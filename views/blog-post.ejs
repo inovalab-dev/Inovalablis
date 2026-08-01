@@ -1,0 +1,166 @@
+<%- include('partials/header') %>
+
+<!-- Top Navigation / Breadcrumb -->
+<section class="bg-brand-softBg/35 border-b border-brand-light/10 py-5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between text-xs font-semibold text-gray-500">
+    <a href="/blog" class="inline-flex items-center text-brand-dark hover:text-brand-light transition-colors">
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Voltar para o Blog
+    </a>
+    <div class="flex items-center space-x-2 font-mono">
+      <span class="bg-brand-dark text-white font-bold font-sans text-[9px] px-2.5 py-1 rounded-full uppercase"><%= post.category %></span>
+    </div>
+  </div>
+</section>
+
+<!-- Corpo do Artigo -->
+<article class="py-12 bg-white animate-fade-in">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    
+    <!-- Cabeçalho do Artigo -->
+    <header class="space-y-6 text-center md:text-left pb-8 border-b border-brand-light/10">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center justify-center md:justify-start space-x-3 text-xs text-gray-400">
+          <span class="font-bold text-brand-gold uppercase tracking-wider font-mono"><%= post.readTime %></span>
+          <span>•</span>
+          <span class="font-mono"><%= post.date %></span>
+        </div>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-dark tracking-tight leading-tight"><%= post.title %></h1>
+      
+      <p class="text-base sm:text-lg text-gray-500 font-medium leading-relaxed max-w-3xl"><%= post.excerpt %></p>
+
+      <!-- Autor -->
+      <div class="flex items-center justify-center md:justify-start space-x-4 pt-2">
+        <div class="w-11 h-11 rounded-full bg-brand-light/35 text-brand-dark font-extrabold flex items-center justify-center text-sm uppercase shadow-sm">
+          <%= post.author.split(' ').map(n => n[0]).join('') %>
+        </div>
+        <div class="text-left">
+          <p class="text-sm font-bold text-brand-dark">Publicado por</p>
+          <p class="text-xs text-gray-500 font-medium"><%= post.author %></p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Artigo Principal Layout (Conteúdo + Compartilhamento) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
+      
+      <!-- Compartilhamento Flutuante (Lado Esquerdo) -->
+      <aside class="lg:col-span-2 lg:sticky lg:top-32 h-fit flex lg:flex-col gap-3 justify-center lg:justify-start py-4 lg:py-0 border-y lg:border-none border-brand-light/10">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-mono mb-1 hidden lg:block">Compartilhar</p>
+        
+        <!-- WhatsApp -->
+        <a href="https://api.whatsapp.com/send?text=Confira%20este%20artigo%20esclarecedor%20do%20InovaLab%20Cambará%20sobre%20'<%= encodeURIComponent(post.title) %>':%20<%= encodeURIComponent(currentUrl) %>" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center lg:justify-start space-x-2 bg-[#25D366] hover:bg-[#20ba5a] text-white py-2 px-4 rounded-xl text-xs font-bold shadow-sm transition-all duration-150 hover:-translate-y-0.5" aria-label="Compartilhar no WhatsApp">
+          <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.25 8.477 3.517 2.266 2.268 3.512 5.279 3.51 8.484-.006 6.545-5.34 11.884-11.954 11.884-.001 0-.002 0-.003 0-1.996-.001-3.956-.503-5.69-1.457L0 24zM6.59 17.545l.361.215a9.872 9.872 0 0 0 5.031 1.378H12a9.89 9.89 0 0 0 9.885-9.885A9.832 9.832 0 0 0 19 2.899 9.825 9.825 0 0 0 12.008 1.1c-5.451 0-9.887 4.434-9.89 9.884-.001 2.094.547 4.14 1.588 5.944l.236.375-1.003 3.655 3.743-.982zM17.472 14.38c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+          <span class="lg:block">WhatsApp</span>
+        </a>
+
+        <!-- Facebook -->
+        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(currentUrl) %>" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center lg:justify-start space-x-2 bg-[#1877F2] hover:bg-[#166fe5] text-white py-2 px-4 rounded-xl text-xs font-bold shadow-sm transition-all duration-150 hover:-translate-y-0.5" aria-label="Compartilhar no Facebook">
+          <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          <span class="lg:block">Facebook</span>
+        </a>
+      </aside>
+
+      <!-- Conteúdo do Texto Formatado (Lado Direito) -->
+      <main class="lg:col-span-10 space-y-6 text-gray-700 leading-relaxed text-sm sm:text-base">
+        <% 
+          // Mecanismo simples de renderização de texto com formatação de parágrafos, subtítulos e listas.
+          const paragraphs = post.content.split('\n');
+          paragraphs.forEach(p => {
+            p = p.trim();
+            if (!p) return;
+
+            // Se for um subtítulo nível 3 (ex: ### Título)
+            if (p.startsWith('### ')) { 
+              %>
+              <h2 class="text-xl sm:text-2xl font-bold text-brand-dark mt-8 mb-4 tracking-tight"><%= p.replace('### ', '') %></h2>
+              <%
+            } 
+            // Se for um item de lista (ex: * Item ou - Item)
+            else if (p.startsWith('* ') || p.startsWith('- ')) {
+              const cleanItem = p.replace(/^[\*\-]\s+/, '');
+              // Destaca o texto em negrito inicial se houver (ex: **Negrito**: Texto)
+              if (cleanItem.includes('**')) {
+                const parts = cleanItem.split('**');
+                %>
+                <ul class="list-disc pl-5 my-2 space-y-1 text-gray-600">
+                  <li>
+                    <strong><%= parts[1] %></strong><%= parts[2] %>
+                  </li>
+                </ul>
+                <%
+              } else {
+                %>
+                <ul class="list-disc pl-5 my-2 space-y-1 text-gray-600">
+                  <li><%= cleanItem %></li>
+                </ul>
+                <%
+              }
+            } 
+            // Se for um item de lista numerada (ex: 1. Item)
+            else if (/^\d+\.\s+/.test(p)) {
+              const cleanItem = p.replace(/^\d+\.\s+/, '');
+              const num = p.match(/^\d+/)[0];
+              if (cleanItem.includes('**')) {
+                const parts = cleanItem.split('**');
+                %>
+                <ol class="list-decimal pl-5 my-2 space-y-1 text-gray-600" start="<%= num %>">
+                  <li>
+                    <strong><%= parts[1] %></strong><%= parts[2] %>
+                  </li>
+                </ol>
+                <%
+              } else {
+                %>
+                <ol class="list-decimal pl-5 my-2 space-y-1 text-gray-600" start="<%= num %>">
+                  <li><%= cleanItem %></li>
+                </ol>
+                <%
+              }
+            }
+            // Parágrafo Normal
+            else {
+              // Verifica se possui texto em negrito interno
+              if (p.includes('**')) {
+                const parts = p.split('**');
+                %>
+                <p class="my-4 text-gray-600 leading-relaxed">
+                  <% parts.forEach((part, idx) => { %>
+                    <% if (idx % 2 === 1) { %>
+                      <strong><%= part %></strong>
+                    <% } else { %>
+                      <%= part %>
+                    <% } %>
+                  <% }) %>
+                </p>
+                <%
+              } else {
+                %>
+                <p class="my-4 text-gray-600 leading-relaxed"><%= p %></p>
+                <%
+              }
+            }
+          });
+        %>
+      </main>
+
+    </div>
+
+    <!-- Banner WhatsApp / Agendamento Integrado -->
+    <div class="mt-16 bg-brand-softBg rounded-3xl p-6 sm:p-10 border border-brand-light/20 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="text-center md:text-left space-y-2 max-w-lg">
+        <h3 class="text-lg sm:text-xl font-extrabold text-brand-dark">Ficou com dúvidas sobre algum exame?</h3>
+        <p class="text-xs sm:text-sm text-gray-500 leading-relaxed">Nossa equipe administrativa em Cambará está pronta para tirar suas dúvidas sobre preparos, convênios ou agendar sua coleta domiciliar.</p>
+      </div>
+      <a href="https://wa.me/5543996183406?text=Olá%20InovaLab!%20Li%20o%20artigo%20'<%= encodeURIComponent(post.title) %>'%20e%20gostaria%20de%20esclarecer%20algumas%2520dúvidas%20ou%20fazer%20um%20agendamento." target="_blank" rel="noopener noreferrer" class="w-full md:w-auto text-center inline-flex items-center justify-center space-x-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs px-6 py-3.5 rounded-xl transition-colors shadow-md hover:shadow-lg">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.25 8.477 3.517 2.266 2.268 3.512 5.279 3.51 8.484-.006 6.545-5.34 11.884-11.954 11.884-.001 0-.002 0-.003 0-1.996-.001-3.956-.503-5.69-1.457L0 24zM6.59 17.545l.361.215a9.872 9.872 0 0 0 5.031 1.378H12a9.89 9.89 0 0 0 9.885-9.885A9.832 9.832 0 0 0 19 2.899 9.825 9.825 0 0 0 12.008 1.1c-5.451 0-9.887 4.434-9.89 9.884-.001 2.094.547 4.14 1.588 5.944l.236.375-1.003 3.655 3.743-.982zM17.472 14.38c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+        <span>Falar no WhatsApp</span>
+      </a>
+    </div>
+
+  </div>
+</article>
+
+<%- include('partials/footer') %>

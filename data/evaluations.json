@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1",
+    "name": "Maria de Lourdes F.",
+    "phone": "(43) 99122-3344",
+    "rating": 5,
+    "comment": "O atendimento do InovaLab foi excelente! A recepcionista foi super educada e o profissional Alisson que realizou minha coleta de sangue foi de uma delicadeza ímpar, quase não senti nada.",
+    "date": "14/07/2026",
+    "type": "positive"
+  },
+  {
+    "id": "2",
+    "name": "Marcos Roberto Costa",
+    "phone": "(43) 99688-4455",
+    "rating": 5,
+    "comment": "Equipe maravilhosa. Laudo de resultado saiu muito rápido e bem detalhado.",
+    "date": "15/07/2026",
+    "type": "positive"
+  },
+  {
+    "id": "3",
+    "name": "Anônimo",
+    "phone": "",
+    "rating": 3,
+    "comment": "O atendimento na recepção demorou um pouco devido à fila de espera, creio que seria bom ter mais uma pessoa nos horários de pico (entre 7h e 8h30). No entanto, a coleta em si foi excelente.",
+    "date": "16/07/2026",
+    "type": "constructive"
+  },
+  {
+    "id": "4",
+    "name": "Carla Beatriz Santos",
+    "phone": "(43) 99877-1122",
+    "rating": 5,
+    "comment": "Exame excelente e atendimento humanizado fantástico. Indico para toda a região de Cambará!",
+    "date": "16/07/2026",
+    "type": "positive"
+  },
+  {
+    "id": "5",
+    "name": "José de Almeida",
+    "phone": "(43) 99933-2211",
+    "rating": 2,
+    "comment": "Achei a recepção um pouco fria e o ar condicionado estava excessivamente gelado na sala de espera de exames.",
+    "date": "17/07/2026",
+    "type": "constructive"
+  }
+]

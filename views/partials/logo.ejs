@@ -1,0 +1,105 @@
+<%
+  // Resolving default parameters
+  const layout = typeof locals.layout !== 'undefined' ? locals.layout : 'horizontal'; // 'horizontal', 'stacked', 'icon-only'
+  const variant = typeof locals.variant !== 'undefined' ? locals.variant : 'light';     // 'light', 'dark'
+  const showSlogan = typeof locals.showSlogan !== 'undefined' ? locals.showSlogan : true;
+  const heightClass = typeof locals.height !== 'undefined' ? locals.height : 'h-11';
+%>
+
+<div class="flex <%= layout === 'stacked' ? 'flex-col items-center text-center space-y-3' : 'items-center space-x-3' %> group">
+  
+  <!-- DNA Double Helix SVG Icon -->
+  <svg class="<%= heightClass %> aspect-[100/130] shrink-0" viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Definitions for Gradients -->
+    <defs>
+      <!-- Luxury Gold Gradients -->
+      <linearGradient id="logoGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#8a7142" />
+        <stop offset="50%" stop-color="#bca374" />
+        <stop offset="100%" stop-color="#a68d53" />
+      </linearGradient>
+      
+      <!-- Soft Light Gold for Dark Mode -->
+      <linearGradient id="logoLightGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#bf9f66" />
+        <stop offset="50%" stop-color="#f3dec1" />
+        <stop offset="100%" stop-color="#c5a875" />
+      </linearGradient>
+      
+      <!-- Green-to-Gold Gradient for Strand 2 (Light variant) -->
+      <linearGradient id="logoGreenToGoldGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="#224215" />
+        <stop offset="35%" stop-color="#224215" />
+        <stop offset="55%" stop-color="#b09868" />
+        <stop offset="100%" stop-color="#b09868" />
+      </linearGradient>
+    </defs>
+
+    <!-- Rungs (Horizontal connection lines) -->
+    <g stroke="<%= variant === 'light' ? 'url(#logoGoldGrad)' : 'url(#logoLightGoldGrad)' %>" stroke-width="0.9" stroke-linecap="round" opacity="0.75">
+      <line x1="36" y1="98" x2="64" y2="98" />
+      <line x1="42" y1="91" x2="58" y2="91" />
+      
+      <line x1="56" y1="72" x2="44" y2="72" />
+      <line x1="64" y1="63" x2="36" y2="63" />
+      <line x1="61" y1="54" x2="39" y2="54" />
+      <line x1="53" y1="45" x2="47" y2="45" />
+      
+      <line x1="41" y1="26" x2="59" y2="26" />
+    </g>
+
+    <!-- Helix Strand 1 (Gold Strand) -->
+    <path 
+      d="M 65,108 C 65,93 58,88 50,83 C 42,78 35,73 35,58 C 35,43 42,38 50,33 C 58,28 65,23 65,16 C 65,8 57,4 49,3" 
+      stroke="<%= variant === 'light' ? 'url(#logoGoldGrad)' : 'url(#logoLightGoldGrad)' %>" 
+      stroke-width="2.2" 
+      stroke-linecap="round"
+      class="transition-all duration-300 group-hover:stroke-[2.5px]"
+    />
+
+    <!-- Helix Strand 2 (Green to Gold in light variant, Light Gold in dark variant) -->
+    <path 
+      d="M 35,108 C 35,93 42,88 50,83 C 58,78 65,73 65,58 C 65,43 58,38 50,33 C 42,28 35,23 35,16 C 35,11 38,7 44,5" 
+      stroke="<%= variant === 'light' ? 'url(#logoGreenToGoldGrad)' : 'url(#logoLightGoldGrad)' %>" 
+      stroke-width="2.2" 
+      stroke-linecap="round"
+      class="transition-all duration-300 group-hover:stroke-[2.5px]"
+    />
+
+    <!-- Small decorative dots -->
+    <!-- Bottom Left Dot (Green in light variant, Light Gold in dark variant) -->
+    <circle 
+      cx="35" 
+      cy="108" 
+      r="2" 
+      fill="<%= variant === 'light' ? '#224215' : 'url(#logoLightGoldGrad)' %>" 
+    />
+    <!-- Top Right Dot (Gold) -->
+    <circle 
+      cx="45" 
+      cy="5" 
+      r="1.8" 
+      fill="<%= variant === 'light' ? 'url(#logoGoldGrad)' : 'url(#logoLightGoldGrad)' %>" 
+    />
+  </svg>
+
+  <% if (layout !== 'icon-only') { %>
+    <!-- Text Label -->
+    <div class="flex flex-col <%= layout === 'stacked' ? 'items-center' : 'items-start' %>">
+      <!-- "INOVALAB" Text -->
+      <span class="text-2xl leading-none">
+        <!-- "INOVA" styled with premium gold -->
+        <span class="font-sans font-normal tracking-[0.03em] <%= variant === 'light' ? 'text-[#b09868]' : 'text-[#dfc293]' %>">INOVA</span><!--
+     --><span class="font-sans font-semibold tracking-[0.03em] <%= variant === 'light' ? 'text-[#224215]' : 'text-white' %>">LAB</span>
+      </span>
+      
+      <% if (showSlogan) { %>
+        <!-- "CUIDANDO DA SUA SAÚDE" tagline -->
+        <span class="text-[7.5px] sm:text-[8px] font-medium tracking-[0.28em] uppercase <%= variant === 'light' ? 'text-[#224215]/90' : 'text-white/85' %> font-sans mt-1.5 leading-none whitespace-nowrap">
+          CUIDANDO DA SUA SAÚDE
+        </span>
+      <% } %>
+    </div>
+  <% } %>
+  
+</div>

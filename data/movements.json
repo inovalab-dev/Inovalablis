@@ -1,0 +1,127 @@
+[
+  {
+    "id": "MV-FC-FC1784837994193777",
+    "code": 363,
+    "closureId": "FC1784837994193777",
+    "isClosureRevenue": true,
+    "type": "receber",
+    "date": "2026-07-02",
+    "chartOfAccounts": "1.1.2 - Convênio Particular + SUS",
+    "complemento": "Fechamento de Caixa - Recepção SUS (2026-07-02)",
+    "bank": "Caixa Geral",
+    "amount": 1500,
+    "createdAt": "2026-07-23T20:20:39.231Z"
+  },
+  {
+    "id": "MV-FC-FC1784837994192112",
+    "code": 362,
+    "closureId": "FC1784837994192112",
+    "isClosureRevenue": true,
+    "type": "receber",
+    "date": "2026-07-01",
+    "chartOfAccounts": "1.1.1 - Convênio Particular",
+    "complemento": "Fechamento de Caixa - Recepção Particular (2026-07-01)",
+    "bank": "Caixa Geral",
+    "amount": 1100,
+    "createdAt": "2026-07-23T20:20:39.230Z"
+  },
+  {
+    "id": "MV-361",
+    "code": 361,
+    "type": "pagar",
+    "date": "2026-07-15",
+    "chartOfAccounts": "Insumos de Laboratório",
+    "complemento": "Compra de insumos descartáveis",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -1168.6,
+    "createdAt": "2026-07-15T10:00:00.000Z"
+  },
+  {
+    "id": "MV-360",
+    "code": 360,
+    "type": "pagar",
+    "date": "2026-07-13",
+    "chartOfAccounts": "Manutenção de Equipamentos",
+    "complemento": "Manutenção preventiva centrífuga",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -954.31,
+    "createdAt": "2026-07-13T14:30:00.000Z"
+  },
+  {
+    "id": "MV-359",
+    "code": 359,
+    "type": "pagar",
+    "date": "2026-07-13",
+    "chartOfAccounts": "Tarifas Bancárias",
+    "complemento": "Taxas de emissão de boletos",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -886.67,
+    "createdAt": "2026-07-13T11:20:00.000Z"
+  },
+  {
+    "id": "MV-358",
+    "code": 358,
+    "type": "pagar",
+    "date": "2026-07-13",
+    "chartOfAccounts": "Energia Elétrica",
+    "complemento": "Fatura Copel vencer em agosto",
+    "bank": "Banco do Brasil (Conta Corrente)",
+    "amount": -3397.31,
+    "createdAt": "2026-07-13T09:15:00.000Z"
+  },
+  {
+    "id": "MV-357",
+    "code": 357,
+    "type": "pagar",
+    "date": "2026-07-13",
+    "chartOfAccounts": "Aluguel",
+    "complemento": "Aluguel da sede Cambará",
+    "bank": "Banco do Brasil (Conta Corrente)",
+    "amount": -1349,
+    "createdAt": "2026-07-13T09:00:00.000Z"
+  },
+  {
+    "id": "MV-356",
+    "code": 356,
+    "type": "pagar",
+    "date": "2026-07-10",
+    "chartOfAccounts": "Insumos de Laboratório",
+    "complemento": "Kits de reagente de apoio",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -889.9,
+    "createdAt": "2026-07-10T16:00:00.000Z"
+  },
+  {
+    "id": "MV-355",
+    "code": 355,
+    "type": "pagar",
+    "date": "2026-07-09",
+    "chartOfAccounts": "Contabilidade",
+    "complemento": "18 - Nucci Contabilidade",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -800,
+    "createdAt": "2026-07-09T14:00:00.000Z"
+  },
+  {
+    "id": "MV-354",
+    "code": 354,
+    "type": "pagar",
+    "date": "2026-07-09",
+    "chartOfAccounts": "Limpeza",
+    "complemento": "4 - Minas Produtos de limpeza",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -300,
+    "createdAt": "2026-07-09T11:00:00.000Z"
+  },
+  {
+    "id": "MV-353",
+    "code": 353,
+    "type": "pagar",
+    "date": "2026-07-09",
+    "chartOfAccounts": "Sistemas",
+    "complemento": "17 - Jalis",
+    "bank": "Banco Infinity Pay(Conta Corrente)",
+    "amount": -640.22,
+    "createdAt": "2026-07-09T09:30:00.000Z"
+  }
+]

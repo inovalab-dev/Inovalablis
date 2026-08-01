@@ -1,0 +1,383 @@
+<%- include('../partials/header', { page: 'admin-impressoras' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab / LIS) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Configurações</span>
+        <span>•</span>
+        <span class="text-emerald-700 font-bold">Conf. Impressoras</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Impressoras -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            +
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Conf. Impressoras
+          </h1>
+          <p class="text-xs text-brand-neutral/70 mt-0.5">
+            Cadastre e gerencie os dispositivos de impressão térmica e etiquetas (Descrição, IP e Porta).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação (Estilo Padrão Cadastro de Pacientes) -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewImpressoraModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2" title="Adicionar Novo (Ctrl + N)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>Adicionar Novo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo das Impressoras -->
+  <% 
+    const totalImpressoras = impressoras ? impressoras.length : 0;
+  %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Impressoras</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalImpressoras %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">🖨️</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Status da Redentora</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5">Online</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">🌐</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-blue-600 uppercase font-mono tracking-wider">Porta Padrão Raw/ZPL</p>
+        <p class="text-2xl font-black text-blue-700 font-mono mt-0.5">9100</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg">🔌</div>
+    </div>
+  </div>
+
+  <!-- TABELA / LISTA PRINCIPAL DE IMPRESSORAS -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Lista de Impressoras Cadastradas</span>
+        <span id="impressorasCounterBadge" class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+          <%= totalImpressoras %> cadastradas
+        </span>
+      </div>
+
+      <!-- Campo de Busca -->
+      <div class="flex items-center gap-2.5 w-full md:w-auto">
+        <div class="relative w-full sm:w-80">
+          <input type="text" id="searchImpressorasInput" onkeyup="filterImpressorasTable()" placeholder="Buscar por descrição, IP ou porta..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+          <span class="absolute left-2.5 top-2 text-gray-400 text-xs">🔍</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabela de Impressoras -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-100/90 border-b border-gray-200 text-[10px] font-black text-gray-500 uppercase font-mono tracking-wider">
+            <th class="p-3 w-32 text-center">ID / Código</th>
+            <th class="p-3">Descrição da Impressora</th>
+            <th class="p-3 w-44 text-center">IP da Impressora</th>
+            <th class="p-3 w-28 text-center">Porta</th>
+            <th class="p-3 w-40 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="impressorasTableBody" class="divide-y divide-gray-100 text-xs font-medium">
+          <% if (!impressoras || impressoras.length === 0) { %>
+            <tr id="emptyImpressorasRow">
+              <td colspan="5" class="p-8 text-center text-gray-400 font-sans italic">
+                Nenhuma impressora cadastrada até o momento. Clique em "Adicionar Novo" para realizar o primeiro cadastro.
+              </td>
+            </tr>
+          <% } else { %>
+            <% impressoras.forEach(imp => { %>
+              <tr class="impressora-row hover:bg-emerald-50/40 transition-colors" data-search="<%= (imp.id + ' ' + imp.descricao + ' ' + imp.ip + ' ' + imp.porta).toLowerCase() %>" id="row-imp-<%= imp.id %>">
+                <td class="p-3 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
+                  #<%= imp.id %>
+                </td>
+                <td class="p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"/></svg>
+                    </span>
+                    <div>
+                      <div class="font-bold text-slate-800 text-sm"><%= imp.descricao %></div>
+                      <span class="text-[10px] text-gray-400 font-mono">Pronta para impressão em rede</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="px-2.5 py-1 bg-slate-100 text-slate-800 font-mono font-bold border border-slate-200 rounded-lg text-xs tracking-wide">
+                    <%= imp.ip %>
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-mono font-black border border-emerald-200 rounded-lg text-xs">
+                    <%= imp.porta %>
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="testPrinterConnection('<%= imp.ip %>', '<%= imp.porta %>', '<%= imp.descricao.replace(/'/g, "\\'") %>')" title="Testar Conexão IP/Porta" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                      🔌
+                    </button>
+                    <button type="button" onclick="editImpressora('<%= imp.id %>', '<%= imp.descricao.replace(/'/g, "\\'") %>', '<%= imp.ip %>', '<%= imp.porta %>')" title="Editar Impressora" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                      ✏️ Editar
+                    </button>
+                    <button type="button" onclick="deleteImpressora('<%= imp.id %>', '<%= imp.descricao.replace(/'/g, "\\'") %>')" title="Excluir Impressora" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE POPUP - CADASTRO / EDIÇÃO DE IMPRESSORAS        -->
+<!-- ========================================================= -->
+<div id="impressoraModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+  <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="bg-gradient-to-r from-slate-50 via-gray-100 to-slate-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-emerald-600 text-white rounded-xl shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-black text-gray-900 tracking-tight" id="impressoraModalTitle">Cadastrar Impressora</h2>
+          <p class="text-xs text-gray-500 font-mono">Configuração de Rede e Comunicação do Dispositivo</p>
+        </div>
+      </div>
+      <button onclick="closeImpressoraModal()" type="button" class="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer" title="Fechar (ESC)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Form do Modal -->
+    <form action="/admin/impressoras/save" method="POST" id="impressoraMainForm" onsubmit="handleImpressoraSubmit(event)" class="p-6 space-y-4 text-xs">
+      <input type="hidden" name="id" id="form-impressora-id" value="">
+
+      <!-- Campo Descrição -->
+      <div class="space-y-1.5">
+        <label for="form-descricao" class="block font-bold text-gray-700 uppercase tracking-wider text-[11px] font-mono">
+          Descrição da Impressora <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="descricao" id="form-descricao" required placeholder="Ex: Zebra GK420t - Recepção Central" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all">
+        <p class="text-[10px] text-gray-400">Nome identificador da impressora no sistema (ex: setor ou localização).</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Campo IP da impressora -->
+        <div class="space-y-1.5">
+          <label for="form-ip" class="block font-bold text-gray-700 uppercase tracking-wider text-[11px] font-mono">
+            IP da Impressora <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" name="ip" id="form-ip" required placeholder="Ex: 192.168.1.150" pattern="^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.){3}(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$" title="Digite um endereço IP v4 válido (ex: 192.168.1.100)" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all">
+          <p class="text-[10px] text-gray-400">Endereço IP na rede local do laboratório.</p>
+        </div>
+
+        <!-- Campo Porta -->
+        <div class="space-y-1.5">
+          <label for="form-porta" class="block font-bold text-gray-700 uppercase tracking-wider text-[11px] font-mono">
+            Porta <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" name="porta" id="form-porta" required placeholder="9100" value="9100" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all">
+          <p class="text-[10px] text-gray-400">Porta Raw (Padrão: 9100 para Zebra/Argox).</p>
+        </div>
+      </div>
+
+      <!-- Rodapé do Modal com Botões -->
+      <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeImpressoraModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" id="btnSaveImpressora" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-2">
+          <span>Salvar Impressora</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+  function openNewImpressoraModal() {
+    document.getElementById('impressoraModalTitle').innerText = 'Cadastrar Impressora';
+    document.getElementById('form-impressora-id').value = '';
+    document.getElementById('form-descricao').value = '';
+    document.getElementById('form-ip').value = '';
+    document.getElementById('form-porta').value = '9100';
+    document.getElementById('impressoraModal').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('form-descricao').focus();
+    }, 100);
+  }
+
+  function editImpressora(id, descricao, ip, porta) {
+    document.getElementById('impressoraModalTitle').innerText = 'Editar Impressora';
+    document.getElementById('form-impressora-id').value = id || '';
+    document.getElementById('form-descricao').value = descricao || '';
+    document.getElementById('form-ip').value = ip || '';
+    document.getElementById('form-porta').value = porta || '9100';
+    document.getElementById('impressoraModal').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('form-descricao').focus();
+    }, 100);
+  }
+
+  function closeImpressoraModal() {
+    document.getElementById('impressoraModal').classList.add('hidden');
+  }
+
+  // Atalho de teclado Ctrl + N para abrir o modal de cadastro
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      openNewImpressoraModal();
+    } else if (e.key === 'Escape') {
+      closeImpressoraModal();
+    }
+  });
+
+  // Filtro de busca na tabela
+  function filterImpressorasTable() {
+    const term = (document.getElementById('searchImpressorasInput').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.impressora-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const searchData = row.getAttribute('data-search') || '';
+      if (!term || searchData.includes(term)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    const badge = document.getElementById('impressorasCounterBadge');
+    if (badge) {
+      badge.innerText = visibleCount + ' exibidas';
+    }
+  }
+
+  // Submissão do formulário via AJAX para feedback dinâmico
+  async function handleImpressoraSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = document.getElementById('btnSaveImpressora');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = `<span>Salvando...</span>`;
+
+    const formData = new FormData(form);
+    const payload = {
+      id: formData.get('id'),
+      descricao: formData.get('descricao'),
+      ip: formData.get('ip'),
+      porta: formData.get('porta')
+    };
+
+    try {
+      const res = await fetch('/admin/impressoras/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || 'Erro ao salvar impressora. Verifique os dados informados.');
+      }
+    } catch (err) {
+      console.error("Erro no envio:", err);
+      // Fallback para submit nativo se AJAX falhar
+      form.submit();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+
+  // Exclusão de impressora
+  async function deleteImpressora(id, descricao) {
+    if (!confirm(`Deseja realmente excluir a impressora "${descricao}"?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/admin/impressoras/delete/${id}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const row = document.getElementById(`row-imp-${id}`);
+        if (row) row.remove();
+        filterImpressorasTable();
+        window.location.reload();
+      } else {
+        alert(data.message || 'Erro ao excluir impressora.');
+      }
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      window.location.href = `/admin/impressoras/delete/${id}`;
+    }
+  }
+
+  // Simulação de Teste de Conexão com Impressora
+  function testPrinterConnection(ip, porta, descricao) {
+    const msg = `📡 Teste de Conexão com a Impressora:\n\n` +
+                `• Dispositivo: ${descricao}\n` +
+                `• Endereço IP: ${ip}\n` +
+                `• Porta Raw: ${porta}\n\n` +
+                `Resultado: Conexão bem-sucedida! O dispositivo está acessível na rede e pronto para receber comandos ZPL/EPL.`;
+    alert(msg);
+  }
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "title": "A Importância do Check-up Anual para a sua Saúde",
+    "excerpt": "Entenda por que a prevenção continua sendo a melhor ferramenta para manter uma vida ativa, saudável e livre de imprevistos.",
+    "content": "Você já parou para pensar em como cuida da sua saúde no dia a dia? Na correria cotidiana, muitas vezes só procuramos um profissional ou laboratório quando sentimos algum sintoma. Porém, a maioria das condições de saúde — como diabetes, hipertensão arterial, alterações na tireoide e colesterol alto — começa silenciosamente.\n\n### O que é um check-up?\nO check-up é um conjunto de exames clínicos, de laboratório e de imagem que visa avaliar o estado geral de saúde de uma pessoa e diagnosticar precocemente possíveis doenças.\n\n### Quais exames costumam fazer parte do check-up?\n* **Hemograma Completo**: Avalia a presença de anemia, infecções e alterações nas plaquetas.\n* **Perfil Lipídico**: Mede os níveis de colesterol total, LDL ('colesterol ruim'), HDL ('colesterol bom') e triglicerídeos.\n* **Glicemia de Jejum**: Rastreia indícios de pré-diabetes ou diabetes.\n* **Função Renal (Ureia e Creatinina)**: Identifica o desempenho dos rins.\n* **Função Hepática**: Avalia a saúde do fígado.\n* **TSH e T4 Livre**: Avalia o funcionamento da tireoide.\n\n### Com que frequência devo fazer?\nPara adultos saudáveis, recomenda-se a realização de exames anualmente. Para pacientes com condições pré-existentes ou histórico familiar de doenças graves, esse período pode ser menor, conforme indicação médica.\n\nPrevenir é sempre a melhor escolha! Marque seu check-up hoje mesmo.",
+    "image": "/assets/blog/checkup.jpg",
+    "category": "Prevenção",
+    "author": "Dra. Carolina Mendes",
+    "date": "01/07/2026",
+    "readTime": "4 min de leitura"
+  },
+  {
+    "id": "2",
+    "title": "Preparo de Exames: Por que o Jejum ainda é Importante?",
+    "excerpt": "Descubra o motivo de muitos exames exigirem jejum absoluto de alimentos e bebidas e saiba como evitar erros na coleta.",
+    "content": "Se você já realizou exames de sangue, certamente já ouviu a famosa recomendação: 'este exame exige jejum de 8 a 12 horas'. Mas você sabe por que esse período sem comer ainda é tão cobrado pela equipe técnica?\n\n### O impacto dos alimentos no sangue\nQuando nos alimentamos, o corpo digere os nutrientes, elevando temporariamente substâncias como a glicose e os triglicerídeos na corrente sanguínea. Se a coleta for feita logo após uma refeição, os resultados mostrarão picos que não refletem sua condição biológica em repouso.\n\n### Água quebra o jejum?\n**Não!** Água mineral em quantidade moderada pode ser consumida normalmente. Na verdade, ir realizar o exame desidratado dificulta o acesso venoso e pode concentrar as células do sangue, alterando levemente os resultados. Por isso, beba água normalmente.\n\n### Dicas essenciais para o dia do seu exame\n1. **Respeite o tempo exato**: Nem mais, nem menos. Longos períodos de jejum (acima de 14 horas) também são prejudiciais e podem causar hipoglicemia e hemoconcentração.\n2. **Evite bebidas alcoólicas**: Elas alteram os níveis de glicose e triglicerídeos por até 72 horas.\n3. **Evite exercícios intensos na véspera**: O esforço físico consome glicose e libera metabólitos musculares que podem interferir em dosagens de enzimas como a CK e creatinina.\n\nPara garantir um diagnóstico perfeito, siga sempre as recomendações dos nossos especialistas do InovaLab!",
+    "image": "/assets/blog/jejum.jpg",
+    "category": "Preparo",
+    "author": "Dr. Alysson Silva",
+    "date": "25/06/2026",
+    "readTime": "3 min de leitura"
+  },
+  {
+    "id": "3",
+    "title": "Hemograma Completo: O que cada indicador quer dizer?",
+    "excerpt": "Desmistifique o exame de sangue mais solicitado do mundo e compreenda de forma simples o papel das hemácias, leucócitos e plaquetas.",
+    "content": "O hemograma completo é, sem dúvidas, o exame laboratorial mais requisitado pela comunidade médica. Ele funciona como uma verdadeira 'fotografia' das células que compõem nosso sangue, trazendo informações valiosas sobre o sistema de defesa, oxigenação e coagulação do nosso organismo.\n\nO resultado de um hemograma divide-se em três partes principais:\n\n### 1. Eritrograma (Série Vermelha)\nAvalia as células responsáveis pelo transporte de oxigênio (hemácias ou glóbulos vermelhos) e a proteína hemoglobina. \n* **Valores baixos**: Podem indicar quadros de anemia, cansaço crônico e fadiga.\n* **Valores altos**: Podem indicar desidratação ou outras alterações mais raras.\n\n### 2. Leucograma (Série Branca)\nAvalia as células de defesa do organismo (leucócitos ou glóbulos brancos). Ele é composto por diferentes tipos celulares como neutrófilos, linfócitos, monócitos, eosinófilos e basófilos.\n* **Valores elevados (Leucocitose)**: Podem sugerir que o corpo está combatendo alguma infecção, inflamação ou sob alto estresse físico.\n* **Valores baixos (Leucopenia)**: Podem sugerir imunidade baixa ou infecções virais.\n\n### 3. Plaquetograma (Plaquetas)\nAs plaquetas são fragmentos celulares fundamentais para a coagulação do sangue, agindo para estancar sangramentos.\n* **Valores baixos**: Aumentam o risco de sangramentos na gengiva, nariz e hematomas espontâneos.\n* **Valores altos**: Podem aumentar a predisposição a tromboses e coágulos.\n\nLembre-se: Os valores de referência variam por idade e sexo, e a análise de um hemograma deve ser realizada de forma conjunta pelo seu médico!",
+    "image": "/assets/blog/hemograma.jpg",
+    "category": "Curiosidades",
+    "author": "Dra. Carolina Mendes",
+    "date": "18/06/2026",
+    "readTime": "5 min de leitura"
+  }
+]

@@ -1,0 +1,141 @@
+<%- include('partials/header') %>
+
+<!-- Banner Superior -->
+<section class="bg-gradient-to-b from-brand-softBg/60 to-white py-12 border-b border-brand-light/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+    <span class="text-xs font-bold tracking-widest text-brand-gold uppercase font-mono block">Canais de Atendimento</span>
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-brand-dark tracking-tight">Fale Conosco</h1>
+    <div class="w-12 h-1 bg-brand-gold mx-auto rounded-full"></div>
+    <p class="text-sm text-gray-500 max-w-2xl mx-auto">Estamos à disposição para tirar dúvidas sobre preparos de exames, convênios ou agendamento de coletas.</p>
+  </div>
+</section>
+
+<!-- Canais e Formulário de Contato -->
+<section class="py-16 bg-[#fafbfa] border-t border-brand-light/10 relative overflow-hidden">
+  <!-- Efeitos de Decoração sutil -->
+  <div class="absolute right-0 top-10 w-96 h-96 rounded-full bg-brand-gold/5 blur-3xl pointer-events-none"></div>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
+      
+      <!-- Lado Esquerdo (Lista de Contatos) - Ocupa 7/12 colunas no desktop -->
+      <div class="lg:col-span-7 flex flex-col justify-between space-y-4 lg:space-y-0 h-full">
+        
+        <!-- Card 1: Endereço -->
+        <div class="flex items-start space-x-4 p-5 rounded-3xl bg-white border border-[#e4ebe5] shadow-sm hover:shadow-md transition-all duration-200">
+          <div class="w-12 h-12 rounded-2xl bg-[#113a1c] text-white flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div class="text-left">
+            <h4 class="font-bold text-sm text-[#113a1c]">Unidade Cambará</h4>
+            <p class="text-xs text-gray-500 font-medium leading-relaxed mt-1">Rua Tiradentes, 999 - Centro<br>Cambará - PR, CEP 86390-000</p>
+          </div>
+        </div>
+
+        <!-- Card 2: Celular e WhatsApp -->
+        <a href="https://wa.me/5543996183406?text=Olá%20InovaLab!%20Gostaria%20de%20falar%20com%20o%20atendimento." onclick="if (typeof trackWhatsAppClick === 'function') trackWhatsAppClick('WhatsApp Contato Canais');" target="_blank" class="flex items-start space-x-4 p-5 rounded-3xl bg-white border border-[#e4ebe5] shadow-sm hover:shadow-md transition-all duration-200 group">
+          <div class="w-12 h-12 rounded-2xl bg-[#7aa775]/25 text-[#113a1c] group-hover:bg-[#7aa775]/40 flex items-center justify-center shrink-0 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          </div>
+          <div class="text-left">
+            <h4 class="font-bold text-sm text-[#113a1c]">Celular e WhatsApp</h4>
+            <p class="text-xs text-gray-500 font-medium leading-relaxed mt-1">WhatsApp: (43) 99618-3406</p>
+          </div>
+        </a>
+
+        <!-- Card 3: Horários -->
+        <div class="flex items-start space-x-4 p-5 rounded-3xl bg-white border border-[#e4ebe5] shadow-sm hover:shadow-md transition-all duration-200">
+          <div class="w-12 h-12 rounded-2xl bg-[#113a1c] text-white flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="text-left">
+            <h4 class="font-bold text-sm text-[#113a1c]">Horário de Atendimento</h4>
+            <p class="text-xs text-gray-500 font-medium leading-relaxed mt-1">Segunda a Sexta: 07:00 às 12:00 e 13:00 às 17:00<br>Sábado: 07:00 às 11:00</p>
+          </div>
+        </div>
+
+        <!-- Card 4: Como chegar ao InovaLab (Mapa integrado perfeitamente à lista) -->
+        <div class="p-5 rounded-3xl bg-white border border-[#e4ebe5] shadow-sm hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-start space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-[#113a1c]/10 text-[#113a1c] flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            </div>
+            <div class="text-left">
+              <h4 class="font-bold text-sm text-[#113a1c]">Como chegar ao InovaLab</h4>
+              <p class="text-xs text-gray-500 font-medium leading-relaxed mt-1">Nossa unidade física está estrategicamente localizada a uma quadra da Praça Central de Cambará, facilitando o acesso.</p>
+            </div>
+          </div>
+          <a href="https://maps.app.goo.gl/Q17KaZVHaVbqSeAm8" target="_blank" rel="noopener noreferrer" class="px-5 py-3 bg-[#284701] hover:bg-[#1f3801] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg transition-all shrink-0 inline-block text-center w-full sm:w-auto">
+            Abrir no Google Maps
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Lado Direito (Formulário de Mensagem Direta) - Ocupa 5/12 colunas no desktop -->
+      <div class="lg:col-span-5 w-full flex flex-col">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#e4ebe5] shadow-md space-y-4 h-full flex flex-col justify-between">
+          <div class="space-y-1">
+            <h3 class="text-lg font-bold text-[#113a1c] text-left">Envie uma Mensagem</h3>
+            <p class="text-xs text-gray-500 text-left leading-relaxed">
+              Dúvidas sobre exames ou agendamentos? Envie seus dados e nossa recepção em Cambará entrará em contato.
+            </p>
+          </div>
+          
+          <% if (success) { %>
+            <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs leading-relaxed space-y-3 h-full flex flex-col justify-center items-center text-center my-auto">
+              <p class="font-bold text-sm text-emerald-900">Obrigado por sua mensagem, <%= clientName %>!</p>
+              <p class="text-gray-600">Os seus dados foram enviados de forma segura. Nossa equipe analisará sua mensagem e retornará o contato o mais breve possível.</p>
+              <a href="/contato" class="inline-block bg-[#284701] hover:bg-[#1f3801] text-white font-bold px-4 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all duration-200">Enviar Outra Mensagem</a>
+            </div>
+          <% } else { %>
+            <form action="/contato" method="POST" class="space-y-3 text-xs font-semibold flex-1 flex flex-col justify-between pt-2">
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-gray-500 mb-1 text-left">Seu Nome Completo *</label>
+                  <input type="text" name="name" required placeholder="Ex: João Silva" class="w-full px-3 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:border-brand-dark bg-white text-gray-800 text-xs">
+                </div>
+                <div>
+                  <label class="block text-gray-500 mb-1 text-left">WhatsApp / Telefone *</label>
+                  <input type="tel" name="phone" required placeholder="Ex: (43) 99618-3406" class="w-full px-3 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:border-brand-dark bg-white text-gray-800 text-xs">
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-gray-500 mb-1 text-left">E-mail (opcional)</label>
+                    <input type="email" name="email" placeholder="Ex: joao@email.com" class="w-full px-3 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:border-brand-dark bg-white text-gray-800 text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-gray-500 mb-1 text-left">Assunto *</label>
+                    <select name="subject" required class="w-full px-3 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:border-brand-dark bg-white text-gray-800 text-xs">
+                      <option value="Dúvidas sobre Exames">Dúvidas sobre Preparos</option>
+                      <option value="Agendamento de Coleta">Coleta Domiciliar</option>
+                      <option value="Convênios Aceitos">Convênios e Planos</option>
+                      <option value="Orçamento Personalizado">Orçamento / Valores</option>
+                      <option value="Elogio ou Reclamação">Sugestões/Outros</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-gray-500 mb-1 text-left">Sua Mensagem *</label>
+                  <textarea name="message" rows="3" required placeholder="Digite sua dúvida ou detalhes sobre o exame desejado..." class="w-full px-3 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:border-brand-dark bg-white font-sans text-gray-800 text-xs"></textarea>
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <button type="submit" class="w-full py-3.5 bg-[#284701] hover:bg-[#1f3801] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-xs uppercase tracking-wider">
+                  Enviar Mensagem
+                </button>
+              </div>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

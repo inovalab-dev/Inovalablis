@@ -1,0 +1,317 @@
+<%- include('../partials/header') %>
+
+<div class="p-4 md:p-8 max-w-7xl mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- CABEÇALHO DA PÁGINA -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Administração & Sistema</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 font-mono">Ativo Globalmente</span>
+        </div>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight mt-0.5">Parametrização de Atalhos de Teclado</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Customize as combinações de teclas que todas as telas e modais do LIS respeitarão instantaneamente.</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <form action="/admin/atalhos/reset" method="POST" onsubmit="return confirm('Deseja realmente restaurar todos os atalhos para o padrão do sistema?')">
+        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs font-mono uppercase tracking-wider transition-all border border-gray-300 cursor-pointer">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Restaurar Padrão
+        </button>
+      </form>
+
+      <button type="button" onclick="document.getElementById('shortcutsMainForm').submit()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-extrabold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Salvar Atalhos
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTAS DE FEEDBACK -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs">
+      <div class="w-7 h-7 rounded-lg bg-emerald-200 text-emerald-900 flex items-center justify-center font-bold shrink-0">✓</div>
+      <span><%= success_msg %></span>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs">
+      <div class="w-7 h-7 rounded-lg bg-rose-200 text-rose-900 flex items-center justify-center font-bold shrink-0">!</div>
+      <span><%= error_msg %></span>
+    </div>
+  <% } %>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- ESQUERDA: FORMULÁRIO DE ATALHOS -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <form id="shortcutsMainForm" action="/admin/atalhos/save" method="POST">
+        <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden p-5 space-y-6">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div>
+              <h2 class="text-sm font-extrabold text-gray-800 uppercase tracking-wider font-mono">Ações do Sistema e Combinações</h2>
+              <p class="text-[11px] text-gray-500">Ajuste os modificadores (Ctrl, Alt, Shift) e a tecla associada para cada comando.</p>
+            </div>
+            <span class="text-[10px] text-gray-400 font-mono">Total de <%= Object.keys(shortcuts).length %> atalhos</span>
+          </div>
+
+          <div class="space-y-4">
+            <% Object.keys(shortcuts).forEach(id => { %>
+              <% const sc = shortcuts[id]; %>
+              <div class="p-4 rounded-xl border border-gray-200 hover:border-emerald-300 bg-gray-50/50 transition-all space-y-3">
+                
+                <!-- Linha do Título e Status -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-200/60">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full <%= sc.enabled !== false ? 'bg-emerald-500' : 'bg-gray-300' %> shrink-0"></span>
+                    <h3 class="text-xs font-bold text-gray-900 font-mono uppercase tracking-wide"><%= sc.action %></h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-gray-200/80 text-gray-700"><%= sc.scope %></span>
+                  </div>
+
+                  <label class="inline-flex items-center gap-2 text-[11px] font-semibold text-gray-600 cursor-pointer select-none">
+                    <input type="checkbox" name="enabled_<%= id %>" <%= sc.enabled !== false ? 'checked' : '' %> class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                    <span>Atalho Ativo</span>
+                  </label>
+                </div>
+
+                <p class="text-[11px] text-gray-500"><%= sc.description %></p>
+
+                <!-- Configuração das Teclas Modificadoras e Tecla Principal -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center pt-1">
+                  
+                  <!-- Checkboxes dos Modificadores -->
+                  <div class="md:col-span-6 flex items-center gap-4 bg-white p-2.5 rounded-lg border border-gray-200">
+                    <span class="text-[10px] font-bold text-gray-400 font-mono uppercase shrink-0">Modificadores:</span>
+                    
+                    <label class="inline-flex items-center gap-1.5 text-xs font-mono text-gray-700 cursor-pointer">
+                      <input type="checkbox" name="ctrl_<%= id %>" <%= sc.ctrlKey ? 'checked' : '' %> onchange="updatePreview('<%= id %>')" class="w-3.5 h-3.5 rounded text-emerald-600 border-gray-300">
+                      <span>Ctrl</span>
+                    </label>
+
+                    <label class="inline-flex items-center gap-1.5 text-xs font-mono text-gray-700 cursor-pointer">
+                      <input type="checkbox" name="alt_<%= id %>" <%= sc.altKey ? 'checked' : '' %> onchange="updatePreview('<%= id %>')" class="w-3.5 h-3.5 rounded text-emerald-600 border-gray-300">
+                      <span>Alt</span>
+                    </label>
+
+                    <label class="inline-flex items-center gap-1.5 text-xs font-mono text-gray-700 cursor-pointer">
+                      <input type="checkbox" name="shift_<%= id %>" <%= sc.shiftKey ? 'checked' : '' %> onchange="updatePreview('<%= id %>')" class="w-3.5 h-3.5 rounded text-emerald-600 border-gray-300">
+                      <span>Shift</span>
+                    </label>
+                  </div>
+
+                  <!-- Input da Tecla Principal + Botão Capturar -->
+                  <div class="md:col-span-6 flex items-center gap-2">
+                    <div class="relative flex-1">
+                      <input type="text" id="key_input_<%= id %>" name="key_<%= id %>" value="<%= sc.key %>" oninput="updatePreview('<%= id %>')" placeholder="Ex: n, s, Escape..." class="w-full pl-3 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 uppercase">
+                    </div>
+
+                    <button type="button" onclick="startCapturingKey('<%= id %>')" class="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-[11px] font-bold font-mono shrink-0 transition-colors cursor-pointer" title="Clique e pressione qualquer tecla do teclado">
+                      Capturar Tecla
+                    </button>
+
+                    <!-- Preview da Combinação -->
+                    <div class="shrink-0">
+                      <kbd id="badge_preview_<%= id %>" class="px-2.5 py-1 bg-gray-900 text-amber-300 font-mono text-xs font-extrabold rounded-md shadow-xs border border-gray-700">
+                        ...
+                      </kbd>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            <% }); %>
+          </div>
+
+          <div class="pt-4 border-t border-gray-200 flex justify-end">
+            <button type="submit" class="px-6 py-3 bg-[#284701] hover:bg-[#3d6b1d] text-white font-extrabold text-xs font-mono uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">
+              Salvar Todas as Configurações
+            </button>
+          </div>
+
+        </div>
+      </form>
+
+    </div>
+
+    <!-- DIREITA: PAINEL DE TESTE EM TEMPO REAL & INSTRUÇÕES -->
+    <div class="space-y-6">
+      
+      <!-- TESTADOR INTERATIVO -->
+      <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow p-5 space-y-4">
+        <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-extrabold text-gray-800 font-mono uppercase">Testador de Atalhos</h3>
+            <p class="text-[10px] text-gray-500">Pressione qualquer combinação no seu teclado para testar</p>
+          </div>
+        </div>
+
+        <div id="tester-box" class="p-6 bg-slate-900 rounded-xl text-center space-y-3 border border-slate-800 relative overflow-hidden">
+          <p class="text-[11px] font-mono uppercase text-slate-400">Combinação Detectada:</p>
+          <div id="tester-keys" class="text-xl font-mono font-black text-amber-400 min-h-[36px] flex items-center justify-center gap-2">
+            <span class="text-slate-600 text-sm italic font-normal">Pressione teclas...</span>
+          </div>
+          <div id="tester-result" class="text-xs font-mono font-bold text-slate-300 bg-slate-800/80 py-1.5 px-3 rounded-lg border border-slate-700 min-h-[28px] flex items-center justify-center">
+            Aguardando entrada de teclado
+          </div>
+        </div>
+
+        <p class="text-[11px] text-gray-500 leading-relaxed">
+          <strong>Dica LIS:</strong> As alterações salvas nesta tela entram em vigor instantaneamente em todo o sistema sem necessidade de reiniciar.
+        </p>
+      </div>
+
+      <!-- GUIA RÁPIDO DE TECLAS ESPECIAIS -->
+      <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow p-5 space-y-3">
+        <h3 class="text-xs font-extrabold text-gray-800 font-mono uppercase flex items-center gap-2">
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Nomes de Teclas Especiais
+        </h3>
+        <p class="text-[11px] text-gray-500">Você pode digitar o nome exato da tecla na caixa de entrada:</p>
+        
+        <div class="grid grid-cols-2 gap-2 text-[11px] font-mono text-gray-700">
+          <div class="p-2 bg-gray-50 rounded border border-gray-200"><strong class="text-gray-900">Escape</strong> (Teclas ESC)</div>
+          <div class="p-2 bg-gray-50 rounded border border-gray-200"><strong class="text-gray-900">Enter</strong> (Teclas Enter)</div>
+          <div class="p-2 bg-gray-50 rounded border border-gray-200"><strong class="text-gray-900">F2, F4, F8</strong> (Teclas F)</div>
+          <div class="p-2 bg-gray-50 rounded border border-gray-200"><strong class="text-gray-900">Space</strong> (Barra espaço)</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SCRIPT DE INTERAÇÃO E PREVIEW DOS ATALHOS -->
+<script>
+  function formatShortcutLabel(ctrl, alt, shift, key) {
+    const parts = [];
+    if (ctrl) parts.push('Ctrl');
+    if (alt) parts.push('Alt');
+    if (shift) parts.push('Shift');
+
+    let keyDisp = (key || '').trim().toUpperCase();
+    if (key.toLowerCase() === 'escape') keyDisp = 'ESC';
+    if (key.toLowerCase() === 'enter') keyDisp = 'ENTER';
+    if (key === ' ') keyDisp = 'ESPAÇO';
+
+    if (keyDisp) parts.push(keyDisp);
+    return parts.length > 0 ? parts.join(' + ') : 'Nenhum';
+  }
+
+  function updatePreview(id) {
+    const form = document.getElementById('shortcutsMainForm');
+    if (!form) return;
+
+    const ctrl = form[`ctrl_${id}`] ? form[`ctrl_${id}`].checked : false;
+    const alt = form[`alt_${id}`] ? form[`alt_${id}`].checked : false;
+    const shift = form[`shift_${id}`] ? form[`shift_${id}`].checked : false;
+    const key = document.getElementById(`key_input_${id}`) ? document.getElementById(`key_input_${id}`).value : '';
+
+    const badge = document.getElementById(`badge_preview_${id}`);
+    if (badge) {
+      badge.textContent = formatShortcutLabel(ctrl, alt, shift, key);
+    }
+  }
+
+  // Inicializar previews ao carregar a página
+  document.addEventListener('DOMContentLoaded', () => {
+    <% Object.keys(shortcuts).forEach(id => { %>
+      updatePreview('<%= id %>');
+    <% }); %>
+  });
+
+  // Capturar Tecla com Botão
+  function startCapturingKey(id) {
+    const input = document.getElementById(`key_input_${id}`);
+    if (!input) return;
+
+    input.value = 'Pressione tecla...';
+    input.classList.add('bg-amber-100', 'ring-2', 'ring-amber-500');
+
+    function onKeyDownOnce(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      let capturedKey = e.key;
+      if (capturedKey === 'Control' || capturedKey === 'Alt' || capturedKey === 'Shift' || capturedKey === 'Meta') {
+        return; // Aguardar tecla de caractere ou de função
+      }
+
+      input.value = capturedKey;
+      input.classList.remove('bg-amber-100', 'ring-2', 'ring-amber-500');
+
+      // Atualizar checkboxes de modificadores com base no que foi pressionado na captura!
+      const form = document.getElementById('shortcutsMainForm');
+      if (form) {
+        if (form[`ctrl_${id}`]) form[`ctrl_${id}`].checked = e.ctrlKey || e.metaKey;
+        if (form[`alt_${id}`]) form[`alt_${id}`].checked = e.altKey;
+        if (form[`shift_${id}`]) form[`shift_${id}`].checked = e.shiftKey;
+      }
+
+      updatePreview(id);
+      window.removeEventListener('keydown', onKeyDownOnce, true);
+    }
+
+    window.addEventListener('keydown', onKeyDownOnce, true);
+  }
+
+  // TESTADOR DE ATALHOS EM TEMPO REAL
+  document.addEventListener('keydown', (e) => {
+    // Evitar interferir se o foco estiver num input de formulário normal (exceto se for teste)
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') && !activeEl.id.startsWith('key_input_')) {
+      // Testar apenas se tiver mod ou ESC
+    }
+
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isAlt = e.altKey;
+    const isShift = e.shiftKey;
+    const key = e.key;
+
+    if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+
+    const keyLabel = formatShortcutLabel(isCtrl, isAlt, isShift, key);
+    
+    const keysContainer = document.getElementById('tester-keys');
+    const resultContainer = document.getElementById('tester-result');
+
+    if (keysContainer) {
+      keysContainer.innerHTML = `<span class="bg-amber-400 text-slate-950 px-3 py-1 rounded-lg border border-amber-300 font-black tracking-wider animate-bounce">${keyLabel}</span>`;
+    }
+
+    if (resultContainer) {
+      // Verificar se essa combinação bate com algum atalho configurado
+      let matchFound = null;
+      <% Object.keys(shortcuts).forEach(id => { %>
+        if (window.matchShortcut(e, '<%= id %>')) {
+          matchFound = { id: '<%= id %>', action: '<%= shortcuts[id].action %>' };
+        }
+      <% }); %>
+
+      if (matchFound) {
+        resultContainer.className = 'text-xs font-mono font-extrabold text-emerald-400 bg-emerald-950/80 py-1.5 px-3 rounded-lg border border-emerald-500/50';
+        resultContainer.innerHTML = `✓ Dispara ação: <strong>${matchFound.action}</strong>`;
+      } else {
+        resultContainer.className = 'text-xs font-mono font-semibold text-slate-400 bg-slate-800/80 py-1.5 px-3 rounded-lg border border-slate-700';
+        resultContainer.innerHTML = `Nenhuma ação vinculada a esta combinação`;
+      }
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

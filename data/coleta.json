@@ -1,0 +1,50 @@
+[
+  {
+    "id": "COL-3001",
+    "requisitionId": "REQ-2026-001",
+    "requisitionCode": "REQ-2026-001",
+    "patientName": "João Carlos da Silva",
+    "patientCpf": "234.567.890-11",
+    "collectionDate": "2026-07-26",
+    "collectionTime": "07:45",
+    "phlebotomist": "Carlos Santos",
+    "status": "Coletado Concluído",
+    "tubes": [
+      { "tubeCode": "TB-001", "color": "Roxa", "sampleType": "Sangue Total EDTA", "label": "Hemograma, HbA1c", "status": "Coletado" },
+      { "tubeCode": "TB-002", "color": "Vermelha", "sampleType": "Soro com Gel Separador", "label": "Glicemia, Lipidograma, Ureia, Creatina", "status": "Coletado" }
+    ],
+    "notes": "Coleta venosa realizada na fossa cubital do braço direito sem intercorrências."
+  },
+  {
+    "id": "COL-3002",
+    "requisitionId": "REQ-2026-002",
+    "requisitionCode": "REQ-2026-002",
+    "patientName": "Maria Eduarda Ferreira",
+    "patientCpf": "123.456.789-00",
+    "collectionDate": "2026-07-26",
+    "collectionTime": "08:15",
+    "phlebotomist": "Ana Souza",
+    "status": "Aguardando Coleta",
+    "tubes": [
+      { "tubeCode": "TB-003", "color": "Vermelha", "sampleType": "Soro com Gel Separador", "label": "TSH, T4 Livre, Vitamina D", "status": "Pendente" }
+    ],
+    "notes": "Paciente aguardando chamada na recepção."
+  },
+  {
+    "id": "COL-3003",
+    "requisitionId": "REQ-2026-003",
+    "requisitionCode": "REQ-2026-003",
+    "patientName": "Ana Paula Mendes",
+    "patientCpf": "345.678.901-22",
+    "collectionDate": "2026-07-26",
+    "collectionTime": "08:30",
+    "phlebotomist": "Carlos Santos",
+    "status": "Coletado Parcial",
+    "tubes": [
+      { "tubeCode": "TB-004", "color": "Cinza", "sampleType": "Plasma Fluoreto", "label": "Glicemia Basal TOTG", "status": "Coletado" },
+      { "tubeCode": "TB-005", "color": "Cinza", "sampleType": "Plasma Fluoreto", "label": "Glicemia 60 min TOTG", "status": "Pendente" },
+      { "tubeCode": "TB-006", "color": "Cinza", "sampleType": "Plasma Fluoreto", "label": "Glicemia 120 min TOTG", "status": "Pendente" }
+    ],
+    "notes": "TOTG 75g administrado às 08:35. Aguardando tempo das próximas coletas."
+  }
+]

@@ -1,0 +1,844 @@
+<%- include('../../partials/header', { page: 'admin-lab-externo-alvaro' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Laboratório Externo</span>
+        <span>•</span>
+        <span class="text-amber-700 font-bold">Exames Álvaro</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/30 shadow-sm flex items-center justify-center shrink-0 relative text-amber-700 font-black text-xl">
+          🧪
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight flex items-center gap-2">
+            Exames Álvaro
+            <span class="text-xs font-mono font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full uppercase border border-amber-200">Apoio Álvaro</span>
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Cadastre e gerencie a lista de exames, valores e materiais disponíveis no Laboratório de Apoio Álvaro
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões Principais de Ação -->
+    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+      <button type="button" id="btnSyncExames" onclick="syncExamesAlvaro()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2 border border-amber-500/30">
+        <svg id="syncIconExames" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+        <span id="syncTextExames">Sincronizar Exame</span>
+      </button>
+      <button type="button" onclick="openExamModal()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Exame Álvaro</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Exames</p>
+        <p id="stat-total-exames" class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= exames.length %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 font-bold text-lg">📋</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Média de Valor</p>
+        <% 
+          let totalVal = exames.reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+          let avgVal = exames.length > 0 ? (totalVal / exames.length).toFixed(2) : '0.00';
+        %>
+        <p id="stat-media-valor" class="text-2xl font-black text-emerald-700 font-mono mt-0.5">R$ <%= avgVal.replace('.', ',') %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-lg">💰</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Materiais</p>
+        <% 
+          let allMats = new Set();
+          exames.forEach(e => {
+            if (Array.isArray(e.materiais)) e.materiais.forEach(m => allMats.add(m));
+          });
+        %>
+        <p id="stat-total-materiais" class="text-2xl font-black text-cyan-700 font-mono mt-0.5"><%= allMats.size %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 font-bold text-lg">🧫</div>
+    </div>
+  </div>
+
+  <!-- Filtro e Pesquisa -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div class="relative flex-1">
+      <input type="text" id="search-input" oninput="filterExamsTable(true)" placeholder="Pesquisar por Código ou Descrição do Exame Álvaro..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+      <span class="absolute left-3.5 top-3 text-gray-400 text-sm">🔍</span>
+    </div>
+    <div class="flex items-center gap-3 text-xs font-mono font-bold text-gray-500 flex-wrap">
+      <div class="flex items-center gap-1.5">
+        <span>Qtd. por pág:</span>
+        <select id="pageSizeSelect" onchange="changePageSize(this.value)" class="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-slate-800 font-extrabold outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="250">250</option>
+          <option value="500">500</option>
+          <option value="999999">Todos</option>
+        </select>
+      </div>
+      <div>
+        Mostrando <span id="filtered-count" class="text-slate-800 font-extrabold"><%= exames.length %></span> exames
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de Exames -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left font-mono text-xs">
+        <thead class="bg-slate-900 text-white text-[10px] uppercase tracking-wider font-extrabold">
+          <tr>
+            <th class="p-3.5 w-32 text-center cursor-pointer hover:bg-slate-800 transition-colors select-none" onclick="toggleSortField('codigo')">
+              Código <span id="sort-indicator-codigo" class="text-amber-400">▲</span>
+            </th>
+            <th class="p-3.5 cursor-pointer hover:bg-slate-800 transition-colors select-none" onclick="toggleSortField('descricao')">
+              Descrição <span id="sort-indicator-descricao" class="text-amber-400"></span>
+            </th>
+            <th class="p-3.5 w-48">Material Padrão</th>
+            <th class="p-3.5">Materiais Disponíveis</th>
+            <th class="p-3.5 w-32 text-right">Valor (R$)</th>
+            <th class="p-3.5 w-28 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="examsTableBody" class="divide-y divide-gray-100 bg-white">
+          <!-- Renderizado via JS / EJS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Controles de Paginação -->
+    <div id="paginationControls" class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs">
+      <div id="paginationInfo" class="text-gray-600 font-bold">
+        Exibindo 0-0 de 0
+      </div>
+      <div id="paginationButtons" class="flex items-center gap-1.5 flex-wrap">
+        <!-- Renderizado via JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CADASTRAR / EDITAR EXAME ÁLVARO -->
+<div id="examModal" class="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+    
+    <!-- Header Modal -->
+    <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">🧪</span>
+        <div>
+          <h3 id="modalTitle" class="text-xs font-black uppercase font-mono tracking-wider text-amber-400">
+            Cadastrar Exame - Álvaro
+          </h3>
+          <p class="text-[10px] text-gray-300">Informe os dados do exame e os materiais disponíveis</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeExamModal()" class="text-gray-400 hover:text-white text-2xl font-bold p-1 cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Form Body -->
+    <form id="examForm" onsubmit="saveExamForm(event)" class="p-5 overflow-y-auto space-y-4 font-mono text-xs flex-1">
+      <input type="hidden" id="modal-exam-id" value="">
+
+      <!-- Código -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Código do Exame:</label>
+        <input type="text" id="modal-exam-codigo" required placeholder="Ex: TSH, HEMOG, ALV-102" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 uppercase">
+      </div>
+
+      <!-- Descrição -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Descrição do Exame:</label>
+        <input type="text" id="modal-exam-descricao" required placeholder="Ex: Hormônio Tireoestimulante Ultra Sensível" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+      </div>
+
+      <!-- Valor -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Valor do Exame (R$):</label>
+        <div class="relative">
+          <span class="absolute left-3 top-2 font-bold text-gray-500">R$</span>
+          <input type="number" step="0.01" min="0" id="modal-exam-valor" required placeholder="0.00" class="w-full pl-10 pr-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+      </div>
+
+      <!-- Material Padrão -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Material Padrão:</label>
+        <select id="modal-exam-material-default" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+          <option value="">-- Nenhum Material Padrão --</option>
+        </select>
+        <p class="text-[10px] text-gray-500 mt-1 font-sans">Armazena apenas o código na tabela, exibindo código e descrição na tela.</p>
+      </div>
+
+      <!-- Lista de Materiais Disponíveis -->
+      <div class="pt-2 border-t border-gray-200">
+        <label class="block font-bold text-slate-700 uppercase mb-1">Materiais Disponíveis:</label>
+        <p class="text-[10px] text-gray-500 mb-2 font-sans">Selecione ou digite o tipo de material aceito para este exame (Ex: 1 - Diversos, 2 - Cabelos)</p>
+        
+        <!-- Tags Atuais -->
+        <div id="materials-container" class="flex flex-wrap gap-1.5 mb-3 p-2 bg-slate-50 border border-gray-200 rounded-xl min-h-[44px]">
+          <!-- Renderizado via JS -->
+        </div>
+
+        <!-- Controles para Adicionar Material -->
+        <div class="space-y-2">
+          <!-- Seleção por dropdown de materiais cadastrados -->
+          <div class="flex items-center gap-2">
+            <select id="modal-material-select" class="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="">-- Selecione um Material Cadastrado --</option>
+            </select>
+            <button type="button" onclick="addMaterialTagFromSelect()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0">
+              + Incluir
+            </button>
+          </div>
+
+          <!-- Digitação manual -->
+          <div class="flex items-center gap-2">
+            <input type="text" id="modal-new-material-input" placeholder="Ou digite outro material (ex: 1 - Diversos)..." class="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+            <button type="button" onclick="addMaterialTagFromInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0">
+              + Adicionar
+            </button>
+          </div>
+        </div>
+
+        <!-- Sugestões de materiais cadastrados -->
+        <div class="mt-2.5">
+          <span class="text-[10px] font-bold text-gray-400 block mb-1">Materiais Cadastrados no Álvaro:</span>
+          <div id="material-suggestions-container" class="flex flex-wrap gap-1 max-h-28 overflow-y-auto p-1.5 bg-slate-50 border border-gray-200 rounded-xl">
+            <!-- Renderizado via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Modal -->
+      <div class="pt-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
+        <button type="button" onclick="closeExamModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer">
+          Salvar Exame
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  let examsData = <%- JSON.stringify(exames) %>;
+  let materiaisCatalog = <%- JSON.stringify(locals.materiais || []) %>;
+  let currentMaterialsList = [];
+
+  let currentSortField = 'codigo';
+  let currentSortAsc = true;
+  let currentPage = 1;
+  let pageSize = 100;
+  let currentFilteredList = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    populateMaterialOptions();
+    filterExamsTable(true);
+  });
+
+  function populateMaterialOptions() {
+    const select = document.getElementById('modal-material-select');
+    const matDefaultSelect = document.getElementById('modal-exam-material-default');
+    const suggContainer = document.getElementById('material-suggestions-container');
+
+    if (select) {
+      select.innerHTML = '<option value="">-- Selecione um Material Cadastrado --</option>';
+    }
+    if (matDefaultSelect) {
+      matDefaultSelect.innerHTML = '<option value="">-- Nenhum Material Padrão --</option>';
+    }
+    if (suggContainer) {
+      suggContainer.innerHTML = '';
+    }
+
+    if (!Array.isArray(materiaisCatalog) || materiaisCatalog.length === 0) {
+      if (suggContainer) {
+        suggContainer.innerHTML = '<span class="text-gray-400 text-[10px] italic">Nenhum material cadastrado em Materiais Álvaro</span>';
+      }
+      return;
+    }
+
+    const sortedMats = materiaisCatalog.slice().sort((a, b) => {
+      const valA = String(a.codigo || a.descricao || '').trim();
+      const valB = String(b.codigo || b.descricao || '').trim();
+      return valA.localeCompare(valB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+    });
+
+    sortedMats.forEach(m => {
+      const code = String(m.codigo || '').trim();
+      const desc = String(m.descricao || '').trim();
+      let label = '';
+      if (code && desc && code.toLowerCase() !== desc.toLowerCase()) {
+        label = `${code} - ${desc}`;
+      } else {
+        label = code || desc;
+      }
+
+      if (select) {
+        const opt = document.createElement('option');
+        opt.value = label;
+        opt.textContent = label;
+        select.appendChild(opt);
+      }
+
+      if (matDefaultSelect) {
+        const opt = document.createElement('option');
+        opt.value = code; // Salva SOMENTE o código
+        opt.textContent = label; // Mostra código e descrição na tela
+        matDefaultSelect.appendChild(opt);
+      }
+
+      if (suggContainer) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => addMaterialTag(label);
+        btn.className = 'px-2 py-1 bg-white hover:bg-amber-100 hover:text-amber-900 text-slate-700 rounded-lg text-[10px] font-bold transition-all border border-gray-200 shadow-2xs text-left truncate max-w-[220px] cursor-pointer';
+        btn.title = label;
+        btn.textContent = '+ ' + label;
+        suggContainer.appendChild(btn);
+      }
+    });
+  }
+
+  function getMaterialDefaultLabel(item) {
+    if (item.materialDefault == null || String(item.materialDefault).trim() === '') return null;
+    const codeStr = String(item.materialDefault).trim();
+
+    if (item.materialDefaultDesc && String(item.materialDefaultDesc).trim()) {
+      const desc = String(item.materialDefaultDesc).trim();
+      if (codeStr.toLowerCase() !== desc.toLowerCase()) {
+        return `${codeStr} - ${desc}`;
+      }
+      return desc;
+    }
+
+    if (Array.isArray(item.possibleMaterials)) {
+      const found = item.possibleMaterials.find(pm => pm && String(pm.code).trim().toLowerCase() === codeStr.toLowerCase());
+      if (found && found.description) {
+        return `${codeStr} - ${found.description.trim()}`;
+      }
+    }
+
+    if (Array.isArray(materiaisCatalog)) {
+      const found = materiaisCatalog.find(m => m && String(m.codigo).trim().toUpperCase() === codeStr.toUpperCase());
+      if (found && found.descricao) {
+        return `${codeStr} - ${found.descricao.trim()}`;
+      }
+    }
+
+    return codeStr;
+  }
+
+  function sortExams(list) {
+    return list.slice().sort((a, b) => {
+      let valA = '';
+      let valB = '';
+      if (currentSortField === 'codigo') {
+        valA = String(a.codigo || '').trim();
+        valB = String(b.codigo || '').trim();
+      } else {
+        valA = String(a.descricao || '').trim();
+        valB = String(b.descricao || '').trim();
+      }
+
+      const comp = valA.localeCompare(valB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+      if (comp !== 0) {
+        return currentSortAsc ? comp : -comp;
+      }
+
+      const subA = String(a.codigo || '').trim();
+      const subB = String(b.codigo || '').trim();
+      return currentSortAsc ? subA.localeCompare(subB, 'pt-BR', { numeric: true }) : -subA.localeCompare(subB, 'pt-BR', { numeric: true });
+    });
+  }
+
+  function toggleSortField(field) {
+    if (currentSortField === field) {
+      currentSortAsc = !currentSortAsc;
+    } else {
+      currentSortField = field;
+      currentSortAsc = true;
+    }
+    filterExamsTable(true);
+  }
+
+  function updateSortIndicators() {
+    const codInd = document.getElementById('sort-indicator-codigo');
+    const descInd = document.getElementById('sort-indicator-descricao');
+    if (codInd) codInd.innerText = currentSortField === 'codigo' ? (currentSortAsc ? ' ▲' : ' ▼') : '';
+    if (descInd) descInd.innerText = currentSortField === 'descricao' ? (currentSortAsc ? ' ▲' : ' ▼') : '';
+  }
+
+  function filterExamsTable(resetPage = true) {
+    const input = document.getElementById('search-input');
+    const query = (input ? input.value : '').toLowerCase().trim();
+
+    let filtered = examsData;
+    if (query) {
+      filtered = examsData.filter(item => {
+        const cod = (item.codigo || '').toLowerCase();
+        const desc = (item.descricao || '').toLowerCase();
+        const matDefault = (item.materialDefault || '').toLowerCase();
+        const matDefaultDesc = (item.materialDefaultDesc || '').toLowerCase();
+        const mats = Array.isArray(item.materiais) ? item.materiais.join(' ').toLowerCase() : '';
+        return cod.includes(query) || desc.includes(query) || matDefault.includes(query) || matDefaultDesc.includes(query) || mats.includes(query);
+      });
+    }
+
+    currentFilteredList = sortExams(filtered);
+
+    if (resetPage) {
+      currentPage = 1;
+    }
+
+    updateSortIndicators();
+    renderExamsTable();
+  }
+
+  function renderExamsTable() {
+    const tbody = document.getElementById('examsTableBody');
+    if (!tbody) return;
+
+    const totalItems = currentFilteredList.length;
+    const effectivePageSize = pageSize >= 999999 ? (totalItems || 1) : pageSize;
+    const totalPages = Math.ceil(totalItems / effectivePageSize) || 1;
+
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    document.getElementById('filtered-count').innerText = totalItems;
+
+    if (!currentFilteredList || totalItems === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-8 text-center text-gray-400 font-sans italic">
+            Nenhum exame cadastrado no laboratório Álvaro.
+          </td>
+        </tr>
+      `;
+      renderPagination(0, 0, 0, 1);
+      return;
+    }
+
+    const startIdx = (currentPage - 1) * effectivePageSize;
+    const endIdx = Math.min(startIdx + effectivePageSize, totalItems);
+    const pageItems = currentFilteredList.slice(startIdx, endIdx);
+
+    tbody.innerHTML = pageItems.map(item => {
+      const matsBadges = Array.isArray(item.materiais) && item.materiais.length > 0
+        ? item.materiais.map(m => `<span class="inline-block px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-lg mr-1 mb-1">${m}</span>`).join('')
+        : '<span class="text-gray-400 text-[10px] italic">Nenhum informado</span>';
+
+      const matDefaultLabel = getMaterialDefaultLabel(item);
+      const matDefaultBadge = matDefaultLabel
+        ? `<span class="inline-block px-2.5 py-1 bg-blue-100 text-blue-900 border border-blue-200 text-[10px] font-extrabold rounded-lg shadow-2xs">${matDefaultLabel}</span>`
+        : '<span class="text-gray-400 text-[10px] italic">-</span>';
+
+      const lastChangeInfo = item.lastChange
+        ? `<span class="block text-[9px] text-gray-400 font-normal font-sans mt-0.5" title="Última alteração no Álvaro">Alt: ${item.lastChange}</span>`
+        : '';
+
+      const valorFormatado = typeof item.valor === 'number' 
+        ? item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : 'R$ ' + (parseFloat(item.valor) || 0).toFixed(2).replace('.', ',');
+
+      return `
+        <tr class="hover:bg-amber-50/50 transition-colors">
+          <td class="p-3.5 text-center font-bold font-mono text-slate-800 bg-slate-50/50">${item.codigo}</td>
+          <td class="p-3.5 font-bold text-slate-900">
+            ${item.descricao}
+            ${lastChangeInfo}
+          </td>
+          <td class="p-3.5">${matDefaultBadge}</td>
+          <td class="p-3.5">${matsBadges}</td>
+          <td class="p-3.5 text-right font-black text-emerald-700">${valorFormatado}</td>
+          <td class="p-3.5 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button type="button" onclick="editExam('${item.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-bold text-[11px] transition-all cursor-pointer" title="Editar Exame">
+                ✏️
+              </button>
+              <button type="button" onclick="deleteExam('${item.id}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer" title="Excluir Exame">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    renderPagination(startIdx + 1, endIdx, totalItems, totalPages);
+  }
+
+  function renderPagination(startNum, endNum, totalItems, totalPages) {
+    const infoEl = document.getElementById('paginationInfo');
+    const buttonsEl = document.getElementById('paginationButtons');
+
+    if (!infoEl || !buttonsEl) return;
+
+    if (totalItems === 0) {
+      infoEl.innerText = 'Nenhum exame para exibir';
+      buttonsEl.innerHTML = '';
+      return;
+    }
+
+    infoEl.innerHTML = `Exibindo <span class="font-black text-slate-800">${startNum}-${endNum}</span> de <span class="font-black text-slate-800">${totalItems}</span> exames (Pág. ${currentPage}/${totalPages})`;
+
+    let html = '';
+
+    // Botão Anterior
+    html += `
+      <button type="button" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg font-bold text-xs text-slate-700 hover:bg-amber-50 hover:border-amber-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-gray-200 transition-all cursor-pointer disabled:cursor-not-allowed">
+        ◀ Anterior
+      </button>
+    `;
+
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    if (startPage > 1) {
+      html += `<button type="button" onclick="changePage(1)" class="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-bold text-xs text-slate-700 hover:bg-amber-50 transition-all cursor-pointer">1</button>`;
+      if (startPage > 2) {
+        html += `<span class="px-1 text-gray-400 font-bold">...</span>`;
+      }
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      if (p === currentPage) {
+        html += `<span class="px-3 py-1.5 bg-amber-600 text-white rounded-lg font-extrabold text-xs shadow-2xs">${p}</span>`;
+      } else {
+        html += `<button type="button" onclick="changePage(${p})" class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg font-bold text-xs text-slate-700 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer">${p}</button>`;
+      }
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        html += `<span class="px-1 text-gray-400 font-bold">...</span>`;
+      }
+      html += `<button type="button" onclick="changePage(${totalPages})" class="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-bold text-xs text-slate-700 hover:bg-amber-50 transition-all cursor-pointer">${totalPages}</button>`;
+    }
+
+    // Botão Próxima
+    html += `
+      <button type="button" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg font-bold text-xs text-slate-700 hover:bg-amber-50 hover:border-amber-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-gray-200 transition-all cursor-pointer disabled:cursor-not-allowed">
+        Próxima ▶
+      </button>
+    `;
+
+    buttonsEl.innerHTML = html;
+  }
+
+  function changePage(newPage) {
+    currentPage = newPage;
+    renderExamsTable();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function changePageSize(val) {
+    pageSize = parseInt(val, 10) || 100;
+    currentPage = 1;
+    renderExamsTable();
+  }
+
+  function openExamModal(id = '') {
+    document.getElementById('examModal').classList.remove('hidden');
+    document.getElementById('modal-exam-id').value = id;
+    populateMaterialOptions();
+
+    if (id) {
+      const exam = examsData.find(e => String(e.id) === String(id));
+      if (exam) {
+        document.getElementById('modalTitle').innerText = 'Editar Exame - Álvaro';
+        document.getElementById('modal-exam-codigo').value = exam.codigo || '';
+        document.getElementById('modal-exam-descricao').value = exam.descricao || '';
+        document.getElementById('modal-exam-valor').value = exam.valor || '';
+        const matDefaultEl = document.getElementById('modal-exam-material-default');
+        if (matDefaultEl) matDefaultEl.value = exam.materialDefault || '';
+        currentMaterialsList = Array.isArray(exam.materiais) ? [...exam.materiais] : [];
+      }
+    } else {
+      document.getElementById('modalTitle').innerText = 'Cadastrar Exame - Álvaro';
+      document.getElementById('modal-exam-codigo').value = '';
+      document.getElementById('modal-exam-descricao').value = '';
+      document.getElementById('modal-exam-valor').value = '';
+      const matDefaultEl = document.getElementById('modal-exam-material-default');
+      if (matDefaultEl) matDefaultEl.value = '';
+      currentMaterialsList = [];
+      if (Array.isArray(materiaisCatalog) && materiaisCatalog.length > 0) {
+        const m = materiaisCatalog[0];
+        const code = String(m.codigo || '').trim();
+        const desc = String(m.descricao || '').trim();
+        const defaultLabel = (code && desc && code.toLowerCase() !== desc.toLowerCase()) ? `${code} - ${desc}` : (code || desc);
+        currentMaterialsList = [defaultLabel];
+      } else {
+        currentMaterialsList = ['1 - Soro'];
+      }
+    }
+
+    renderMaterialsTags();
+    setTimeout(() => document.getElementById('modal-exam-codigo').focus(), 100);
+  }
+
+  function closeExamModal() {
+    document.getElementById('examModal').classList.add('hidden');
+  }
+
+  function renderMaterialsTags() {
+    const container = document.getElementById('materials-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (currentMaterialsList.length === 0) {
+      container.innerHTML = '<span class="text-gray-400 text-[11px] italic">Nenhum material adicionado ainda</span>';
+      return;
+    }
+
+    currentMaterialsList.forEach((mat, idx) => {
+      const tag = document.createElement('span');
+      tag.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-lg shadow-2xs';
+      tag.innerHTML = `
+        <span>${mat}</span>
+        <button type="button" onclick="removeMaterialTag(${idx})" class="text-amber-700 hover:text-rose-600 font-extrabold cursor-pointer text-sm">&times;</button>
+      `;
+      container.appendChild(tag);
+    });
+  }
+
+  function addMaterialTagFromSelect() {
+    const select = document.getElementById('modal-material-select');
+    if (!select) return;
+    const val = select.value.trim();
+    if (val) {
+      addMaterialTag(val);
+      select.value = '';
+    }
+  }
+
+  function addMaterialTagFromInput() {
+    const input = document.getElementById('modal-new-material-input');
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) {
+      addMaterialTag(val);
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  function addMaterialTag(name) {
+    if (!name) return;
+    if (!currentMaterialsList.includes(name)) {
+      currentMaterialsList.push(name);
+      renderMaterialsTags();
+    }
+  }
+
+  function removeMaterialTag(idx) {
+    if (idx >= 0 && idx < currentMaterialsList.length) {
+      currentMaterialsList.splice(idx, 1);
+      renderMaterialsTags();
+    }
+  }
+
+  async function saveExamForm(event) {
+    event.preventDefault();
+    const id = document.getElementById('modal-exam-id').value;
+    const codigo = document.getElementById('modal-exam-codigo').value.trim();
+    const descricao = document.getElementById('modal-exam-descricao').value.trim();
+    const valor = parseFloat(document.getElementById('modal-exam-valor').value) || 0;
+    const matDefaultSelect = document.getElementById('modal-exam-material-default');
+    const materialDefault = matDefaultSelect ? matDefaultSelect.value : null;
+
+    let materialDefaultDesc = '';
+    if (materialDefault && matDefaultSelect && matDefaultSelect.selectedIndex >= 0) {
+      const selOpt = matDefaultSelect.options[matDefaultSelect.selectedIndex];
+      if (selOpt && selOpt.textContent) {
+        const parts = selOpt.textContent.split(' - ');
+        if (parts.length > 1) {
+          materialDefaultDesc = parts.slice(1).join(' - ').trim();
+        } else {
+          materialDefaultDesc = selOpt.textContent.trim();
+        }
+      }
+    }
+
+    const payload = {
+      id: id || ('alv-' + Date.now()),
+      codigo,
+      descricao,
+      valor,
+      materialDefault,
+      materialDefaultDesc,
+      materiais: currentMaterialsList
+    };
+
+    try {
+      const res = await fetch('/api/lab-externo/alvaro/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        examsData = data.exames;
+        filterExamsTable(false);
+        updateStats(examsData);
+        closeExamModal();
+      } else {
+        alert('Erro ao salvar exame: ' + (data.message || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar exame.');
+    }
+  }
+
+  async function editExam(id) {
+    openExamModal(id);
+  }
+
+  async function deleteExam(id) {
+    if (!confirm('Deseja realmente excluir este exame do Apoio Álvaro?')) return;
+    try {
+      const res = await fetch('/api/lab-externo/alvaro/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        examsData = data.exames;
+        filterExamsTable(false);
+        updateStats(examsData);
+      } else {
+        alert('Erro ao excluir: ' + (data.message || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao excluir exame.');
+    }
+  }
+
+  function updateStats(list) {
+    document.getElementById('stat-total-exames').innerText = list.length;
+    let totalVal = list.reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+    let avgVal = list.length > 0 ? (totalVal / list.length).toFixed(2) : '0.00';
+    document.getElementById('stat-media-valor').innerText = 'R$ ' + avgVal.replace('.', ',');
+
+    let allMats = new Set();
+    list.forEach(e => {
+      if (Array.isArray(e.materiais)) e.materiais.forEach(m => allMats.add(m));
+    });
+    document.getElementById('stat-total-materiais').innerText = allMats.size;
+  }
+
+  async function syncExamesAlvaro() {
+    const btn = document.getElementById('btnSyncExames');
+    const icon = document.getElementById('syncIconExames');
+    const text = document.getElementById('syncTextExames');
+
+    btn.disabled = true;
+    icon.classList.add('animate-spin');
+    text.innerText = 'Sincronizando...';
+
+    try {
+      const res = await fetch('/api/lab-externo/alvaro/sync-exames', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        examsData = data.exames;
+        if (Array.isArray(data.materiais)) {
+          materiaisCatalog = data.materiais;
+          populateMaterialOptions();
+        }
+        filterExamsTable(false);
+        updateStats(examsData);
+        const msg = `Sincronização concluída! ${data.countNew} novo(s) exame(s) adicionado(s) e ${data.countUpdated} atualizado(s) com materiais. Total: ${data.countTotal}`;
+        showToast(msg, 'success');
+      } else {
+        showToast(data.message || 'Erro ao sincronizar exames com Álvaro.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de conexão ao sincronizar exames com Álvaro.', 'error');
+    } finally {
+      btn.disabled = false;
+      icon.classList.remove('animate-spin');
+      text.innerText = 'Sincronizar Exame';
+    }
+  }
+
+  function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto px-4 py-3 rounded-xl font-mono text-xs font-bold text-white shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 ${
+      type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+    }`;
+    toast.innerHTML = `<span>${type === 'success' ? '✓' : '⚠️'}</span><span>${escapeHtml(message)}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-2');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
+<%- include('../../partials/footer') %>

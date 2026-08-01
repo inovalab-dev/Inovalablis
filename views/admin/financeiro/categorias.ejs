@@ -1,0 +1,330 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 md:p-8 max-w-7xl mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- Cabeçalho -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Gestão Financeira</p>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight">Categorias de Plano de Contas</h1>
+      </div>
+    </div>
+    
+    <button onclick="openModal('add-cat-modal')" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+      Nova Categoria
+    </button>
+  </div>
+
+  <!-- Abas de Navegação Financeira -->
+  <div class="flex flex-wrap border-b border-gray-200 gap-2">
+    <a href="/admin/financeiro" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Fluxo de Caixa
+    </a>
+    <a href="/admin/financeiro/contas-bancarias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Contas Bancárias
+    </a>
+    <a href="/admin/financeiro/documentos" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Tipos de Documentos
+    </a>
+    <a href="/admin/financeiro/categorias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-[#284701] text-[#284701] transition-all">
+      Categorias
+    </a>
+    <a href="/admin/financeiro/plano-contas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Plano de Contas
+    </a>
+  </div>
+
+  <!-- Alertas de Feedback -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <%= success_msg %>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <%= error_msg %>
+    </div>
+  <% } %>
+
+  <!-- Tabela de Categorias -->
+  <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+          <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+          Categorias Ativas
+        </h2>
+        <p class="text-xs text-brand-neutralDark/60 mt-1">Gerencie os grupos e classificações do plano de contas para a estruturação do DRE (Demonstrativo do Resultado do Exercício).</p>
+      </div>
+
+      <!-- Barra de Pesquisa Rápida -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-mono font-bold text-gray-500">Pesquisar:</label>
+        <input type="text" id="catSearch" onkeyup="filterCatsTable()" placeholder="Buscar categoria..." class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#284701]">
+      </div>
+    </div>
+
+    <% if (accountCategories.length === 0) { %>
+      <div class="p-12 text-center text-gray-400">
+        <p class="font-bold">Nenhuma categoria cadastrada.</p>
+        <button onclick="openModal('add-cat-modal')" class="text-[#284701] font-bold hover:underline mt-2 inline-block">Cadastrar primeira categoria</button>
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="catsTable">
+          <thead>
+            <tr class="border-b border-brand-softBg bg-brand-softBg/20">
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider w-24">Código</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Descrição</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Indicador</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Faixa no DRE</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider text-right w-36">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-brand-softBg">
+            <% accountCategories.forEach(cat => { %>
+              <tr class="hover:bg-brand-softBg/10 transition-colors">
+                <td class="p-4 text-xs font-bold font-mono text-brand-neutralDark/50">#<%= cat.id %></td>
+                <td class="p-4 text-sm font-black text-[#284701] cat-description-cell"><%= cat.description %></td>
+                <td class="p-4 text-xs">
+                  <% if (cat.indicator === 'Crédito') { %>
+                    <span class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 font-bold font-mono uppercase text-[9px] border border-emerald-100">
+                      Crédito (+)
+                    </span>
+                  <% } else { %>
+                    <span class="px-2.5 py-1 rounded bg-rose-50 text-rose-700 font-bold font-mono uppercase text-[9px] border border-rose-100">
+                      Débito (-)
+                    </span>
+                  <% } %>
+                </td>
+                <td class="p-4 text-xs font-bold text-brand-neutralDark/70 font-mono"><%= cat.dreRange %></td>
+                <td class="p-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button onclick="editCategory(<%= JSON.stringify(cat) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    </button>
+                    <button onclick="confirmDeleteCategory('<%= cat.id %>', '<%= cat.description %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rodapé de paginação falso combinando com o design da imagem -->
+      <div class="p-4 bg-brand-softBg/10 border-t border-brand-softBg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-gray-500">
+        <div>
+          Mostrando de 1 até <%= accountCategories.length %> de <%= accountCategories.length %> registros
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="px-2.5 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed">Anterior</button>
+          <span class="px-3 py-1 bg-[#284701] text-white rounded font-bold">1</span>
+          <button class="px-2.5 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed">Próximo</button>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+</div>
+
+<!-- MODAL: Adicionar Categoria -->
+<div id="add-cat-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Categoria de Plano de Contas
+      </h3>
+      <button onclick="closeModal('add-cat-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/categorias/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Categoria *</label>
+        <input type="text" name="description" required placeholder="Ex: Receitas Exames, Custos Variáveis" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Indicador financeiro *</label>
+        <select name="indicator" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Débito">Débito (-)</option>
+          <option value="Crédito">Crédito (+)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Faixa no DRE *</label>
+        <select name="dreRange" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Receitas">Receitas</option>
+          <option value="Deduções sobre vendas">Deduções sobre vendas</option>
+          <option value="Custos variáveis">Custos variáveis</option>
+          <option value="Custos fixos">Custos fixos</option>
+          <option value="Despesas financeiras">Despesas financeiras</option>
+          <option value="Investimentos">Investimentos</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-cat-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Categoria
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Categoria -->
+<div id="edit-cat-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Categoria
+      </h3>
+      <button onclick="closeModal('edit-cat-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/categorias/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-cat-id">
+      
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Categoria *</label>
+        <input type="text" name="description" id="edit-cat-description" required placeholder="Ex: Receitas Exames" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Indicador financeiro *</label>
+        <select name="indicator" id="edit-cat-indicator" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Débito">Débito (-)</option>
+          <option value="Crédito">Crédito (+)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Faixa no DRE *</label>
+        <select name="dreRange" id="edit-cat-dreRange" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Receitas">Receitas</option>
+          <option value="Deduções sobre vendas">Deduções sobre vendas</option>
+          <option value="Custos variáveis">Custos variáveis</option>
+          <option value="Custos fixos">Custos fixos</option>
+          <option value="Despesas financeiras">Despesas financeiras</option>
+          <option value="Investimentos">Investimentos</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-cat-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        const dialog = modal.querySelector('div');
+        if (dialog) {
+          dialog.classList.remove('scale-95');
+          dialog.classList.add('scale-100');
+        }
+      }, 50);
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      const dialog = modal.querySelector('div');
+      if (dialog) {
+        dialog.classList.remove('scale-100');
+        dialog.classList.add('scale-95');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 150);
+    }
+  }
+
+  function editCategory(cat) {
+    document.getElementById('edit-cat-id').value = cat.id;
+    document.getElementById('edit-cat-description').value = cat.description;
+    document.getElementById('edit-cat-indicator').value = cat.indicator;
+    document.getElementById('edit-cat-dreRange').value = cat.dreRange || 'Receitas';
+    openModal('edit-cat-modal');
+  }
+
+  function confirmDeleteCategory(id, description) {
+    if (confirm('Deseja realmente excluir a categoria de plano de contas "' + description + '"?')) {
+      window.location.href = '/admin/financeiro/categorias/delete/' + id;
+    }
+  }
+
+  function filterCatsTable() {
+    const input = document.getElementById('catSearch');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('catsTable');
+    if (!table) return;
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+      const tdDesc = trs[i].querySelector('.cat-description-cell');
+      if (tdDesc) {
+        const text = tdDesc.textContent || tdDesc.innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+          trs[i].style.display = "";
+        } else {
+          trs[i].style.display = "none";
+        }
+      }
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

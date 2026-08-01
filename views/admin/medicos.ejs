@@ -1,0 +1,447 @@
+<%- include('../partials/header', { page: 'admin-medicos' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab / LIS) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Cadastros</span>
+        <span>•</span>
+        <span class="text-blue-700 font-bold">Médicos</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Médicos -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            +
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Cadastro de Médicos & Solicitantes
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Gerencie os médicos solicitantes, conselho profissional (CRM, CRO, CRN, etc.), registro e UF.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewMedicoModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Médico</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo dos Médicos -->
+  <% 
+    const totalMedicos = medicos.length;
+    let maxCod = 0;
+    medicos.forEach(m => {
+      const num = parseInt(m.codigo || m.id, 10);
+      if (!isNaN(num) && num > maxCod) maxCod = num;
+    });
+  %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Médicos</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalMedicos %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg">👨‍⚕️</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Status do Cadastro</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5">Ativo</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">✅</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-purple-600 uppercase font-mono tracking-wider">Próximo Código</p>
+        <p class="text-2xl font-black text-purple-700 font-mono mt-0.5">
+          <%= maxCod + 1 %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 text-lg">🏷️</div>
+    </div>
+  </div>
+
+  <!-- TABELA / LISTA PRINCIPAL DE MÉDICOS -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Lista de Médicos</span>
+        <span id="medicosCounterBadge" class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold font-mono">
+          <%= totalMedicos %> cadastrados
+        </span>
+      </div>
+
+      <!-- Campo de Busca -->
+      <div class="flex items-center gap-2.5 w-full md:w-auto">
+        <div class="relative w-full sm:w-80">
+          <input 
+            type="text" 
+            id="searchMedicoInput" 
+            onkeyup="filterMedicos()" 
+            placeholder="Buscar por nome, conselho, número ou UF..." 
+            class="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-xl text-xs text-slate-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-2xs font-medium"
+          >
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Dados -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-100/70 border-b border-gray-200 text-[11px] font-black text-slate-600 uppercase tracking-wider font-mono">
+            <th class="py-3 px-4 w-16 text-center">Cód.</th>
+            <th class="py-3 px-4">Nome do Médico</th>
+            <th class="py-3 px-4">Conselho / Nº / UF</th>
+            <th class="py-3 px-4">Especialidade</th>
+            <th class="py-3 px-4">Contato</th>
+            <th class="py-3 px-4 text-center">Status</th>
+            <th class="py-3 px-4 text-right pr-6">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="medicosTableBody" class="divide-y divide-gray-100 text-xs">
+          <% if (medicos && medicos.length > 0) { %>
+            <% medicos.forEach(m => { %>
+              <tr class="medico-row hover:bg-slate-50/80 transition-colors"
+                  data-search="<%= (m.nome + ' ' + (m.conselho || '') + ' ' + (m.numero || '') + ' ' + (m.uf || '') + ' ' + (m.especialidade || '')).toLowerCase() %>">
+                <td class="py-3 px-4 text-center font-mono font-bold text-slate-500"><%= m.codigo || m.id %></td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-slate-800 text-sm"><%= m.nome %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-800 font-mono font-bold text-xs">
+                    <span class="text-blue-600 font-black"><%= m.conselho || 'CRM' %></span>
+                    <span><%= m.numero || '-' %></span>
+                    <% if (m.uf) { %>
+                      <span class="text-blue-500 font-normal">/ <%= m.uf %></span>
+                    <% } %>
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-slate-600 font-medium">
+                  <%= m.especialidade || 'Clínica Geral' %>
+                </td>
+                <td class="py-3 px-4 text-slate-600">
+                  <% if (m.telefone) { %>
+                    <div class="font-mono text-xs"><%= m.telefone %></div>
+                  <% } %>
+                  <% if (m.email) { %>
+                    <div class="text-[11px] text-slate-400"><%= m.email %></div>
+                  <% } %>
+                  <% if (!m.telefone && !m.email) { %>
+                    <span class="text-slate-300 font-mono">-</span>
+                  <% } %>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                    <%= m.status || 'Ativo' %>
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right pr-6 space-x-1">
+                  <button 
+                    type="button" 
+                    onclick='openEditMedicoModal(<%- JSON.stringify(m) %>)'
+                    class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                    title="Editar Médico"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    onclick="confirmDeleteMedico('<%= m.id %>', '<%= m.nome %>')"
+                    class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    title="Excluir Médico"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr id="emptyStateRow">
+              <td colspan="7" class="py-12 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center gap-2">
+                  <span class="text-3xl">👨‍⚕️</span>
+                  <p class="font-bold text-slate-600">Nenhum médico cadastrado ainda</p>
+                  <p class="text-xs text-slate-400">Clique em "+ Novo Médico" para incluir o primeiro solicitante.</p>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CADASTRAR / EDITAR MÉDICO -->
+<div id="modalMedico" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-xl w-full overflow-hidden transform transition-all animate-fadeIn">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">👨‍⚕️</span>
+        <h3 id="modalMedicoTitle" class="text-base font-bold font-mono uppercase tracking-wider">Novo Médico</h3>
+      </div>
+      <button onclick="closeMedicoModal()" class="text-gray-400 hover:text-white transition-colors cursor-pointer text-xl font-bold">&times;</button>
+    </div>
+
+    <!-- Formulário -->
+    <form id="formMedico" action="/admin/medicos/save" method="POST" class="p-6 space-y-4">
+      <input type="hidden" id="medicoId" name="id" value="">
+
+      <!-- Código e Status -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">Código</label>
+          <input 
+            type="text" 
+            id="medicoCodigo" 
+            name="codigo" 
+            placeholder="Auto" 
+            class="w-full px-3 py-2 bg-slate-50 border border-gray-300 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">Status</label>
+          <select 
+            id="medicoStatus" 
+            name="status" 
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="Ativo" selected>Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Nome -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">
+          Nome do Médico <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="medicoNome" 
+          name="nome" 
+          required 
+          placeholder="Ex: Dr. Carlos Eduardo Silva" 
+          class="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <!-- Conselho, Número e Estado (UF) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Conselho -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">
+            Conselho <span class="text-rose-500">*</span>
+          </label>
+          <select 
+            id="medicoConselho" 
+            name="conselho" 
+            required
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <% 
+              const conselhos = [
+                'CRM', 'CRV', 'CRN', 'CRO', 'CRF', 'CRQ', 'CRAS', 'COREN', 
+                'CRP', 'CRFA', 'CRBM', 'CRBIO', 'CRFITO', 'RMS', 'CRT', 'CRMV', 
+                'ABQ', 'CREF', 'CRTR', 'CRTH'
+              ];
+            %>
+            <% conselhos.forEach(c => { %>
+              <option value="<%= c %>"><%= c %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Número -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">
+            Número <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="medicoNumero" 
+            name="numero" 
+            required 
+            placeholder="Ex: 123456" 
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+
+        <!-- Estados (UF) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">
+            Estados (UF) <span class="text-rose-500">*</span>
+          </label>
+          <select 
+            id="medicoUf" 
+            name="uf" 
+            required
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <% 
+              const ufs = [
+                'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+                'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+                'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+              ];
+            %>
+            <% ufs.forEach(uf => { %>
+              <option value="<%= uf %>" <%= uf === 'PR' ? 'selected' : '' %>><%= uf %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <!-- Especialidade, Telefone e Email -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">Especialidade</label>
+          <input 
+            type="text" 
+            id="medicoEspecialidade" 
+            name="especialidade" 
+            placeholder="Ex: Clínica Geral" 
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">Telefone</label>
+          <input 
+            type="text" 
+            id="medicoTelefone" 
+            name="telefone" 
+            placeholder="(43) 99999-9999" 
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono mb-1">E-mail</label>
+          <input 
+            type="email" 
+            id="medicoEmail" 
+            name="email" 
+            placeholder="medico@email.com" 
+            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+        </div>
+      </div>
+
+      <!-- Botões de Ação do Modal -->
+      <div class="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+        <button 
+          type="button" 
+          onclick="closeMedicoModal()" 
+          class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+        >
+          Salvar Médico
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Script de Lógica Cliente -->
+<script>
+  function openNewMedicoModal() {
+    document.getElementById('modalMedicoTitle').textContent = 'Novo Médico';
+    document.getElementById('medicoId').value = '';
+    document.getElementById('medicoCodigo').value = '';
+    document.getElementById('medicoNome').value = '';
+    document.getElementById('medicoConselho').value = 'CRM';
+    document.getElementById('medicoNumero').value = '';
+    document.getElementById('medicoUf').value = 'PR';
+    document.getElementById('medicoEspecialidade').value = '';
+    document.getElementById('medicoTelefone').value = '';
+    document.getElementById('medicoEmail').value = '';
+    document.getElementById('medicoStatus').value = 'Ativo';
+    
+    document.getElementById('modalMedico').classList.remove('hidden');
+  }
+
+  function openEditMedicoModal(m) {
+    document.getElementById('modalMedicoTitle').textContent = 'Editar Médico';
+    document.getElementById('medicoId').value = m.id || '';
+    document.getElementById('medicoCodigo').value = m.codigo || '';
+    document.getElementById('medicoNome').value = m.nome || '';
+    document.getElementById('medicoConselho').value = m.conselho || 'CRM';
+    document.getElementById('medicoNumero').value = m.numero || '';
+    document.getElementById('medicoUf').value = m.uf || 'PR';
+    document.getElementById('medicoEspecialidade').value = m.especialidade || '';
+    document.getElementById('medicoTelefone').value = m.telefone || '';
+    document.getElementById('medicoEmail').value = m.email || '';
+    document.getElementById('medicoStatus').value = m.status || 'Ativo';
+
+    document.getElementById('modalMedico').classList.remove('hidden');
+  }
+
+  function closeMedicoModal() {
+    document.getElementById('modalMedico').classList.add('hidden');
+  }
+
+  function filterMedicos() {
+    const term = document.getElementById('searchMedicoInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.medico-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const searchData = row.dataset.search || '';
+      if (searchData.includes(term)) {
+        row.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+
+    const badge = document.getElementById('medicosCounterBadge');
+    if (badge) {
+      badge.textContent = `${visibleCount} cadastrados`;
+    }
+  }
+
+  function confirmDeleteMedico(id, nome) {
+    if (confirm(`Deseja realmente excluir o médico "${nome}"?`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/admin/medicos/delete/${id}`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

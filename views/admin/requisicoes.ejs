@@ -1,0 +1,3229 @@
+<%- include('../partials/header') %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1">
+
+  <!-- Cabeçalho Principal da Tela (Estilo LIS PEP/Recepção) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <span>Recepção LIS</span>
+        <span>•</span>
+        <span class="text-brand-gold font-bold">Solicitações & Protocolos de Exames</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-neutralDark flex items-center gap-2">
+        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Cadastro de Requisições
+      </h1>
+      <p class="text-xs text-brand-neutral/70 mt-1">
+        Histórico e montagem de solicitações de exames. Clique em "Nova Requisição" ou pressione CTRL + N para iniciar a ficha.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="startNewRequisition()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer" title="Nova Requisição (CTRL + N)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Nova Requisição <span class="font-mono text-[10px] opacity-80">(Ctrl+N)</span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Busca, Filtros e Itens por Página -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6 space-y-3">
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="req-search-input" onkeyup="filterRequisitionsTable()" placeholder="Buscar paciente por nome, código de requisição, CPF, telefone ou convênio..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all">
+      </div>
+      <select id="itemsPerPageSelect" class="w-full sm:w-36 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+        <option value="20">20 por pág.</option>
+        <option value="50" selected>50 por pág.</option>
+        <option value="100">100 por pág.</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabela Histórica de Requisições Cadastradas -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse" id="requisitions-table">
+        <thead>
+          <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider font-mono">
+            <th class="py-3.5 px-3 whitespace-nowrap">Cód. Req.</th>
+            <th class="py-3.5 px-3 whitespace-nowrap">Data Req.</th>
+            <th class="py-3.5 px-3 whitespace-nowrap">Dt. Nasc.</th>
+            <th class="py-3.5 px-4 min-w-[220px] md:min-w-[260px]">Paciente / CPF</th>
+            <th class="py-3.5 px-3 whitespace-nowrap">Contato</th>
+            <th class="py-3.5 px-3 whitespace-nowrap">Convênio</th>
+            <th class="py-3.5 px-3 text-center whitespace-nowrap">Status</th>
+            <th class="py-3.5 px-4 text-center whitespace-nowrap">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs text-gray-700 font-medium">
+          <% requisitions.forEach(req => { %>
+            <%
+              let formattedBirth = req.patientBirthDate || '-';
+              if (req.patientBirthDate && req.patientBirthDate.includes('-') && req.patientBirthDate.split('-').length === 3) {
+                const [y, m, d] = req.patientBirthDate.split('-');
+                if (y.length === 4) {
+                  formattedBirth = `${d}/${m}/${y}`;
+                }
+              }
+              let displayCpf = req.patientCpf || '-';
+              if (displayCpf === '-' && req.patientCode && typeof patients !== 'undefined') {
+                let pFound = patients.find(p => (p.code || p.id) === req.patientCode || p.name === req.patientName);
+                if (pFound && pFound.cpf) displayCpf = pFound.cpf;
+              }
+              let displayPhone = req.patientPhone || req.patientWhatsapp || '-';
+              if (displayPhone === '-' && req.patientCode && typeof patients !== 'undefined') {
+                let pFound = patients.find(p => (p.code || p.id) === req.patientCode || p.name === req.patientName);
+                if (pFound && (pFound.whatsapp || pFound.phone)) displayPhone = pFound.whatsapp || pFound.phone;
+              }
+              let displayBirth = formattedBirth;
+              if (displayBirth === '-' && req.patientCode && typeof patients !== 'undefined') {
+                let pFound = patients.find(p => (p.code || p.id) === req.patientCode || p.name === req.patientName);
+                if (pFound && pFound.birthDate) {
+                  const [y, m, d] = pFound.birthDate.split('-');
+                  if (y && m && d) displayBirth = `${d}/${m}/${y}`;
+                }
+              }
+
+              // Extração de Data e Hora em 2 linhas
+              let datePart = req.createdAt || '-';
+              let timePart = req.hora || '';
+              if (req.createdAt) {
+                let raw = req.createdAt;
+                if (raw.includes(',')) {
+                  const parts = raw.split(',');
+                  datePart = parts[0].trim();
+                  timePart = parts[1].trim();
+                } else if (raw.includes(' ')) {
+                  const parts = raw.split(' ');
+                  datePart = parts[0].trim();
+                  timePart = parts[1].trim();
+                }
+              }
+              if (timePart && timePart.split(':').length === 3) {
+                const tParts = timePart.split(':');
+                timePart = `${tParts[0]}:${tParts[1]}`;
+              }
+            %>
+            <tr class="hover:bg-emerald-50/40 transition-colors req-row cursor-pointer" onclick="selectRequisitionToForm('<%= req.id %>')" data-name="<%= (req.patientName || '').toLowerCase() %>" data-code="<%= (req.requisitionCode || '').toLowerCase() %>" data-cpf="<%= (displayCpf || '').toLowerCase() %>" data-phone="<%= (displayPhone || '').toLowerCase() %>" data-convenio="<%= (req.convenio || '').toLowerCase() %>" data-status="<%= (req.status || 'A Coletar').toLowerCase() %>">
+              
+              <!-- 1. Cód. Req. -->
+              <td class="py-3.5 px-3 font-mono font-extrabold text-emerald-800 text-xs whitespace-nowrap">
+                <span class="bg-emerald-50 text-emerald-900 border border-emerald-200/80 px-2.5 py-1 rounded-lg">
+                  #<%= req.requisitionCode || req.id %>
+                </span>
+              </td>
+
+              <!-- 2. Data Req. (2 linhas: Data e Hora) -->
+              <td class="py-3.5 px-3 text-gray-700 font-mono text-xs whitespace-nowrap">
+                <div class="flex flex-col">
+                  <span class="font-bold text-gray-900 text-xs"><%= datePart %></span>
+                  <span class="text-[11px] text-gray-500 font-medium pl-0.5"><%= timePart || '12:00' %></span>
+                </div>
+              </td>
+
+              <!-- 3. Dt. Nasc. -->
+              <td class="py-3.5 px-3 text-gray-700 font-mono text-xs whitespace-nowrap">
+                <%= displayBirth %>
+              </td>
+
+              <!-- 4. Paciente / CPF (Espaço amplo para Nome Completo) -->
+              <td class="py-3.5 px-4 min-w-[220px] md:min-w-[260px]">
+                <div class="flex flex-col">
+                  <span class="font-mono text-[11px] text-gray-600 font-bold"><%= displayCpf %></span>
+                  <span class="font-black text-gray-900 text-xs leading-snug"><%= req.patientName %></span>
+                </div>
+              </td>
+
+              <!-- 5. Contato -->
+              <td class="py-3.5 px-3 text-gray-700 font-mono text-xs whitespace-nowrap">
+                <% if (displayPhone && displayPhone !== '-') { %>
+                  <span class="text-emerald-700 font-bold inline-flex items-center gap-1">
+                    <span>📱</span> <%= displayPhone %>
+                  </span>
+                <% } else { %>
+                  <span class="text-gray-400 font-normal">-</span>
+                <% } %>
+              </td>
+
+              <!-- 6. Convênio (2 linhas: Código e Nome) -->
+              <td class="py-3.5 px-3 whitespace-nowrap">
+                <div class="flex flex-col">
+                  <span class="font-mono text-[10px] text-gray-500 font-bold"><%= req.convenioCode || '1' %></span>
+                  <span class="font-bold text-gray-800 text-xs"><%= req.convenio || 'Particular' %></span>
+                </div>
+              </td>
+
+              <!-- 7. Status da Requisição -->
+              <td class="py-3.5 px-3 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+                <%
+                  const st = req.status || 'A Coletar';
+                  let bgClass = 'bg-amber-100 text-amber-900 border-amber-300';
+                  let icon = '🧪';
+                  if (st === 'Coletado') {
+                    bgClass = 'bg-blue-100 text-blue-900 border-blue-300';
+                    icon = '💉';
+                  } else if (st === 'Em Análise') {
+                    bgClass = 'bg-purple-100 text-purple-900 border-purple-300';
+                    icon = '🔬';
+                  } else if (st === 'Liberado' || st === 'Pronto' || st === 'Concluído') {
+                    bgClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+                    icon = '✅';
+                  } else if (st === 'Entregue') {
+                    bgClass = 'bg-teal-100 text-teal-900 border-teal-300';
+                    icon = '📦';
+                  } else if (st === 'Cancelado') {
+                    bgClass = 'bg-rose-100 text-rose-900 border-rose-300';
+                    icon = '❌';
+                  }
+                %>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold font-mono border <%= bgClass %> shadow-2xs">
+                  <span><%= icon %></span>
+                  <span><%= st %></span>
+                </span>
+              </td>
+
+              <!-- 7. Ações (Editar e Remover) -->
+              <td class="py-3.5 px-4 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button type="button" onclick="selectRequisitionToForm('<%= req.id %>')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white border border-amber-200/80 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95" title="Editar Requisição">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Editar</span>
+                  </button>
+
+                  <form action="/admin/requisicoes/delete" method="POST" onsubmit="return confirm('Deseja realmente remover a requisição <%= req.requisitionCode %>?')" class="inline m-0">
+                    <input type="hidden" name="id" value="<%= req.id %>">
+                    <button type="submit" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200/80 rounded-xl font-bold text-[11px] inline-flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95" title="Remover Requisição">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      <span>Remover</span>
+                    </button>
+                  </form>
+                </div>
+              </td>
+
+            </tr>
+          <% }) %>
+
+          <% if (requisitions.length === 0) { %>
+            <tr>
+              <td colspan="7" class="text-center py-10 text-gray-400 italic">
+                Nenhuma requisição cadastrada no sistema.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Controles de Paginação -->
+    <div class="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-mono">
+      <div id="paginationInfo">
+        Exibindo <%= requisitions.length > 0 ? `1 - ${requisitions.length} de ${requisitions.length}` : '0 - 0 de 0' %> requisições registradas
+      </div>
+      <div class="flex items-center gap-1.5" id="paginationControls">
+        <button class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 cursor-not-allowed text-xs font-bold" disabled>&lt; Anterior</button>
+        <button class="px-3 py-1.5 rounded-lg border border-emerald-500 bg-emerald-600 text-white text-xs font-bold">1</button>
+        <button class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-400 cursor-not-allowed text-xs font-bold" disabled>Próximo &gt;</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE POPUP COMPLETO - CADASTRO DE REQUISIÇÃO (LIS)    -->
+<!-- ========================================================= -->
+<div id="requisitionFormModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/75 backdrop-blur-sm overflow-hidden">
+  <div class="bg-white rounded-2xl border border-gray-300 w-full max-w-7xl max-h-[94vh] shadow-2xl overflow-hidden flex flex-col my-auto">
+    
+    <!-- Cabeçalho do Modal LIS com Stepper de Abas -->
+    <div class="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 px-6 py-3.5 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-emerald-600 text-white rounded-xl shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-gray-900 tracking-tight" id="requisitionModalTitle">Cadastro e Montagem de Requisição</h2>
+          <p class="text-xs text-gray-500 font-mono">Formulário Unificado LIS - InovaLab Prontuário Eletrônico</p>
+        </div>
+      </div>
+
+      <!-- BOTÕES DE ABAS / STEPPER DO MODAL -->
+      <div class="flex items-center gap-1.5 bg-gray-200/80 p-1 rounded-2xl border border-gray-300/60 shadow-inner">
+        <button type="button" onclick="switchRequisitionStep(1)" id="stepTabBtn1" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>1. Paciente & Dados Clínicos</span>
+        </button>
+        <button type="button" onclick="switchRequisitionStep(2)" id="stepTabBtn2" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+          <span>2. Lançamento de Exames</span>
+          <span id="stepTabExamsBadge" class="bg-emerald-100 text-emerald-900 text-[10px] font-mono px-2 py-0.5 rounded-full font-extrabold border border-emerald-300/80">
+            0 exames (R$ 0,00)
+          </span>
+        </button>
+      </div>
+
+      <button onclick="closeRequisitionFormModal()" type="button" class="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer" title="Fechar (ESC)">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Conteúdo do Formulário -->
+    <form id="requisitionMainForm" action="/admin/requisicoes/add" method="POST" onsubmit="return handleFormSubmit(event)" class="flex-1 overflow-y-auto p-4 sm:p-6 text-xs">
+      <input type="hidden" name="id" id="req-id" value="">
+      <input type="hidden" name="examsJson" id="req-examsJson" value="[]">
+      <input type="hidden" name="subtotal" id="req-subtotalInput" value="0.00">
+      <input type="hidden" name="totalAmount" id="req-totalAmountInput" value="0.00">
+
+      <!-- ========================================================= -->
+      <!-- ETAPA 1: DADOS DO PACIENTE & PARÂMETROS CLÍNICOS          -->
+      <!-- ========================================================= -->
+      <div id="requisitionStep1" class="space-y-4">
+
+      <!-- CARD 1: Código da Requisição -->
+      <div id="requisitionCodeCard" class="bg-gray-50/80 p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-sm"></span>
+          <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">Identificador da Requisição</h3>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <label class="font-bold text-gray-700 text-xs shrink-0 font-mono">Nº Requisição:</label>
+          <div class="relative flex items-center">
+            <input type="text" name="requisitionCode" id="req-requisitionCode" value="<%= nextReqCode %>" class="w-32 pl-3 pr-7 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono font-extrabold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+            <button type="button" onclick="openSearchModal('req')" class="absolute right-1.5 text-gray-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Buscar requisições anteriores">
+              🔍
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: DADOS DO PACIENTE (Importados do Cadastro de Clientes - Somente Leitura em Texto) -->
+      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-emerald-900/60 shadow-lg space-y-3">
+        
+        <div class="flex items-center justify-between pb-2.5 border-b border-emerald-800/50 flex-wrap gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center font-black text-sm">
+              👤
+            </div>
+            <div>
+              <h3 class="text-xs font-black text-white uppercase tracking-wider">Dados do Paciente</h3>
+              <p class="text-[10px] text-emerald-200/70 font-mono">Informações registradas no Cadastro de Clientes</p>
+            </div>
+          </div>
+          <button type="button" onclick="openPatientSearchModal()" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-black text-[11px] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>Pesquisar / Selecionar Paciente</span>
+          </button>
+        </div>
+
+        <!-- Campos ocultos para submissão via POST no formulário -->
+        <input type="hidden" name="patientCode" id="req-patientCode" value="">
+        <input type="hidden" name="patientName" id="req-patientName" value="" required>
+        <input type="hidden" name="patientBirthDate" id="req-patientBirthDate" value="">
+        <input type="hidden" name="patientAge" id="req-patientAge" value="">
+        <input type="hidden" name="patientSex" id="req-patientSex" value="">
+        <input type="hidden" name="address" id="req-address" value="">
+        <input type="hidden" name="complement" id="req-complement" value="">
+        <input type="hidden" name="city" id="req-city" value="Cambará">
+        <input type="hidden" name="cep" id="req-cep" value="">
+        <input type="hidden" name="patientPhone" id="req-patientPhone" value="">
+        <input type="hidden" name="responsibleName" id="req-responsibleName" value="">
+
+        <!-- CARD INTERATIVO DE EXIBIÇÃO DE TEXTO DO PACIENTE -->
+        <div id="patientCardDisplay" class="bg-slate-800/90 rounded-2xl p-4 border border-emerald-700/60 shadow-inner text-white">
+          
+          <!-- ESTADO 1: Nenhum paciente associado ainda -->
+          <div id="patientCardEmptyState" class="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left py-2">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-lg shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h4 class="font-black text-white text-xs">Nenhum Paciente Selecionado</h4>
+                <p class="text-[11px] text-emerald-200/70">Selecione um paciente cadastrado para carregar os dados cadastrais nesta requisição.</p>
+              </div>
+            </div>
+            <button type="button" onclick="openPatientSearchModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition-all cursor-pointer shadow-sm shrink-0">
+              Localizar Paciente
+            </button>
+          </div>
+
+          <!-- ESTADO 2: Exibição de Texto com Dados do Paciente -->
+          <div id="patientCardActiveState" class="hidden space-y-3">
+            
+            <!-- Linha Principal: Avatar, Nome, Cód Prontuário, Nascimento, Idade e Sexo -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-700/60">
+              <div class="flex items-center gap-3">
+                <div id="displayPatientAvatar" class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-xs uppercase tracking-wider">
+                  --
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 id="displayPatientName" class="font-black text-white text-sm tracking-tight">Nome do Paciente</h4>
+                    <span id="displayPatientCodeBadge" class="bg-emerald-900/80 text-emerald-200 border border-emerald-700/80 font-mono font-black text-[10px] px-2 py-0.5 rounded-lg">
+                      Cód: --
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 mt-0.5 text-[11px] text-emerald-200/80 font-medium flex-wrap">
+                    <span id="displayPatientCpf" class="font-mono text-emerald-200 font-semibold">CPF: --</span>
+                    <span>•</span>
+                    <span id="displayPatientSex" class="font-bold text-emerald-200">Sexo: --</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 self-start sm:self-auto font-mono text-[11px]">
+                <span class="bg-emerald-900/60 text-emerald-200 border border-emerald-700/60 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
+                  <span>🎂 Nasc.:</span> <span id="displayPatientBirth">--</span>
+                </span>
+                <span class="bg-teal-900/60 text-teal-200 border border-teal-700/60 px-2.5 py-1 rounded-xl font-bold">
+                  <span id="displayPatientAge">--</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Linha Secundária: Blocos Informativos de Endereço, Fone e Responsável -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              
+              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
+                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">📍 Endereço Residencial</span>
+                <p id="displayPatientAddress" class="font-semibold text-white text-[11px] mt-0.5 truncate">--</p>
+              </div>
+
+              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
+                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">📱 Contato / WhatsApp</span>
+                <p id="displayPatientPhone" class="font-mono font-bold text-emerald-300 text-[11px] mt-0.5">--</p>
+              </div>
+
+              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
+                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">👥 Responsável / Mãe</span>
+                <p id="displayPatientResp" class="font-semibold text-white text-[11px] mt-0.5 truncate">--</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- CARD 3: Parâmetros Clínicos da Requisição -->
+      <div class="bg-slate-100/70 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        
+        <div class="flex items-center justify-between pb-2.5 border-b border-slate-200">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-600 inline-block shadow-sm"></span>
+            <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Parâmetros Clínicos & Fisiológicos</h3>
+          </div>
+          <span class="text-[11px] text-slate-500 font-semibold bg-white px-2.5 py-1 rounded-full border border-slate-200 shadow-2xs">4 Sub-Módulos Clínicos</span>
+        </div>
+
+        <!-- GRID DE CARDS CLÍNICOS (2 COLUNAS EM TELAS GRANDES) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- CARD 1: CONVÊNIO, GUIA & FATURAMENTO -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+                <div class="flex items-center gap-1.5 font-black text-xs text-emerald-800 uppercase tracking-wide">
+                  <span>💳</span>
+                  <span>1. Convênio, Guia & Faturamento</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Faturamento</span>
+              </div>
+
+              <div class="space-y-2.5">
+                <!-- Convênio e Situação -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Convênio:</label>
+                    <div class="flex items-center gap-1">
+                      <input type="text" name="convenioCode" id="req-convenioCode" placeholder="Cód" class="w-12 px-1 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-center outline-none">
+                      <div class="relative flex-1 flex items-center">
+                        <input type="text" name="convenio" id="req-convenio" value="Particular" placeholder="Nome do convênio" class="w-full pl-2 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                        <button type="button" onclick="openSearchModal('convenio')" class="absolute right-1 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Situação:</label>
+                    <div class="flex items-center gap-1">
+                      <input type="text" name="situacaoCode" id="req-situacaoCode" placeholder="Cód" class="w-12 px-1 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-center outline-none">
+                      <div class="relative flex-1 flex items-center">
+                        <select name="situacao" id="req-situacao" class="w-full pl-2 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                          <option value="Normal">Normal</option>
+                          <option value="Urgente">Urgente</option>
+                          <option value="Prioritário">Prioritário</option>
+                          <option value="Aguardando Coleta">Aguardando Coleta</option>
+                        </select>
+                        <button type="button" onclick="openSearchModal('situacao')" class="absolute right-1 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Matrícula & Guia -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Matrícula / Carteirinha:</label>
+                    <input type="text" name="matricula" id="req-matricula" placeholder="Nº da carteirinha" class="w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Nº Guia de Autorização:</label>
+                    <input type="text" name="guia" id="req-guia" placeholder="Número da guia" class="w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+
+                <!-- Empresa Parceira -->
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Empresa Parceira / Faturamento:</label>
+                  <div class="relative flex items-center">
+                    <input type="text" name="empresa" id="req-empresa" placeholder="Empresa parceira / faturamento" class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                    <button type="button" onclick="openSearchModal('empresa')" class="absolute right-1.5 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2: POSTO, TRIAGEM & DESTINO -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+                <div class="flex items-center gap-1.5 font-black text-xs text-emerald-800 uppercase tracking-wide">
+                  <span>🧪</span>
+                  <span>2. Posto de Coleta, Triagem & Destino</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Logística Técnica</span>
+              </div>
+
+              <div class="space-y-2.5">
+                <!-- Coleta & Cartão SUS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Posto / Local de Coleta:</label>
+                    <div class="relative flex items-center">
+                      <input type="text" name="coleta" id="req-coleta" value="Sede / Central" placeholder="Posto de Coleta" class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <button type="button" onclick="openSearchModal('coleta')" class="absolute right-1.5 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Cartão SUS:</label>
+                    <div class="flex items-center gap-1">
+                      <input type="text" name="susCard" id="req-susCard" placeholder="000 0000 0000 0000" class="flex-1 px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-mono outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <button type="button" onclick="useCpfForSus()" class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg font-bold text-[10px] shrink-0 cursor-pointer">Usar CPF</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Destino & Horário -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                  <div class="sm:col-span-2">
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Destino / Lab. Apoio:</label>
+                    <div class="relative flex items-center">
+                      <input type="text" name="destino" id="req-destino" value="Laboratório Principal" placeholder="Laboratório de Apoio" class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <button type="button" onclick="openSearchModal('destino')" class="absolute right-1.5 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Data Fatura:</label>
+                    <div class="relative flex items-center">
+                      <input type="text" name="fatura" id="req-fatura" value="<%= new Date().toLocaleDateString('pt-BR') %>" class="w-full pl-2 pr-6 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <button type="button" onclick="openSearchModal('fatura')" class="absolute right-1 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Hora & Flag Urgente -->
+                <div class="flex items-center justify-between gap-2 pt-1">
+                  <div class="flex items-center gap-1.5">
+                    <label class="font-bold text-[11px] text-slate-600">Hora Entrada:</label>
+                    <input type="time" name="hora" id="req-hora" value="<%= new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }) %>" class="w-24 px-2 py-1 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-mono outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                  </div>
+
+                  <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-xs text-rose-700 bg-rose-50 hover:bg-rose-100/80 px-3 py-1.5 rounded-lg border border-rose-200 transition-colors">
+                    <input type="checkbox" name="isUrgent" id="req-isUrgent" class="w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500">
+                    <span>🚨 Urgência Médica</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: MÉDICO SOLICITANTE & OBSERVAÇÕES -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+                <div class="flex items-center gap-1.5 font-black text-xs text-emerald-800 uppercase tracking-wide">
+                  <span>👨‍⚕️</span>
+                  <span>3. Médico Solicitante & Observações</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Prescritor</span>
+              </div>
+
+              <div class="space-y-2.5">
+                <!-- Médico Solicitante completo -->
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Médico Solicitante:</label>
+                  <div class="flex items-center gap-1">
+                    <select name="doctorCrmType" id="req-doctorCrmType" class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
+                      <% 
+                        const conselhosReq = [
+                          'CRM', 'CRV', 'CRN', 'CRO', 'CRF', 'CRQ', 'CRAS', 'COREN', 
+                          'CRP', 'CRFA', 'CRBM', 'CRBIO', 'CRFITO', 'RMS', 'CRT', 'CRMV', 
+                          'ABQ', 'CREF', 'CRTR', 'CRTH'
+                        ];
+                      %>
+                      <% conselhosReq.forEach(c => { %>
+                        <option value="<%= c %>"><%= c %></option>
+                      <% }) %>
+                    </select>
+                    <input type="text" name="doctorCrm" id="req-doctorCrm" placeholder="000000" class="w-20 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
+                    <select name="doctorUf" id="req-doctorUf" class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
+                      <% 
+                        const ufsReq = [
+                          'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+                          'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+                          'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+                        ];
+                      %>
+                      <% ufsReq.forEach(uf => { %>
+                        <option value="<%= uf %>" <%= uf === 'PR' ? 'selected' : '' %>><%= uf %></option>
+                      <% }) %>
+                    </select>
+                    <div class="relative flex-1 flex items-center">
+                      <input type="text" name="doctorName" id="req-doctorName" list="medicosDatalist" placeholder="Nome do Médico Solicitante" class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <datalist id="medicosDatalist">
+                        <% if (locals.medicos && locals.medicos.length > 0) { %>
+                          <% locals.medicos.forEach(m => { %>
+                            <option value="<%= m.nome %>"><%= m.conselho || 'CRM' %> <%= m.numero %>/<%= m.uf || 'PR' %> - <%= m.nome %></option>
+                          <% }) %>
+                        <% } %>
+                      </datalist>
+                      <button type="button" onclick="openSearchModal('medico')" class="absolute right-1.5 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Buscar Médico no Cadastro">🔍</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Observações -->
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Observações Adicionais:</label>
+                  <textarea name="obs" id="req-obs" rows="2" placeholder="Observações específicas para esta requisição..." class="w-full px-2.5 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 4: CONDIÇÕES FISIOLÓGICAS & BIOMETRIA -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+                <div class="flex items-center gap-1.5 font-black text-xs text-emerald-800 uppercase tracking-wide">
+                  <span>🩺</span>
+                  <span>4. Condições Fisiológicas & Biometria</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Perfil Fisiológico</span>
+              </div>
+
+              <!-- Pílulas de Checkboxes de Condição Especial -->
+              <div class="flex flex-wrap items-center gap-2 mb-3 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/80">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-400 transition-colors">
+                  <input type="checkbox" name="isPregnant" id="req-isPregnant" class="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                  <span>Gestante</span>
+                </label>
+
+                <div class="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-xs">
+                  <span class="font-bold text-slate-600">Período:</span>
+                  <input type="text" name="gestationalPeriod" id="req-gestationalPeriod" placeholder="0" class="w-9 px-1 py-0.5 bg-slate-50 border border-slate-300 rounded text-center text-xs font-bold outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
+                  <span class="text-slate-500 font-medium">sem.</span>
+                </div>
+
+                <label class="inline-flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-400 transition-colors">
+                  <input type="checkbox" name="isNeonate" id="req-isNeonate" class="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                  <span>Neonato</span>
+                </label>
+
+                <label class="inline-flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-400 transition-colors">
+                  <input type="checkbox" name="isIncapacitated" id="req-isIncapacitated" class="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                  <span>Incapacitado</span>
+                </label>
+
+                <label class="inline-flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-400 transition-colors">
+                  <input type="checkbox" name="isPsr" id="req-isPsr" class="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                  <span>PSR</span>
+                </label>
+              </div>
+
+              <!-- Grid Biométrico (DUM, Peso, Altura, Obs Clínicas) -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">D.U.M.</label>
+                  <input type="date" name="dum" id="req-dum" class="w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Peso (kg)</label>
+                  <input type="number" step="0.1" name="weight" id="req-weight" placeholder="kg" class="w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Altura (m)</label>
+                  <input type="number" step="0.01" name="height" id="req-height" placeholder="m" class="w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Obs. Clínicas</label>
+                  <input type="text" name="clinicalNotes" id="req-clinicalNotes" placeholder="Resumo clínico" class="w-full px-2 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- Fim do Grid de 4 Cards -->
+
+      </div> <!-- Fim do CARD 3 -->
+
+        <!-- BARRA DE NAVEGAÇÃO DA ETAPA 1 -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
+          <button type="button" onclick="cancelRequisitionForm()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+            <span>Cancelar</span>
+            <span class="text-[10px] text-gray-400 font-normal ml-1">(ESC)</span>
+          </button>
+          <button type="button" onclick="switchRequisitionStep(2)" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+            <span>Próximo</span>
+            <span class="text-[10px] opacity-80 font-mono">(Alt + →)</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+
+      </div> <!-- Fim de requisitionStep1 -->
+
+
+      <!-- ========================================================= -->
+      <!-- ETAPA 2: LANÇAMENTO DE EXAMES & INFORMAÇÕES FINANCEIRAS   -->
+      <!-- ========================================================= -->
+      <div id="requisitionStep2" class="hidden space-y-4">
+
+        <!-- PAINEL DE ADIÇÃO RÁPIDA DE EXAMES -->
+        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-emerald-900/60 shadow-lg space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-emerald-800/50 flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center font-black text-sm">
+                🧪
+              </div>
+              <div>
+                <h3 class="text-xs font-black text-white uppercase tracking-wider">Lançar Exame na Requisição</h3>
+                <p class="text-[10px] text-emerald-200/70 font-mono">Pesquise por código, nome ou informe o código direto no campo rápido</p>
+              </div>
+            </div>
+            <span class="text-[11px] font-mono text-emerald-300 font-bold bg-emerald-900/60 px-3 py-1 rounded-full border border-emerald-700/60">
+              Catálogo LIS Ativo
+            </span>
+          </div>
+
+          <!-- INPUT DE BUSCA + CAMPO RÁPIDO DE CÓDIGO + AUTOCOMPLETE DE EXAMES -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+            
+            <!-- CAMPO DE Lançamento Rápido por Código -->
+            <div class="md:col-span-3">
+              <label class="block font-bold text-[11px] text-amber-300 mb-1">⚡ Código Rápido (Aperte Enter)</label>
+              <div class="relative">
+                <input type="text" id="req-quickCodeInput" placeholder="Ex: HEM, GLI, EAS" onkeydown="if(event.key==='Enter'){ event.preventDefault(); addQuickExamByCodeDirect(); }" class="w-full pl-3 pr-8 py-2 bg-slate-800/90 border border-amber-400/80 rounded-xl text-xs font-mono font-black text-amber-300 uppercase placeholder-slate-500 outline-none focus:ring-2 focus:ring-amber-400 shadow-inner">
+                <span class="absolute right-2.5 top-2.5 text-[10px] text-amber-400 font-bold font-mono">↵</span>
+              </div>
+            </div>
+
+            <!-- BUSCA GERAL COM DROPDOWN -->
+            <div class="md:col-span-4 relative">
+              <label class="block font-bold text-[11px] text-emerald-200 mb-1">🔍 Pesquisar Exame ou Nome</label>
+              <input type="text" id="req-examSearchInput" onkeyup="filterExamAutocomplete(this.value)" placeholder="Digite o nome ou código..." class="w-full px-3.5 py-2 bg-slate-800/90 border border-emerald-700/80 rounded-xl text-xs text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-400 font-medium">
+              
+              <!-- Lista Autocomplete Dropdown -->
+              <div id="examAutocompleteList" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl z-30 max-h-64 overflow-y-auto divide-y divide-gray-100 text-gray-900"></div>
+            </div>
+
+            <div class="md:col-span-3">
+              <label class="block font-bold text-[11px] text-emerald-200 mb-1">Material Biológico</label>
+              <select id="req-examMaterial" onchange="onReqExamMaterialChange()" class="w-full px-3 py-2 bg-slate-800/90 border border-emerald-700/80 rounded-xl text-xs text-white outline-none focus:ring-2 focus:ring-emerald-400 font-medium">
+                <option value="">Selecione o material...</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-1">
+              <label class="block font-bold text-[11px] text-emerald-200 mb-1">Valor R$</label>
+              <input type="number" step="0.01" id="req-examPrice" placeholder="0.00" readonly class="w-full px-2 py-2 bg-slate-900/90 border border-emerald-700/80 rounded-xl text-xs font-mono font-bold text-emerald-300 outline-none cursor-not-allowed select-none">
+            </div>
+
+            <div class="md:col-span-1">
+              <button type="button" onclick="addManualExamFromInput()" class="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 active:scale-95">
+                <span>+ Add</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- CHIPS RÁPIDOS DE EXAMES MAIS PEDIDOS -->
+          <div class="pt-2 border-t border-emerald-800/40 flex items-center gap-1.5 flex-wrap">
+            <span class="text-[10px] font-mono text-emerald-300 uppercase font-bold mr-1">Atalhos Rápido:</span>
+            <button type="button" onclick="quickAddExam('HEMO01')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Hemograma
+            </button>
+            <button type="button" onclick="quickAddExam('GLIC02')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Glicemia
+            </button>
+            <button type="button" onclick="quickAddExam('EAS06')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Urina EAS
+            </button>
+            <button type="button" onclick="quickAddExam('COLE03')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Colesterol
+            </button>
+            <button type="button" onclick="quickAddExam('TSH04')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + TSH
+            </button>
+            <button type="button" onclick="quickAddExam('BHCG09')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Beta HCG
+            </button>
+            <button type="button" onclick="quickAddExam('CREA05')" class="px-2.5 py-1 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-700/60 rounded-lg text-[10px] font-bold transition-all cursor-pointer">
+              + Creatinina
+            </button>
+          </div>
+
+        </div>
+
+        <!-- TABELA DE EXAMES SOLICITADOS (LARGURA COMPLETA - GRID INTEIRO) -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+              <h4 class="font-black text-gray-800 uppercase tracking-wider text-xs">Exames Solicitados na Requisição</h4>
+              <span id="examsCountBadge" class="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                0 Exames
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Campo de Horas em Jejum informadas pelo paciente -->
+              <div class="flex items-center gap-1.5 bg-amber-50/90 border border-amber-300 px-3 py-1 rounded-xl shadow-2xs">
+                <span class="text-amber-700 text-xs">⏱️</span>
+                <label for="req-fastingHours" class="font-bold text-xs text-amber-950 shrink-0 select-none">Jejum informado:</label>
+                <div class="flex items-center gap-1">
+                  <input type="number" min="0" max="72" step="1" name="fastingHours" id="req-fastingHours" placeholder="8" title="Quantidade de horas em jejum informadas pelo paciente" class="w-14 px-1.5 py-0.5 bg-white border border-amber-300 rounded-lg text-xs font-mono font-bold text-amber-950 text-center outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs">
+                  <span class="text-[10px] font-extrabold text-amber-800 uppercase font-mono">Horas</span>
+                </div>
+              </div>
+
+              <!-- BOTÃO PARA ABRIR O MODAL POPUP DE ORIENTAÇÕES DE COLETA -->
+              <button type="button" onclick="openPrepInstructionsModal()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-2xs">
+                <span>📋</span>
+                <span>Orientações de Coleta & Jejum</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-mono text-[10px] uppercase border-b border-gray-200">
+                <tr>
+                  <th class="px-3 py-2">#</th>
+                  <th class="px-3 py-2">Código</th>
+                  <th class="px-3 py-2">Nome do Exame</th>
+                  <th class="px-3 py-2">Material</th>
+                  <th class="px-3 py-2">Jejum</th>
+                  <th class="px-3 py-2">Prazo</th>
+                  <th class="px-3 py-2 text-right">Valor R$</th>
+                  <th class="px-3 py-2 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="addedExamsTbody" class="divide-y divide-gray-100">
+                <!-- Preenchido dinamicamente via JS -->
+                <tr id="addedExamsEmptyRow">
+                  <td colspan="8" class="px-4 py-8 text-center text-gray-400 italic">
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <span class="text-2xl">🧪</span>
+                      <span class="font-bold text-gray-600 text-xs">Nenhum exame adicionado a esta requisição</span>
+                      <span class="text-[11px] text-gray-400">Utilize o campo acima para pesquisar ou clique nos atalhos rápidos</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-emerald-50/50 border-t border-emerald-100 font-bold text-xs">
+                <tr>
+                  <td colspan="6" class="px-3 py-2.5 text-right font-mono uppercase text-emerald-900">Subtotal dos Exames:</td>
+                  <td id="tableSubtotalVal" class="px-3 py-2.5 text-right font-mono font-black text-emerald-800 text-sm">R$ 0,00</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- DIVISÃO EM 2 CARDS LADO A LADO ABAIXO DOS EXAMES: LOGÍSTICA (ESQUERDA) E RESUMO FINANCEIRO (DIREITA) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- CARD 1: LOGÍSTICA & PREVISÃO DE ENTREGA (LADO ESQUERDO) -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-xs space-y-3.5">
+            <div class="flex items-center gap-2 pb-2 border-b border-gray-200/80">
+              <span class="text-base">📅</span>
+              <h4 class="font-black text-gray-800 uppercase tracking-wider text-xs">Logística & Previsão de Entrega</h4>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block font-bold text-[11px] text-gray-700 mb-1">Data Prevista Entrega</label>
+                <input type="date" name="deliveryDate" id="req-deliveryDate" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-900">
+              </div>
+              <div>
+                <label class="block font-bold text-[11px] text-gray-700 mb-1">Hora Prevista</label>
+                <input type="time" name="deliveryTime" id="req-deliveryTime" value="17:00" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-900">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-[11px] text-gray-700 mb-1">Código CID-10 (Hipótese Diagnóstica)</label>
+              <div class="relative">
+                <input type="text" name="cid10" id="req-cid10" placeholder="Ex: E11 (Diabetes), Z00" class="w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono uppercase outline-none focus:ring-2 focus:ring-emerald-500">
+                <button type="button" onclick="openCidModal()" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-emerald-700">🔍</button>
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-1 border-t border-gray-100">
+              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-xs text-gray-800">
+                <input type="checkbox" name="notifyWhatsapp" id="req-notifyWhatsapp" checked class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                <span>📱 Notificar paciente por WhatsApp ao liberar laudo</span>
+              </label>
+              <br>
+              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-xs text-gray-800">
+                <input type="checkbox" name="separateLabel" id="req-separateLabel" class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                <span>🏷️ Imprimir etiquetas de tubo de ensaio separadas</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- CARD 2: RESUMO FINANCEIRO DA REQUISIÇÃO (LADO DIREITO) -->
+          <div class="bg-gradient-to-br from-emerald-950 via-teal-900 to-emerald-900 text-white p-4 sm:p-5 rounded-2xl border border-emerald-800 shadow-md space-y-3.5">
+            
+            <div class="flex items-center justify-between pb-2 border-b border-emerald-800/80">
+              <div class="flex items-center gap-2">
+                <span class="text-base">💰</span>
+                <h4 class="font-black text-white uppercase tracking-wider text-xs">Resumo Financeiro da Requisição</h4>
+              </div>
+              <span class="text-[10px] font-mono text-emerald-200 font-bold bg-emerald-900 px-2.5 py-0.5 rounded-full border border-emerald-700">
+                Fechamento LIS
+              </span>
+            </div>
+
+            <!-- Subtotal e Desconto -->
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center text-emerald-200 font-mono">
+                <span>Subtotal Bruto:</span>
+                <span id="req-subtotalSummary" class="font-bold text-white text-sm">R$ 0,00</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 items-center">
+                <label class="font-bold text-emerald-200">Desconto Concedido (R$):</label>
+                <input type="number" step="0.01" name="discount" id="req-discount" value="0.00" oninput="calcFinancials()" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-emerald-700/80 rounded-xl text-xs font-mono font-bold text-amber-300 text-right outline-none focus:ring-2 focus:ring-amber-400">
+              </div>
+            </div>
+
+            <!-- TOTAL LÍQUIDO DESTACADO -->
+            <div class="bg-emerald-900/90 p-3 rounded-xl border border-emerald-700/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-mono font-bold text-emerald-300 uppercase block">VALOR TOTAL LÍQUIDO</span>
+                <span class="text-[10px] text-emerald-200/80">Valor final a cobrar do paciente</span>
+              </div>
+              <span id="req-totalAmountDisplay" class="text-2xl font-black font-mono text-emerald-300 tracking-tight">R$ 0,00</span>
+            </div>
+
+            <!-- FORMA DE PAGAMENTO & CONDIÇÃO -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Forma de Pagamento</label>
+                <select name="paymentMethod" id="req-paymentMethod" onchange="calcFinancials()" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-emerald-700/80 rounded-xl text-xs text-white outline-none focus:ring-2 focus:ring-emerald-400 font-medium">
+                  <option value="Particular - Dinheiro">Particular - Dinheiro</option>
+                  <option value="Particular - Pix">Particular - Pix</option>
+                  <option value="Particular - Cartão de Crédito">Particular - Cartão de Crédito</option>
+                  <option value="Particular - Cartão de Débito">Particular - Cartão de Débito</option>
+                  <option value="Faturado - Convênio / Guia">Faturado - Convênio / Guia</option>
+                  <option value="Boleto Bancário">Boleto Bancário</option>
+                  <option value="Cortesia / Isento">Cortesia / Isento</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Condição</label>
+                <select name="paymentCondition" id="req-paymentCondition" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-emerald-700/80 rounded-xl text-xs text-white outline-none focus:ring-2 focus:ring-emerald-400 font-medium">
+                  <option value="À Vista">À Vista</option>
+                  <option value="A Prazo (Faturamento 30 Dias)">A Prazo (30 Dias)</option>
+                  <option value="Parcelado 2x">Parcelado 2x</option>
+                  <option value="Parcelado 3x">Parcelado 3x</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- VALOR PAGO / ENTRADA & SALDO RESTANTE -->
+            <div class="grid grid-cols-2 gap-2 items-center text-xs">
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Valor Pago / Entrada (R$)</label>
+                <input type="number" step="0.01" name="paidAmount" id="req-paidAmount" value="0.00" oninput="calcFinancials()" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-emerald-700/80 rounded-xl text-xs font-mono font-bold text-emerald-300 outline-none focus:ring-2 focus:ring-emerald-400">
+              </div>
+
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Saldo Restante / Troco</label>
+                <div class="px-2.5 py-1.5 bg-slate-900/90 border border-emerald-700/80 rounded-xl font-mono font-bold text-xs flex items-center justify-between">
+                  <span id="req-remainingBalanceLabel" class="text-emerald-400">Pendente:</span>
+                  <span id="req-remainingBalanceDisplay" class="text-white">R$ 0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- STATUS FINANCEIRO & STATUS DA REQUISIÇÃO -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Status Financeiro</label>
+                <select name="financialStatus" id="req-financialStatus" class="w-full px-3 py-2 bg-slate-900 border border-emerald-600 rounded-xl text-xs font-bold text-emerald-200 outline-none focus:ring-2 focus:ring-emerald-400">
+                  <option value="Pendente">🟡 Pendente (Aguardando Pagamento)</option>
+                  <option value="Pago">🟢 Pago (Total Quitado)</option>
+                  <option value="Faturado Convênio">🔵 Faturado para Convênio</option>
+                  <option value="Parcial">🟠 Parcial (Possui Saldo Devedor)</option>
+                  <option value="Cortesia">⚪ Cortesia / Isento</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-emerald-200 mb-0.5">Status da Requisição</label>
+                <select name="status" id="req-status" class="w-full px-3 py-2 bg-slate-900 border border-emerald-600 rounded-xl text-xs font-bold text-emerald-200 outline-none focus:ring-2 focus:ring-emerald-400">
+                  <option value="A Coletar">🧪 A Coletar (Padrão ao Finalizar)</option>
+                  <option value="Coletado">💉 Coletado</option>
+                  <option value="Em Análise">🔬 Em Análise</option>
+                  <option value="Liberado">✅ Liberado / Concluído</option>
+                  <option value="Entregue">📦 Entregue</option>
+                  <option value="Cancelado">❌ Cancelado</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- BARRA DE NAVEGAÇÃO DA ETAPA 2 -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
+          <button type="button" onclick="cancelRequisitionForm()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+            <span>Cancelar</span>
+            <span class="text-[10px] text-gray-400 font-normal ml-1">(ESC)</span>
+          </button>
+          
+          <button type="button" onclick="switchRequisitionStep(1)" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>Voltar</span>
+            <span class="text-[10px] text-gray-500 font-mono">(Alt + ←)</span>
+          </button>
+          
+          <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Finalizar requisição</span>
+            <span class="text-[10px] opacity-80 font-mono">(Ctrl + Enter)</span>
+          </button>
+        </div>
+
+      </div> <!-- Fim de requisitionStep2 -->
+
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 1: SELEÇÃO DE PACIENTES (ESTILO MODERNO LIS INOVALAB)-->
+<!-- ========================================================= -->
+<div id="modalPatientSearch" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md animate-fadeIn">
+  <div class="bg-white rounded-3xl border border-gray-100 w-full max-w-4xl shadow-2xl overflow-hidden font-sans flex flex-col max-h-[92vh]">
+    
+    <!-- Cabeçalho LIS Premium -->
+    <div class="px-6 py-4 bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 text-white flex items-center justify-between shrink-0 shadow-md">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center font-black text-lg shadow-inner">
+          <svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-black text-white tracking-tight">Seleção & Busca de Paciente</h3>
+            <span id="patientModalCountBadge" class="bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold">
+              0 cadastrados
+            </span>
+          </div>
+          <p class="text-xs text-emerald-100/70 font-mono">Localize o paciente por Nome, CPF ou Código de Prontuário LIS</p>
+        </div>
+      </div>
+      <button onclick="closePatientSearchModal()" type="button" class="text-emerald-200/80 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-all cursor-pointer" title="Fechar (ESC)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Central de Filtros e Busca Inteligente -->
+    <div class="p-4 sm:p-5 bg-gradient-to-b from-slate-50 via-gray-50/80 to-white border-b border-gray-200/80 space-y-3 shrink-0">
+      
+      <!-- Linha Principal de Pesquisa -->
+      <div class="flex flex-col sm:flex-row items-stretch gap-2.5">
+        
+        <!-- Campo de Texto Principal com Ícone Integrado -->
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <input type="text" id="modalFilterQuery" oninput="executePatientFilter()" onkeyup="if(event.key==='Enter') executePatientFilter()" placeholder="Digite o nome, CPF, código ou telefone do paciente..." class="w-full pl-10 pr-24 py-2.5 bg-white border border-gray-200 rounded-2xl text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs outline-none transition-all placeholder:text-gray-400">
+          <button type="button" onclick="executePatientFilter()" class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all flex items-center gap-1 cursor-pointer shadow-xs">
+            <span>Buscar</span>
+          </button>
+        </div>
+
+        <!-- Seletor de Campo -->
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-2xl px-2.5 py-1.5 shadow-2xs">
+            <span class="text-[11px] font-bold text-gray-400 font-mono uppercase">Campo:</span>
+            <select id="modalFilterField" onchange="executePatientFilter()" class="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer">
+              <option value="name">Nome do Paciente</option>
+              <option value="cpf">CPF</option>
+              <option value="code">Código / Prontuário</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-2xl px-2.5 py-1.5 shadow-2xs hidden md:flex">
+            <span class="text-[11px] font-bold text-gray-400 font-mono uppercase">Tipo:</span>
+            <select id="modalFilterType" onchange="executePatientFilter()" class="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer">
+              <option value="contains">Contenha</option>
+              <option value="starts">Comece com</option>
+              <option value="equals">Igual a</option>
+            </select>
+          </div>
+
+          <!-- Botão de Cadastrar Novo -->
+          <button type="button" onclick="openPatientRegisterModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs tracking-wider shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0" title="Cadastrar Novo Paciente (Alt + N)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            <span>+ Novo Paciente</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Atalhos de Filtro Rápido / Dica de Seleção -->
+      <div class="flex items-center justify-between text-[11px] text-gray-500 font-medium pt-1 border-t border-gray-200/50">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-emerald-800">💡 Dica LIS:</span>
+          <span>Clique na linha para selecionar ou dê um <strong class="text-gray-800">duplo-clique</strong> para associar diretamente.</span>
+        </div>
+        <div class="flex items-center gap-1 text-[10px] text-gray-400 font-mono">
+          <span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-bold">Duplo-Clique</span> Seleção Rápida
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Conteúdo da Tabela / Lista de Pacientes -->
+    <div class="p-3 flex-1 overflow-y-auto bg-slate-50/50 min-h-[280px] max-h-[420px]">
+      <table class="w-full text-left border-separate border-spacing-y-1.5 text-xs" id="modalPatientsTable">
+        <thead>
+          <tr class="text-[11px] font-bold text-gray-400 uppercase font-mono tracking-wider px-3">
+            <th class="pb-2 px-3 w-16">Cód</th>
+            <th class="pb-2 px-3">Paciente / Nome</th>
+            <th class="pb-2 px-3 w-32">CPF</th>
+            <th class="pb-2 px-3 w-32">Nascimento / Idade</th>
+            <th class="pb-2 px-3 w-32">Contato / Fone</th>
+            <th class="pb-2 px-3 w-28">Cidade</th>
+            <th class="pb-2 px-3 w-24 text-center">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalPatientsTbody">
+          <!-- Injetado dinamicamente via Javascript -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Rodapé com Preview do Selecionado & Ações -->
+    <div class="p-4 bg-white border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg">
+      
+      <!-- Preview do Paciente Selecionado -->
+      <div id="modalSelectedPatientPreview" class="flex items-center gap-3 bg-gray-50 border border-gray-200/80 px-3.5 py-2 rounded-2xl flex-1 w-full sm:w-auto">
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-black text-xs flex items-center justify-center shrink-0">
+          ?
+        </div>
+        <div class="text-xs">
+          <span class="text-gray-400 font-medium block text-[10px] uppercase font-mono tracking-wider">Status da Seleção:</span>
+          <span class="text-gray-600 font-bold">Nenhum paciente selecionado na lista acima.</span>
+        </div>
+      </div>
+
+      <!-- Filtro Rápido Secundário / Localizar em tempo real -->
+      <div class="hidden">
+        <input type="text" id="modalLocalizarInput" onkeyup="filterLocalizarTable(this.value)">
+      </div>
+
+      <!-- Botões de Ação -->
+      <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+        <button type="button" onclick="closePatientSearchModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+          Cancelar
+        </button>
+
+        <button type="button" onclick="openPatientRegisterModal()" class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+          + Cadastrar Paciente
+        </button>
+
+        <button type="button" id="btnConfirmPatientSelect" onclick="confirmPatientSelection()" disabled class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>Confirmar Seleção</span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 2: CADASTRO COMPLETO DE PACIENTES VIA POPUP         -->
+<!-- ========================================================= -->
+<div id="modalPatientRegister" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl shadow-2xl overflow-hidden my-auto">
+    
+    <!-- Header do Modal -->
+    <div class="px-6 py-3.5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 border-b border-gray-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-emerald-600 text-white rounded-xl shadow-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-gray-900 tracking-tight">Cadastro Rápido de Pacientes</h3>
+          <p class="text-[10px] text-gray-500 font-mono">Cadastre o paciente e vincule direto na requisição</p>
+        </div>
+      </div>
+      <button onclick="closePatientRegisterModal()" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-xl hover:bg-gray-200 transition-colors cursor-pointer">✕</button>
+    </div>
+
+    <!-- Formulário do Paciente -->
+    <form id="ajaxPatientForm" onsubmit="submitAjaxPatient(event)" class="p-5 space-y-4 text-xs">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-2">
+          <label class="font-bold text-gray-700 text-[11px] block">Código</label>
+          <input type="text" name="code" id="modal-p-code" placeholder="Auto" readonly class="w-full px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-xl text-xs font-mono font-bold text-emerald-800">
+        </div>
+        <div class="sm:col-span-6">
+          <label class="font-bold text-gray-700 text-[11px] block">Nome Completo *</label>
+          <input type="text" name="name" id="modal-p-name" required placeholder="Nome completo do paciente *" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="font-bold text-gray-700 text-[11px] block">Nome Social</label>
+          <input type="text" name="socialName" id="modal-p-socialName" placeholder="Nome social" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">CPF</label>
+          <input type="text" name="cpf" id="modal-p-cpf" placeholder="000.000.000-00" maxlength="14" oninput="this.value = applyCpfMask(this.value)" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">RG</label>
+          <input type="text" name="rg" id="modal-p-rg" placeholder="Número do RG" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">WhatsApp / Celular</label>
+          <input type="text" name="whatsapp" id="modal-p-whatsapp" placeholder="(43) 99999-9999" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">Sexo *</label>
+          <select name="sex" id="modal-p-sex" required class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="">Selecione...</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">Data Nasc. *</label>
+          <input type="date" name="birthDate" id="modal-p-birthDate" required onchange="calcModalPAge()" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">Idade (automática)</label>
+          <input type="text" name="ageValue" id="modal-p-ageValue" readonly placeholder="0" class="w-full px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-xl text-xs font-mono outline-none">
+        </div>
+        <div class="sm:col-span-6">
+          <label class="font-bold text-gray-700 text-[11px] block">Nome da Mãe</label>
+          <input type="text" name="motherName" id="modal-p-motherName" placeholder="Nome completo da mãe" class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-4">
+          <label class="font-bold text-gray-700 text-[11px] block">CEP</label>
+          <input type="text" name="cep" id="modal-p-cep" placeholder="86390-000" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-5">
+          <label class="font-bold text-gray-700 text-[11px] block">Logradouro / Endereço</label>
+          <input type="text" name="street" id="modal-p-street" placeholder="Rua / Avenida / Número" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-3">
+          <label class="font-bold text-gray-700 text-[11px] block">Cidade</label>
+          <input type="text" name="city" id="modal-p-city" value="Cambará" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-4">
+          <label class="font-bold text-gray-700 text-[11px] block">Convênio</label>
+          <input type="text" name="convenio" id="modal-p-convenio" value="Particular" class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="sm:col-span-8">
+          <label class="font-bold text-gray-700 text-[11px] block">Observações do Atendimento</label>
+          <input type="text" name="obs" id="modal-p-obs" placeholder="Observações..." class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-gray-200 flex justify-end gap-2">
+        <button type="button" onclick="closePatientRegisterModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs transition-all">Cancelar</button>
+        <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs shadow-md transition-all cursor-pointer">Salvar e Selecionar Paciente</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- MODAL GENÉRICO PARA DEMAIS BUSCAS (CONVÊNIO, MÉDICO, COLETA, DESTINO, EMPRESA) -->
+<div id="modalGenericSearch" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="px-5 py-3.5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 border-b border-gray-200 flex items-center justify-between">
+      <h3 id="genericSearchTitle" class="text-xs font-black uppercase font-mono tracking-wider text-gray-900">Pesquisando Item</h3>
+      <button onclick="closeGenericSearchModal()" class="text-gray-400 hover:text-gray-700 font-bold text-sm cursor-pointer">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <input type="text" id="genericSearchInput" onkeyup="filterGenericList(this.value)" placeholder="Digite para filtrar..." class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+      <div id="genericSearchList" class="max-h-60 overflow-y-auto divide-y divide-gray-100 border border-gray-100 rounded-xl"></div>
+    </div>
+    <div class="p-3.5 bg-gray-50 border-t border-gray-200 flex justify-end">
+      <button onclick="closeGenericSearchModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs cursor-pointer transition-all">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE COMPARTILHAMENTO WHATSAPP -->
+<div id="share-message-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+      <div class="flex items-center gap-2.5">
+        <div id="modal-icon-container" class="w-8 h-8 rounded-xl flex items-center justify-center"></div>
+        <div>
+          <h3 id="modal-title" class="text-xs font-extrabold text-gray-900 uppercase font-mono">Compartilhar Mensagem</h3>
+          <p id="modal-subtitle" class="text-[10px] text-gray-500">Mensagem formatada para o paciente.</p>
+        </div>
+      </div>
+      <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-700 font-bold p-1 rounded-lg hover:bg-gray-200 transition-colors">✕</button>
+    </div>
+
+    <div class="p-5 space-y-3">
+      <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-200 flex justify-between text-xs">
+        <div>
+          <span class="block text-[10px] text-gray-500 font-bold uppercase font-mono">Paciente</span>
+          <strong id="modal-patient-name" class="text-gray-900 font-extrabold"></strong>
+        </div>
+        <div class="text-right">
+          <span class="block text-[10px] text-gray-500 font-bold uppercase font-mono">WhatsApp</span>
+          <span id="modal-patient-phone" class="font-mono font-bold text-gray-700"></span>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-gray-500 uppercase font-mono">Prévia da Mensagem</label>
+        <div class="bg-[#efeae2] p-3 rounded-xl border border-black/5 text-xs text-gray-800 shadow-inner whitespace-pre-wrap">
+          <p id="modal-message-body" class="whitespace-pre-wrap select-all text-gray-800 bg-white p-3 rounded-lg shadow-xs"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-5 py-3.5 border-t border-gray-200 bg-gray-50 flex gap-2">
+      <button id="modal-copy-btn" onclick="copyModalMessage()" class="w-1/2 py-2 bg-white hover:bg-gray-100 text-gray-800 font-bold rounded-xl text-xs border border-gray-200 transition-all cursor-pointer">
+        <span id="modal-copy-btn-text">Copiar Mensagem</span>
+      </button>
+      <button id="modal-whatsapp-btn" onclick="sendModalToWhatsApp()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1 cursor-pointer">
+        <span>Conversar WhatsApp</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL POPUP: SUCESSO AO CRIAR REQUISIÇÃO                 -->
+<!-- ========================================================= -->
+<div id="modalSuccessRequisition" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm transition-all duration-300">
+  <div class="bg-white rounded-3xl border border-emerald-100 w-full max-w-md shadow-2xl overflow-hidden p-6 text-center space-y-5 animate-in fade-in zoom-in-95">
+    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+      <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    
+    <div>
+      <h3 class="text-xl font-black text-gray-900 tracking-tight">Requisição Criada com Sucesso!</h3>
+      <p class="text-xs text-gray-500 mt-1">A requisição foi cadastrada com sucesso no sistema.</p>
+    </div>
+
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xs">
+      <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-widest font-mono">Código da Requisição Gerado</span>
+      <span id="successRequisitionCodeBadge" class="text-3xl font-black font-mono text-emerald-700 tracking-wider">
+        Nº --
+      </span>
+      <span id="successPatientNameBadge" class="text-xs font-bold text-gray-700 mt-1 truncate max-w-full">
+        Paciente: --
+      </span>
+    </div>
+
+    <div class="flex items-center justify-center gap-3 pt-2">
+      <button type="button" onclick="closeSuccessRequisitionModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer">
+        OK / Continuar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL POPUP: ORIENTAÇÕES DE COLETA E JEJUM (EXAMES)       -->
+<!-- ========================================================= -->
+<div id="modalPrepInstructions" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md animate-fadeIn">
+  <div class="bg-white rounded-3xl border border-gray-100 w-full max-w-2xl shadow-2xl overflow-hidden font-sans flex flex-col max-h-[90vh]">
+    
+    <!-- Cabeçalho -->
+    <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-black text-lg">
+          📋
+        </div>
+        <div>
+          <h3 class="text-base font-black text-white tracking-tight">Orientações de Coleta & Jejum Exigido</h3>
+          <p class="text-xs text-emerald-200/70 font-mono">Detalhamento técnico dos exames inclusos na requisição</p>
+        </div>
+      </div>
+      <button onclick="closePrepInstructionsModal()" type="button" class="text-gray-300 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-all cursor-pointer" title="Fechar (ESC)">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="p-5 overflow-y-auto space-y-4">
+      <div class="bg-amber-50 text-amber-950 border border-amber-200/80 p-3.5 rounded-2xl text-xs font-bold font-mono flex items-center justify-between shadow-2xs">
+        <span class="flex items-center gap-2">⌛ <span>Maior Jejum Exigido na Requisição:</span></span>
+        <span id="maxFastingDisplayVal" class="font-black text-amber-900 text-sm">Sem exames</span>
+      </div>
+
+      <div id="prepExamsListContainer" class="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+        <div class="bg-gray-50 p-6 rounded-2xl border border-slate-200 text-center text-slate-400 italic text-xs">
+          Nenhum exame adicionado. Ao selecionar ou lançar exames, as orientações de preparo serão listadas automaticamente aqui.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+      <button onclick="closePrepInstructionsModal()" type="button" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer">
+        Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Dados sincronizados do backend
+  let patientsList = <%- JSON.stringify(patients) %>;
+  let requisitionsData = <%- JSON.stringify(requisitions) %>;
+  const templatesData = <%- JSON.stringify(messageTemplates) %>;
+  const availableExamsList = <%- JSON.stringify(exams || []) %>;
+
+  let currentRequisitionExams = [];
+  let selectedPatientInModal = null;
+  let activeSearchType = null;
+
+  // Alternar entre Etapa 1 e Etapa 2 no Modal
+  function switchRequisitionStep(step) {
+    const step1 = document.getElementById('requisitionStep1');
+    const step2 = document.getElementById('requisitionStep2');
+    const btn1 = document.getElementById('stepTabBtn1');
+    const btn2 = document.getElementById('stepTabBtn2');
+
+    if (step === 1) {
+      if (step1) step1.classList.remove('hidden');
+      if (step2) step2.classList.add('hidden');
+
+      if (btn1) {
+        btn1.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer";
+        const dot = btn1.querySelector('span');
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+      }
+      if (btn2) {
+        btn2.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer";
+        const dot = btn2.querySelector('span');
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-gray-400";
+      }
+    } else {
+      if (step1) step1.classList.add('hidden');
+      if (step2) step2.classList.remove('hidden');
+
+      if (btn2) {
+        btn2.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer";
+        const dot = btn2.querySelector('span');
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+      }
+      if (btn1) {
+        btn1.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer";
+        const dot = btn1.querySelector('span');
+        if (dot) dot.className = "w-2 h-2 rounded-full bg-gray-400";
+      }
+    }
+  }
+
+  // --- GERENCIAMENTO DE EXAMES DA REQUISIÇÃO ---
+  let currentlySelectedExamForInput = null;
+
+  function populateExamMaterialsCombo(exam) {
+    const materialSelect = document.getElementById('req-examMaterial');
+    if (!materialSelect) return;
+
+    materialSelect.innerHTML = '<option value="">Selecione o material...</option>';
+
+    if (!exam) {
+      materialSelect.value = '';
+      return;
+    }
+
+    let mats = [];
+    if (Array.isArray(exam.materiaisColetados) && exam.materiaisColetados.length > 0) {
+      mats = exam.materiaisColetados;
+    } else if (Array.isArray(exam.materiais) && exam.materiais.length > 0) {
+      mats = exam.materiais;
+    }
+
+    const addedNames = new Set();
+
+    if (mats.length > 0) {
+      mats.forEach(m => {
+        let matName = '';
+        if (typeof m === 'object' && m !== null) {
+          matName = (m.nome || m.material || m.abrev || '').trim();
+        } else {
+          matName = String(m || '').trim();
+        }
+        if (matName && !addedNames.has(matName.toLowerCase())) {
+          addedNames.add(matName.toLowerCase());
+          const opt = document.createElement('option');
+          opt.value = matName;
+          opt.textContent = matName;
+          materialSelect.appendChild(opt);
+        }
+      });
+    }
+
+    if (addedNames.size === 0 && (exam.material || exam.category)) {
+      const matName = (exam.material || exam.category).trim();
+      if (matName) {
+        addedNames.add(matName.toLowerCase());
+        const opt = document.createElement('option');
+        opt.value = matName;
+        opt.textContent = matName;
+        materialSelect.appendChild(opt);
+      }
+    }
+
+    if (addedNames.size === 0) {
+      const defaultMats = ['Sangue', 'Sangue Total', 'Soro', 'Plasma', 'Urina', 'Fezes', 'Escarrado', 'Swab', 'Líquor', 'Outro'];
+      defaultMats.forEach(dm => {
+        const opt = document.createElement('option');
+        opt.value = dm;
+        opt.textContent = dm;
+        materialSelect.appendChild(opt);
+      });
+    }
+
+    // Deve ficar vazio após o cliente selecionar o exame
+    materialSelect.value = '';
+  }
+
+  function onReqExamMaterialChange() {
+    const materialSelect = document.getElementById('req-examMaterial');
+    const priceInput = document.getElementById('req-examPrice');
+    if (!materialSelect || !priceInput) return;
+
+    const selectedMat = materialSelect.value.trim();
+    if (!selectedMat) {
+      priceInput.value = '';
+      return;
+    }
+
+    if (currentlySelectedExamForInput) {
+      const examWithMat = { ...currentlySelectedExamForInput, material: selectedMat };
+      const price = getExamPriceForConvenio(examWithMat);
+      priceInput.value = price.toFixed(2);
+    }
+  }
+
+  function addExamToRequisition(exam) {
+    if (!exam) return false;
+
+    const newCode = (exam.code || '').trim().toUpperCase();
+    const newName = (exam.name || '').trim().toUpperCase();
+    const newMat = (exam.material || exam.category || 'Sangue').trim().toUpperCase();
+
+    const isDuplicate = currentRequisitionExams.some(item => {
+      const itemCode = (item.code || '').trim().toUpperCase();
+      const itemName = (item.name || '').trim().toUpperCase();
+      const itemMat = (item.material || '').trim().toUpperCase();
+
+      const sameExam = (newCode && itemCode === newCode) || (newName && itemName === newName);
+      const sameMaterial = itemMat === newMat;
+      return sameExam && sameMaterial;
+    });
+
+    if (isDuplicate) {
+      alert('Este exame já foi lançado na requisição para este mesmo material biológico.');
+      return false;
+    }
+
+    currentRequisitionExams.push({
+      code: exam.code || 'EX' + (currentRequisitionExams.length + 1),
+      name: exam.name || 'Exame Personalizado',
+      category: exam.category || 'Geral',
+      material: exam.material || exam.category || 'Sangue',
+      price: exam.pricePrivate !== undefined ? exam.pricePrivate : getExamPriceForConvenio(exam),
+      fasting: exam.fasting || 'Não informado',
+      timeframe: exam.timeframe || '24 horas',
+      instructions: exam.instructions || 'Procedimento padrão do laboratório.',
+      status: exam.status || 'A Coletar'
+    });
+
+    renderExamsTable();
+    calcFinancials();
+
+    const searchInput = document.getElementById('req-examSearchInput');
+    const priceInput = document.getElementById('req-examPrice');
+    const list = document.getElementById('examAutocompleteList');
+    if (searchInput) searchInput.value = '';
+    if (priceInput) priceInput.value = '';
+    if (list) list.classList.add('hidden');
+
+    currentlySelectedExamForInput = null;
+    populateExamMaterialsCombo(null);
+    return true;
+  }
+
+  function addManualExamFromInput() {
+    const nameInput = document.getElementById('req-examSearchInput');
+    const materialSelect = document.getElementById('req-examMaterial');
+    const priceInput = document.getElementById('req-examPrice');
+
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (!name) {
+      alert('Digite o código ou nome do exame.');
+      return;
+    }
+
+    const material = materialSelect ? materialSelect.value.trim() : '';
+    if (!material) {
+      alert('Por favor, selecione o Material Biológico.');
+      if (materialSelect) materialSelect.focus();
+      return;
+    }
+
+    let examObj = null;
+    if (currentlySelectedExamForInput) {
+      const price = priceInput && priceInput.value !== '' 
+        ? parseFloat(priceInput.value) 
+        : getExamPriceForConvenio({ ...currentlySelectedExamForInput, material });
+
+      examObj = {
+        code: currentlySelectedExamForInput.code,
+        name: currentlySelectedExamForInput.name,
+        category: currentlySelectedExamForInput.category || 'Geral',
+        material: material,
+        pricePrivate: price,
+        fasting: currentlySelectedExamForInput.fasting || '4h',
+        timeframe: currentlySelectedExamForInput.timeframe || '24h',
+        instructions: currentlySelectedExamForInput.instructions || 'Procedimento padrão do laboratório.'
+      };
+    } else {
+      const price = priceInput && priceInput.value !== '' ? parseFloat(priceInput.value) : 0;
+      examObj = {
+        code: name.slice(0, 6).toUpperCase(),
+        name: name,
+        category: material,
+        material: material,
+        pricePrivate: price,
+        fasting: 'Recomendado 4 horas',
+        timeframe: '24 horas',
+        instructions: 'Instruções padrão para ' + name
+      };
+    }
+
+    addExamToRequisition(examObj);
+  }
+
+  function quickAddExam(code) {
+    const found = availableExamsList.find(e => (e.code || '').toLowerCase() === (code || '').toLowerCase());
+    if (found) {
+      selectExamFromAutocomplete(found.code);
+    } else {
+      const nameInput = document.getElementById('req-examSearchInput');
+      if (nameInput) nameInput.value = code;
+      currentlySelectedExamForInput = null;
+      populateExamMaterialsCombo(null);
+    }
+  }
+
+  function addQuickExamByCodeDirect() {
+    const input = document.getElementById('req-quickCodeInput');
+    if (!input) return;
+    const rawVal = input.value.trim();
+    if (!rawVal) return;
+
+    const queryUpper = rawVal.toUpperCase();
+
+    let found = availableExamsList.find(e => (e.code || '').toUpperCase() === queryUpper);
+    if (!found) {
+      found = availableExamsList.find(e => (e.code || '').toUpperCase().startsWith(queryUpper));
+    }
+    if (!found) {
+      found = availableExamsList.find(e => (e.name || '').toUpperCase().includes(queryUpper));
+    }
+
+    if (found) {
+      selectExamFromAutocomplete(found.code);
+    } else {
+      const nameInput = document.getElementById('req-examSearchInput');
+      if (nameInput) nameInput.value = queryUpper;
+      currentlySelectedExamForInput = null;
+      populateExamMaterialsCombo(null);
+    }
+
+    input.value = '';
+    input.focus();
+  }
+
+  function removeExamFromRequisition(index) {
+    if (index >= 0 && index < currentRequisitionExams.length) {
+      currentRequisitionExams.splice(index, 1);
+      renderExamsTable();
+      calcFinancials();
+    }
+  }
+
+  let draggedExamIndex = null;
+
+  function handleExamDragStart(e, index) {
+    draggedExamIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    e.currentTarget.classList.add('opacity-40', 'bg-emerald-100');
+  }
+
+  function handleExamDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const tr = e.currentTarget;
+    tr.classList.add('bg-emerald-100/80', 'border-y-2', 'border-emerald-500');
+  }
+
+  function handleExamDragLeave(e) {
+    const tr = e.currentTarget;
+    tr.classList.remove('bg-emerald-100/80', 'border-y-2', 'border-emerald-500');
+  }
+
+  function handleExamDrop(e, targetIndex) {
+    e.preventDefault();
+    const tr = e.currentTarget;
+    tr.classList.remove('bg-emerald-100/80', 'border-y-2', 'border-emerald-500');
+
+    if (draggedExamIndex === null || draggedExamIndex === targetIndex) return;
+
+    const movedExam = currentRequisitionExams.splice(draggedExamIndex, 1)[0];
+    currentRequisitionExams.splice(targetIndex, 0, movedExam);
+
+    draggedExamIndex = null;
+    renderExamsTable();
+    if (typeof calcFinancials === 'function') calcFinancials();
+  }
+
+  function handleExamDragEnd(e) {
+    e.currentTarget.classList.remove('opacity-40', 'bg-emerald-100');
+    draggedExamIndex = null;
+    document.querySelectorAll('#addedExamsTbody tr').forEach(tr => {
+      tr.classList.remove('opacity-40', 'bg-emerald-100/80', 'border-y-2', 'border-emerald-500');
+    });
+  }
+
+  function renderExamsTable() {
+    const tbody = document.getElementById('addedExamsTbody');
+    const countBadge = document.getElementById('examsCountBadge');
+    const stepBadge = document.getElementById('stepTabExamsBadge');
+    const jsonInput = document.getElementById('req-examsJson');
+
+    if (jsonInput) jsonInput.value = JSON.stringify(currentRequisitionExams);
+
+    if (!tbody) return;
+
+    if (currentRequisitionExams.length === 0) {
+      tbody.innerHTML = `
+        <tr id="addedExamsEmptyRow">
+          <td colspan="8" class="px-4 py-8 text-center text-gray-400 italic">
+            <div class="flex flex-col items-center justify-center gap-1">
+              <span class="text-2xl">🧪</span>
+              <span class="font-bold text-gray-600 text-xs">Nenhum exame adicionado a esta requisição</span>
+              <span class="text-[11px] text-gray-400">Utilize o campo acima para pesquisar ou clique nos atalhos rápidos</span>
+            </div>
+          </td>
+        </tr>
+      `;
+      if (countBadge) countBadge.textContent = '0 Exames';
+      if (stepBadge) stepBadge.textContent = '0 exames (R$ 0,00)';
+      updatePrepInfoCard();
+      return;
+    }
+
+    let html = '';
+    let subtotal = 0;
+
+    currentRequisitionExams.forEach((e, idx) => {
+      const price = parseFloat(e.price) || 0;
+      subtotal += price;
+
+      html += `
+        <tr class="hover:bg-emerald-50/60 cursor-grab active:cursor-grabbing transition-colors text-xs" 
+            draggable="true" 
+            data-index="${idx}"
+            ondragstart="handleExamDragStart(event, ${idx})"
+            ondragover="handleExamDragOver(event)"
+            ondragleave="handleExamDragLeave(event)"
+            ondrop="handleExamDrop(event, ${idx})"
+            ondragend="handleExamDragEnd(event)"
+            onclick="selectExamForPrepInfo(${idx})">
+          <td class="px-3 py-2 font-mono text-gray-400 font-bold select-none"><span class="text-gray-400 text-sm mr-1">⠿</span>${idx + 1}</td>
+          <td class="px-3 py-2 font-mono font-bold text-emerald-800">${e.code}</td>
+          <td class="px-3 py-2 font-black text-gray-900">${e.name}</td>
+          <td class="px-3 py-2"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-mono text-[10px]">${e.material || e.category || 'Sangue'}</span></td>
+          <td class="px-3 py-2 font-mono text-[11px] font-bold text-amber-800"><span class="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded font-mono text-[10px]">${e.fasting || 'Sem jejum'}</span></td>
+          <td class="px-3 py-2 font-mono text-[11px] text-gray-500">${e.timeframe || '24h'}</td>
+          <td class="px-3 py-2 text-right font-mono font-bold text-emerald-900">R$ ${price.toFixed(2).replace('.', ',')}</td>
+          <td class="px-3 py-2 text-center" onclick="event.stopPropagation()">
+            <button type="button" onclick="removeExamFromRequisition(${idx})" class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Remover Exame">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+
+    if (countBadge) countBadge.textContent = currentRequisitionExams.length + ' Exame(s)';
+    if (stepBadge) stepBadge.textContent = `${currentRequisitionExams.length} exame(s) (R$ ${subtotal.toFixed(2).replace('.', ',')})`;
+
+    updatePrepInfoCard();
+  }
+
+  function updatePrepInfoCard() {
+    const maxFastingDisplay = document.getElementById('maxFastingDisplayVal');
+    const listContainer = document.getElementById('prepExamsListContainer');
+
+    if (!listContainer) return;
+
+    if (!currentRequisitionExams || currentRequisitionExams.length === 0) {
+      if (maxFastingDisplay) maxFastingDisplay.textContent = 'Sem exames';
+      listContainer.innerHTML = `
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center text-slate-400 italic text-xs">
+          Nenhum exame adicionado. Ao selecionar ou lançar exames, as orientações de preparo serão listadas automaticamente aqui.
+        </div>
+      `;
+      return;
+    }
+
+    // Calcular o maior jejum em horas entre todos os exames adicionados
+    let maxHours = 0;
+    let maxHoursExam = '';
+
+    currentRequisitionExams.forEach(e => {
+      const fStr = (e.fasting || '').toString();
+      const matches = fStr.match(/\d+/g);
+      if (matches) {
+        matches.forEach(mStr => {
+          const num = parseInt(mStr, 10);
+          if (num > maxHours && num <= 48) {
+            maxHours = num;
+            maxHoursExam = e.name;
+          }
+        });
+      }
+    });
+
+    if (maxFastingDisplay) {
+      if (maxHours > 0) {
+        maxFastingDisplay.textContent = `${maxHours} Horas (${maxHoursExam || 'Exame LIS'})`;
+      } else {
+        maxFastingDisplay.textContent = 'Sem exigência de jejum prolongado';
+      }
+    }
+
+    // Listar as orientações de TODOS os exames da requisição
+    let html = '';
+    currentRequisitionExams.forEach((e) => {
+      html += `
+        <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 hover:border-emerald-300 transition-colors">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="font-mono text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded font-extrabold">${e.code}</span>
+              <span class="text-slate-900">${e.name}</span>
+            </div>
+            <span class="bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">
+              ⌛ Jejum: ${e.fasting || 'Não informado'}
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-600 flex items-center justify-between font-mono pt-0.5">
+            <span>Amostra: <b>${e.material || e.category || 'Sangue'}</b></span>
+            <span>Prazo Laudo: <b>${e.timeframe || '24h'}</b></span>
+          </div>
+          <div class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 mt-1">
+            💡 <b>Orientações de Coleta & Preparo:</b> ${e.instructions || 'Procedimento padrão de coleta laboratorial.'}
+          </div>
+        </div>
+      `;
+    });
+
+    listContainer.innerHTML = html;
+  }
+
+  function openPrepInstructionsModal() {
+    updatePrepInfoCard();
+    const modal = document.getElementById('modalPrepInstructions');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closePrepInstructionsModal() {
+    const modal = document.getElementById('modalPrepInstructions');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function selectExamForPrepInfo(idx) {
+    const exam = currentRequisitionExams[idx];
+    if (!exam) return;
+    openPrepInstructionsModal();
+  }
+
+  // --- CÁLCULOS FINANCEIROS COMPLETOS ---
+  function calcFinancials() {
+    let subtotal = 0;
+    currentRequisitionExams.forEach(e => {
+      subtotal += parseFloat(e.price) || 0;
+    });
+
+    const discountInput = document.getElementById('req-discount');
+    const discount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+
+    let total = subtotal - discount;
+    if (total < 0) total = 0;
+
+    const paidInput = document.getElementById('req-paidAmount');
+    const paid = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
+
+    const remaining = total - paid;
+
+    const subtotalDisplay = document.getElementById('req-subtotalSummary');
+    const tableSubtotalVal = document.getElementById('tableSubtotalVal');
+    const subtotalInput = document.getElementById('req-subtotalInput');
+    const totalDisplay = document.getElementById('req-totalAmountDisplay');
+    const totalInput = document.getElementById('req-totalAmountInput');
+    const remainingLabel = document.getElementById('req-remainingBalanceLabel');
+    const remainingDisplay = document.getElementById('req-remainingBalanceDisplay');
+    const statusSelect = document.getElementById('req-financialStatus');
+
+    if (subtotalDisplay) subtotalDisplay.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+    if (tableSubtotalVal) tableSubtotalVal.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+    if (subtotalInput) subtotalInput.value = subtotal.toFixed(2);
+
+    if (totalDisplay) totalDisplay.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+    if (totalInput) totalInput.value = total.toFixed(2);
+
+    if (remainingDisplay && remainingLabel) {
+      if (remaining <= 0) {
+        remainingLabel.textContent = 'Troco / Quitado:';
+        remainingLabel.className = 'text-emerald-400 font-bold';
+        remainingDisplay.textContent = 'R$ ' + Math.abs(remaining).toFixed(2).replace('.', ',');
+        remainingDisplay.className = 'text-emerald-300 font-black';
+      } else {
+        remainingLabel.textContent = 'Saldo Devedor:';
+        remainingLabel.className = 'text-amber-400 font-bold';
+        remainingDisplay.textContent = 'R$ ' + remaining.toFixed(2).replace('.', ',');
+        remainingDisplay.className = 'text-amber-300 font-black';
+      }
+    }
+
+    if (statusSelect) {
+      const pm = document.getElementById('req-paymentMethod')?.value || '';
+      if (pm.includes('Convênio')) {
+        statusSelect.value = 'Faturado Convênio';
+      } else if (pm.includes('Cortesia')) {
+        statusSelect.value = 'Cortesia';
+      } else if (paid >= total && total > 0) {
+        statusSelect.value = 'Pago';
+      } else if (paid > 0 && paid < total) {
+        statusSelect.value = 'Parcial';
+      } else if (paid === 0) {
+        statusSelect.value = 'Pendente';
+      }
+    }
+
+    const stepBadge = document.getElementById('stepTabExamsBadge');
+    if (stepBadge) {
+      stepBadge.textContent = `${currentRequisitionExams.length} exame(s) (R$ ${total.toFixed(2).replace('.', ',')})`;
+    }
+  }
+
+  // --- AUTOCOMPLETE DE EXAMES NA BUSCA ---
+  function filterExamAutocomplete(val) {
+    const list = document.getElementById('examAutocompleteList');
+    if (!list) return;
+
+    const q = (val || '').trim().toLowerCase();
+    if (!q || q.length < 1) {
+      list.classList.add('hidden');
+      currentlySelectedExamForInput = null;
+      populateExamMaterialsCombo(null);
+      return;
+    }
+
+    if (currentlySelectedExamForInput) {
+      const exName = (currentlySelectedExamForInput.name || '').toLowerCase();
+      const exCode = (currentlySelectedExamForInput.code || '').toLowerCase();
+      if (!val.toLowerCase().includes(exCode) && !val.toLowerCase().includes(exName)) {
+        currentlySelectedExamForInput = null;
+        populateExamMaterialsCombo(null);
+      }
+    }
+
+    const matches = availableExamsList.filter(e => 
+      (e.code || '').toLowerCase().includes(q) ||
+      (e.name || '').toLowerCase().includes(q) ||
+      (e.category || '').toLowerCase().includes(q)
+    ).slice(0, 10);
+
+    if (matches.length === 0) {
+      list.innerHTML = `
+        <div class="p-3 text-center text-gray-500 italic text-xs">
+          Nenhum exame encontrado com "${val}". Clique em <b>+ Add</b> para incluir como personalizado.
+        </div>
+      `;
+      list.classList.remove('hidden');
+      return;
+    }
+
+    let html = '';
+    matches.forEach(e => {
+      const price = getExamPriceForConvenio(e);
+      html += `
+        <div class="p-3 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors border-b border-gray-100" onclick="selectExamFromAutocomplete('${e.code}')">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-extrabold text-emerald-800 text-xs bg-emerald-100 px-1.5 py-0.5 rounded">${e.code}</span>
+              <strong class="text-gray-900 text-xs">${e.name}</strong>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-0.5 font-mono">Categoria: ${e.category || 'Geral'} | Jejum: ${e.fasting || '4h'}</p>
+          </div>
+          <span class="font-mono font-black text-emerald-800 text-xs">R$ ${price.toFixed(2).replace('.', ',')}</span>
+        </div>
+      `;
+    });
+
+    list.innerHTML = html;
+    list.classList.remove('hidden');
+  }
+
+  function selectExamFromAutocomplete(code) {
+    const found = availableExamsList.find(e => (e.code || '').toLowerCase() === (code || '').toLowerCase());
+    if (found) {
+      currentlySelectedExamForInput = found;
+      const searchInput = document.getElementById('req-examSearchInput');
+      const priceInput = document.getElementById('req-examPrice');
+      const list = document.getElementById('examAutocompleteList');
+
+      if (searchInput) searchInput.value = `[${found.code}] ${found.name}`;
+      if (list) list.classList.add('hidden');
+
+      populateExamMaterialsCombo(found);
+
+      if (priceInput) priceInput.value = '';
+
+      const materialSelect = document.getElementById('req-examMaterial');
+      if (materialSelect) materialSelect.focus();
+    }
+  }
+
+  // Mask helper for CPF
+  function applyCpfMask(v) {
+    if (!v) return '';
+    v = v.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+    return v
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+
+  // Calculation of Age
+  function calcReqAge() {
+    const dob = document.getElementById('req-patientBirthDate').value;
+    if (!dob) {
+      document.getElementById('req-patientAge').value = '';
+      return;
+    }
+    const birth = new Date(dob);
+    const now = new Date();
+    let years = now.getFullYear() - birth.getFullYear();
+    let months = now.getMonth() - birth.getMonth();
+    if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) {
+      years--;
+    }
+    document.getElementById('req-patientAge').value = years + ' ano(s)';
+  }
+
+  function calcModalPAge() {
+    const dob = document.getElementById('modal-p-birthDate').value;
+    if (!dob) return;
+    const birth = new Date(dob);
+    const now = new Date();
+    let years = now.getFullYear() - birth.getFullYear();
+    if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) {
+      years--;
+    }
+    document.getElementById('modal-p-ageValue').value = years;
+  }
+
+  // Preencher Formulario de Requisição a partir de um Objeto Paciente
+  function fillPatientIntoRequisition(p) {
+    if (!p) return;
+    document.getElementById('req-patientCode').value = p.code || p.id || '';
+    document.getElementById('req-patientName').value = p.name || '';
+    document.getElementById('req-patientBirthDate').value = p.birthDate || '';
+    calcReqAge();
+    if (p.sex) document.getElementById('req-patientSex').value = p.sex;
+    document.getElementById('req-address').value = p.street ? (p.street + (p.number ? ', ' + p.number : '') + (p.neighborhood ? ' - ' + p.neighborhood : '')) : '';
+    document.getElementById('req-complement').value = p.complement || '';
+    document.getElementById('req-city').value = p.city || 'Cambará';
+    document.getElementById('req-cep').value = p.cep || '';
+    document.getElementById('req-patientPhone').value = p.whatsapp || p.phone || '';
+    document.getElementById('req-responsibleName').value = p.responsibleName || p.motherName || '';
+    document.getElementById('req-clinicalNotes').value = p.clinicalNotes || '';
+    document.getElementById('req-convenio').value = p.convenio || 'Particular';
+    if (p.weight) document.getElementById('req-weight').value = p.weight;
+    if (p.height) document.getElementById('req-height').value = p.height;
+
+    // Atualizar o card visual de texto do paciente
+    updatePatientCardDisplay();
+  }
+
+  // Atualizar visualização de texto do Card "Dados do Paciente"
+  function updatePatientCardDisplay() {
+    const codeElem = document.getElementById('req-patientCode');
+    const nameElem = document.getElementById('req-patientName');
+    const birthElem = document.getElementById('req-patientBirthDate');
+    const ageElem = document.getElementById('req-patientAge');
+    const sexElem = document.getElementById('req-patientSex');
+    const addressElem = document.getElementById('req-address');
+    const cityElem = document.getElementById('req-city');
+    const phoneElem = document.getElementById('req-patientPhone');
+    const respElem = document.getElementById('req-responsibleName');
+
+    const code = codeElem ? codeElem.value : '';
+    const name = nameElem ? nameElem.value : '';
+    const birth = birthElem ? birthElem.value : '';
+    const age = ageElem ? ageElem.value : '';
+    const sex = sexElem ? sexElem.value : '';
+    const address = addressElem ? addressElem.value : '';
+    const city = cityElem ? cityElem.value : '';
+    const phone = phoneElem ? phoneElem.value : '';
+    const resp = respElem ? respElem.value : '';
+
+    const emptyState = document.getElementById('patientCardEmptyState');
+    const activeState = document.getElementById('patientCardActiveState');
+
+    if (!name && !code) {
+      if (emptyState) emptyState.classList.remove('hidden');
+      if (activeState) activeState.classList.add('hidden');
+      return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+    if (activeState) activeState.classList.remove('hidden');
+
+    // Iniciais do Avatar
+    const nameParts = (name || 'Paciente').trim().split(' ');
+    let initials = nameParts[0][0] || 'P';
+    if (nameParts.length > 1) initials += nameParts[nameParts.length - 1][0] || '';
+    const avatarEl = document.getElementById('displayPatientAvatar');
+    if (avatarEl) avatarEl.textContent = initials.toUpperCase();
+
+    const dName = document.getElementById('displayPatientName');
+    if (dName) dName.textContent = name || 'Paciente sem nome';
+
+    const dCode = document.getElementById('displayPatientCodeBadge');
+    if (dCode) dCode.textContent = 'Cód: ' + (code || '—');
+
+    // Localizar CPF cadastrado
+    let patientObj = patientsList.find(p => (p.code || p.id) === code || p.name === name);
+    let cpfText = 'CPF: Não informado';
+    if (patientObj && patientObj.cpf) {
+      cpfText = 'CPF: ' + applyCpfMask(patientObj.cpf);
+    }
+    const dCpf = document.getElementById('displayPatientCpf');
+    if (dCpf) dCpf.textContent = cpfText;
+
+    const dSex = document.getElementById('displayPatientSex');
+    if (dSex) dSex.textContent = 'Sexo: ' + (sex || 'Não informado');
+
+    let birthFormatted = 'Não informada';
+    if (birth) {
+      const parts = birth.split('-');
+      if (parts.length === 3) {
+        birthFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } else {
+        birthFormatted = birth;
+      }
+    }
+    const dBirth = document.getElementById('displayPatientBirth');
+    if (dBirth) dBirth.textContent = birthFormatted;
+
+    const dAge = document.getElementById('displayPatientAge');
+    if (dAge) dAge.textContent = age || '—';
+
+    let fullAddress = address || '';
+    if (city && !fullAddress.includes(city)) {
+      fullAddress += (fullAddress ? ' - ' : '') + city;
+    }
+    const dAddress = document.getElementById('displayPatientAddress');
+    if (dAddress) dAddress.textContent = fullAddress || 'Não informado';
+
+    const dPhone = document.getElementById('displayPatientPhone');
+    if (dPhone) dPhone.textContent = phone ? '📱 ' + phone : 'Não informado';
+
+    const dResp = document.getElementById('displayPatientResp');
+    if (dResp) dResp.textContent = resp || 'Não informado';
+  }
+
+  function openRequisitionFormModal() {
+    const modal = document.getElementById('requisitionFormModal');
+    if (modal) modal.classList.remove('hidden');
+
+    const reqId = document.getElementById('req-id').value;
+    const reqCodeCard = document.getElementById('requisitionCodeCard');
+    if (reqCodeCard) {
+      if (reqId && reqId.trim() !== '') {
+        reqCodeCard.classList.remove('hidden');
+      } else {
+        reqCodeCard.classList.add('hidden');
+      }
+    }
+  }
+
+  function closeRequisitionFormModal() {
+    const modal = document.getElementById('requisitionFormModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Iniciar Nova Requisição (Limpar e Abrir Modal da Requisição e de Pacientes)
+  function startNewRequisition() {
+    document.getElementById('requisitionMainForm').reset();
+    document.getElementById('req-id').value = '';
+    currentRequisitionExams = [];
+    switchRequisitionStep(1);
+    renderExamsTable();
+    calcFinancials();
+    
+    // Esconder o Card de Identificador da Requisição no cadastro de nova requisição
+    const reqCodeCard = document.getElementById('requisitionCodeCard');
+    if (reqCodeCard) reqCodeCard.classList.add('hidden');
+    document.getElementById('req-requisitionCode').value = '';
+
+    document.getElementById('req-city').value = 'Cambará';
+    document.getElementById('req-convenio').value = 'Particular';
+    document.getElementById('req-coleta').value = 'Sede / Central';
+    document.getElementById('req-destino').value = 'Laboratório Principal';
+    document.getElementById('req-fatura').value = new Date().toLocaleDateString('pt-BR');
+    document.getElementById('req-hora').value = new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+    if (document.getElementById('req-status')) document.getElementById('req-status').value = 'A Coletar';
+    if (document.getElementById('req-fastingHours')) document.getElementById('req-fastingHours').value = '';
+
+    // Atualizar o card do paciente para o estado vazio
+    updatePatientCardDisplay();
+
+    // Abrir o modal de cadastro de requisição
+    openRequisitionFormModal();
+
+    // Abrir diretamente a popup de Pesquisando Pacientes
+    openPatientSearchModal();
+  }
+
+  // --- MODAL 1: PESQUISANDO PACIENTES ---
+  function openPatientSearchModal() {
+    const modal = document.getElementById('modalPatientSearch');
+    if (modal) modal.classList.remove('hidden');
+
+    const inputQuery = document.getElementById('modalFilterQuery');
+    if (inputQuery) {
+      inputQuery.value = '';
+      setTimeout(() => inputQuery.focus(), 100);
+    }
+
+    const inputLocalizar = document.getElementById('modalLocalizarInput');
+    if (inputLocalizar) inputLocalizar.value = '';
+
+    const preview = document.getElementById('modalSelectedPatientPreview');
+    const confirmBtn = document.getElementById('btnConfirmPatientSelect');
+    if (preview) {
+      preview.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-black text-xs flex items-center justify-center shrink-0">
+          ?
+        </div>
+        <div class="text-xs">
+          <span class="text-gray-400 font-medium block text-[10px] uppercase font-mono tracking-wider">Status da Seleção:</span>
+          <span class="text-gray-600 font-bold">Nenhum paciente selecionado na lista acima.</span>
+        </div>
+      `;
+    }
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    selectedPatientInModal = null;
+
+    // Renderizar pacientes recentes por padrão
+    renderModalPatientsTable(patientsList.slice(-15).reverse());
+  }
+
+  function closePatientSearchModal() {
+    const modal = document.getElementById('modalPatientSearch');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function renderModalPatientsTable(list) {
+    const tbody = document.getElementById('modalPatientsTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const countBadge = document.getElementById('patientModalCountBadge');
+    if (countBadge) {
+      countBadge.textContent = (list ? list.length : 0) + ' cadastrados';
+    }
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-2xs">
+            <div class="max-w-xs mx-auto text-center space-y-2">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl font-bold">
+                👤
+              </div>
+              <p class="text-xs font-bold text-gray-700">Nenhum paciente encontrado</p>
+              <p class="text-[11px] text-gray-400">Verifique os termos digitados ou cadastre um novo paciente no botão acima.</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    list.forEach((p) => {
+      const tr = document.createElement('tr');
+      const pId = p.id || p.code || Math.random().toString(36).substring(7);
+      const isSelected = selectedPatientInModal && (selectedPatientInModal.id === p.id || selectedPatientInModal.code === p.code);
+
+      tr.className = `group cursor-pointer transition-all rounded-2xl border border-gray-100 bg-white hover:bg-emerald-50/60 hover:border-emerald-200 hover:shadow-sm ${isSelected ? 'bg-emerald-50/90 border-emerald-400 ring-2 ring-emerald-500/20' : ''}`;
+      tr.id = "p-row-" + pId;
+      tr.onclick = () => selectPatientRowInModal(p);
+      tr.ondblclick = () => {
+        selectPatientRowInModal(p);
+        confirmPatientSelection();
+      };
+
+      // Gerar iniciais para o avatar
+      const nameParts = (p.name || 'Paciente').trim().split(' ');
+      let initials = nameParts[0][0] || 'P';
+      if (nameParts.length > 1) {
+        initials += nameParts[nameParts.length - 1][0] || '';
+      }
+      initials = initials.toUpperCase();
+
+      // Formatar dados do paciente
+      const cpfFormatted = p.cpf ? applyCpfMask(p.cpf) : 'Não informado';
+      const birthFormatted = p.birthDate ? new Date(p.birthDate).toLocaleDateString('pt-BR') : '—';
+      const ageStr = p.ageValue || p.age ? `${p.ageValue || p.age} anos` : '';
+      const phoneStr = p.whatsapp || p.phone || '';
+      const sexBadge = p.sex === 'Feminino' ? 'bg-pink-50 text-pink-700 border-pink-200' : p.sex === 'Masculino' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200';
+
+      tr.innerHTML = `
+        <td class="py-3 px-3.5 rounded-l-2xl font-mono font-extrabold text-emerald-800 text-xs">
+          <span class="bg-emerald-100/80 text-emerald-900 border border-emerald-200/80 px-2 py-1 rounded-lg text-[11px]">
+            ${p.code || p.id || '—'}
+          </span>
+        </td>
+
+        <td class="py-3 px-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs uppercase tracking-wider">
+              ${initials}
+            </div>
+            <div>
+              <span class="font-black text-gray-900 text-xs block group-hover:text-emerald-900">${p.name || 'Sem nome'}</span>
+              <div class="flex items-center gap-2 mt-0.5">
+                ${p.sex ? `<span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${sexBadge}">${p.sex}</span>` : ''}
+                ${p.motherName || p.responsibleName ? `<span class="text-[10px] text-gray-400">Resp/Mãe: ${p.motherName || p.responsibleName}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        </td>
+
+        <td class="py-3 px-3.5 font-mono text-[11px] text-gray-700 font-bold">
+          ${cpfFormatted}
+        </td>
+
+        <td class="py-3 px-3.5 text-xs text-gray-600 font-medium">
+          <div>${birthFormatted}</div>
+          ${ageStr ? `<span class="text-[10px] text-emerald-700 font-mono font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">${ageStr}</span>` : ''}
+        </td>
+
+        <td class="py-3 px-3.5 font-mono text-[11px] text-gray-600">
+          <div class="flex items-center gap-1 text-emerald-800 font-bold">
+            ${phoneStr ? '📱 ' + phoneStr : '<span class="text-gray-400 font-normal">Sem fone</span>'}
+          </div>
+        </td>
+
+        <td class="py-3 px-3.5 text-xs text-gray-600 font-medium">
+          ${p.city || 'Cambará'}
+        </td>
+
+        <td class="py-3 px-3.5 rounded-r-2xl text-center">
+          <button type="button" class="px-2.5 py-1 bg-emerald-600 text-white rounded-xl text-[10px] font-extrabold group-hover:bg-emerald-700 shadow-2xs transition-all">
+            Selecionar
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function selectPatientRowInModal(p) {
+    selectedPatientInModal = p;
+
+    // Resetar estilos das linhas
+    document.querySelectorAll('#modalPatientsTbody tr').forEach(row => {
+      row.classList.remove('bg-emerald-50/90', 'border-emerald-400', 'ring-2', 'ring-emerald-500/20');
+      row.classList.add('bg-white');
+    });
+
+    const pId = p.id || p.code;
+    const selectedTr = document.getElementById("p-row-" + pId);
+    if (selectedTr) {
+      selectedTr.classList.remove('bg-white');
+      selectedTr.classList.add('bg-emerald-50/90', 'border-emerald-400', 'ring-2', 'ring-emerald-500/20');
+    }
+
+    // Atualizar Preview no Rodapé
+    const preview = document.getElementById('modalSelectedPatientPreview');
+    const confirmBtn = document.getElementById('btnConfirmPatientSelect');
+
+    if (preview && p) {
+      const nameParts = (p.name || 'Paciente').trim().split(' ');
+      let initials = nameParts[0][0] || 'P';
+      if (nameParts.length > 1) initials += nameParts[nameParts.length - 1][0] || '';
+      initials = initials.toUpperCase();
+
+      preview.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+          ${initials}
+        </div>
+        <div class="text-xs">
+          <span class="text-emerald-800 font-black block">${p.name || 'Paciente'}</span>
+          <span class="text-[10px] text-gray-500 font-mono">Cód: <strong class="text-emerald-800">${p.code || p.id}</strong> | CPF: ${p.cpf ? applyCpfMask(p.cpf) : 'Não inf.'} | ${p.city || 'Cambará'}</span>
+        </div>
+      `;
+    }
+
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+    }
+  }
+
+  function confirmPatientSelection() {
+    if (!selectedPatientInModal) {
+      alert('Por favor, selecione um paciente da lista.');
+      return;
+    }
+    fillPatientIntoRequisition(selectedPatientInModal);
+    closePatientSearchModal();
+  }
+
+  function executePatientFilter() {
+    const fieldElem = document.getElementById('modalFilterField');
+    const typeElem = document.getElementById('modalFilterType');
+    const queryElem = document.getElementById('modalFilterQuery');
+
+    const field = fieldElem ? fieldElem.value : 'name';
+    const matchType = typeElem ? typeElem.value : 'contains';
+    const query = queryElem ? queryElem.value.toLowerCase().trim() : '';
+
+    if (!query) {
+      renderModalPatientsTable(patientsList.slice(-15).reverse());
+      return;
+    }
+
+    const filtered = patientsList.filter(p => {
+      let val = '';
+      if (field === 'name') val = (p.name || '').toLowerCase();
+      else if (field === 'cpf') val = (p.cpf || '').replace(/\D/g, '');
+      else if (field === 'code') val = (p.code || p.id || '').toLowerCase();
+      else if (field === 'prontuario') val = (p.prontuario || '').toLowerCase();
+
+      const qClean = field === 'cpf' ? query.replace(/\D/g, '') : query;
+
+      if (matchType === 'equals') return val === qClean;
+      if (matchType === 'starts') return val.startsWith(qClean);
+      return val.includes(qClean);
+    });
+
+    renderModalPatientsTable(filtered);
+  }
+
+  function filterLocalizarTable(val) {
+    const q = val.toLowerCase().trim();
+    if (!q) {
+      renderModalPatientsTable(patientsList.slice(-15).reverse());
+      return;
+    }
+    const filtered = patientsList.filter(p => 
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.cpf || '').includes(q) ||
+      (p.code || p.id || '').toLowerCase().includes(q)
+    );
+    renderModalPatientsTable(filtered);
+  }
+
+  // --- MODAL 2: CADASTRO DE PACIENTES VIA AJAX ---
+  function openPatientRegisterModal() {
+    document.getElementById('ajaxPatientForm').reset();
+    document.getElementById('modal-p-city').value = 'Cambará';
+    document.getElementById('modal-p-convenio').value = 'Particular';
+    document.getElementById('modalPatientRegister').classList.remove('hidden');
+  }
+
+  function closePatientRegisterModal() {
+    document.getElementById('modalPatientRegister').classList.add('hidden');
+  }
+
+  async function submitAjaxPatient(e) {
+    e.preventDefault();
+    const form = document.getElementById('ajaxPatientForm');
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((val, key) => data[key] = val);
+
+    try {
+      const response = await fetch('/admin/recepcao/pacientes/save-ajax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const resData = await response.json();
+      if (resData.success && resData.patient) {
+        patientsList = resData.patients || patientsList;
+        patientsList.push(resData.patient);
+        fillPatientIntoRequisition(resData.patient);
+        closePatientRegisterModal();
+        closePatientSearchModal();
+        alert('Paciente ' + resData.patient.name + ' cadastrado e selecionado com sucesso!');
+      } else {
+        alert('Erro ao cadastrar paciente: ' + (resData.error || 'Verifique os dados.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro na comunicação ao salvar paciente.');
+    }
+  }
+
+  // --- AUTOCOMPLETE NO CAMPO DE PACIENTE ---
+  function filterPatientsDropdown(val) {
+    const dropdown = document.getElementById('patientAutocompleteList');
+    const q = val.toLowerCase().trim();
+
+    if (!q || q.length < 2) {
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    const matches = patientsList.filter(p => 
+      (p.name || '').toLowerCase().includes(q) || 
+      (p.cpf || '').includes(q) ||
+      (p.code || p.id || '').toLowerCase().includes(q)
+    ).slice(0, 8);
+
+    if (matches.length === 0) {
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    dropdown.innerHTML = '';
+    matches.forEach(p => {
+      const div = document.createElement('div');
+      div.className = "px-3 py-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 flex justify-between items-center text-xs";
+      div.onclick = () => {
+        fillPatientIntoRequisition(p);
+        dropdown.classList.add('hidden');
+      };
+      div.innerHTML = `
+        <div>
+          <strong class="text-gray-900 block">${p.name}</strong>
+          <span class="text-[10px] text-gray-500 font-mono">CPF: ${p.cpf ? applyCpfMask(p.cpf) : 'Não inf.'} | Nasc: ${p.birthDate || ''}</span>
+        </div>
+        <span class="font-mono text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${p.code || p.id}</span>
+      `;
+      dropdown.appendChild(div);
+    });
+
+    dropdown.classList.remove('hidden');
+  }
+
+  // --- MODAL POPUP SUCESSO ---
+  function showSuccessRequisitionModal(reqCode, patientName) {
+    const modal = document.getElementById('modalSuccessRequisition');
+    const badge = document.getElementById('successRequisitionCodeBadge');
+    const pBadge = document.getElementById('successPatientNameBadge');
+    if (badge) badge.textContent = 'Nº ' + (reqCode || '--');
+    if (pBadge) pBadge.textContent = 'Paciente: ' + (patientName || 'Não informado');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeSuccessRequisitionModal() {
+    const modal = document.getElementById('modalSuccessRequisition');
+    if (modal) modal.classList.add('hidden');
+    window.location.reload();
+  }
+
+  // --- SUBMETER FORMULÁRIO PRINCIPAL ---
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    const form = document.getElementById('requisitionMainForm');
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((val, key) => data[key] = val);
+
+    if (!data.patientName || data.patientName.trim() === '') {
+      alert('Por favor, selecione um paciente para a requisição.');
+      openPatientSearchModal();
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/requisicoes/add-ajax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const res = await response.json();
+      if (res.success) {
+        closeRequisitionFormModal();
+        showSuccessRequisitionModal(res.requisitionCode || res.id, data.patientName || '');
+      } else {
+        alert('Erro ao salvar requisição: ' + (res.error || 'Verifique os dados.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro na comunicação ao salvar requisição.');
+    }
+  }
+
+  function cancelRequisitionForm() {
+    if (!confirm('Deseja realmente cancelar? Todos os dados não salvos desta requisição serão perdidos.')) {
+      return;
+    }
+    document.getElementById('requisitionMainForm').reset();
+    document.getElementById('req-id').value = '';
+    currentRequisitionExams = [];
+    switchRequisitionStep(1);
+    renderExamsTable();
+    calcFinancials();
+    updatePatientCardDisplay();
+    closeRequisitionFormModal();
+  }
+
+  function selectRequisitionToForm(reqId) {
+    const req = requisitionsData.find(r => r.id === reqId);
+    if (!req) return;
+
+    document.getElementById('req-id').value = req.id || '';
+    document.getElementById('req-requisitionCode').value = req.requisitionCode || '';
+    document.getElementById('req-patientCode').value = req.patientCode || '';
+    document.getElementById('req-patientName').value = req.patientName || '';
+    document.getElementById('req-patientBirthDate').value = req.patientBirthDate || '';
+    calcReqAge();
+    if (req.patientSex) document.getElementById('req-patientSex').value = req.patientSex;
+    
+    document.getElementById('req-isPregnant').checked = !!req.isPregnant;
+    document.getElementById('req-gestationalPeriod').value = req.gestationalPeriod || '';
+    document.getElementById('req-isNeonate').checked = !!req.isNeonate;
+    document.getElementById('req-isIncapacitated').checked = !!req.isIncapacitated;
+    document.getElementById('req-isPsr').checked = !!req.isPsr;
+
+    document.getElementById('req-dum').value = req.dum || '';
+    document.getElementById('req-weight').value = req.weight || '';
+    document.getElementById('req-height').value = req.height || '';
+    document.getElementById('req-address').value = req.address || '';
+    document.getElementById('req-complement').value = req.complement || '';
+    document.getElementById('req-city').value = req.city || 'Cambará';
+    document.getElementById('req-cep').value = req.cep || '';
+    document.getElementById('req-patientPhone').value = req.patientPhone || '';
+    document.getElementById('req-responsibleName').value = req.responsibleName || '';
+    document.getElementById('req-clinicalNotes').value = req.clinicalNotes || '';
+    
+    document.getElementById('req-convenioCode').value = req.convenioCode || '';
+    document.getElementById('req-convenio').value = req.convenio || 'Particular';
+    document.getElementById('req-situacaoCode').value = req.situacaoCode || '';
+    if (req.situacao) document.getElementById('req-situacao').value = req.situacao;
+
+    document.getElementById('req-matricula').value = req.matricula || '';
+    document.getElementById('req-guia').value = req.guia || '';
+    document.getElementById('req-coleta').value = req.coleta || 'Sede / Central';
+    document.getElementById('req-susCard').value = req.susCard || '';
+    document.getElementById('req-destino').value = req.destino || 'Laboratório Principal';
+
+    if (req.doctorCrmType) document.getElementById('req-doctorCrmType').value = req.doctorCrmType;
+    document.getElementById('req-doctorCrm').value = req.doctorCrm || '';
+    if (req.doctorUf) document.getElementById('req-doctorUf').value = req.doctorUf;
+    document.getElementById('req-doctorName').value = req.doctorName || '';
+
+    document.getElementById('req-fatura').value = req.fatura || new Date().toLocaleDateString('pt-BR');
+    document.getElementById('req-hora').value = req.hora || '';
+    document.getElementById('req-isUrgent').checked = !!req.isUrgent;
+    document.getElementById('req-obs').value = req.obs || '';
+    document.getElementById('req-empresa').value = req.empresa || '';
+
+    // Carregar dados de Exames e Financeiro
+    if (Array.isArray(req.exams)) {
+      currentRequisitionExams = [...req.exams];
+    } else if (req.examsJson) {
+      try {
+        currentRequisitionExams = JSON.parse(req.examsJson);
+      } catch(e) {
+        currentRequisitionExams = [];
+      }
+    } else {
+      currentRequisitionExams = [];
+    }
+
+    if (document.getElementById('req-discount')) document.getElementById('req-discount').value = req.discount || '0.00';
+    if (document.getElementById('req-paymentMethod') && req.paymentMethod) document.getElementById('req-paymentMethod').value = req.paymentMethod;
+    if (document.getElementById('req-paymentCondition') && req.paymentCondition) document.getElementById('req-paymentCondition').value = req.paymentCondition;
+    if (document.getElementById('req-paidAmount')) document.getElementById('req-paidAmount').value = req.paidAmount || '0.00';
+    if (document.getElementById('req-financialStatus') && req.financialStatus) document.getElementById('req-financialStatus').value = req.financialStatus;
+    if (document.getElementById('req-status')) document.getElementById('req-status').value = req.status || 'A Coletar';
+
+    if (document.getElementById('req-deliveryDate')) document.getElementById('req-deliveryDate').value = req.deliveryDate || '';
+    if (document.getElementById('req-deliveryTime')) document.getElementById('req-deliveryTime').value = req.deliveryTime || '17:00';
+    if (document.getElementById('req-cid10')) document.getElementById('req-cid10').value = req.cid10 || '';
+    if (document.getElementById('req-fastingHours')) document.getElementById('req-fastingHours').value = req.fastingHours || '';
+    if (document.getElementById('req-notifyWhatsapp')) document.getElementById('req-notifyWhatsapp').checked = req.notifyWhatsapp !== false;
+    if (document.getElementById('req-separateLabel')) document.getElementById('req-separateLabel').checked = !!req.separateLabel;
+
+    switchRequisitionStep(1);
+    renderExamsTable();
+    calcFinancials();
+
+    // Atualizar o card visual de dados do paciente
+    updatePatientCardDisplay();
+
+    // Abrir o modal com os dados carregados!
+    openRequisitionFormModal();
+  }
+
+  function navRequisitions(dir) {
+    const currentId = document.getElementById('req-id').value;
+    if (!currentId && requisitionsData.length > 0) {
+      selectRequisitionToForm(requisitionsData[0].id);
+      return;
+    }
+    const idx = requisitionsData.findIndex(r => r.id === currentId);
+    if (idx !== -1) {
+      const nextIdx = idx + dir;
+      if (nextIdx >= 0 && nextIdx < requisitionsData.length) {
+        selectRequisitionToForm(requisitionsData[nextIdx].id);
+      }
+    }
+  }
+
+  function useCpfForSus() {
+    const pCode = document.getElementById('req-patientCode').value;
+    const pName = document.getElementById('req-patientName').value;
+    let found = patientsList.find(p => (p.code || p.id) === pCode || p.name === pName);
+    if (found && found.cpf) {
+      document.getElementById('req-susCard').value = found.cpf.replace(/\D/g, '');
+    } else {
+      alert('Selecione um paciente cadastrado com CPF válido.');
+    }
+  }
+
+  async function deleteCurrentRequisition() {
+    const currentId = document.getElementById('req-id').value;
+    if (!currentId) {
+      alert('Nenhuma requisição selecionada para excluir.');
+      return;
+    }
+    if (!confirm('Deseja realmente excluir esta requisição?')) return;
+
+    try {
+      const response = await fetch('/admin/requisicoes/delete-ajax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Requisição excluída com sucesso!');
+        window.location.reload();
+      } else {
+        alert('Erro ao excluir requisição.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro na requisição de exclusão.');
+    }
+  }
+
+  function editCurrentRequisition() {
+    const currentId = document.getElementById('req-id').value;
+    if (!currentId) {
+      alert('Clique em uma requisição na tabela abaixo para carregar e editar.');
+    } else {
+      alert('Você está editando a requisição ' + document.getElementById('req-requisitionCode').value);
+    }
+  }
+
+  function openCidModal() {
+    alert('Consulta CID-10: Digite o código ou diagnóstico para pesquisar (ex: E11 para Diabetes Melito).');
+  }
+
+  function filterRequisitionsTable() {
+    const input = document.getElementById('req-search-input');
+    const filter = input.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.req-row');
+
+    rows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const code = row.getAttribute('data-code') || '';
+      const cpf = row.getAttribute('data-cpf') || '';
+      const phone = row.getAttribute('data-phone') || '';
+      const convenio = row.getAttribute('data-convenio') || '';
+      const status = row.getAttribute('data-status') || '';
+      if (name.includes(filter) || code.includes(filter) || cpf.includes(filter) || phone.includes(filter) || convenio.includes(filter) || status.includes(filter)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  let activeRecipientPhone = '', activeMessageText = '', activeReqId = '', activeType = '';
+
+  async function openShareModal(type, reqId) {
+    const req = requisitionsData.find(r => r.id === reqId);
+    if (!req) return;
+
+    activeReqId = reqId;
+    activeType = type;
+    activeRecipientPhone = (req.patientPhone || '').replace(/\D/g, '');
+
+    document.getElementById('modal-patient-name').innerText = req.patientName || 'Paciente sem nome';
+    document.getElementById('modal-patient-phone').innerText = req.patientPhone || 'Sem telefone';
+
+    const iconBox = document.getElementById('modal-icon-container');
+    const titleEl = document.getElementById('modal-title');
+    const subtitleEl = document.getElementById('modal-subtitle');
+
+    if (type === 'ready') {
+      iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-800 font-bold";
+      iconBox.innerHTML = "📄";
+      titleEl.innerText = "Aviso de Laudo Pronto";
+      subtitleEl.innerText = "Enviar mensagem avisando que os resultados estão disponíveis.";
+
+      let msg = templatesData.resultReady || '';
+      msg = msg.replace(/\{paciente\}/g, req.patientName || '')
+               .replace(/\{usuario\}/g, req.patientUsername || '')
+               .replace(/\{senha\}/g, req.patientPassword || '');
+      activeMessageText = msg;
+    } else {
+      iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center bg-amber-100 text-amber-800 font-bold";
+      iconBox.innerHTML = "⭐";
+      titleEl.innerText = "Pedir Avaliação de Atendimento";
+      subtitleEl.innerText = "Enviar convite do Google Avaliações para o paciente.";
+
+      let msg = templatesData.invite || '';
+      msg = msg.replace(/\{paciente\}/g, req.patientName || '');
+      activeMessageText = msg;
+    }
+
+    document.getElementById('modal-message-body').innerText = activeMessageText;
+    document.getElementById('share-message-modal').classList.remove('hidden');
+  }
+
+  function closeShareModal() {
+    document.getElementById('share-message-modal').classList.add('hidden');
+  }
+
+  function copyModalMessage() {
+    navigator.clipboard.writeText(activeMessageText).then(() => {
+      const btnText = document.getElementById('modal-copy-btn-text');
+      btnText.innerText = 'Copiado!';
+      setTimeout(() => { btnText.innerText = 'Copiar Mensagem'; }, 2000);
+    });
+  }
+
+  async function sendModalToWhatsApp() {
+    if (!activeRecipientPhone) {
+      alert('Paciente não possui número de telefone/WhatsApp cadastrado.');
+      return;
+    }
+
+    try {
+      await fetch('/api/requisicoes/mark-notified', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: activeReqId, type: activeType })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    const encodedMsg = encodeURIComponent(activeMessageText);
+    window.open(`https://wa.me/55${activeRecipientPhone}?text=${encodedMsg}`, '_blank');
+    closeShareModal();
+    window.location.reload();
+  }
+
+  function updateRequisitionStatus(id, newStatus) {
+    fetch('/admin/requisicoes/update-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: newStatus })
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        console.log('Status atualizado');
+      }
+    });
+  }
+
+  // MODAL GENÉRICO DE BUSCA COM INTEGRAÇÃO DE CONVÊNIOS E MÉDICOS DO CADASTRO
+  const conveniosListFromDb = <%- JSON.stringify(locals.convenios || []) %>;
+  const priceTablesFromDb = <%- JSON.stringify(locals.priceTables || []) %>;
+  const medicosListFromDb = <%- JSON.stringify(locals.medicos || []) %>;
+
+  function getExamPriceForConvenio(exam, convenioNameOrCode) {
+    if (!exam) return 0;
+    
+    const currentConvName = (convenioNameOrCode || document.getElementById('req-convenio')?.value || 'Particular').trim();
+    const currentConvCode = document.getElementById('req-convenioCode')?.value?.trim();
+    
+    let conv = conveniosListFromDb.find(c => 
+      (currentConvCode && String(c.codigo) === currentConvCode) ||
+      (c.fantasia && c.fantasia.toLowerCase() === currentConvName.toLowerCase()) ||
+      (c.razaoSocial && c.razaoSocial.toLowerCase() === currentConvName.toLowerCase())
+    );
+
+    if (!conv) {
+      conv = conveniosListFromDb.find(c => (c.fantasia || c.razaoSocial || '').toLowerCase().includes('particular')) || conveniosListFromDb[0];
+    }
+
+    const tabelaId = conv ? conv.tabelaPrecoId : null;
+    let priceTable = null;
+    if (tabelaId) {
+      priceTable = priceTablesFromDb.find(pt => String(pt.id) === String(tabelaId));
+    }
+    if (!priceTable && priceTablesFromDb.length > 0) {
+      priceTable = priceTablesFromDb[0];
+    }
+
+    if (!priceTable || !priceTable.precios) {
+      return parseFloat(exam.pricePrivate || exam.price || 0);
+    }
+
+    const examCode = (exam.code || exam.codigo || '').toLowerCase();
+    const examName = (exam.name || exam.nome || '').toLowerCase();
+    const examId = (exam.id || '').toLowerCase();
+    const examMat = (exam.material || exam.materialColetado || exam.materialNome || '').toLowerCase().trim();
+
+    let priceItem = null;
+    if (examMat) {
+      priceItem = priceTable.precios.find(p => {
+        const pCode = (p.exameCodigo || p.examCode || p.code || '').toLowerCase();
+        const pName = (p.exameNome || p.examName || p.name || '').toLowerCase();
+        const pId = (p.exameId || p.id || '').toLowerCase();
+        const pMat = (p.material || '').toLowerCase().trim();
+
+        const matchExam = (examCode && pCode === examCode) || (examId && pId === examId) || (examName && pName === examName);
+        return matchExam && pMat === examMat;
+      });
+    }
+
+    if (!priceItem) {
+      priceItem = priceTable.precios.find(p => {
+        const pCode = (p.exameCodigo || p.examCode || p.code || '').toLowerCase();
+        const pName = (p.exameNome || p.examName || p.name || '').toLowerCase();
+        const pId = (p.exameId || p.id || '').toLowerCase();
+        return (examCode && pCode === examCode) || (examId && pId === examId) || (examName && pName === examName);
+      });
+    }
+
+    if (priceItem && priceItem.valor !== undefined && priceItem.valor !== null && priceItem.valor !== '') {
+      return parseFloat(priceItem.valor) || 0;
+    }
+
+    return parseFloat(exam.pricePrivate || exam.price || 0);
+  }
+
+  function recalculateRequisitionExamPrices() {
+    if (!currentRequisitionExams || currentRequisitionExams.length === 0) return;
+    currentRequisitionExams.forEach(item => {
+      const foundInAvailable = availableExamsList.find(e => (e.code && e.code.toLowerCase() === (item.code || '').toLowerCase()) || (e.name && e.name.toLowerCase() === (item.name || '').toLowerCase()));
+      item.price = getExamPriceForConvenio(foundInAvailable || item);
+    });
+    renderExamsTable();
+    calcFinancials();
+  }
+
+  const GENERIC_LISTS = {
+    convenio: conveniosListFromDb.length > 0 
+      ? conveniosListFromDb.map(c => `[Cód ${c.codigo}] ${c.fantasia || c.razaoSocial}`) 
+      : ['[Cód 1] Particular', '[Cód 2] Unimed Cambará', '[Cód 3] Bradesco Saúde', '[Cód 4] SulAmérica', '[Cód 5] Casssi'],
+    situacao: ['Normal', 'Urgente', 'Prioritário', 'Aguardando Coleta'],
+    coleta: ['Sede / Central', 'Posto Cambará', 'Posto Jacarezinho', 'Coleta Domiciliar', 'Hospital Municipal'],
+    destino: ['Laboratório Principal', 'Apoio Hermes Pardini', 'Apoio Fleury', 'Apoio DB Diagnósticos'],
+    medico: medicosListFromDb.length > 0
+      ? medicosListFromDb.map(m => `[${m.conselho || 'CRM'} ${m.numero || ''}/${m.uf || 'PR'}] ${m.nome}`)
+      : ['Dr. Carlos Eduardo (CRM 12345/PR)', 'Dra. Ana Paula (CRM 23456/PR)', 'Dr. Marcos Roberto (CRM 34567/PR)', 'Dra. Juliana Lima (CRM 45678/SP)'],
+    empresa: ['InovaLab Cambará', 'Prefeitura Municipal', 'Usina Jacarezinho', 'Empresa Teste LTDA'],
+    dum: ['Informado no formulário', 'Não informado', 'Menopausa', 'Gestante', 'Histerectomia']
+  };
+
+  function openSearchModal(type) {
+    activeSearchType = type;
+    const list = GENERIC_LISTS[type] || [];
+    document.getElementById('genericSearchTitle').innerText = 'Pesquisando ' + type.toUpperCase();
+    document.getElementById('genericSearchInput').value = '';
+    renderGenericList(list);
+    document.getElementById('modalGenericSearch').classList.remove('hidden');
+  }
+
+  function closeGenericSearchModal() {
+    document.getElementById('modalGenericSearch').classList.add('hidden');
+  }
+
+  function renderGenericList(items) {
+    const container = document.getElementById('genericSearchList');
+    container.innerHTML = '';
+    if (!items || items.length === 0) {
+      container.innerHTML = `<p class="p-3 text-center text-gray-400 italic text-xs">Nenhum item encontrado.</p>`;
+      return;
+    }
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = "p-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-bold text-gray-800 transition-colors";
+      div.onclick = () => selectGenericItem(item);
+      div.innerText = item;
+      container.appendChild(div);
+    });
+  }
+
+  function filterGenericList(val) {
+    const list = GENERIC_LISTS[activeSearchType] || [];
+    const filtered = list.filter(i => i.toLowerCase().includes(val.toLowerCase()));
+    renderGenericList(filtered);
+  }
+
+  function selectGenericItem(item) {
+    if (activeSearchType === 'convenio') {
+      const matchCode = item.match(/\[Cód\s+([^\]]+)\]/i);
+      if (matchCode && matchCode[1]) {
+        const codeVal = matchCode[1].trim();
+        document.getElementById('req-convenioCode').value = codeVal;
+        const nameVal = item.replace(/\[Cód\s+[^\]]+\]\s*/i, '').trim();
+        document.getElementById('req-convenio').value = nameVal;
+      } else {
+        document.getElementById('req-convenio').value = item;
+      }
+      recalculateRequisitionExamPrices();
+    }
+    else if (activeSearchType === 'situacao') document.getElementById('req-situacao').value = item;
+    else if (activeSearchType === 'coleta') document.getElementById('req-coleta').value = item;
+    else if (activeSearchType === 'destino') document.getElementById('req-destino').value = item;
+    else if (activeSearchType === 'medico') {
+      const matched = medicosListFromDb.find(m => {
+        const fullTag = `[${m.conselho || 'CRM'} ${m.numero || ''}/${m.uf || 'PR'}] ${m.nome}`;
+        return item === fullTag || item === m.nome || item.includes(m.nome) || (m.numero && item.includes(m.numero));
+      });
+      if (matched) {
+        if (document.getElementById('req-doctorName')) document.getElementById('req-doctorName').value = matched.nome || '';
+        if (document.getElementById('req-doctorCrmType')) document.getElementById('req-doctorCrmType').value = matched.conselho || 'CRM';
+        if (document.getElementById('req-doctorCrm')) document.getElementById('req-doctorCrm').value = matched.numero || '';
+        if (document.getElementById('req-doctorUf')) document.getElementById('req-doctorUf').value = matched.uf || 'PR';
+      } else {
+        document.getElementById('req-doctorName').value = item;
+      }
+    }
+    else if (activeSearchType === 'empresa') document.getElementById('req-empresa').value = item;
+    closeGenericSearchModal();
+  }
+
+  // Preenchimento automático ao selecionar ou digitar médico
+  document.getElementById('req-doctorName')?.addEventListener('input', function(e) {
+    const val = e.target.value.trim().toLowerCase();
+    if (!val) return;
+    const found = medicosListFromDb.find(m => (m.nome || '').toLowerCase() === val);
+    if (found) {
+      if (document.getElementById('req-doctorCrmType')) document.getElementById('req-doctorCrmType').value = found.conselho || 'CRM';
+      if (document.getElementById('req-doctorCrm')) document.getElementById('req-doctorCrm').value = found.numero || '';
+      if (document.getElementById('req-doctorUf')) document.getElementById('req-doctorUf').value = found.uf || 'PR';
+    }
+  });
+
+  document.getElementById('req-doctorCrm')?.addEventListener('input', function(e) {
+    const crmVal = e.target.value.trim();
+    if (!crmVal) return;
+    const found = medicosListFromDb.find(m => String(m.numero || '').trim() === crmVal);
+    if (found) {
+      if (document.getElementById('req-doctorName')) document.getElementById('req-doctorName').value = found.nome || '';
+      if (document.getElementById('req-doctorCrmType')) document.getElementById('req-doctorCrmType').value = found.conselho || 'CRM';
+      if (document.getElementById('req-doctorUf')) document.getElementById('req-doctorUf').value = found.uf || 'PR';
+    }
+  });
+
+  // Preenchimento automático do nome do convênio ao digitar o código
+  document.getElementById('req-convenioCode')?.addEventListener('input', function(e) {
+    const codeVal = e.target.value.trim();
+    if (!codeVal) return;
+    const found = conveniosListFromDb.find(c => String(c.codigo) === codeVal || String(c.id) === codeVal);
+    if (found) {
+      document.getElementById('req-convenio').value = found.fantasia || found.razaoSocial;
+    }
+    recalculateRequisitionExamPrices();
+  });
+
+  document.getElementById('req-convenio')?.addEventListener('change', function(e) {
+    recalculateRequisitionExamPrices();
+  });
+
+  // Atalhos de Teclado Parametrizados no LIS (Novo Registro, Salvar, Cancelar, ESC, Busca, Navegação)
+  document.addEventListener('keydown', (e) => {
+    const reqModal = document.getElementById('requisitionFormModal');
+    const isReqModalOpen = reqModal && !reqModal.classList.contains('hidden');
+
+    // 1. ESC - Fechar modais / Cancelar
+    if (e.key === 'Escape') {
+      const prepModal = document.getElementById('modalPrepInstructions');
+      const pReg = document.getElementById('modalPatientRegister');
+      const pSearch = document.getElementById('modalPatientSearch');
+      const gSearch = document.getElementById('modalGenericSearch');
+
+      if (prepModal && !prepModal.classList.contains('hidden')) {
+        closePrepInstructionsModal();
+        return;
+      }
+      if (pReg && !pReg.classList.contains('hidden')) {
+        closePatientRegisterModal();
+        return;
+      }
+      if (pSearch && !pSearch.classList.contains('hidden')) {
+        closePatientSearchModal();
+        return;
+      }
+      if (gSearch && !gSearch.classList.contains('hidden')) {
+        closeGenericSearchModal();
+        return;
+      }
+      if (isReqModalOpen) {
+        cancelRequisitionForm();
+        return;
+      }
+    }
+
+    // 2. Atalhos de Navegação de Etapas na Requisição (Alt + Left ou Alt + V -> Voltar; Alt + Right ou Alt + P -> Próximo)
+    if (isReqModalOpen && e.altKey) {
+      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        switchRequisitionStep(1);
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        switchRequisitionStep(2);
+        return;
+      }
+    }
+
+    // 3. Finalizar Requisição / Salvar (Ctrl + Enter)
+    if (isReqModalOpen && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      const form = document.getElementById('requisitionMainForm');
+      if (form) form.requestSubmit();
+      return;
+    }
+
+    // 4. Fechar Modal via função global de atalhos
+    if (window.matchShortcut && window.matchShortcut(e, 'closeModal')) {
+      if (isReqModalOpen) cancelRequisitionForm();
+      return;
+    }
+
+    // 5. Novo Registro (Ex: CTRL + N)
+    if (window.matchShortcut && window.matchShortcut(e, 'newRecord')) {
+      e.preventDefault();
+      if (!document.getElementById('modalPatientSearch').classList.contains('hidden')) {
+        openPatientRegisterModal();
+      } else {
+        startNewRequisition();
+      }
+      return;
+    }
+
+    // 6. Salvar (Ex: CTRL + S)
+    if (window.matchShortcut && window.matchShortcut(e, 'save')) {
+      e.preventDefault();
+      if (!document.getElementById('modalPatientRegister').classList.contains('hidden')) {
+        const pForm = document.getElementById('ajaxPatientForm');
+        if (pForm) pForm.requestSubmit();
+      } else if (isReqModalOpen) {
+        const form = document.getElementById('requisitionMainForm');
+        if (form) form.requestSubmit();
+      }
+      return;
+    }
+
+    // 7. Cancelar / Limpar (Ex: CTRL + C)
+    if (window.matchShortcut && window.matchShortcut(e, 'cancel')) {
+      const selectedText = window.getSelection() ? window.getSelection().toString() : '';
+      if (!selectedText && isReqModalOpen) {
+        e.preventDefault();
+        cancelRequisitionForm();
+      }
+      return;
+    }
+
+    // 8. Buscar Paciente (Ex: CTRL + P)
+    if (window.matchShortcut && window.matchShortcut(e, 'searchPatient')) {
+      e.preventDefault();
+      openPatientSearchModal();
+      return;
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,83 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+  <!-- Cabeçalho Principal -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <span>Recepção LIS</span>
+        <span>•</span>
+        <span class="text-brand-gold font-bold">Triagem & Soroteca</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-neutralDark flex items-center gap-2">
+        <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Recebimento & Triagem de Amostras
+      </h1>
+      <p class="text-xs text-brand-neutral/70 mt-1">
+        Recebimento de malotes externos, conferência de integridade de soros/plasmas e triagem para bancadas.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tabela de Recebimento de Amostras -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <h2 class="text-xs font-bold font-mono text-gray-700 uppercase tracking-wider">Amostras em Triagem</h2>
+      <span class="text-xs font-mono font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">Check-in de Malotes</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider font-mono">
+            <th class="py-3.5 px-4">Cód. Amostra</th>
+            <th class="py-3.5 px-4">Paciente</th>
+            <th class="py-3.5 px-4">Origem / Posto</th>
+            <th class="py-3.5 px-4">Integridade / Aspecto</th>
+            <th class="py-3.5 px-4">Setor Destino</th>
+            <th class="py-3.5 px-4 text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs text-gray-700 font-medium">
+          <% if (requisitions && requisitions.length > 0) { %>
+            <% requisitions.forEach(reqItem => { %>
+              <tr class="hover:bg-gray-50/50 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-bold text-amber-900">
+                  AMP-<%= reqItem.id %>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-gray-900"><%= reqItem.patientName %></div>
+                  <div class="text-[10px] font-mono text-gray-500">Convênio: <%= reqItem.convenio || 'Particular' %></div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-600">
+                  Matriz Cambará
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    🟢 Íntegra / Límvida
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-bold text-gray-800">
+                  Bioquímica / Hematologia
+                </td>
+                <td class="py-3.5 px-4 text-right space-x-1">
+                  <button onclick="alert('Amostra triada e enviada para a bancada técnica de análise.')" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-lg transition-colors">
+                    Dar Entrada em Bancada
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="py-8 text-center text-gray-400 font-mono text-xs">
+                Nenhuma amostra em processo de triagem.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

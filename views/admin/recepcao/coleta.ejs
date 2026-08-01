@@ -1,0 +1,1853 @@
+<%- include('../../partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+  @media print {
+    @page {
+      size: auto;
+      margin: 8mm;
+    }
+    body * {
+      visibility: hidden !important;
+    }
+    #modalPrintLabels, #labels-preview-container, #labels-preview-container * {
+      visibility: visible !important;
+    }
+    .no-print, .no-print * {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    #modalPrintLabels {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      background: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #modalPrintLabels > div {
+      max-width: 100% !important;
+      box-shadow: none !important;
+      border: none !important;
+      background: transparent !important;
+    }
+    #modalPrintLabels .bg-slate-900, #modalPrintLabels .bg-gray-50 {
+      display: none !important;
+    }
+
+    /* MODO TÉRMICA ZEBRA / CONTINUA (1 POR PÁGINA / ROLO) */
+    #modalPrintLabels.print-type-zebra .zebra-label-card {
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+      margin-bottom: 20px !important;
+      width: 100% !important;
+    }
+
+    /* MODO FOLHA A4 (VÁRIAS ETIQUETAS EM GRADE NA MESMA FOLHA A4) */
+    #modalPrintLabels.print-type-a4 #labels-preview-container {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 5mm !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+    #modalPrintLabels.print-type-a4 .bg-slate-50 {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: contents !important;
+    }
+    #modalPrintLabels.print-type-a4 .space-y-3 {
+      display: contents !important;
+    }
+    #modalPrintLabels.print-type-a4 .zebra-label-card {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: auto !important;
+      break-after: auto !important;
+      width: 90mm !important;
+      min-height: 48mm !important;
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }
+  }
+</style>
+
+<div class="p-4 sm:p-6 w-full max-w-full">
+  
+  <!-- CABEÇALHO DA TELA -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-mono uppercase tracking-wider mb-1">
+        <span>Recepção LIS</span>
+        <span>•</span>
+        <span class="text-emerald-700 font-bold">Fase Pré-Analítica</span>
+        <span>•</span>
+        <span class="text-rose-600 font-bold">Posto de Coleta</span>
+      </div>
+      <h1 class="text-2xl font-black text-slate-800 flex items-center gap-2.5">
+        <span class="p-2 bg-rose-100 text-rose-700 rounded-xl">🧪</span>
+        Coleta de Materiais Biológicos
+      </h1>
+      <p class="text-xs text-slate-500 mt-1">
+        Controle operacional da fila de atendimento, contagem automatizada de tubos por cor e confirmação de coleta.
+      </p>
+    </div>
+
+    <!-- CARDS DE METRICAS DA FILA DA COLETA -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+          ⏳
+        </div>
+        <div>
+          <div class="text-[10px] font-mono font-bold text-amber-800 uppercase tracking-wider">A Coletar</div>
+          <div class="text-xl font-black text-amber-900 font-mono" id="stat-a-coletar">0</div>
+        </div>
+      </div>
+
+      <div class="bg-rose-50/80 border border-rose-200 rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
+          🚨
+        </div>
+        <div>
+          <div class="text-[10px] font-mono font-bold text-rose-800 uppercase tracking-wider">Urgentes</div>
+          <div class="text-xl font-black text-rose-900 font-mono" id="stat-urgentes">0</div>
+        </div>
+      </div>
+
+      <div class="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
+          ✅
+        </div>
+        <div>
+          <div class="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wider">Coletados Hoje</div>
+          <div class="text-xl font-black text-emerald-900 font-mono" id="stat-coletados">0</div>
+        </div>
+      </div>
+
+      <div class="bg-blue-50/80 border border-blue-200 rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
+          ⏱️
+        </div>
+        <div>
+          <div class="text-[10px] font-mono font-bold text-blue-800 uppercase tracking-wider">Média Espera</div>
+          <div class="text-lg font-black text-blue-900 font-mono" id="stat-media-espera">-- min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL (SELEÇÃO DE PACIENTE VS MODO FOCO DE COLETA) -->
+  <div id="coleta-main-container" class="w-full">
+
+    <!-- ÁREA 1: SELEÇÃO DE PACIENTES NA FILA (EXIBIDO QUANDO NENHUM PACIENTE ESTÁ SELECIONADO) -->
+    <div id="coleta-queue-container" class="w-full flex flex-col gap-4">
+      
+      <!-- BUSCA E FILTROS -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="relative w-full sm:w-auto sm:flex-1">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="coleta-search" oninput="filterColetaQueue()" placeholder="Buscar por paciente, código de requisição ou CPF..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-rose-500 focus:bg-white outline-none transition-all">
+          </div>
+
+          <div class="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl text-[11px] font-bold w-full sm:w-auto">
+            <button type="button" onclick="setColetaTab('a_coletar')" id="tab-btn-a_coletar" class="coleta-tab-btn flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer bg-white text-slate-800 shadow-2xs font-extrabold">
+              ⏳ A Coletar
+            </button>
+            <button type="button" onclick="setColetaTab('urgentes')" id="tab-btn-urgentes" class="coleta-tab-btn flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-slate-800">
+              🚨 Urgentes
+            </button>
+            <button type="button" onclick="setColetaTab('coletados')" id="tab-btn-coletados" class="coleta-tab-btn flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-slate-800">
+              ✅ Coletados
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTA DE PACIENTES DA FILA -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 min-h-[450px] flex flex-col">
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📋</span>
+              <span>Fila de Pacientes para Coleta</span>
+            </span>
+            <p class="text-[11px] text-gray-500 mt-0.5">Selecione o paciente desejado na lista abaixo para abrir os detalhes e realizar a coleta de amostras.</p>
+          </div>
+          <span class="text-xs font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full" id="queue-count-badge">0 em espera</span>
+        </div>
+
+        <div id="coleta-queue-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 overflow-y-auto max-h-[700px]">
+          <!-- Renderizado via JavaScript -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ÁREA 2: PAINEL DE DETALHES E GUIA DE TUBOS DA COLETA (EXIBIDO QUANDO UM PACIENTE É SELECIONADO) -->
+    <div id="coleta-details-column" class="w-full hidden space-y-5">
+      
+      <!-- BARRINHA SUPERIOR COM BOTÃO VOLTAR PARA A SELEÇÃO -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onclick="clearSelectedColeta()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer shadow-sm">
+          <span>←</span>
+          <span>Voltar para Seleção de Pacientes</span>
+        </button>
+      </div>
+
+      <!-- CARTOES DE DETALHES DA COLETA (SELECIONADO) -->
+      <div id="coleta-details-panel" class="space-y-5">
+        
+        <!-- CARD 1: DADOS DO PACIENTE E ATENDIMENTO -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono font-extrabold px-3 py-1 rounded-xl bg-slate-900 text-emerald-400" id="det-req-code">#----</span>
+              <span class="px-3 py-1 rounded-full text-xs font-extrabold font-mono uppercase bg-amber-100 text-amber-900 border border-amber-300" id="det-req-status-badge">A Coletar</span>
+              <span class="px-3 py-1 rounded-full text-xs font-extrabold font-mono bg-emerald-100 text-emerald-900 border border-emerald-300 hidden" id="det-req-collected-badge">✅ Coletado em: --/--/---- --:--</span>
+              <span class="px-2.5 py-1 rounded-full text-xs font-extrabold font-mono bg-rose-100 text-rose-800 border border-rose-200 hidden" id="det-req-urgent-badge">🚨 URGENTE</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="triggerChamarPaciente()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black rounded-xl text-xs transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                <span>📢</span> Chamar Paciente
+              </button>
+              <button type="button" onclick="openLabelPrintModal()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-black rounded-xl text-xs transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                <span>🖨️</span> Imprimir Etiquetas
+              </button>
+            </div>
+          </div>
+
+          <!-- GRADE DE INFORMACÕES DO PACIENTE -->
+          <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 bg-gray-50/70 p-4 rounded-xl border border-gray-100">
+            <div class="md:col-span-2">
+              <span class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-wider block">Paciente</span>
+              <div class="text-sm font-black text-slate-800" id="det-patient-name">---</div>
+              <div class="text-xs text-gray-500 font-mono mt-0.5" id="det-patient-meta">---</div>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-wider block">Convênio / Plano</span>
+              <div class="text-xs font-black text-slate-700" id="det-req-convenio">---</div>
+              <div class="text-[11px] text-gray-500 font-mono" id="det-req-date">---</div>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-wider block">Médico / Solicitante</span>
+              <div class="text-xs font-bold text-slate-700" id="det-req-doctor">---</div>
+              <div class="text-[11px] text-gray-500" id="det-req-user">---</div>
+            </div>
+
+            <div id="det-req-coleta-block" class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+              <span class="text-[10px] font-mono text-emerald-800 font-bold uppercase tracking-wider block">💉 Data da Coleta</span>
+              <div class="text-xs font-black text-emerald-950 font-mono mt-0.5" id="det-req-coleta-date">--/--/---- --:--</div>
+              <div class="text-[10px] text-emerald-700 font-semibold mt-0.5" id="det-req-coleta-sub">Status: A Coletar</div>
+            </div>
+          </div>
+
+          <!-- NOTAS DE JEJUM E CLINICAS -->
+          <div id="det-req-notes-container" class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+            <div class="font-black flex items-center gap-1.5 text-amber-800">
+              <span>📋</span> Recomendações de Jejum & Observações Clínicas:
+            </div>
+            <div id="det-req-notes-content" class="font-medium text-amber-950">
+              Sem observações específicas cadastradas.
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: TABELA DE EXAMES SOLICITADOS -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div>
+              <h3 class="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📋</span> Exames Solicitados na Requisição
+              </h3>
+              <p class="text-[11px] text-gray-500 mt-0.5">Agrupados por tipo de tubo/recipiente e material biológico com volumes recomendados.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="expandAllExamGroups()" class="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer flex items-center gap-1">
+                <span>📂</span> Expandir
+              </button>
+              <button type="button" onclick="collapseAllExamGroups()" class="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer flex items-center gap-1">
+                <span>📁</span> Recolher
+              </button>
+              <span class="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200" id="det-exams-count">0 exames</span>
+            </div>
+          </div>
+
+          <div id="det-exams-grouped-container" class="space-y-4">
+            <!-- Renderizado dinamicamente via JavaScript -->
+          </div>
+        </div>
+
+        <!-- CARD 3: CONTAGEM DE TUBOS E INFORMAÇÕES DE COLETA (DESTAQUE DA SOLICITAÇÃO DO USUÁRIO) -->
+        <div id="det-tubes-card-container" class="bg-white rounded-2xl border border-rose-200 shadow-sm p-5 space-y-4 hidden transition-all">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-3">
+            <div>
+              <h3 class="text-sm font-black text-rose-950 flex items-center gap-2">
+                <span>🧪</span>
+                <span>Tubos & Recipientes Necessários para a Coleta</span>
+              </h3>
+              <p class="text-[11px] text-rose-800/80 mt-0.5">
+                Contagem automatizada por cor de tampa e frasco recomendados para os exames desta requisição.
+              </p>
+            </div>
+            
+            <div class="inline-flex items-center gap-1.5 bg-rose-600 text-white font-mono font-black text-xs px-3 py-1.5 rounded-xl shadow-2xs self-start sm:self-auto">
+              <span>📦 Total:</span>
+              <span id="det-tubes-total-count">0 recipientes</span>
+            </div>
+          </div>
+
+          <!-- CARDS VISUAIS DE QUANTIDADE POR COR DE TUBO -->
+          <div id="det-tubes-summary-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Renderizado via JS -->
+          </div>
+
+          <!-- PAINEL DE GUIA / INSTRUÇÕES TÉCNICAS DE COLETA -->
+          <div class="bg-rose-50/50 border border-rose-200/80 rounded-xl p-4 space-y-2">
+            <h4 class="text-xs font-black text-rose-900 font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <span>💡</span> Informações Técnicas de Coleta & Procedimento:
+            </h4>
+            <div id="det-tubes-instructions-list" class="text-xs text-slate-700 space-y-2 font-medium">
+              <!-- Renderizado via JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CARD 4: BARRA DE AÇÕES DA COLETA (ANOTAÇÕES DA COLETA) -->
+        <div id="det-obs-card-container" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hidden transition-all">
+          <div class="flex-1">
+            <label class="block text-[11px] font-bold text-gray-600 font-mono mb-1">Anotações do Coletador / Observações da Amostra (Opcional):</label>
+            <input type="text" id="det-coleta-obs" placeholder="Ex: Coleta difícil (acesso venoso), amostra sem intercorrências..." class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-rose-500">
+          </div>
+
+          <div class="flex items-center justify-end gap-3 shrink-0">
+            <button type="button" onclick="toggleObsCard()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-all cursor-pointer">
+              Cancelar
+            </button>
+            <button type="button" onclick="confirmarColetaFinalizada()" id="btn-confirmar-coleta" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer">
+              <span>📝</span> Adicionar anotação
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL DE PREVIEW DE ETIQUETAS DE CÓDIGO DE BARRAS -->
+<div id="modalPrintLabels" class="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-gray-100">
+    <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🖨️</span>
+        <h3 class="font-black text-sm font-mono">Impressão de Etiquetas para Tubos (Zebra / Argox)</h3>
+      </div>
+      <button onclick="closeLabelPrintModal()" class="text-gray-400 hover:text-white font-bold text-lg cursor-pointer">&times;</button>
+    </div>
+
+    <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto" id="labels-preview-container">
+      <!-- Gerado via JS -->
+    </div>
+
+    <div class="p-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <label for="selectPrintMode" class="text-xs font-bold text-slate-700 flex items-center gap-1">
+          <span>🖨️</span> Impressão:
+        </label>
+        <select id="selectPrintMode" onchange="setPrintMode(this.value)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-rose-500 focus:outline-none cursor-pointer">
+          <option value="a4" selected>📄 Folha A4 (Várias etiquetas/página)</option>
+          <option value="zebra">🏷️ Térmica / Zebra (1 por página)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" onclick="closeLabelPrintModal()" class="px-3.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-xs cursor-pointer transition-colors">Fechar</button>
+        <button type="button" onclick="simulateZebraPrint()" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95">
+          <span>🖨️</span> Imprimir Agora
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE ALTERAÇÃO DE STATUS DE EXAME INDIVIDUAL -->
+<div id="modalChangeExamStatus" class="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-gray-100">
+    <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">✏️</span>
+        <h3 class="font-black text-xs font-mono">Alterar Status do Exame</h3>
+      </div>
+      <button onclick="closeChangeExamStatusModal()" class="text-gray-400 hover:text-white font-bold text-lg cursor-pointer">&times;</button>
+    </div>
+
+    <div class="p-5 space-y-3">
+      <p class="text-xs font-bold text-slate-800" id="modal-exam-title">Exame: ---</p>
+      <p class="text-[11px] text-gray-500">Selecione abaixo o novo status desejado para este exame:</p>
+
+      <div class="space-y-2 pt-2">
+        <button type="button" onclick="applyNewExamStatus('A Coletar')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 font-mono text-xs font-bold transition-all flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-2"><span>⏳</span> A Coletar</span>
+          <span class="text-[10px] opacity-75">Pendente</span>
+        </button>
+
+        <button type="button" onclick="applyNewExamStatus('Coletado')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-mono text-xs font-bold transition-all flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-2"><span>✅</span> Coletado</span>
+          <span class="text-[10px] opacity-75">Amostra Obtida</span>
+        </button>
+
+        <button type="button" onclick="applyNewExamStatus('Em Análise')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-950 border border-blue-300 font-mono text-xs font-bold transition-all flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-2"><span>🔬</span> Em Análise</span>
+          <span class="text-[10px] opacity-75">Na Triagem</span>
+        </button>
+
+        <button type="button" onclick="applyNewExamStatus('Concluído')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-950 border border-purple-300 font-mono text-xs font-bold transition-all flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-2"><span>🎉</span> Concluído</span>
+          <span class="text-[10px] opacity-75">Laudo Pronto</span>
+        </button>
+
+        <button type="button" onclick="applyNewExamStatus('Cancelado')" class="w-full text-left px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-950 border border-rose-300 font-mono text-xs font-bold transition-all flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-2"><span>❌</span> Cancelado</span>
+          <span class="text-[10px] opacity-75">Descontinuado</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-3 bg-gray-50 border-t border-gray-200 text-right">
+      <button type="button" onclick="closeChangeExamStatusModal()" class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-xs cursor-pointer">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dados globais passados pelo backend EJS
+  const globalRequisitions = <%- JSON.stringify(requisitions || []) %>;
+  const globalExams = <%- JSON.stringify(exams || []) %>;
+  const globalRecipientes = <%- JSON.stringify(recipientes || []) %>;
+  const globalSetores = <%- JSON.stringify(setores || []) %>;
+  const globalPatients = <%- JSON.stringify(patients || []) %>;
+
+  let currentTab = 'a_coletar'; // 'a_coletar', 'urgentes', 'coletados'
+  let selectedReqId = null;
+  let targetExamCodeForEdit = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateColetaStats();
+    renderColetaQueue();
+  });
+
+  // --- MÉTODOS DE ESTATÍSTICA ---
+  function updateColetaStats() {
+    const aColetar = globalRequisitions.filter(r => (r.status || 'A Coletar') === 'A Coletar');
+    const urgentes = aColetar.filter(r => r.isUrgent);
+    const coletados = globalRequisitions.filter(r => r.status === 'Coletado');
+
+    document.getElementById('stat-a-coletar').textContent = aColetar.length;
+    document.getElementById('stat-urgentes').textContent = urgentes.length;
+    document.getElementById('stat-coletados').textContent = coletados.length;
+
+    // Calcular tempo médio de espera
+    if (aColetar.length > 0) {
+      let totalMinutes = 0;
+      aColetar.forEach(r => {
+        totalMinutes += getMinutesElapsed(r.createdAt);
+      });
+      const avg = Math.round(totalMinutes / aColetar.length);
+      document.getElementById('stat-media-espera').textContent = avg + ' min';
+    } else {
+      document.getElementById('stat-media-espera').textContent = '0 min';
+    }
+  }
+
+  function getMinutesElapsed(createdAtStr) {
+    if (!createdAtStr) return 10; // fallback padrao
+    try {
+      // Ex: "28/07/2026, 10:03:04" ou ISO
+      let dateObj;
+      if (createdAtStr.includes('/')) {
+        const parts = createdAtStr.split(',');
+        const dateParts = parts[0].trim().split('/');
+        const timeParts = parts[1] ? parts[1].trim().split(':') : ['08', '00', '00'];
+        dateObj = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2] || 0);
+      } else {
+        dateObj = new Date(createdAtStr);
+      }
+      const diffMs = new Date() - dateObj;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      return diffMins > 0 ? diffMins : 5;
+    } catch (e) {
+      return 15;
+    }
+  }
+
+  function formatColetaDateTime(collectedAtRaw, req) {
+    let dt = null;
+    if (collectedAtRaw) {
+      dt = new Date(collectedAtRaw);
+    }
+    if (!dt || isNaN(dt.getTime())) {
+      if (req && req.collectedAt) {
+        dt = new Date(req.collectedAt);
+      } else if (req && req.updatedAt && (req.status === 'Coletado' || req.triado)) {
+        dt = new Date(req.updatedAt);
+      }
+    }
+    if (!dt || isNaN(dt.getTime())) {
+      if (req && req.fatura) {
+        return `${req.fatura} às ${req.hora || '10:00'}`;
+      }
+      return 'Data N/I';
+    }
+    const d = String(dt.getDate()).padStart(2, '0');
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const y = dt.getFullYear();
+    const h = String(dt.getHours()).padStart(2, '0');
+    const min = String(dt.getMinutes()).padStart(2, '0');
+    return `${d}/${m}/${y} às ${h}:${min}`;
+  }
+
+  // --- FILTROS E ABAS ---
+  function setColetaTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.coleta-tab-btn').forEach(btn => {
+      btn.className = 'coleta-tab-btn flex-1 py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-slate-800';
+    });
+    const activeBtn = document.getElementById(`tab-btn-${tab}`);
+    if (activeBtn) {
+      activeBtn.className = 'coleta-tab-btn flex-1 py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer bg-white text-slate-800 shadow-2xs font-extrabold';
+    }
+    renderColetaQueue();
+  }
+
+  function filterColetaQueue() {
+    renderColetaQueue();
+  }
+
+  // --- RENDERIZAR FILA DE PACIENTES ---
+  function renderColetaQueue() {
+    const listContainer = document.getElementById('coleta-queue-list');
+    const searchVal = (document.getElementById('coleta-search').value || '').toLowerCase().trim();
+
+    let filtered = globalRequisitions.filter(r => {
+      const st = r.status || 'A Coletar';
+      if (currentTab === 'a_coletar') return st === 'A Coletar';
+      if (currentTab === 'urgentes') return st === 'A Coletar' && r.isUrgent;
+      if (currentTab === 'coletados') return st === 'Coletado';
+      return true;
+    });
+
+    if (searchVal) {
+      filtered = filtered.filter(r => {
+        const name = (r.patientName || '').toLowerCase();
+        const code = (r.requisitionCode || r.id || '').toLowerCase();
+        const cpf = (r.patientCpf || '').toLowerCase();
+        const doctor = (r.doctorName || '').toLowerCase();
+        return name.includes(searchVal) || code.includes(searchVal) || cpf.includes(searchVal) || doctor.includes(searchVal);
+      });
+    }
+
+    // Ordenar urgentes primeiro, depois por tempo de espera
+    filtered.sort((a, b) => {
+      if (a.isUrgent && !b.isUrgent) return -1;
+      if (!a.isUrgent && b.isUrgent) return 1;
+      return getMinutesElapsed(b.createdAt) - getMinutesElapsed(a.createdAt);
+    });
+
+    document.getElementById('queue-count-badge').textContent = `${filtered.length} na fila`;
+
+    if (filtered.length === 0) {
+      listContainer.innerHTML = `
+        <div class="p-8 text-center text-gray-400 text-xs font-mono">
+          Nenhum paciente encontrado com os filtros selecionados.
+        </div>
+      `;
+      return;
+    }
+
+    listContainer.innerHTML = '';
+    filtered.forEach(req => {
+      const isSelected = selectedReqId === req.id;
+      const mins = getMinutesElapsed(req.createdAt);
+
+      const card = document.createElement('div');
+      card.className = `p-3 rounded-xl border transition-all cursor-pointer select-none space-y-2 ${
+        isSelected
+          ? 'bg-rose-50/80 border-rose-500 shadow-sm ring-2 ring-rose-400'
+          : req.isUrgent
+          ? 'bg-rose-50/40 border-rose-200 hover:bg-rose-50/70'
+          : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50/80'
+      }`;
+      card.onclick = () => selectRequisitionToCollect(req.id);
+
+      const reqCodeDisplay = `#${req.requisitionCode || req.id}`;
+      const examNames = (req.exams || []).map(e => e.name).slice(0, 3).join(', ');
+      const extraExamsCount = (req.exams || []).length > 3 ? `+${(req.exams || []).length - 3}` : '';
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1.5 font-mono font-black text-slate-800">
+            <span class="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 text-[11px]">${reqCodeDisplay}</span>
+            ${req.isUrgent ? '<span class="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[9px] font-extrabold uppercase">🚨 URGENTE</span>' : ''}
+          </div>
+          ${(req.status === 'Coletado' || req.triado || req.collectedAt)
+            ? `<span class="text-[10px] font-mono text-emerald-800 font-extrabold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200" title="Data da Coleta">✅ ${formatColetaDateTime(req.collectedAt, req)}</span>`
+            : `<span class="text-[10px] font-mono text-gray-500 font-bold flex items-center gap-1">⏱️ ${mins} min</span>`
+          }
+        </div>
+
+        <div>
+          <div class="font-black text-xs text-slate-900 leading-snug">${req.patientName || 'Paciente Não Informado'}</div>
+          <div class="text-[10px] text-gray-500 font-mono mt-0.5 flex items-center gap-2">
+            <span>${req.patientAge || 'Idade N/I'}</span>
+            <span>•</span>
+            <span class="font-bold text-slate-700">${req.convenio || 'Particular'}</span>
+          </div>
+        </div>
+
+        <div class="text-[10px] text-slate-600 font-mono bg-gray-100/70 px-2 py-1 rounded-lg truncate">
+          🧪 ${examNames || 'Nenhum exame'} ${extraExamsCount}
+        </div>
+      `;
+
+      listContainer.appendChild(card);
+    });
+  }
+
+  // --- SELECIONAR REQUISIÇÃO PARA COLETA ---
+  function selectRequisitionToCollect(reqId) {
+    selectedReqId = reqId;
+
+    const req = globalRequisitions.find(r => r.id === reqId);
+    if (!req) return;
+
+    // Ocultar a área de seleção de pacientes e exibir o modo foco da coleta
+    const queueContainer = document.getElementById('coleta-queue-container');
+    const detailsCol = document.getElementById('coleta-details-column');
+    if (queueContainer) queueContainer.classList.add('hidden');
+    if (detailsCol) detailsCol.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Header Meta
+    document.getElementById('det-req-code').textContent = `#${req.requisitionCode || req.id}`;
+    
+    const stBadge = document.getElementById('det-req-status-badge');
+    stBadge.textContent = req.status || 'A Coletar';
+    if (req.status === 'Coletado') {
+      stBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold font-mono uppercase bg-emerald-100 text-emerald-900 border border-emerald-300';
+    } else {
+      stBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold font-mono uppercase bg-amber-100 text-amber-900 border border-amber-300';
+    }
+
+    const urgentBadge = document.getElementById('det-req-urgent-badge');
+    if (req.isUrgent) urgentBadge.classList.remove('hidden');
+    else urgentBadge.classList.add('hidden');
+
+    // Data / Hora da Coleta
+    const isColetado = req.status === 'Coletado' || req.triado || req.collectedAt;
+    const collectedBadge = document.getElementById('det-req-collected-badge');
+    const coletaDateEl = document.getElementById('det-req-coleta-date');
+    const coletaSubEl = document.getElementById('det-req-coleta-sub');
+    const coletaBlock = document.getElementById('det-req-coleta-block');
+
+    if (isColetado) {
+      const formattedColetaDate = formatColetaDateTime(req.collectedAt, req);
+      if (collectedBadge) {
+        collectedBadge.textContent = `✅ Coletado em: ${formattedColetaDate}`;
+        collectedBadge.classList.remove('hidden');
+      }
+      if (coletaDateEl) coletaDateEl.textContent = formattedColetaDate;
+      if (coletaSubEl) coletaSubEl.textContent = `Local: ${req.coleta || 'Sede / Central'}`;
+      if (coletaBlock) {
+        coletaBlock.className = 'bg-emerald-50 p-2.5 rounded-xl border border-emerald-300 shadow-2xs';
+      }
+    } else {
+      if (collectedBadge) collectedBadge.classList.add('hidden');
+      if (coletaDateEl) coletaDateEl.textContent = 'Pendente';
+      if (coletaSubEl) coletaSubEl.textContent = 'Aguardando Coleta';
+      if (coletaBlock) {
+        coletaBlock.className = 'bg-amber-50/70 p-2.5 rounded-xl border border-amber-200';
+      }
+    }
+
+    // Paciente
+    document.getElementById('det-patient-name').textContent = req.patientName || 'Não informado';
+    document.getElementById('det-patient-meta').textContent = `${req.patientAge || 'Idade N/I'} • Sexo: ${req.patientSex || 'N/I'} • CPF: ${req.patientCpf || 'Sem CPF'}`;
+    document.getElementById('det-req-convenio').textContent = req.convenio || 'Particular';
+    document.getElementById('det-req-date').textContent = `Fatura: ${req.fatura || 'Hoje'} às ${req.hora || '10:00'}`;
+    document.getElementById('det-req-doctor').textContent = req.doctorName || 'Sem solicitação declarada';
+    document.getElementById('det-req-user').textContent = `Coleta: ${req.coleta || 'Sede'} / ${req.destino || 'Principal'}`;
+
+    // Observações
+    const notesContent = document.getElementById('det-req-notes-content');
+    let notesText = [];
+    if (req.fasting) notesText.push(`Jejum exigido: ${req.fasting}`);
+    if (req.clinicalNotes) notesText.push(`Observações Clínicas: ${req.clinicalNotes}`);
+    if (req.obs) notesText.push(`Obs. Atendimento: ${req.obs}`);
+
+    notesContent.textContent = notesText.length > 0 ? notesText.join(' | ') : 'Sem recomendações especiais cadastradas.';
+
+    // Tabela/Lista de Exames Agrupados por Tipo de Tubo e Material
+    const groupedContainer = document.getElementById('det-exams-grouped-container');
+    if (groupedContainer) groupedContainer.innerHTML = '';
+
+    const reqExams = req.exams || [];
+    document.getElementById('det-exams-count').textContent = `${reqExams.length} exame(s)`;
+
+    // Processar informações de tubo, material e volume para cada exame
+    const processedExams = reqExams.map(ex => getExamTubeAndMaterialInfo(ex));
+
+    // Agrupar por chave: `${tubo}___${material}`
+    const groups = {};
+    processedExams.forEach(info => {
+      const groupKey = `${info.tubo}___${info.material}`;
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          tubo: info.tubo,
+          material: info.material,
+          icon: info.icon,
+          colorTheme: info.colorTheme,
+          exams: [],
+          totalVolume: 0,
+          uni: info.uni
+        };
+      }
+      groups[groupKey].exams.push(info);
+      groups[groupKey].totalVolume += info.volume;
+    });
+
+    const groupKeys = Object.keys(groups);
+    if (groupKeys.length === 0 && groupedContainer) {
+      groupedContainer.innerHTML = `
+        <div class="p-6 text-center text-gray-400 text-xs font-mono">
+          Nenhum exame associado a esta requisição.
+        </div>
+      `;
+    } else if (groupedContainer) {
+      groupKeys.forEach((key, idx) => {
+        const grp = groups[key];
+        const groupCard = document.createElement('div');
+        
+        let headerBg = 'bg-slate-50 border-gray-200 text-slate-900';
+        let materialBadgeClass = 'bg-gray-100 text-gray-800 border-gray-300';
+        let volBadgeClass = 'bg-slate-200/90 text-slate-800 border-slate-300';
+        
+        if (grp.colorTheme === 'purple') {
+          headerBg = 'bg-purple-50/90 border-purple-200 text-purple-950';
+          materialBadgeClass = 'bg-purple-100 text-purple-900 border-purple-300';
+          volBadgeClass = 'bg-purple-200/80 text-purple-950 border-purple-300';
+        } else if (grp.colorTheme === 'blue') {
+          headerBg = 'bg-blue-50/90 border-blue-200 text-blue-950';
+          materialBadgeClass = 'bg-blue-100 text-blue-900 border-blue-300';
+          volBadgeClass = 'bg-blue-200/80 text-blue-950 border-blue-300';
+        } else if (grp.colorTheme === 'gray') {
+          headerBg = 'bg-slate-100 border-slate-300 text-slate-900';
+          materialBadgeClass = 'bg-slate-200 text-slate-900 border-slate-300';
+          volBadgeClass = 'bg-slate-300/80 text-slate-900 border-slate-400';
+        } else if (grp.colorTheme === 'yellow') {
+          headerBg = 'bg-amber-50/90 border-amber-200 text-amber-950';
+          materialBadgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
+          volBadgeClass = 'bg-amber-200/80 text-amber-950 border-amber-300';
+        } else if (grp.colorTheme === 'orange') {
+          headerBg = 'bg-orange-50/90 border-orange-200 text-orange-950';
+          materialBadgeClass = 'bg-orange-100 text-orange-900 border-orange-300';
+          volBadgeClass = 'bg-orange-200/80 text-orange-950 border-orange-300';
+        } else if (grp.colorTheme === 'amber') {
+          headerBg = 'bg-rose-50/80 border-rose-200 text-rose-950';
+          materialBadgeClass = 'bg-rose-100 text-rose-900 border-rose-300';
+          volBadgeClass = 'bg-rose-200/80 text-rose-950 border-rose-300';
+        }
+
+        const totalVolFormatted = grp.totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + ' ' + grp.uni;
+
+        let suggestedTubesCount = 1;
+        if (grp.colorTheme === 'amber' && grp.exams.length > 5) {
+          suggestedTubesCount = Math.ceil(grp.exams.length / 5);
+        } else if (grp.totalVolume > 5.0 && grp.uni === 'mL') {
+          suggestedTubesCount = Math.ceil(grp.totalVolume / 4.0);
+        }
+
+        groupCard.className = 'rounded-xl border border-gray-200 overflow-hidden shadow-2xs transition-all';
+        
+        let rowsHtml = grp.exams.map(exInfo => {
+          const volFormatted = exInfo.volume.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + ' ' + exInfo.uni;
+          const statusStr = exInfo.status || 'A Coletar';
+
+          let statusBadgeClass = 'bg-amber-100 text-amber-950 border-amber-300';
+          let statusIcon = '⏳';
+          if (statusStr === 'Coletado' || statusStr === 'Coletada') {
+            statusBadgeClass = 'bg-emerald-100 text-emerald-950 border-emerald-300';
+            statusIcon = '✅';
+          } else if (statusStr === 'Em Análise' || statusStr === 'Em Analise') {
+            statusBadgeClass = 'bg-blue-100 text-blue-950 border-blue-300';
+            statusIcon = '🔬';
+          } else if (statusStr === 'Concluído' || statusStr === 'Concluido') {
+            statusBadgeClass = 'bg-purple-100 text-purple-950 border-purple-300';
+            statusIcon = '🎉';
+          } else if (statusStr === 'Cancelado') {
+            statusBadgeClass = 'bg-rose-100 text-rose-950 border-rose-300';
+            statusIcon = '❌';
+          }
+
+          const escapedCode = String(exInfo.code || '').replace(/'/g, "\\'");
+
+          return `
+            <tr class="hover:bg-gray-50/80 transition-colors">
+              <td class="p-2.5 font-mono font-black text-slate-900">${exInfo.code}</td>
+              <td class="p-2.5 font-bold text-slate-900">${exInfo.name}</td>
+              <td class="p-2.5 text-center">
+                <div class="inline-flex items-center justify-center gap-1.5">
+                  <span class="inline-flex items-center gap-1 font-mono text-[10px] font-extrabold px-2 py-0.5 rounded border ${statusBadgeClass}">
+                    <span>${statusIcon}</span> ${statusStr}
+                  </span>
+                  <button type="button" 
+                          onclick="openChangeExamStatusModal('${escapedCode}')" 
+                          title="Alterar status do exame ${exInfo.code}" 
+                          class="p-1 text-slate-600 hover:text-slate-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-all cursor-pointer text-xs">
+                    ✏️
+                  </button>
+                </div>
+              </td>
+              <td class="p-2.5 font-mono text-gray-600 text-[11px]">${exInfo.fasting}</td>
+              <td class="p-2.5 font-mono text-gray-500 text-[11px]">${exInfo.timeframe}</td>
+              <td class="p-2.5 text-right font-mono font-black text-emerald-800 bg-emerald-50/40">
+                <span class="inline-flex items-center gap-1 bg-emerald-100/90 text-emerald-950 px-2 py-0.5 rounded border border-emerald-300">
+                  <span>💧</span> ${volFormatted}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        const escapedTubo = String(grp.tubo || '').replace(/'/g, "\\'");
+        const escapedMaterial = String(grp.material || '').replace(/'/g, "\\'");
+
+        groupCard.innerHTML = `
+          <div onclick="toggleGroupCollapse(${idx})" class="px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer select-none hover:brightness-95 transition-all ${headerBg}">
+            <div class="flex items-center gap-2">
+              <span class="text-xl leading-none">${grp.icon}</span>
+              <div>
+                <span class="font-black text-xs font-mono uppercase tracking-wider">${suggestedTubesCount}x - ${grp.tubo}</span>
+                <span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold border ${materialBadgeClass}">
+                  Material: ${grp.material}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto flex-wrap">
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold border ${volBadgeClass} flex items-center gap-1 shadow-2xs">
+                <span>💧 Vol. Total:</span>
+                <span>${totalVolFormatted}</span>
+              </span>
+              <button type="button" 
+                      onclick="event.stopPropagation(); coletarTodosDoGrupo('${escapedTubo}', '${escapedMaterial}')" 
+                      title="Marcar todos os exames em 'A Coletar' deste grupo como Coletados" 
+                      class="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all shadow-2xs flex items-center justify-center cursor-pointer text-xs">
+                <span>✅</span>
+              </button>
+              <button type="button" 
+                      onclick="event.stopPropagation(); openLabelPrintModal('${escapedTubo}', '${escapedMaterial}')" 
+                      title="Imprimir etiquetas dos exames deste grupo" 
+                      class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold border border-slate-300 rounded-lg transition-all shadow-2xs flex items-center justify-center cursor-pointer text-xs">
+                <span>🖨️</span>
+              </button>
+              <button type="button" aria-label="Alternar grupo" class="p-1 rounded-lg bg-white/60 hover:bg-white text-slate-700 border border-black/10 transition-transform">
+                <svg id="group-chevron-${idx}" class="w-4 h-4 transition-transform duration-200 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="group-body-${idx}" class="overflow-x-auto bg-white transition-all">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50/90 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase font-mono">
+                  <th class="p-2.5">Código</th>
+                  <th class="p-2.5">Exame (${grp.exams.length})</th>
+                  <th class="p-2.5 text-center">Status</th>
+                  <th class="p-2.5">Jejum / Preparo</th>
+                  <th class="p-2.5">Prazo</th>
+                  <th class="p-2.5 text-right">Volume Solicitado (Cadastro)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-xs text-slate-800 font-medium">
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        groupedContainer.appendChild(groupCard);
+      });
+
+      // Botão "Coletar todos tubos", "Imprimir etiquetas" e "Ver Info. Técnicas" localizado abaixo de todos os agrupamentos
+      const globalColetaBar = document.createElement('div');
+      globalColetaBar.className = 'mt-4 pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/90 p-4 rounded-2xl border border-slate-200 shadow-2xs';
+      globalColetaBar.innerHTML = `
+        <div class="flex items-center gap-2">
+          <button type="button" 
+                  onclick="toggleTechInfoCard()" 
+                  class="px-3.5 py-2 rounded-lg bg-white hover:bg-gray-100 text-slate-800 border border-gray-300 font-bold text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+            <span>💡</span>
+            <span>Ver Info. Técnicas</span>
+          </button>
+          <button type="button" 
+                  onclick="toggleObsCard()" 
+                  class="px-3.5 py-2 rounded-lg bg-white hover:bg-gray-100 text-slate-800 border border-gray-300 font-bold text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+            <span>📝</span>
+            <span>Add Observação</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <button type="button" 
+                  onclick="openLabelPrintModal()" 
+                  class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-black text-xs font-mono rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer">
+            <span>🖨️</span>
+            <span>Imprimir etiquetas</span>
+          </button>
+          <button type="button" 
+                  onclick="coletarTodosOsExames()" 
+                  class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs font-mono rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer">
+            <span>✅</span>
+            <span>Coletar todos tubos</span>
+          </button>
+        </div>
+      `;
+      groupedContainer.appendChild(globalColetaBar);
+    }
+
+    // CONTAGEM INTELIGENTE DE TUBOS E INSTRUÇÕES DE COLETA
+    calculateAndRenderTubes(reqExams, groups);
+  }
+
+  window.toggleGroupCollapse = function(index) {
+    const body = document.getElementById(`group-body-${index}`);
+    const chevron = document.getElementById(`group-chevron-${index}`);
+    if (!body) return;
+    const isHidden = body.classList.contains('hidden');
+    if (isHidden) {
+      body.classList.remove('hidden');
+      if (chevron) chevron.style.transform = 'rotate(0deg)';
+    } else {
+      body.classList.add('hidden');
+      if (chevron) chevron.style.transform = 'rotate(-90deg)';
+    }
+  };
+
+  window.expandAllExamGroups = function() {
+    document.querySelectorAll('[id^="group-body-"]').forEach(body => {
+      body.classList.remove('hidden');
+    });
+    document.querySelectorAll('[id^="group-chevron-"]').forEach(chev => {
+      chev.style.transform = 'rotate(0deg)';
+    });
+  };
+
+  window.collapseAllExamGroups = function() {
+    document.querySelectorAll('[id^="group-body-"]').forEach(body => {
+      body.classList.add('hidden');
+    });
+    document.querySelectorAll('[id^="group-chevron-"]').forEach(chev => {
+      chev.style.transform = 'rotate(-90deg)';
+    });
+  };
+
+  function clearSelectedColeta() {
+    selectedReqId = null;
+
+    // Fechar a tela de detalhes da coleta e reabrir a seleção/fila de pacientes
+    const detailsCol = document.getElementById('coleta-details-column');
+    const queueContainer = document.getElementById('coleta-queue-container');
+    if (detailsCol) detailsCol.classList.add('hidden');
+    if (queueContainer) queueContainer.classList.remove('hidden');
+
+    renderColetaQueue();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // --- EXTRAIR INFORMAÇÕES DE TUBO, MATERIAL E VOLUME DO CADASTRO DO EXAME ---
+  function getExamTubeAndMaterialInfo(ex) {
+    const fullExam = globalExams.find(e => e.code === ex.code || e.name === ex.name || (e.jalisCode && e.jalisCode === ex.code)) || ex;
+    const searchStr = `${ex.name || ''} ${ex.code || ''} ${ex.category || ''} ${fullExam.name || ''} ${fullExam.category || ''} ${fullExam.jalisCode || ''}`.toLowerCase();
+
+    let tuboNome = '';
+    let materialNome = '';
+    let volumeVal = 0;
+    let volumeUni = 'mL';
+    let icon = '🧪';
+    let colorTheme = 'slate';
+
+    // 1. Tentar obter dados cadastrados na aba Recipientes / materiaisColetados
+    if (Array.isArray(fullExam.materiaisColetados) && fullExam.materiaisColetados.length > 0) {
+      const mat = fullExam.materiaisColetados[0];
+      if (mat.nome) materialNome = mat.nome;
+      if (Array.isArray(mat.recipientesColeta) && mat.recipientesColeta.length > 0) {
+        const rec = mat.recipientesColeta[0];
+        if (rec.nome) tuboNome = rec.nome;
+        if (rec.volume) {
+          let v = parseFloat(String(rec.volume).replace(',', '.'));
+          if (!isNaN(v) && v > 0) volumeVal = v;
+        }
+        if (rec.uni) volumeUni = rec.uni;
+      }
+    }
+
+    // 2. Fallbacks inteligentes caso não haja dados específicos cadastrados
+    if (!materialNome) materialNome = ex.material || fullExam.category || 'Sangue Total';
+
+    if (!tuboNome) {
+      if (searchStr.includes('hemo') || searchStr.includes('leuco') || searchStr.includes('plaq') || searchStr.includes('hba1c') || searchStr.includes('edta') || searchStr.includes('roxa') || searchStr.includes('sangue total')) {
+        tuboNome = 'Tubo Tampa Roxa (EDTA)';
+        if (!materialNome || materialNome === 'Sangue') materialNome = 'Sangue Total';
+        if (volumeVal === 0) volumeVal = 0.100;
+      } else if (searchStr.includes('citrat') || searchStr.includes('tap') || searchStr.includes('ttpa') || searchStr.includes('fibrin') || searchStr.includes('coag') || searchStr.includes('azul')) {
+        tuboNome = 'Tubo Tampa Azul (Citrato)';
+        if (!materialNome || materialNome === 'Sangue') materialNome = 'Plasma Citratado';
+        if (volumeVal === 0) volumeVal = 2.0;
+      } else if (searchStr.includes('glico') || searchStr.includes('fluor') || searchStr.includes('cinza') || searchStr.includes('lactat')) {
+        tuboNome = 'Tubo Tampa Cinza (Fluoreto)';
+        if (!materialNome || materialNome === 'Sangue') materialNome = 'Plasma';
+        if (volumeVal === 0) volumeVal = 1.0;
+      } else if (searchStr.includes('urin') || searchStr.includes('eas') || searchStr.includes('uroc')) {
+        tuboNome = 'Frasco Coletor Urina Estéril';
+        if (!materialNome) materialNome = 'Urina';
+        if (volumeVal === 0) volumeVal = 10.0;
+      } else if (searchStr.includes('fez') || searchStr.includes('copro') || searchStr.includes('parasit')) {
+        tuboNome = 'Frasco Coletor Fezes';
+        if (!materialNome) materialNome = 'Fezes';
+        if (volumeVal === 0) volumeVal = 5.0;
+        volumeUni = 'g';
+      } else {
+        tuboNome = 'Tubo Tampa Vermelha / Amarela (Gel / Soro)';
+        if (!materialNome || materialNome === 'Sangue') materialNome = 'Soro';
+        if (volumeVal === 0) volumeVal = 0.5;
+      }
+    }
+
+    if (volumeVal === 0) volumeVal = 0.5;
+
+    // Determinar ícone e cores do tema
+    const tuboLower = tuboNome.toLowerCase();
+    if (tuboLower.includes('roxa') || tuboLower.includes('edta')) {
+      icon = '🟣';
+      colorTheme = 'purple';
+    } else if (tuboLower.includes('azul') || tuboLower.includes('citrato')) {
+      icon = '🔵';
+      colorTheme = 'blue';
+    } else if (tuboLower.includes('cinza') || tuboLower.includes('fluoreto')) {
+      icon = '⚪';
+      colorTheme = 'gray';
+    } else if (tuboLower.includes('urina') || tuboLower.includes('estéril') || tuboLower.includes('esteril')) {
+      icon = '🟨';
+      colorTheme = 'yellow';
+    } else if (tuboLower.includes('fezes')) {
+      icon = '💩';
+      colorTheme = 'orange';
+    } else if (tuboLower.includes('vermelha') || tuboLower.includes('amarela') || tuboLower.includes('soro') || tuboLower.includes('gel')) {
+      icon = '🔴';
+      colorTheme = 'amber';
+    } else {
+      icon = '📦';
+      colorTheme = 'slate';
+    }
+
+    return {
+      code: ex.code || fullExam.code || 'EX',
+      name: ex.name || fullExam.name,
+      status: ex.status || fullExam.status || 'A Coletar',
+      material: materialNome,
+      tubo: tuboNome,
+      volume: volumeVal,
+      uni: volumeUni,
+      fasting: ex.fasting || fullExam.fasting || 'Jejum Padrão',
+      timeframe: ex.timeframe || fullExam.timeframe || '24h',
+      icon,
+      colorTheme,
+      fullExam
+    };
+  }
+
+  // --- CÁLCULO INTELIGENTE DE TUBOS E INSTRUÇÕES ---
+  function calculateAndRenderTubes(reqExams, groups) {
+    const tubesSummaryGrid = document.getElementById('det-tubes-summary-grid');
+    const tubesInstructionsList = document.getElementById('det-tubes-instructions-list');
+
+    tubesSummaryGrid.innerHTML = '';
+    tubesInstructionsList.innerHTML = '';
+
+    const instructionsMap = {
+      edta: 'Homogeneizar por inversão suave 8 a 10 vezes imediatamente após a coleta. Nunca agitar energeticamente para prevenir microcoágulos e hemólise.',
+      soro: 'Inverter 5 vezes suavemente. Manter em repouso vertical por 30 minutos para retração do coágulo antes da centrifugação a 3000 RPM.',
+      citrato: 'Respeitar rigorosamente a marca do volume do tubo (proporção 1:9 anticoagulante/sangue). Inverter suavemente 3 a 4 vezes.',
+      fluoreto: 'Homogeneizar 8 vezes por inversão. O fluoreto inibe a glicólise garantindo dosagem exata de glicemia.',
+      urina: 'Higienização prévia do paciente. Orientar desprezar o 1º jato e coletar o jato médio em frasco estéril.',
+      fezes: 'Coletar porção equivalente a uma colher de chá em pontos distintos da amostra evitando urina ou água do vaso.',
+      outros: 'Seguir protocolo pré-analítico de biossegurança de amostras especiais.'
+    };
+
+    let totalRecipientesCount = 0;
+    const groupValues = groups ? Object.values(groups) : [];
+
+    if (groupValues.length === 0) {
+      document.getElementById('det-tubes-total-count').textContent = '0 recipientes';
+      return;
+    }
+
+    groupValues.forEach(grp => {
+      let count = 1;
+      if (grp.colorTheme === 'amber' && grp.exams.length > 5) {
+        count = Math.ceil(grp.exams.length / 5);
+      } else if (grp.totalVolume > 5.0 && grp.uni === 'mL') {
+        count = Math.ceil(grp.totalVolume / 4.0);
+      }
+
+      totalRecipientesCount += count;
+      const totalVolFormatted = grp.totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + ' ' + grp.uni;
+
+      let colorBg = 'bg-slate-100';
+      let colorText = 'text-slate-900';
+      let colorBorder = 'border-slate-300';
+      let instKey = 'outros';
+
+      if (grp.colorTheme === 'purple') {
+        colorBg = 'bg-purple-100'; colorText = 'text-purple-900'; colorBorder = 'border-purple-300'; instKey = 'edta';
+      } else if (grp.colorTheme === 'blue') {
+        colorBg = 'bg-blue-100'; colorText = 'text-blue-900'; colorBorder = 'border-blue-300'; instKey = 'citrato';
+      } else if (grp.colorTheme === 'gray') {
+        colorBg = 'bg-slate-200'; colorText = 'text-slate-900'; colorBorder = 'border-slate-400'; instKey = 'fluoreto';
+      } else if (grp.colorTheme === 'yellow') {
+        colorBg = 'bg-yellow-100'; colorText = 'text-yellow-900'; colorBorder = 'border-yellow-300'; instKey = 'urina';
+      } else if (grp.colorTheme === 'orange') {
+        colorBg = 'bg-orange-100'; colorText = 'text-orange-900'; colorBorder = 'border-orange-300'; instKey = 'fezes';
+      } else if (grp.colorTheme === 'amber') {
+        colorBg = 'bg-amber-100'; colorText = 'text-amber-900'; colorBorder = 'border-amber-300'; instKey = 'soro';
+      }
+
+      const card = document.createElement('div');
+      card.className = `p-3 rounded-xl border flex flex-col justify-between ${colorBg} ${colorBorder} ${colorText} shadow-2xs font-mono space-y-2`;
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${grp.icon}</span>
+            <div>
+              <div class="font-extrabold text-xs leading-tight">${grp.tubo}</div>
+              <div class="text-[10px] font-bold opacity-80 mt-0.5">Material: ${grp.material}</div>
+            </div>
+          </div>
+          <div class="text-base font-black bg-white/90 px-2.5 py-1 rounded-lg border border-black/10 shadow-2xs shrink-0">
+            ${count}x
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] font-black border-t border-black/10 pt-1.5 mt-1">
+          <span class="opacity-75">Vol. Total Sugerido:</span>
+          <span class="bg-white/90 px-2 py-0.5 rounded text-emerald-950 font-extrabold">${totalVolFormatted}</span>
+        </div>
+      `;
+      tubesSummaryGrid.appendChild(card);
+
+      const inst = document.createElement('div');
+      inst.className = 'flex items-start gap-2 p-2 rounded-lg bg-white/80 border border-rose-100 text-xs text-slate-800';
+      inst.innerHTML = `
+        <span class="text-base leading-none">${grp.icon}</span>
+        <div>
+          <strong class="font-black text-rose-950">${grp.tubo} (${grp.material}):</strong> ${instructionsMap[instKey] || instructionsMap.outros}
+        </div>
+      `;
+      tubesInstructionsList.appendChild(inst);
+    });
+
+    document.getElementById('det-tubes-total-count').textContent = `${totalRecipientesCount} recipiente(s)`;
+  }
+
+  // --- AÇÃO DE CONFIRMAR COLETA ---
+  async function confirmarColetaFinalizada() {
+    if (!selectedReqId) return;
+
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req) return;
+
+    const obsColeta = document.getElementById('det-coleta-obs').value;
+
+    if (!confirm(`Deseja confirmar a realização da coleta das amostras para o paciente "${req.patientName}"?`)) {
+      return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-coleta');
+    btn.disabled = true;
+    btn.innerHTML = `<span>⏳</span> Salvando...`;
+
+    try {
+      const response = await fetch('/admin/requisicoes/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedReqId,
+          status: 'Coletado',
+          coletaObs: obsColeta
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Atualiza status local
+        req.status = 'Coletado';
+        req.collectedAt = data.collectedAt || new Date().toISOString();
+        
+        // Notificação toast
+        alert(`✅ Coleta do paciente ${req.patientName} confirmada com sucesso! A amostra foi direcionada para a triagem técnica.`);
+
+        // Atualizar estatísticas e retornar para a listagem de seleção de pacientes
+        updateColetaStats();
+        clearSelectedColeta();
+      } else {
+        alert("Ocorreu um erro ao atualizar o status da coleta.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro na comunicação com o servidor.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<span>💉</span> Confirmar Coleta de Amostras`;
+    }
+  }
+
+  // --- CHAMAR PACIENTE ---
+  function triggerChamarPaciente() {
+    if (!selectedReqId) return;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req) return;
+
+    alert(`📢 Chamando paciente "${req.patientName}" (Req. #${req.requisitionCode || req.id}) para o Guichê de Coleta nº 01!`);
+  }
+
+  // --- AUXILIARES DA ETIQUETA ZEBRA (50x30mm) ---
+  function getPatientDN(req) {
+    if (!req) return '21/01/1983';
+    let birthDate = req.patientBirthDate || req.patientNascimento || req.nascimento || req.birthDate;
+
+    if (!birthDate && typeof globalPatients !== 'undefined' && Array.isArray(globalPatients)) {
+      const p = globalPatients.find(patient => 
+        (req.patientId && (patient.id === req.patientId || patient.code === req.patientId)) ||
+        (req.patientCpf && patient.cpf && patient.cpf.replace(/\D/g, '') === req.patientCpf.replace(/\D/g, '')) ||
+        (req.patientName && patient.name && patient.name.trim().toLowerCase() === req.patientName.trim().toLowerCase())
+      );
+      if (p) {
+        birthDate = p.birthDate || p.nascimento || p.dataNascimento;
+      }
+    }
+
+    if (!birthDate) return '21/01/1983';
+
+    const clean = String(birthDate).trim();
+    if (clean.includes('-')) {
+      const parts = clean.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      }
+    }
+    return clean;
+  }
+
+  function getExamSetorName(ex) {
+    if (!ex) return 'Externo';
+    const fullExam = (typeof globalExams !== 'undefined' && Array.isArray(globalExams))
+      ? globalExams.find(e => e.code === ex.code || e.id === ex.id || (e.jalisCode && e.jalisCode === ex.code) || e.name === ex.name) || ex
+      : ex;
+
+    // 1. Procurar na aba Setores do cadastro do exame (fullExam.setores)
+    if (Array.isArray(fullExam.setores) && fullExam.setores.length > 0) {
+      for (const s of fullExam.setores) {
+        if (typeof s === 'object' && s !== null) {
+          const desc = s.descricao || s.nome || s.sigla;
+          if (desc && desc.trim()) return desc.trim();
+        } else if (typeof s === 'string' && s.trim()) {
+          return s.trim();
+        }
+      }
+    }
+
+    // 2. Fallbacks caso o exame não tenha setor cadastrado na aba Setores
+    if (Array.isArray(fullExam.materiaisColetados) && fullExam.materiaisColetados.length > 0) {
+      const mat = fullExam.materiaisColetados[0];
+      if (mat.setorBancada) return mat.setorBancada;
+    }
+    if (fullExam.setorBancada) return fullExam.setorBancada;
+    if (fullExam.category) return fullExam.category;
+    if (ex.category) return ex.category;
+
+    return 'Externo';
+  }
+
+  function getExamTubeName(ex) {
+    if (!ex) return 'Lamina';
+    const fullExam = (typeof globalExams !== 'undefined' && Array.isArray(globalExams))
+      ? globalExams.find(e => e.code === ex.code || e.name === ex.name || (e.jalisCode && e.jalisCode === ex.code)) || ex
+      : ex;
+
+    if (Array.isArray(fullExam.materiaisColetados) && fullExam.materiaisColetados.length > 0) {
+      const mat = fullExam.materiaisColetados[0];
+      if (Array.isArray(mat.recipientesColeta) && mat.recipientesColeta.length > 0) {
+        const rec = mat.recipientesColeta[0];
+        if (rec.nome) return rec.nome;
+      }
+      if (mat.recipiente) return mat.recipiente;
+      if (mat.nome) return mat.nome;
+    }
+
+    if (fullExam.tubo) return fullExam.tubo;
+    if (fullExam.recipiente) return fullExam.recipiente;
+    if (ex.tubo) return ex.tubo;
+
+    return 'Lamina';
+  }
+
+  function getReqDateTimeStr(req) {
+    let dateStr = '';
+    let timeStr = '';
+
+    if (req.fatura) dateStr = req.fatura;
+    if (req.hora) timeStr = req.hora;
+
+    if (!dateStr || !timeStr) {
+      if (req.createdAt) {
+        const parts = String(req.createdAt).split(',');
+        if (parts[0]) dateStr = dateStr || parts[0].trim();
+        if (parts[1]) {
+          const timeParts = parts[1].trim().split(':');
+          if (timeParts.length >= 2) {
+            timeStr = timeStr || `${timeParts[0]}:${timeParts[1]}`;
+          }
+        }
+      }
+    }
+
+    const now = new Date();
+    if (!dateStr) dateStr = '28/07/2026';
+    if (!timeStr) timeStr = '14:13';
+
+    return { dateStr, timeStr };
+  }
+
+  function renderBarcodeCode128(svgElem, text) {
+    if (!svgElem) return;
+    if (typeof JsBarcode === 'function') {
+      try {
+        JsBarcode(svgElem, text, {
+          format: "CODE128",
+          height: 38,
+          width: 1.6,
+          displayValue: false,
+          margin: 0
+        });
+        return;
+      } catch(e) {}
+    }
+
+    const patterns = [
+      "212222","222122","222221","121223","121322","131222","122213","122312","132212","221213",
+      "221312","231212","112232","122132","122231","113222","123122","123221","223211","221132",
+      "221231","213212","223112","312131","311222","321122","321221","312212","322112","322211",
+      "212123","212321","232121","111323","131123","131321","112313","132113","132311","211313",
+      "231113","231311","112133","112331","132131","113123","113321","133121","313121","211331",
+      "231131","213113","213311","213131","311123","311321","331121","312113","312311","332111",
+      "314111","221411","431111","111224","111422","121124","121421","141122","141221","112214",
+      "112412","122114","122411","142112","142411","241211","221114","411112","421111","211142",
+      "214112","412112","111114","111411","114111","114212","124112","124211","411211","421112",
+      "421211","212141","214121","412121","111143","111341","131141","114113","114311","411113",
+      "411311","113141","114131","311141","411131","211412","211214","211232","2331112"
+    ];
+    let code = [104];
+    let checkSum = 104;
+    for (let i = 0; i < text.length; i++) {
+      const charCode = text.charCodeAt(i) - 32;
+      if (charCode >= 0 && charCode <= 94) {
+        code.push(charCode);
+        checkSum += charCode * (i + 1);
+      }
+    }
+    checkSum = checkSum % 103;
+    code.push(checkSum);
+    code.push(106);
+
+    let barStr = "";
+    code.forEach(idx => { barStr += patterns[idx] || ""; });
+
+    let rects = "";
+    let x = 0;
+    for (let i = 0; i < barStr.length; i++) {
+      const width = parseInt(barStr[i], 10);
+      if (i % 2 === 0) {
+        rects += `<rect x="${x}" y="0" width="${width * 1.5}" height="38" fill="#000" />`;
+      }
+      x += width * 1.5;
+    }
+    svgElem.setAttribute("viewBox", `0 0 ${x} 38`);
+    svgElem.innerHTML = rects;
+  }
+
+  // --- AUXILIAR: OBTER CÓDIGO DO SETOR DO EXAME (2 DÍGITOS) ---
+  function getExamSetorCodigo(ex) {
+    if (!ex) return '01';
+
+    const fullExam = (typeof globalExams !== 'undefined' && Array.isArray(globalExams))
+      ? globalExams.find(e => e.code === ex.code || e.name === ex.name || (e.jalisCode && e.jalisCode === ex.code)) || ex
+      : ex;
+
+    let targetSetorName = '';
+    let targetSetorCode = '';
+
+    // 1. Array 'setores' do exame
+    if (Array.isArray(fullExam.setores) && fullExam.setores.length > 0) {
+      const firstSetor = fullExam.setores[0];
+      if (typeof firstSetor === 'object' && firstSetor !== null) {
+        if (firstSetor.codigo) targetSetorCode = String(firstSetor.codigo);
+        if (firstSetor.descricao) targetSetorName = String(firstSetor.descricao);
+      } else if (typeof firstSetor === 'string') {
+        targetSetorName = firstSetor;
+      }
+    }
+
+    // 2. Outras propriedades (setorBancada, category)
+    if (!targetSetorName && !targetSetorCode) {
+      if (Array.isArray(fullExam.materiaisColetados) && fullExam.materiaisColetados.length > 0) {
+        const mat = fullExam.materiaisColetados[0];
+        if (mat.setorBancada) targetSetorName = mat.setorBancada;
+      }
+      if (!targetSetorName && fullExam.setorBancada) {
+        targetSetorName = fullExam.setorBancada;
+      }
+      if (!targetSetorName && fullExam.category) {
+        targetSetorName = fullExam.category;
+      }
+      if (!targetSetorName && ex.category) {
+        targetSetorName = ex.category;
+      }
+    }
+
+    // 3. Buscar no array globalSetores do cadastro
+    if (typeof globalSetores !== 'undefined' && Array.isArray(globalSetores) && globalSetores.length > 0) {
+      if (targetSetorCode) {
+        const matchByCode = globalSetores.find(s => String(s.codigo) === targetSetorCode || String(s.id) === targetSetorCode);
+        if (matchByCode) return String(matchByCode.codigo).padStart(2, '0');
+      }
+
+      if (targetSetorName) {
+        const cleanTarget = targetSetorName.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const matchByName = globalSetores.find(s => {
+          const desc = String(s.descricao || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const sigla = String(s.sigla || '').trim().toLowerCase();
+          return desc === cleanTarget || cleanTarget.includes(desc) || desc.includes(cleanTarget) || (sigla && sigla === cleanTarget);
+        });
+        if (matchByName) {
+          return String(matchByName.codigo).padStart(2, '0');
+        }
+      }
+    }
+
+    // 4. Mapeamento fallback caso o nome não estivesse idêntico ao cadastro
+    if (targetSetorName) {
+      const norm = targetSetorName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (norm.includes('hemato')) return '01';
+      if (norm.includes('bioquim')) return '02';
+      if (norm.includes('imuno')) return '03';
+      if (norm.includes('endocrin') || norm.includes('hormon')) return '04';
+      if (norm.includes('bacterio') || norm.includes('microbio')) return '05';
+      if (norm.includes('toxico')) return '06';
+      if (norm.includes('citolog')) return '07';
+      if (norm.includes('seminal') || norm.includes('esperm')) return '08';
+      if (norm.includes('uroan') || norm.includes('urinal') || norm.includes('urina')) return '09';
+      if (norm.includes('parasit') || norm.includes('fezes')) return '10';
+      if (norm.includes('externo') || norm.includes('apoio')) return '11';
+      if (norm.includes('coagul')) return '12';
+    }
+
+    return '01';
+  }
+
+  // --- ESTADO GLOBAL DE GRUPOS DE ETIQUETAS E QUANTIDADES ---
+  window.activeLabelGroups = [];
+
+  function changeLabelQty(idx, delta) {
+    if (!window.activeLabelGroups || !window.activeLabelGroups[idx]) return;
+    const item = window.activeLabelGroups[idx];
+    item.currentQty = Math.max(1, item.currentQty + delta);
+
+    const valElem = document.getElementById(`label-qty-val-${idx}`);
+    if (valElem) valElem.textContent = item.currentQty;
+
+    renderLabelCopies(idx);
+  }
+
+  function renderLabelCopies(idx) {
+    const item = window.activeLabelGroups[idx];
+    if (!item) return;
+
+    const copiesContainer = document.getElementById(`label-copies-container-${idx}`);
+    if (!copiesContainer) return;
+
+    copiesContainer.innerHTML = '';
+
+    const primaryExam = item.grp.exams[0];
+    const setorCode2Digits = getExamSetorCodigo(primaryExam);
+    const barcodeTag = `01-${item.reqCode8Digits}-${setorCode2Digits}`;
+    const setorName = getExamSetorName(primaryExam);
+    const tuboName = item.grp.tubo || getExamTubeName(primaryExam);
+
+    const rawCodes = item.grp.exams.map(e => e.code || e.jalisCode || e.name).filter(Boolean);
+    const uniqueCodes = [...new Set(rawCodes)];
+
+    const examCodesHtml = uniqueCodes
+      .map(c => `<span class="inline-block whitespace-nowrap">${c}</span>`)
+      .join('<span class="text-slate-400 font-normal">,</span> ');
+
+    for (let copyIdx = 0; copyIdx < item.currentQty; copyIdx++) {
+      const svgId = `barcode-svg-label-${idx}-${copyIdx}`;
+      const card = document.createElement('div');
+      card.className = 'zebra-label-card relative bg-white border-2 border-slate-300 rounded-xl p-3 sm:p-3.5 font-mono text-slate-900 shadow-sm min-h-[175px] flex flex-col justify-between overflow-hidden my-2';
+      card.innerHTML = `
+        <!-- Topo: Setor (da aba Setores do exame) e Material à Esquerda | Data, Hora e DN à Direita -->
+        <div class="flex items-start justify-between pr-7">
+          <div class="flex flex-col items-start gap-0.5">
+            <span class="bg-black text-white font-black text-xs px-2 py-0.5 rounded tracking-wide uppercase inline-block">
+              ${setorName}
+            </span>
+            <span class="text-xs font-bold text-slate-900 pl-0.5 truncate max-w-[150px]">
+              ${item.grp.material || 'Diversos'}
+            </span>
+          </div>
+
+          <div class="text-right text-[11px] font-bold font-mono text-slate-900 leading-tight">
+            <div>${item.dateTime.dateStr}</div>
+            <div>${item.dateTime.timeStr}</div>
+            <div>DN: ${item.patientDN}</div>
+          </div>
+        </div>
+
+        <!-- Nome do Tubo na Margem Direita (Vertical) -->
+        <div class="absolute right-1 top-2 bottom-2 w-6 flex items-center justify-center font-bold text-slate-900 text-xs font-mono select-none" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+          ${tuboName}
+        </div>
+
+        <!-- Nome do Paciente e Códigos de Exame (Multilinha com flex-wrap sem quebrar layout) -->
+        <div class="my-1 pr-7">
+          <div class="text-sm font-black text-slate-900 leading-tight truncate">
+            ${item.patientName}
+          </div>
+          <div class="text-xs font-bold font-mono text-slate-900 uppercase mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug break-words max-w-full">
+            ${examCodesHtml}
+          </div>
+        </div>
+
+        <!-- Código de Barras e Laboratório -->
+        <div class="flex flex-col items-center justify-center pt-1 border-t border-gray-200 pr-5">
+          <svg id="${svgId}" class="w-full max-w-[210px] h-10 my-0.5"></svg>
+          <div class="text-xs font-black font-mono text-black tracking-wider leading-none mt-0.5">
+            ${barcodeTag}
+          </div>
+          <div class="text-[10px] font-bold text-slate-800 tracking-wider uppercase mt-0.5">
+            Laboratorio
+          </div>
+        </div>
+      `;
+
+      copiesContainer.appendChild(card);
+
+      setTimeout(() => {
+        const svgElem = document.getElementById(svgId);
+        if (svgElem) renderBarcodeCode128(svgElem, barcodeTag);
+      }, 50);
+    }
+  }
+
+  // --- MODAL DE IMPRESSÃO DE ETIQUETAS ---
+  function openLabelPrintModal(filterTubo, filterMaterial) {
+    if (!selectedReqId) return;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req) return;
+
+    const container = document.getElementById('labels-preview-container');
+    container.innerHTML = '';
+
+    let reqExams = req.exams || [];
+    if (filterTubo && filterMaterial) {
+      reqExams = reqExams.filter(ex => {
+        const info = getExamTubeAndMaterialInfo(ex);
+        return info.tubo === filterTubo && info.material === filterMaterial;
+      });
+    }
+
+    if (reqExams.length === 0) {
+      alert("Nenhum exame encontrado para os filtros selecionados.");
+      return;
+    }
+
+    // Código da requisição formatado com 8 dígitos (ex: 00001005)
+    const rawReqCode = String(req.requisitionCode || req.id || '1').replace(/\D/g, '');
+    const reqCode8Digits = rawReqCode ? rawReqCode.padStart(8, '0') : '00000001';
+    const patientDN = getPatientDN(req);
+    const dateTime = getReqDateTimeStr(req);
+
+    // Agrupar os exames por Tubo e Material para que cada tubo físico tenha 1 etiqueta com seus exames
+    const tubeGroups = {};
+    reqExams.forEach(ex => {
+      const info = getExamTubeAndMaterialInfo(ex);
+      const groupKey = `${info.tubo}___${info.material}`;
+      if (!tubeGroups[groupKey]) {
+        tubeGroups[groupKey] = {
+          tubo: info.tubo,
+          material: info.material,
+          exams: []
+        };
+      }
+      tubeGroups[groupKey].exams.push(ex);
+    });
+
+    const groupKeys = Object.keys(tubeGroups);
+
+    window.activeLabelGroups = groupKeys.map((key, idx) => {
+      const grp = tubeGroups[key];
+      return {
+        idx,
+        grp,
+        suggestedQty: 1,
+        currentQty: 1,
+        reqCode8Digits,
+        patientDN,
+        dateTime,
+        patientName: req.patientName || 'PACIENTE'
+      };
+    });
+
+    window.activeLabelGroups.forEach((item, idx) => {
+      const tuboName = item.grp.tubo || getExamTubeName(item.grp.exams[0]);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bg-slate-50 border border-slate-200/90 rounded-2xl p-3 sm:p-4 mb-4 space-y-3';
+      wrapper.innerHTML = `
+        <!-- Painel Superior de Controle da Etiqueta (Oculto na Impressão) -->
+        <div class="no-print flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black font-mono text-slate-800 bg-rose-50 text-rose-900 px-2.5 py-1 rounded-lg border border-rose-200/80 flex items-center gap-1.5">
+              <span>🧪</span> ${tuboName}
+            </span>
+            <span class="text-xs text-slate-500 font-bold truncate max-w-[180px]">
+              (${item.grp.material || 'Diversos'})
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-3 bg-slate-100/90 px-3 py-1.5 rounded-xl border border-slate-200">
+            <div class="flex items-center gap-1 text-[11px] font-bold text-slate-600">
+              <span>Qtd. Sugerida:</span>
+              <span class="bg-white text-slate-800 font-black px-1.5 py-0.5 rounded border border-slate-200 text-xs">
+                ${item.suggestedQty}
+              </span>
+            </div>
+
+            <div class="h-4 w-px bg-slate-300"></div>
+
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-extrabold text-slate-700">Ajustar:</span>
+              <button type="button" onclick="changeLabelQty(${idx}, -1)" class="w-7 h-7 bg-white hover:bg-rose-50 hover:text-rose-600 active:scale-95 text-slate-800 font-black rounded-lg border border-slate-300 text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" title="Diminuir quantidade de etiquetas">
+                -
+              </button>
+              <span id="label-qty-val-${idx}" class="w-8 text-center font-mono font-black text-xs text-slate-900 bg-white px-1 py-1 rounded-md border border-slate-200 shadow-2xs">
+                ${item.currentQty}
+              </span>
+              <button type="button" onclick="changeLabelQty(${idx}, 1)" class="w-7 h-7 bg-white hover:bg-emerald-50 hover:text-emerald-600 active:scale-95 text-slate-800 font-black rounded-lg border border-slate-300 text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" title="Aumentar quantidade de etiquetas">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Container onde as N etiquetas do tubo serão renderizadas -->
+        <div id="label-copies-container-${idx}" class="space-y-3"></div>
+      `;
+
+      container.appendChild(wrapper);
+      renderLabelCopies(idx);
+    });
+
+    document.getElementById('modalPrintLabels').classList.remove('hidden');
+    setPrintMode(window.currentPrintMode || 'a4');
+  }
+
+  window.currentPrintMode = 'a4';
+
+  function setPrintMode(mode) {
+    window.currentPrintMode = mode || 'a4';
+    const modal = document.getElementById('modalPrintLabels');
+    if (modal) {
+      modal.classList.remove('print-type-a4', 'print-type-zebra');
+      modal.classList.add(`print-type-${window.currentPrintMode}`);
+    }
+
+    const select = document.getElementById('selectPrintMode');
+    if (select && select.value !== window.currentPrintMode) {
+      select.value = window.currentPrintMode;
+    }
+  }
+
+  function closeLabelPrintModal() {
+    document.getElementById('modalPrintLabels').classList.add('hidden');
+  }
+
+  function simulateZebraPrint() {
+    setPrintMode(window.currentPrintMode || 'a4');
+    window.print();
+  }
+
+  // --- GERENCIAMENTO DE STATUS DE EXAMES (INDIVIDUAL, GRUPO E GLOBAL) ---
+
+  function openChangeExamStatusModal(examCode) {
+    targetExamCodeForEdit = examCode;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req) return;
+    const ex = (req.exams || []).find(e => (e.code || e.id) === examCode);
+    const examName = ex ? (ex.name || ex.code) : examCode;
+
+    const modalTitle = document.getElementById('modal-exam-title');
+    if (modalTitle) {
+      modalTitle.textContent = `Exame: ${examCode} - ${examName}`;
+    }
+    const modal = document.getElementById('modalChangeExamStatus');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeChangeExamStatusModal() {
+    targetExamCodeForEdit = null;
+    const modal = document.getElementById('modalChangeExamStatus');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  async function applyNewExamStatus(newStatus) {
+    if (!selectedReqId || !targetExamCodeForEdit) return;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req || !Array.isArray(req.exams)) return;
+
+    const exIndex = req.exams.findIndex(e => (e.code || e.id) === targetExamCodeForEdit);
+    if (exIndex !== -1) {
+      req.exams[exIndex].status = newStatus;
+      await syncExamsToBackend(req.id, req.exams);
+    }
+
+    closeChangeExamStatusModal();
+    selectRequisitionToCollect(selectedReqId);
+  }
+
+  async function coletarTodosDoGrupo(tubo, material) {
+    if (!selectedReqId) return;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req || !Array.isArray(req.exams)) return;
+
+    let changedCount = 0;
+    req.exams.forEach(ex => {
+      const info = getExamTubeAndMaterialInfo(ex);
+      if (info.tubo === tubo && info.material === material) {
+        const currentStatus = ex.status ? String(ex.status).trim() : 'A Coletar';
+        if (currentStatus === 'A Coletar') {
+          ex.status = 'Coletado';
+          changedCount++;
+        }
+      }
+    });
+
+    if (changedCount > 0) {
+      await syncExamsToBackend(req.id, req.exams);
+      selectRequisitionToCollect(selectedReqId);
+    } else {
+      alert("Nenhum exame pendente ('A Coletar') foi encontrado neste grupo.");
+    }
+  }
+
+  async function coletarTodosOsExames() {
+    if (!selectedReqId) return;
+    const req = globalRequisitions.find(r => r.id === selectedReqId);
+    if (!req || !Array.isArray(req.exams)) return;
+
+    let changedCount = 0;
+    req.exams.forEach(ex => {
+      const currentStatus = ex.status ? String(ex.status).trim() : 'A Coletar';
+      if (currentStatus === 'A Coletar') {
+        ex.status = 'Coletado';
+        changedCount++;
+      }
+    });
+
+    if (changedCount > 0) {
+      await syncExamsToBackend(req.id, req.exams);
+      selectRequisitionToCollect(selectedReqId);
+    } else {
+      alert("Nenhum exame no status 'A Coletar' pendente nesta requisição.");
+    }
+  }
+
+  window.toggleTechInfoCard = function() {
+    const card = document.getElementById('det-tubes-card-container');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    if (isHidden) {
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      card.classList.add('hidden');
+    }
+  };
+
+  window.toggleObsCard = function() {
+    const card = document.getElementById('det-obs-card-container');
+    if (!card) return;
+    const isHidden = card.classList.contains('hidden');
+    if (isHidden) {
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = document.getElementById('det-coleta-obs');
+      if (input) input.focus();
+    } else {
+      card.classList.add('hidden');
+    }
+  };
+
+  async function syncExamsToBackend(reqId, exams) {
+    try {
+      const response = await fetch('/admin/requisicoes/update-exams-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reqId, exams })
+      });
+      const data = await response.json();
+      if (data.success) {
+        const req = globalRequisitions.find(r => r.id === reqId);
+        if (req) {
+          if (data.status) req.status = data.status;
+          if (data.exams) req.exams = data.exams;
+          if (data.collectedAt) req.collectedAt = data.collectedAt;
+        }
+        updateColetaStats();
+      }
+    } catch (err) {
+      console.error("Erro ao sincronizar status dos exames:", err);
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

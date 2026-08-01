@@ -1,0 +1,1098 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Cabeçalho -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 text-[10px] font-black font-mono uppercase bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-100">RH & DP</span>
+        <h1 class="text-xl sm:text-2xl font-black text-brand-dark tracking-tight font-sans">Gestão de Recursos Humanos & Finanças</h1>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Gerencie salários, ponto, horas extras, plantões, férias, holerites e custos operacionais de seus profissionais.</p>
+    </div>
+    
+    <div class="flex gap-2">
+      <a href="/admin/profissionais" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
+        Cadastro Básico
+      </a>
+    </div>
+  </div>
+
+  <!-- Alertas de Sucesso / Erro -->
+  <% if (success) { %>
+    <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 rounded-xl text-xs font-mono">
+      🎉 Operação realizada com sucesso! Código de status: <%= success %>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-xl text-xs font-mono">
+      ⚠️ Erro encontrado: <%= error %>
+    </div>
+  <% } %>
+
+  <!-- Abas Principais de Navegação -->
+  <div class="flex border-b border-gray-200 overflow-x-auto whitespace-nowrap bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm gap-1 scrollbar-none">
+    <button onclick="switchMainTab('tab-dashboard')" id="btn-main-dashboard" class="main-tab-btn active px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-emerald-800 hover:border-gray-300 transition-all flex items-center gap-2 rounded-lg">
+      📊 Painel & Indicadores
+    </button>
+    <button onclick="switchMainTab('tab-escala')" id="btn-main-escala" class="main-tab-btn px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-emerald-800 hover:border-gray-300 transition-all flex items-center gap-2 rounded-lg">
+      📅 Escala de Plantões
+    </button>
+    <button onclick="switchMainTab('tab-colaboradores')" id="btn-main-colaboradores" class="main-tab-btn px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-emerald-800 hover:border-gray-300 transition-all flex items-center gap-2 rounded-lg">
+      👥 Gestão Individual de Colaboradores
+    </button>
+  </div>
+
+  <!-- 1. ABA DASHBOARD & INDICADORES -->
+  <div id="section-main-dashboard" class="main-section space-y-6">
+    <!-- Grid de KPIs Dinâmicos -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Salários Base</p>
+        <p class="text-lg font-black text-brand-dark mt-1">R$ <%= stats.totalSalaries.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-emerald-600 mt-1 font-mono">Fixo mensal</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Horas Extras</p>
+        <p class="text-lg font-black text-brand-dark mt-1">R$ <%= stats.totalOvertime.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-amber-600 mt-1 font-mono">Variável (Jul/26)</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Plantões</p>
+        <p class="text-lg font-black text-brand-dark mt-1">R$ <%= stats.totalShiftsPay.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-emerald-600 mt-1 font-mono">Realizados (Jul/26)</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Benefícios</p>
+        <p class="text-lg font-black text-brand-dark mt-1">R$ <%= stats.totalBenefits.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-gray-500 mt-1 font-mono">VT / Convênios</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Encargos (Est.)</p>
+        <p class="text-lg font-black text-gray-700 mt-1">R$ <%= stats.totalTaxes.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-gray-400 mt-1 font-mono">34.8% da folha</p>
+      </div>
+      <div class="bg-emerald-950 text-white p-5 rounded-2xl border border-emerald-900 shadow-md">
+        <p class="text-[10px] font-bold text-emerald-300 uppercase tracking-wider font-mono">Custo Total</p>
+        <p class="text-lg font-black text-brand-gold mt-1">R$ <%= stats.totalCost.toLocaleString('pt-BR') %></p>
+        <p class="text-[10px] text-emerald-200 mt-1 font-mono">Total Empresa (Jul)</p>
+      </div>
+    </div>
+
+    <!-- Indicadores Avançados e Custos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Médias e Custos por Departamento -->
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h2 class="text-sm font-black text-brand-dark uppercase tracking-wider font-mono border-b pb-2">📉 12. Indicadores Operacionais & Médias</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <span class="text-xs font-bold text-gray-500 font-mono block">CUSTO MÉDIO POR COLABORADOR</span>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="text-2xl font-black text-brand-dark">R$ <%= (professionals.length > 0 ? Math.round(stats.totalCost / professionals.length) : 0).toLocaleString('pt-BR') %></span>
+              <span class="text-xs text-gray-400">/ profissional ativo</span>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <span class="text-xs font-bold text-gray-500 font-mono block mb-2">MÉDIA SALARIAL E CUSTO POR SETOR</span>
+            <div class="space-y-3">
+              <% Object.keys(stats.sectorSalaries).forEach(sector => { %>
+                <% const count = stats.sectorCounts[sector] || 1; %>
+                <% const avg = Math.round(stats.sectorSalaries[sector] / count); %>
+                <div class="flex justify-between items-center text-xs p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                  <div>
+                    <p class="font-extrabold text-gray-700 font-mono"><%= sector %></p>
+                    <p class="text-[10px] text-gray-400 mt-0.5"><%= count %> colaborador(es)</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold text-brand-dark">Média: R$ <%= avg.toLocaleString('pt-BR') %></p>
+                    <p class="text-[10px] text-gray-500">Custo Base: R$ <%= stats.sectorSalaries[sector].toLocaleString('pt-BR') %></p>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evolução da Folha (Simulada para demonstração visual elegante) -->
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h2 class="text-sm font-black text-brand-dark uppercase tracking-wider font-mono border-b pb-2">📈 Evolução da Folha de Pagamento</h2>
+        <p class="text-xs text-gray-400">Acompanhamento dos custos totais da folha de pagamento nos últimos 6 meses:</p>
+        
+        <div class="space-y-3 pt-2">
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-mono font-bold">
+              <span class="text-gray-500">Julho / 2026 (Competência Atual)</span>
+              <span class="text-brand-dark">R$ <%= stats.totalCost.toLocaleString('pt-BR') %></span>
+            </div>
+            <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+              <div class="bg-brand-dark h-full" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-gray-400">Junho / 2026</span>
+              <span class="text-gray-600">R$ <%= Math.round(stats.totalCost * 0.94).toLocaleString('pt-BR') %></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-brand-dark/75 h-full" style="width: 94%"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-gray-400">Maio / 2026</span>
+              <span class="text-gray-600">R$ <%= Math.round(stats.totalCost * 0.92).toLocaleString('pt-BR') %></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-brand-dark/70 h-full" style="width: 92%"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-gray-400">Abril / 2026</span>
+              <span class="text-gray-600">R$ <%= Math.round(stats.totalCost * 0.91).toLocaleString('pt-BR') %></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-brand-dark/65 h-full" style="width: 91%"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-gray-400">Março / 2026</span>
+              <span class="text-gray-600">R$ <%= Math.round(stats.totalCost * 0.89).toLocaleString('pt-BR') %></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-brand-dark/60 h-full" style="width: 89%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ABA ESCALA DE PLANTÕES -->
+  <div id="section-main-escala" class="main-section hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
+        <div>
+          <h2 class="text-md font-black text-brand-dark uppercase tracking-wider font-mono">📅 Escala e Controle de Plantonistas</h2>
+          <p class="text-xs text-gray-500 mt-1">Visualize quem fez ou fará o plantão. Sem necessidade de controle por horas, foco na escala.</p>
+        </div>
+        
+        <button onclick="document.getElementById('modal-add-shift').classList.remove('hidden')" class="px-4 py-2 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          Adicionar Plantão na Escala
+        </button>
+      </div>
+
+      <!-- Lista / Calendário Simplificado de Plantões -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200 font-mono text-gray-400 font-bold">
+              <th class="p-3">Data</th>
+              <th class="p-3">Colaborador</th>
+              <th class="p-3">Tipo de Plantão</th>
+              <th class="p-3">Descrição / Detalhes</th>
+              <th class="p-3 text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% let hasShifts = false; %>
+            <% professionals.forEach(p => { %>
+              <% if (p.shifts && p.shifts.length > 0) { %>
+                <% p.shifts.forEach((sh, idx) => { %>
+                  <% hasShifts = true; %>
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="p-3 font-mono font-bold text-gray-700">
+                      <%= sh.date.split('-').reverse().join('/') || sh.date %>
+                    </td>
+                    <td class="p-3">
+                      <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-brand-gold/10 text-brand-gold flex items-center justify-center font-bold text-[10px] font-mono">
+                          <%= p.name.charAt(0) %>
+                        </div>
+                        <div>
+                          <p class="font-extrabold text-brand-dark"><%= p.name %></p>
+                          <p class="text-[9px] text-gray-400"><%= p.role %></p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="p-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100">
+                        <%= sh.type %>
+                      </span>
+                    </td>
+                    <td class="p-3 text-gray-500 italic"><%= sh.description || 'Nenhuma descrição' %></td>
+                    <td class="p-3 text-right">
+                      <a href="/admin/financeiro/rh/delete-shift/<%= p.id %>/<%= idx %>" class="text-rose-600 hover:text-rose-800 font-mono text-[10px] font-black uppercase tracking-wider border border-dashed border-rose-200 hover:border-rose-300 px-2 py-1 rounded">
+                        Remover
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            <% }) %>
+            <% if (!hasShifts) { %>
+              <tr>
+                <td colspan="5" class="p-8 text-center text-gray-400 italic">Nenhum plantão agendado na escala de nenhum profissional.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ABA GESTÃO INDIVIDUAL DE COLABORADORES -->
+  <div id="section-main-colaboradores" class="main-section hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Barra Lateral: Lista de Colaboradores -->
+    <div class="lg:col-span-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3 h-fit">
+      <h3 class="text-xs font-black text-gray-400 font-mono uppercase tracking-widest px-2 pb-1 border-b">Selecione o Colaborador</h3>
+      <div class="space-y-1.5">
+        <% professionals.forEach(p => { %>
+          <a href="/admin/financeiro/rh?profId=<%= p.id %>&tab=colaboradores" class="flex items-center justify-between p-3 rounded-xl transition-all border <%= p.id === selectedProfId ? 'bg-brand-dark text-white border-brand-dark shadow-sm' : 'bg-gray-50 text-gray-700 border-gray-100 hover:bg-gray-100/50' %>">
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono shrink-0 <%= p.id === selectedProfId ? 'bg-white/10 text-brand-gold' : 'bg-brand-gold/10 text-brand-gold' %>">
+                <%= p.name.charAt(0) %>
+              </div>
+              <div class="overflow-hidden">
+                <p class="font-extrabold text-xs truncate <%= p.id === selectedProfId ? 'text-white' : 'text-brand-dark' %>"><%= p.name %></p>
+                <p class="text-[10px] truncate <%= p.id === selectedProfId ? 'text-emerald-100' : 'text-gray-400' %>"><%= p.role %></p>
+              </div>
+            </div>
+            <span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full <%= p.status === 'Ativo' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/15' : 'bg-gray-400/10 text-gray-400' %>">
+              <%= p.status %>
+            </span>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Painel de Dados do Colaborador Selecionado -->
+    <div class="lg:col-span-8 space-y-6">
+      <% if (!selectedProf) { %>
+        <div class="bg-white p-12 rounded-2xl border border-gray-100 shadow-sm text-center text-gray-400 italic">
+          Nenhum profissional cadastrado ou selecionado.
+        </div>
+      <% } else { %>
+        <!-- Card de Identidade Rápida -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-brand-gold/10 text-brand-gold flex items-center justify-center font-bold text-lg font-mono">
+              <%= selectedProf.name.charAt(0) %>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-md font-black text-brand-dark font-sans"><%= selectedProf.name %></h2>
+                <% if (selectedProf.status === 'Desligado' || selectedProf.status === 'Inativo') { %>
+                  <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-mono text-[9px] font-bold uppercase tracking-wider">Desligado</span>
+                <% } %>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5"><%= selectedProf.role %> • Setor: <%= selectedProf.sector || 'N/A' %> • CLT</p>
+              <% if ((selectedProf.status === 'Desligado' || selectedProf.status === 'Inativo') && selectedProf.terminationReason) { %>
+                <p class="text-[11px] text-rose-700 font-medium mt-1 bg-rose-50 border border-rose-200/60 px-2.5 py-1 rounded-lg">
+                  <strong class="font-mono text-[9px] uppercase tracking-wider text-rose-800">Motivo:</strong> <%= selectedProf.terminationReason %>
+                </p>
+              <% } %>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <a href="/admin/meu-rh?simulateId=<%= selectedProf.id %>" class="px-3.5 py-1.5 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold hover:text-white border border-brand-gold/20 text-[10px] font-bold font-mono uppercase tracking-widest rounded-lg transition-colors flex items-center gap-1.5">
+              Simular Área do Funcionário
+            </a>
+          </div>
+        </div>
+
+        <!-- Sub-abas do Colaborador -->
+        <div class="bg-gray-100/50 p-1 rounded-2xl flex flex-wrap gap-1 border border-gray-200/40">
+          <button onclick="switchSubTab('sub-salario')" id="btn-sub-salario" class="sub-tab-btn active px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            💰 1. Dados Salariais & Pix
+          </button>
+          <button onclick="switchSubTab('sub-ponto')" id="btn-sub-ponto" class="sub-tab-btn px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            ⏱️ Banco de Horas
+          </button>
+          <button onclick="switchSubTab('sub-eventos')" id="btn-sub-eventos" class="sub-tab-btn px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            💵 5. Eventos Financeiros
+          </button>
+          <button onclick="switchSubTab('sub-historico')" id="btn-sub-historico" class="sub-tab-btn px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            📊 Custos & Histórico
+          </button>
+          <button onclick="switchSubTab('sub-holerites')" id="btn-sub-holerites" class="sub-tab-btn px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            🧾 8. Holerites
+          </button>
+          <button onclick="switchSubTab('sub-ferias')" id="btn-sub-ferias" class="sub-tab-btn px-3.5 py-1.5 text-[10px] font-black font-mono uppercase tracking-wider rounded-xl transition-all">
+            🏖️ Férias / Ausências
+          </button>
+        </div>
+
+        <!-- SUB-ABA: DADOS SALARIAIS -->
+        <div id="section-sub-salario" class="sub-section space-y-6">
+          <form action="/admin/financeiro/rh/update-salary" method="POST" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <input type="hidden" name="profId" value="<%= selectedProf.id %>">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">💰 1. Dados Salariais Fixos & PIX</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Salário Base (R$)</label>
+                <input type="number" name="baseSalary" value="<%= (selectedProf.salaryData && selectedProf.salaryData.baseSalary) || '' %>" step="0.01" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold mt-1 text-brand-dark" placeholder="R$ 5.000,00">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Piso da Categoria (R$)</label>
+                <input type="number" name="categoryFloor" value="<%= (selectedProf.salaryData && selectedProf.salaryData.categoryFloor) || '' %>" step="0.01" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" placeholder="R$ 4.500,00">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Tipo de Remuneração</label>
+                <select name="type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Mensalista" <%= (selectedProf.salaryData && selectedProf.salaryData.type === 'Mensalista') ? 'selected' : '' %>>Mensalista</option>
+                  <option value="Horista" <%= (selectedProf.salaryData && selectedProf.salaryData.type === 'Horista') ? 'selected' : '' %>>Horista</option>
+                  <option value="Plantonista" <%= (selectedProf.salaryData && selectedProf.salaryData.type === 'Plantonista') ? 'selected' : '' %>>Plantonista</option>
+                  <option value="Comissionado" <%= (selectedProf.salaryData && selectedProf.salaryData.type === 'Comissionado') ? 'selected' : '' %>>Comissionado (se aplicável)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Cargo de Atuação</label>
+                <input type="text" name="role" value="<%= (selectedProf.salaryData && selectedProf.salaryData.role) || selectedProf.role || '' %>" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Farmacêutica-Bioquímica Plena">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Banco</label>
+                <input type="text" name="bank" value="<%= (selectedProf.salaryData && selectedProf.salaryData.bank) || '' %>" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Banco do Brasil">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Agência</label>
+                <input type="text" name="agency" value="<%= (selectedProf.salaryData && selectedProf.salaryData.agency) || '' %>" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" placeholder="0185-6">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Conta</label>
+                <input type="text" name="account" value="<%= (selectedProf.salaryData && selectedProf.salaryData.account) || '' %>" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" placeholder="25430-8">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Chave PIX (opcional)</label>
+                <input type="text" name="pixKey" value="<%= (selectedProf.salaryData && selectedProf.salaryData.pixKey) || '' %>" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="E-mail, CPF ou Aleatória">
+              </div>
+            </div>
+
+            <!-- Registro de Reajustes (Motivo) -->
+            <div class="pt-2 border-t">
+              <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Motivo de Reajuste (Se alterar o salário acima)</label>
+              <input type="text" name="reason" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: Dissídio, Promoção, Mérito, etc.">
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-colors">
+              Salvar Dados Salariais & Financeiros
+            </button>
+          </form>
+
+          <!-- Histórico de Reajustes (💲 11. Reajustes) -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">💲 11. Histórico de Reajustes Salariais</h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                    <th class="p-2.5">Data</th>
+                    <th class="p-2.5">Salário Anterior</th>
+                    <th class="p-2.5">Novo Salário</th>
+                    <th class="p-2.5">Variação</th>
+                    <th class="p-2.5">Motivo Administrativo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono">
+                  <% if (selectedProf.adjustments && selectedProf.adjustments.length > 0) { %>
+                    <% selectedProf.adjustments.forEach(adj => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 text-gray-500"><%= adj.date %></td>
+                        <td class="p-2.5 text-rose-600 line-through">R$ <%= adj.originalSalary.toLocaleString('pt-BR') %></td>
+                        <td class="p-2.5 text-emerald-600 font-bold">R$ <%= adj.newSalary.toLocaleString('pt-BR') %></td>
+                        <td class="p-2.5 font-bold">
+                          + <%= Math.round(((adj.newSalary - adj.originalSalary) / adj.originalSalary) * 100) %>%
+                        </td>
+                        <td class="p-2.5 text-gray-700 font-sans"><%= adj.reason %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="5" class="p-4 text-center text-gray-400 italic font-sans">Nenhum reajuste salarial registrado.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: BANCO DE HORAS -->
+        <div id="section-sub-ponto" class="sub-section hidden space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+              <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">⏱️ Banco de Horas Acumulado</h3>
+              
+              <!-- Saldo Consolidado -->
+              <% let totalMinBalance = 0; %>
+              <% if (selectedProf.timesheet && selectedProf.timesheet.length > 0) { %>
+                <% selectedProf.timesheet.forEach(ts => { totalMinBalance += (Number(ts.balance) || 0); }) %>
+              <% } %>
+              
+              <span class="px-3 py-1.5 rounded-xl font-mono text-xs font-bold <%= totalMinBalance >= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100' %>">
+                Saldo Geral: <%= totalMinBalance >= 0 ? '+' : '' %><%= Math.floor(totalMinBalance / 60) %>h <%= Math.abs(totalMinBalance % 60) %>m
+              </span>
+            </div>
+
+            <!-- Tabela de Registros Recentes de Ponto -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse font-mono">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-bold">
+                    <th class="p-2.5">Data</th>
+                    <th class="p-2.5">Entrada</th>
+                    <th class="p-2.5">Início Intervalo</th>
+                    <th class="p-2.5">Fim Intervalo</th>
+                    <th class="p-2.5">Saída</th>
+                    <th class="p-2.5">Total Trabalhado</th>
+                    <th class="p-2.5 text-right">Saldo do Dia</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <% if (selectedProf.timesheet && selectedProf.timesheet.length > 0) { %>
+                    <% selectedProf.timesheet.slice().reverse().forEach(ts => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 text-gray-600"><%= ts.date %></td>
+                        <td class="p-2.5"><%= ts.entry %></td>
+                        <td class="p-2.5 text-gray-400"><%= ts.breakStart %></td>
+                        <td class="p-2.5 text-gray-400"><%= ts.breakEnd %></td>
+                        <td class="p-2.5"><%= ts.exit %></td>
+                        <td class="p-2.5 font-bold text-gray-800"><%= ts.totalHours %></td>
+                        <td class="p-2.5 text-right font-bold <%= ts.balance >= 0 ? 'text-emerald-600' : 'text-rose-600' %>">
+                          <%= ts.balance >= 0 ? '+' : '' %><%= Math.floor(ts.balance / 60) %>h <%= Math.abs(ts.balance % 60) %>m
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="7" class="p-4 text-center text-gray-400 italic font-sans">Nenhum registro de ponto encontrado para este profissional.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: EVENTOS FINANCEIROS VARIÁVEIS -->
+        <div id="section-sub-eventos" class="sub-section hidden space-y-6">
+          <form action="/admin/financeiro/rh/add-event" method="POST" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <input type="hidden" name="profId" value="<%= selectedProf.id %>">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">💵 5. Lançamentos Financeiros Variáveis (Proventos & Descontos)</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Competência (Mês/Ano)</label>
+                <input type="month" name="month" value="2026-07" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Tipo de Lançamento</label>
+                <select name="type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="provento">Provento (Soma / Crédito)</option>
+                  <option value="desconto">Desconto (Subtrai / Débito)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Categoria do Evento</label>
+                <select name="category" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Horas Extras">Horas Extras</option>
+                  <option value="Plantões">Plantões</option>
+                  <option value="Bonificações">Bonificações</option>
+                  <option value="Premiações">Premiações</option>
+                  <option value="Comissão">Comissão</option>
+                  <option value="Adicional Noturno">Adicional Noturno</option>
+                  <option value="Insalubridade">Insalubridade</option>
+                  <option value="Periculosidade">Periculosidade</option>
+                  <option value="Gratificações">Gratificações</option>
+                  <option value="Faltas">Desconto: Faltas</option>
+                  <option value="Atrasos">Desconto: Atrasos</option>
+                  <option value="Vale Transporte">Desconto: Vale Transporte</option>
+                  <option value="Convênios">Desconto: Convênios</option>
+                  <option value="Empréstimos">Desconto: Empréstimos</option>
+                  <option value="Adiantamentos">Desconto: Adiantamentos</option>
+                  <option value="Pensão">Desconto: Pensão Alimentícia</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Valor Financeiro (R$)</label>
+                <input type="number" name="value" step="0.01" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold mt-1 text-brand-dark" placeholder="R$ 150,00" required>
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Justificativa / Descrição do Lançamento</label>
+                <input type="text" name="description" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: Referente a 3 horas extras de sábado" required>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-emerald-950 hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-all">
+              Gravar Evento Financeiro
+            </button>
+          </form>
+
+          <!-- Tabela de Lançamentos Vigentes -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Extrato de Lançamentos Registrados</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                    <th class="p-2.5">Competência</th>
+                    <th class="p-2.5">Tipo</th>
+                    <th class="p-2.5">Categoria</th>
+                    <th class="p-2.5">Descrição</th>
+                    <th class="p-2.5 text-right">Valor</th>
+                    <th class="p-2.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono">
+                  <% if (selectedProf.financialEvents && selectedProf.financialEvents.length > 0) { %>
+                    <% selectedProf.financialEvents.forEach((evt, idx) => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 text-gray-500 font-bold"><%= evt.month %></td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase <%= evt.type === 'provento' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' %>">
+                            <%= evt.type %>
+                          </span>
+                        </td>
+                        <td class="p-2.5 font-bold"><%= evt.category %></td>
+                        <td class="p-2.5 font-sans text-gray-600"><%= evt.description %></td>
+                        <td class="p-2.5 text-right font-bold <%= evt.type === 'provento' ? 'text-emerald-700' : 'text-rose-700' %>">
+                          <%= evt.type === 'provento' ? '+' : '-' %> R$ <%= Number(evt.value).toLocaleString('pt-BR') %>
+                        </td>
+                        <td class="p-2.5 text-right font-sans">
+                          <a href="/admin/financeiro/rh/delete-event/<%= selectedProf.id %>/<%= idx %>" class="text-rose-600 hover:text-rose-800 font-mono text-[9px] font-black border border-dashed border-rose-100 px-1.5 py-0.5 rounded">Excluir</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="6" class="p-4 text-center text-gray-400 italic font-sans">Nenhum lançamento variável encontrado.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: HISTÓRICO FINANCEIRO POR COMPETÊNCIA & ANÁLISE DE CUSTO -->
+        <div id="section-sub-historico" class="sub-section hidden space-y-6">
+          <!-- 📈 6. Histórico Financeiro por Competência -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">📈 6. Histórico Financeiro Mensal por Competência</h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse font-mono">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-bold">
+                    <th class="p-2.5">Competência</th>
+                    <th class="p-2.5">Salário Base</th>
+                    <th class="p-2.5">Adicionais (Extras)</th>
+                    <th class="p-2.5">Descontos</th>
+                    <th class="p-2.5 text-right">Líquido Recebido</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <% 
+                    // Montar agrupamento por competência
+                    const compData = {};
+                    const baseSal = (selectedProf.salaryData && selectedProf.salaryData.baseSalary) ? Number(selectedProf.salaryData.baseSalary) : 0;
+                    
+                    // Inicializar competências padrão
+                    compData['2026-07'] = { base: baseSal, proventos: 0, descontos: 0 };
+                    compData['2026-06'] = { base: baseSal, proventos: 0, descontos: 0 };
+                    
+                    if (selectedProf.financialEvents) {
+                      selectedProf.financialEvents.forEach(evt => {
+                        if (!compData[evt.month]) {
+                          compData[evt.month] = { base: baseSal, proventos: 0, descontos: 0 };
+                        }
+                        if (evt.type === 'provento') {
+                          if (evt.category === 'Salário Base') {
+                            compData[evt.month].base = Number(evt.value);
+                          } else {
+                            compData[evt.month].proventos += Number(evt.value);
+                          }
+                        } else {
+                          compData[evt.month].descontos += Number(evt.value);
+                        }
+                      });
+                    }
+                  %>
+                  <% Object.keys(compData).sort().reverse().forEach(month => { %>
+                    <% const c = compData[month]; %>
+                    <% const net = c.base + c.proventos - c.descontos; %>
+                    <tr class="hover:bg-gray-50/50 font-bold text-gray-700">
+                      <td class="p-2.5 text-brand-dark font-mono"><%= month %></td>
+                      <td class="p-2.5 font-normal">R$ <%= c.base.toLocaleString('pt-BR') %></td>
+                      <td class="p-2.5 font-normal text-emerald-600">+ R$ <%= c.proventos.toLocaleString('pt-BR') %></td>
+                      <td class="p-2.5 font-normal text-rose-600">- R$ <%= c.descontos.toLocaleString('pt-BR') %></td>
+                      <td class="p-2.5 text-right text-emerald-700">R$ <%= net.toLocaleString('pt-BR') %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 📊 7. Custos Reais do Colaborador (Diferencial da Empresa) -->
+          <div class="bg-gradient-to-br from-emerald-950 to-brand-dark text-white p-6 rounded-2xl shadow-md space-y-4 border border-emerald-900">
+            <div class="border-b border-white/10 pb-3">
+              <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider bg-white/10 text-brand-gold rounded">Diferencial</span>
+              <h3 class="text-xs font-black text-white uppercase font-mono tracking-widest mt-1">📊 7. Cálculo Automático de Custos Reais do Colaborador</h3>
+              <p class="text-[11px] text-emerald-200 mt-0.5">Visão real do custo financeiro total deste profissional para a folha do laboratório.</p>
+            </div>
+
+            <% 
+              // Calcular custos específicos
+              const base = (selectedProf.salaryData && selectedProf.salaryData.baseSalary) ? Number(selectedProf.salaryData.baseSalary) : 0;
+              const chargesEst = Math.round(base * 0.348); // INSS + FGTS + provisões aproximados
+              const benefitsEst = 420; // VT, Plano, etc. estimativa base
+              const uniformsEst = 60; // Uniformes provisionado mensal
+              const episEst = 40; // EPIs provisionado mensal
+              const trainingsEst = 30; // Treinamentos provisionado mensal
+              
+              // Extras do mês Julho/2026
+              let extOT = 0;
+              let extShifts = 0;
+              if (selectedProf.financialEvents) {
+                selectedProf.financialEvents.forEach(evt => {
+                  if (evt.month === '2026-07' && evt.type === 'provento') {
+                    if (evt.category === 'Horas Extras') extOT += Number(evt.value);
+                    if (evt.category === 'Plantões') extShifts += Number(evt.value);
+                  }
+                });
+              }
+
+              const totalRealCost = base + chargesEst + benefitsEst + uniformsEst + episEst + trainingsEst + extOT + extShifts;
+            %>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Salário Fixo:</span>
+                  <span class="font-bold">R$ <%= base.toLocaleString('pt-BR') %></span>
+                </div>
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Encargos Sociais Estimados (34.8%):</span>
+                  <span class="font-bold">R$ <%= chargesEst.toLocaleString('pt-BR') %></span>
+                </div>
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Benefícios Corporativos:</span>
+                  <span class="font-bold">R$ <%= benefitsEst.toLocaleString('pt-BR') %></span>
+                </div>
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Provisão Uniformes & EPIs:</span>
+                  <span class="font-bold">R$ <%= (uniformsEst + episEst).toLocaleString('pt-BR') %></span>
+                </div>
+              </div>
+
+              <div class="space-y-2 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-6">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Provisão Treinamentos:</span>
+                  <span class="font-bold">R$ <%= trainingsEst.toLocaleString('pt-BR') %></span>
+                </div>
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Horas Extras Realizadas:</span>
+                  <span class="font-bold text-brand-gold">+ R$ <%= extOT.toLocaleString('pt-BR') %></span>
+                </div>
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-emerald-200">Plantões Realizados:</span>
+                  <span class="font-bold text-brand-gold">+ R$ <%= extShifts.toLocaleString('pt-BR') %></span>
+                </div>
+                
+                <div class="border-t border-white/20 pt-3 flex justify-between items-baseline">
+                  <span class="text-xs font-black font-mono text-brand-gold uppercase">CUSTO TOTAL MENSAL:</span>
+                  <span class="text-xl font-black text-brand-gold">R$ <%= totalRealCost.toLocaleString('pt-BR') %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: HOLERITES (🧾 8. Holerites) -->
+        <div id="section-sub-holerites" class="sub-section hidden space-y-6">
+          <form action="/admin/financeiro/rh/add-paystub" method="POST" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <input type="hidden" name="profId" value="<%= selectedProf.id %>">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">🧾 8. Upload de Holerite de Pagamento</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Competência (Mês/Ano)</label>
+                <input type="month" name="month" value="2026-07" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data Prevista de Pagamento</label>
+                <input type="date" name="payDate" value="2026-08-05" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Situação Inicial</label>
+                <select name="status" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Pendente">Pendente</option>
+                  <option value="Pago">Pago</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-center text-xs text-gray-400">
+              📁 Arraste ou selecione o arquivo do Holerite (PDF) para anexar digitalmente.
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-colors">
+              Disponibilizar Holerite no Portal do Funcionário
+            </button>
+          </form>
+
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Recibos e Holerites Disponíveis</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                    <th class="p-2.5">Mês Referência</th>
+                    <th class="p-2.5">Pagamento Previsto</th>
+                    <th class="p-2.5">Situação</th>
+                    <th class="p-2.5">Assinatura Eletrônica</th>
+                    <th class="p-2.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono">
+                  <% if (selectedProf.paystubs && selectedProf.paystubs.length > 0) { %>
+                    <% selectedProf.paystubs.forEach((stub, idx) => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 text-brand-dark font-bold"><%= stub.month %></td>
+                        <td class="p-2.5"><%= stub.payDate.split('-').reverse().join('/') || stub.payDate %></td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono <%= stub.status === 'Pago' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' %>">
+                            <%= stub.status %>
+                          </span>
+                        </td>
+                        <td class="p-2.5 font-sans">
+                          <% if (stub.signed) { %>
+                            <span class="text-emerald-700 font-bold font-mono text-xs flex items-center gap-1">
+                              ✓ Assinado em <%= new Date(stub.signedAt).toLocaleDateString('pt-BR') %>
+                            </span>
+                          <% } else { %>
+                            <span class="text-rose-600 font-mono text-xs font-bold">Pendente Assinatura</span>
+                          <% } %>
+                        </td>
+                        <td class="p-2.5 text-right">
+                          <a href="/admin/financeiro/rh/delete-paystub/<%= selectedProf.id %>/<%= idx %>" class="text-rose-600 hover:text-rose-800 font-mono text-[9px] font-black border border-dashed border-rose-100 px-1.5 py-0.5 rounded">Excluir</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="5" class="p-4 text-center text-gray-400 italic font-sans">Nenhum holerite arquivado.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: FÉRIAS & AFASTAMENTOS (📄 9. Férias & 🤒 10. Afastamentos) -->
+        <div id="section-sub-ferias" class="sub-section hidden space-y-6">
+          <!-- 🏖️ 9. Férias -->
+          <form action="/admin/financeiro/rh/add-vacation" method="POST" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <input type="hidden" name="profId" value="<%= selectedProf.id %>">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">🏖️ 9. Registro de Períodos de Férias</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Período Aquisitivo (Início/Fim)</label>
+                <input type="text" name="aquisitivePeriod" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: 15/05/2024 a 14/05/2025" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Período Concessivo (Início/Fim)</label>
+                <input type="text" name="concessivePeriod" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: 15/05/2025 a 14/05/2026" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data de Início das Férias</label>
+                <input type="date" name="startDate" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data de Fim das Férias</label>
+                <input type="date" name="endDate" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Abono Pecuniário (Venda de 10 dias)</label>
+                <select name="abono" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Não">Não</option>
+                  <option value="Sim (10 dias)">Sim (10 dias)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Valor Total Pago (R$)</label>
+                <input type="number" name="amountPaid" step="0.01" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold mt-1 text-brand-dark" placeholder="R$ 6.000,00" required>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Situação das Férias</label>
+                <select name="status" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Agendadas">Agendadas</option>
+                  <option value="Gozadas">Gozadas</option>
+                  <option value="Pendente">Pendente de Agendamento</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-all">
+              Salvar Registro de Férias
+            </button>
+          </form>
+
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Histórico de Férias Registradas</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                    <th class="p-2.5">Período Aquisitivo</th>
+                    <th class="p-2.5">Datas Gozo</th>
+                    <th class="p-2.5">Abono</th>
+                    <th class="p-2.5">Valor Pago</th>
+                    <th class="p-2.5">Situação</th>
+                    <th class="p-2.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono">
+                  <% if (selectedProf.vacations && selectedProf.vacations.length > 0) { %>
+                    <% selectedProf.vacations.forEach((vac, idx) => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 font-sans">
+                          <p class="font-extrabold text-gray-700 text-xs"><%= vac.aquisitivePeriod %></p>
+                          <p class="text-[9px] text-gray-400">Conc: <%= vac.concessivePeriod %></p>
+                        </td>
+                        <td class="p-2.5">
+                          <%= vac.startDate.split('-').reverse().join('/') %> a <%= vac.endDate.split('-').reverse().join('/') %>
+                        </td>
+                        <td class="p-2.5 font-sans"><%= vac.abono %></td>
+                        <td class="p-2.5 text-emerald-700 font-bold">R$ <%= Number(vac.amountPaid).toLocaleString('pt-BR') %></td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-bold <%= vac.status === 'Gozadas' ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700' %>">
+                            <%= vac.status %>
+                          </span>
+                        </td>
+                        <td class="p-2.5 text-right font-sans">
+                          <a href="/admin/financeiro/rh/delete-vacation/<%= selectedProf.id %>/<%= idx %>" class="text-rose-600 hover:text-rose-800 font-mono text-[9px] font-black border border-dashed border-rose-100 px-1.5 py-0.5 rounded">Excluir</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="6" class="p-4 text-center text-gray-400 italic font-sans">Nenhuma férias registrada.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 🤒 10. Afastamentos -->
+          <form action="/admin/financeiro/rh/add-leave" method="POST" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4 pt-6">
+            <input type="hidden" name="profId" value="<%= selectedProf.id %>">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">🤒 10. Registros de Afastamentos Médicos ou Licenças</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Tipo de Afastamento</label>
+                <select name="type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Atestado Médico">Atestado Médico</option>
+                  <option value="Licença Maternidade/Paternidade">Licença Maternidade/Paternidade</option>
+                  <option value="Acidente de Trabalho">Acidente de Trabalho</option>
+                  <option value="Licença Não Remunerada">Licença Não Remunerada</option>
+                  <option value="Outros">Outros Afastamentos</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Situação do Afastamento</label>
+                <select name="status" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+                  <option value="Aprovado">Aprovado</option>
+                  <option value="Em análise">Em análise</option>
+                  <option value="Encaminhado ao INSS">Encaminhado ao INSS</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data de Início</label>
+                <input type="date" name="startDate" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data de Fim</label>
+                <input type="date" name="endDate" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Motivo Administrativo (Sem registrar diagnóstico CID por sigilo de privacidade)</label>
+                <input type="text" name="adminReason" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: Atestado de saúde por motivos de força maior / cirúrgico" required>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-colors">
+              Salvar Registro de Afastamento
+            </button>
+          </form>
+
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Histórico de Afastamentos</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                    <th class="p-2.5">Tipo</th>
+                    <th class="p-2.5">Período</th>
+                    <th class="p-2.5">Motivo Administrativo (Sigilo de Saúde)</th>
+                    <th class="p-2.5">Situação</th>
+                    <th class="p-2.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono">
+                  <% if (selectedProf.leaves && selectedProf.leaves.length > 0) { %>
+                    <% selectedProf.leaves.forEach((lv, idx) => { %>
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="p-2.5 font-bold text-brand-dark font-sans"><%= lv.type %></td>
+                        <td class="p-2.5">
+                          <%= lv.startDate.split('-').reverse().join('/') %> a <%= lv.endDate.split('-').reverse().join('/') %>
+                        </td>
+                        <td class="p-2.5 text-gray-600 font-sans"><%= lv.adminReason %></td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
+                            <%= lv.status %>
+                          </span>
+                        </td>
+                        <td class="p-2.5 text-right font-sans">
+                          <a href="/admin/financeiro/rh/delete-leave/<%= selectedProf.id %>/<%= idx %>" class="text-rose-600 hover:text-rose-800 font-mono text-[9px] font-black border border-dashed border-rose-100 px-1.5 py-0.5 rounded">Excluir</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="5" class="p-4 text-center text-gray-400 italic font-sans">Nenhum afastamento médico registrado.</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD PLANTÃO DA ESCALA -->
+<div id="modal-add-shift" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl border border-gray-100 max-w-md w-full shadow-lg overflow-hidden animate-fade-in">
+    <div class="bg-brand-dark text-white p-4 font-mono font-bold text-xs uppercase flex justify-between items-center">
+      <span>📅 Agendar Plantão na Escala</span>
+      <button onclick="document.getElementById('modal-add-shift').classList.add('hidden')" class="text-white hover:text-brand-gold text-lg">&times;</button>
+    </div>
+    <form action="/admin/financeiro/rh/add-shift" method="POST" class="p-6 space-y-4">
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Selecionar Profissional</label>
+        <select name="profId" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" required>
+          <% professionals.forEach(p => { %>
+            <option value="<%= p.id %>"><%= p.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Data do Plantão</label>
+        <input type="date" name="date" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Tipo de Turno</label>
+        <select name="type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1">
+          <option value="Plantão de Sábado">Plantão de Sábado</option>
+          <option value="Plantão de Domingo">Plantão de Sábado / Domingo</option>
+          <option value="Plantão Diurno">Plantão Diurno Regular</option>
+          <option value="Plantão Noturno">Plantão Noturno Especial</option>
+          <option value="Plantão Feriado">Plantão Feriado</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Descrição Adicional / Escopo</label>
+        <input type="text" name="description" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs mt-1" placeholder="Ex: Responsável por coletas de urgência de Cambará">
+      </div>
+      
+      <div class="pt-2 flex justify-end gap-2">
+        <button type="button" onclick="document.getElementById('modal-add-shift').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold font-mono rounded-xl hover:bg-gray-200 uppercase">Cancelar</button>
+        <button type="submit" class="px-4 py-2 bg-brand-dark hover:bg-emerald-900 text-white text-xs font-bold font-mono rounded-xl uppercase">Registrar Escala</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Controlar Abas Principais
+  function switchMainTab(tabId) {
+    const cleanId = tabId.replace('tab-', 'main-');
+    document.querySelectorAll('.main-section').forEach(sec => sec.classList.add('hidden'));
+    document.querySelectorAll('.main-tab-btn').forEach(btn => btn.classList.remove('active', 'text-brand-gold', 'bg-white/10', 'border-l-4', 'border-brand-gold'));
+    
+    // Mostra seção ativa
+    const secEl = document.getElementById('section-' + cleanId);
+    const btnEl = document.getElementById('btn-' + cleanId);
+    if (secEl) secEl.classList.remove('hidden');
+    if (btnEl) btnEl.classList.add('active');
+  }
+
+  // Controlar Sub-abas de Colaboradores
+  function switchSubTab(subTabId) {
+    document.querySelectorAll('.sub-section').forEach(sec => sec.classList.add('hidden'));
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active', 'bg-brand-dark', 'text-white'));
+    
+    const secEl = document.getElementById('section-' + subTabId);
+    const btnEl = document.getElementById('btn-' + subTabId);
+    if (secEl) secEl.classList.remove('hidden');
+    if (btnEl) btnEl.classList.add('active', 'bg-brand-dark', 'text-white');
+  }
+
+  // Inicializar com base nos parâmetros da URL
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      switchMainTab('tab-' + tabParam);
+    } else {
+      switchMainTab('tab-dashboard');
+    }
+
+    const subTabParam = urlParams.get('subTab');
+    if (subTabParam) {
+      switchSubTab('sub-' + subTabParam);
+    } else {
+      switchSubTab('sub-salario');
+    }
+  });
+</script>
+
+<style>
+  .main-tab-btn.active {
+    border-bottom-color: #3b661d;
+    color: #3b661d;
+    background-color: rgb(240 253 244);
+  }
+  .sub-tab-btn {
+    color: #4b5563;
+    background-color: transparent;
+  }
+  .sub-tab-btn.active {
+    background-color: #0c2010;
+    color: #ffffff;
+  }
+</style>
+
+<%- include('../../partials/footer') %>

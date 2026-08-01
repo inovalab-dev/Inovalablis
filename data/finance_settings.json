@@ -1,0 +1,102 @@
+{
+  "providers": [
+    "Labingá",
+    "Reagentes S/A",
+    "Alvaro Apoio",
+    "Hermes Pardini",
+    "Unimed Cambará",
+    "Sicredi",
+    "Insumos S/A"
+  ],
+  "chartsOfAccounts": [
+    "1.1.1 - Convênio Particular",
+    "1.1.2 - Convênio Pronto Socorro",
+    "1.1.3 - Convênio Cisnorpi",
+    "1.1.4 - Reembolso Toxicológico",
+    "2.1.1 - Estornos",
+    "2.1.2 - Simples Nacional",
+    "3.1.1 - Laboratório Alvaro",
+    "3.1.2 - Laboratório Pardini",
+    "3.2.1 - Reagentes e Insumos",
+    "3.3.1 - Aquisições Gerais",
+    "3.4.1 - Café",
+    "3.5.1 - Combustível",
+    "3.5.2 - Outras Despesas Variáveis",
+    "4.1.1 - Salários",
+    "4.1.2 - INSS/FGTS",
+    "4.2.1 - Aluguel da Sede",
+    "4.2.2 - Energia Elétrica",
+    "4.3.1 - Propaganda e Divulgação",
+    "5.1.1 - Juros",
+    "5.1.2 - Tarifas Bancárias",
+    "6.1.1 - Ativos"
+  ],
+  "docTypes": [
+    "Boleto",
+    "Nota Fiscal",
+    "Recibo",
+    "Transferência",
+    "Pix",
+    "Dinheiro"
+  ],
+  "banks": [
+    "Sicredi",
+    "Banco do Brasil",
+    "Itaú",
+    "Caixa",
+    "Bradesco"
+  ],
+  "bankAccounts": [
+    { "id": "1", "description": "Sicredi" },
+    { "id": "2", "description": "Banco do Brasil" },
+    { "id": "3", "description": "Itaú" },
+    { "id": "4", "description": "Caixa" },
+    { "id": "5", "description": "Bradesco" }
+  ],
+  "documentTypes": [
+    { "id": "1", "description": "Boleto" },
+    { "id": "2", "description": "Dinheiro" },
+    { "id": "3", "description": "Cartão de Crédito" },
+    { "id": "4", "description": "Débito Automático" },
+    { "id": "5", "description": "PIX" },
+    { "id": "6", "description": "Cartão de Débito" },
+    { "id": "7", "description": "Cheque" }
+  ],
+  "accountCategories": [
+    { "id": "1", "code": "1.1", "description": "Receitas de Exame", "indicator": "Crédito", "dreRange": "Receitas" },
+    { "id": "2", "code": "2.1", "description": "Deduções de Receita", "indicator": "Débito", "dreRange": "Deduções sobre vendas" },
+    { "id": "3", "code": "3.1", "description": "Laboratório de Apoio", "indicator": "Débito", "dreRange": "Custos variáveis" },
+    { "id": "4", "code": "3.2", "description": "Reagentes/Insumos", "indicator": "Débito", "dreRange": "Custos variáveis" },
+    { "id": "5", "code": "3.3", "description": "Aquisições", "indicator": "Débito", "dreRange": "Custos variáveis" },
+    { "id": "6", "code": "3.4", "description": "Café", "indicator": "Débito", "dreRange": "Custos variáveis" },
+    { "id": "7", "code": "3.5", "description": "Outras Despesas Variáveis", "indicator": "Débito", "dreRange": "Custos variáveis" },
+    { "id": "8", "code": "4.1", "description": "Pessoal (RH)", "indicator": "Débito", "dreRange": "Custos fixos" },
+    { "id": "9", "code": "4.2", "description": "Administrativas", "indicator": "Débito", "dreRange": "Custos fixos" },
+    { "id": "10", "code": "4.3", "description": "Marketing", "indicator": "Débito", "dreRange": "Custos fixos" },
+    { "id": "11", "code": "5.1", "description": "Financeiras", "indicator": "Débito", "dreRange": "Despesas financeiras" },
+    { "id": "12", "code": "6.1", "description": "Ativos", "indicator": "Débito", "dreRange": "Investimentos" }
+  ],
+  "chartOfAccountsTree": [
+    { "id": "1", "code": "1.1.1", "description": "Convênio Particular", "categoryId": "1", "parentId": null },
+    { "id": "2", "code": "1.1.2", "description": "Convênio Pronto Socorro", "categoryId": "1", "parentId": null },
+    { "id": "3", "code": "1.1.3", "description": "Convênio Cisnorpi", "categoryId": "1", "parentId": null },
+    { "id": "4", "code": "1.1.4", "description": "Reembolso Toxicológico", "categoryId": "1", "parentId": null },
+    { "id": "5", "code": "2.1.1", "description": "Estornos", "categoryId": "2", "parentId": null },
+    { "id": "6", "code": "2.1.2", "description": "Simples Nacional", "categoryId": "2", "parentId": null },
+    { "id": "7", "code": "3.1.1", "description": "Laboratório Alvaro", "categoryId": "3", "parentId": null },
+    { "id": "8", "code": "3.1.2", "description": "Laboratório Pardini", "categoryId": "3", "parentId": null },
+    { "id": "9", "code": "3.2.1", "description": "Reagentes/Insumos", "categoryId": "4", "parentId": null },
+    { "id": "10", "code": "3.3.1", "description": "Aquisições", "categoryId": "5", "parentId": null },
+    { "id": "11", "code": "3.4.1", "description": "Café", "categoryId": "6", "parentId": null },
+    { "id": "12", "code": "3.5.1", "description": "Combustível", "categoryId": "7", "parentId": null },
+    { "id": "13", "code": "3.5.2", "description": "Outras", "categoryId": "7", "parentId": null },
+    { "id": "14", "code": "4.1.1", "description": "Salários", "categoryId": "8", "parentId": null },
+    { "id": "15", "code": "4.1.2", "description": "INSS/FGTS", "categoryId": "8", "parentId": null },
+    { "id": "16", "code": "4.2.1", "description": "Aluguel da Sede", "categoryId": "9", "parentId": null },
+    { "id": "17", "code": "4.2.2", "description": "Energia Elétrica", "categoryId": "9", "parentId": null },
+    { "id": "18", "code": "4.3.1", "description": "Marketing", "categoryId": "10", "parentId": null },
+    { "id": "19", "code": "5.1.1", "description": "Juros", "categoryId": "11", "parentId": null },
+    { "id": "20", "code": "5.1.2", "description": "Tarifas Bancárias", "categoryId": "11", "parentId": null },
+    { "id": "21", "code": "6.1.1", "description": "Ativos", "categoryId": "12", "parentId": null }
+  ]
+}

@@ -1,0 +1,1627 @@
+<%- include('../partials/header') %>
+
+<!-- Top Section with Clinical Banner -->
+<section class="bg-gradient-to-r from-brand-dark to-brand-light/85 text-white py-8 relative overflow-hidden">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.06),transparent_50%)] pointer-events-none"></div>
+  <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+  
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10 animate-fade-in">
+    <div class="space-y-3 max-w-3xl">
+      <div class="flex items-center gap-2 text-xs font-semibold text-brand-light/20 bg-white/10 px-3 py-1 rounded-full w-fit">
+        <a href="/admin" class="hover:text-white transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-white font-bold font-mono uppercase text-[9px] tracking-wider">Recursos Humanos</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">Ficha Funcional & Recursos Humanos</h1>
+      <p class="text-xs text-white/80 max-w-xl leading-relaxed">
+        Gerenciamento completo do corpo de colaboradores da empresa. Registre dados pessoais, contratuais, formação acadêmica, registros profissionais, treinamentos, controle de vacinação e históricos de ausências.
+      </p>
+    </div>
+
+    <!-- Stats badge -->
+    <button onclick="toggleAddProfForm()" class="bg-brand-gold hover:bg-amber-600 text-brand-neutralDark font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-brand-gold/20">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      <span>Adicionar Colaborador</span>
+    </button>
+  </div>
+</section>
+
+<section class="py-10 bg-brand-neutralLight/45">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    
+    <!-- Formulário Principal de Cadastro/Edição (Oculto por padrão) -->
+    <div id="add-prof-panel" class="hidden bg-white rounded-3xl border-2 border-brand-light/30 shadow-xl overflow-hidden animate-fade-in">
+      <div class="bg-brand-dark text-white px-6 py-5 flex justify-between items-center">
+        <div>
+          <h2 id="form-title" class="text-lg font-extrabold tracking-tight">Cadastrar Novo Colaborador</h2>
+          <p class="text-[10px] text-white/70">Preencha as informações funcionais organizadas por abas abaixo.</p>
+        </div>
+        <button onclick="hideAddProfForm()" class="text-white/80 hover:text-white text-xs font-bold font-mono uppercase bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 cursor-pointer">
+          Cancelar / Fechar
+        </button>
+      </div>
+
+      <!-- Abas de Navegação do Formulário -->
+      <div class="bg-brand-softBg/40 border-b border-brand-light/10 flex flex-wrap gap-1 p-2">
+        <button type="button" onclick="switchFormTab('tab-pessoais')" id="btn-tab-pessoais" class="form-tab-btn active px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          👤 1. Pessoais
+        </button>
+        <button type="button" onclick="switchFormTab('tab-profissionais')" id="btn-tab-profissionais" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          💼 2. Profissionais
+        </button>
+        <button type="button" onclick="switchFormTab('tab-formacao')" id="btn-tab-formacao" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          🎓 3. Formação & Registro
+        </button>
+        <button type="button" onclick="switchFormTab('tab-treinamentos')" id="btn-tab-treinamentos" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          📚 4. Treinamentos
+        </button>
+        <button type="button" onclick="switchFormTab('tab-vacinacao')" id="btn-tab-vacinacao" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          💉 5. Vacinação
+        </button>
+        <button type="button" onclick="switchFormTab('tab-documentos')" id="btn-tab-documentos" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          📂 6. Documentos Digitais
+        </button>
+        <button type="button" onclick="switchFormTab('tab-ausencias')" id="btn-tab-ausencias" class="form-tab-btn px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all">
+          📅 7. Férias & Ausências
+        </button>
+      </div>
+
+      <!-- Formulário -->
+      <form id="prof-form" action="/admin/profissionais/add" method="POST" class="p-6 sm:p-8 space-y-6">
+        <input type="hidden" name="id" id="form-prof-id">
+        
+        <!-- Inputs Ocultos de Arrays Serializados -->
+        <input type="hidden" name="education" id="form-serialized-education" value="[]">
+        <input type="hidden" name="trainings" id="form-serialized-trainings" value="[]">
+        <input type="hidden" name="vaccinations" id="form-serialized-vaccinations" value="[]">
+        <input type="hidden" name="documents" id="form-serialized-documents" value="[]">
+        <input type="hidden" name="absences" id="form-serialized-absences" value="[]">
+
+        <!-- ---------------- TAB 1: DADOS PESSOAIS ---------------- -->
+        <div id="panel-tab-pessoais" class="form-panel space-y-6">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">👤 1. Dados Pessoais & Contatos</h3>
+            <p class="text-[10px] text-gray-400">Informações básicas e documentos de identificação civil do colaborador.</p>
+          </div>
+
+          <!-- Avatar / Foto -->
+          <div class="flex items-center gap-5 bg-brand-softBg/30 p-4 rounded-2xl border border-brand-light/10">
+            <div class="relative group">
+              <div class="w-16 h-16 rounded-full bg-brand-softBg border-2 border-brand-light/30 flex items-center justify-center overflow-hidden">
+                <img id="avatar-preview" src="" class="w-full h-full object-cover hidden">
+                <svg id="avatar-placeholder" class="w-8 h-8 text-brand-dark/30" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono">Foto do Colaborador</label>
+              <input type="file" id="photo-file" accept="image/*" onchange="handlePhotoUpload(event)" class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-softBg file:text-brand-dark hover:file:bg-brand-light/20 cursor-pointer">
+              <input type="hidden" name="photo" id="form-prof-photo">
+              <p class="text-[9px] text-gray-400">Tamanho recomendado: 300x300px. Formatos: PNG, JPG.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Nome Completo <span class="text-rose-500">*</span></label>
+              <input type="text" name="name" id="form-prof-name" required placeholder="Ex: Monara Natana Idem" class="form-input">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Nome Social (se aplicável)</label>
+              <input type="text" name="socialName" id="form-prof-socialName" placeholder="Ex: Nome de preferência" class="form-input">
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">CPF <span class="text-rose-500">*</span></label>
+              <input type="text" name="cpf" id="form-prof-cpf" required placeholder="000.000.000-00" oninput="maskCPF(this)" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">RG</label>
+              <input type="text" name="rg" id="form-prof-rg" placeholder="00.000.000-0" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data de Nascimento</label>
+              <input type="date" name="birthDate" id="form-prof-birthDate" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Sexo</label>
+              <select name="gender" id="form-prof-gender" class="form-input">
+                <option value="">Selecione...</option>
+                <option value="Feminino">Feminino</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Outro">Outro / Prefere não dizer</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Estado Civil</label>
+              <select name="maritalStatus" id="form-prof-maritalStatus" class="form-input">
+                <option value="">Selecione...</option>
+                <option value="Solteiro(a)">Solteiro(a)</option>
+                <option value="Casado(a)">Casado(a)</option>
+                <option value="Divorciado(a)">Divorciado(a)</option>
+                <option value="Viúvo(a)">Viúvo(a)</option>
+                <option value="União Estável">União Estável</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Nacionalidade</label>
+              <input type="text" name="nationality" id="form-prof-nationality" placeholder="Ex: Brasileira" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Telefone Fixo</label>
+              <input type="text" name="phone" id="form-prof-phone" oninput="maskPhone(this)" placeholder="(43) 3546-0000" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Celular <span class="text-rose-500">*</span></label>
+              <input type="text" name="mobile" id="form-prof-mobile" required oninput="maskPhone(this)" placeholder="(43) 99999-0000" class="form-input">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">E-mail Pessoal / Trabalho</label>
+              <input type="email" name="email" id="form-prof-email" placeholder="nome@laboratorioinovalab.com" class="form-input">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Endereço Residencial</label>
+              <input type="text" name="address" id="form-prof-address" placeholder="Rua, número, bairro" class="form-input">
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Cidade</label>
+              <input type="text" name="city" id="form-prof-city" placeholder="Ex: Cambará" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Estado</label>
+              <input type="text" name="state" id="form-prof-state" placeholder="Ex: PR" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">CEP</label>
+              <input type="text" name="zipCode" id="form-prof-zipCode" placeholder="86390-000" class="form-input">
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 2: DADOS PROFISSIONAIS ---------------- -->
+        <div id="panel-tab-profissionais" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">💼 2. Dados Profissionais & Acessos</h3>
+            <p class="text-[10px] text-gray-400">Atribuição do colaborador na estrutura organizacional e permissões.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Matrícula / Registro Interno</label>
+              <input type="text" name="registration" id="form-prof-registration" placeholder="Ex: INOVA-105" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Cargo Principal <span class="text-rose-500">*</span></label>
+              <select name="role" id="form-prof-role" required class="form-input">
+                <option value="">Selecione...</option>
+                <option value="Responsável Técnico">Responsável Técnico</option>
+                <option value="Bioquímico(a)">Bioquímico(a)</option>
+                <option value="Biomédico(a)">Biomédico(a)</option>
+                <option value="Farmacêutico(a)">Farmacêutico(a)</option>
+                <option value="Recepcionista">Recepcionista</option>
+                <option value="Analista de Laboratório">Analista de Laboratório</option>
+                <option value="Auxiliar de Coleta">Auxiliar de Coleta</option>
+                <option value="Serviços Gerais">Serviços Gerais</option>
+                <option value="Gerente Administrativo">Gerente Administrativo</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Setor de Atuação</label>
+              <select name="sector" id="form-prof-sector" class="form-input">
+                <option value="">Selecione...</option>
+                <option value="Técnico / Bancada">Técnico / Bancada</option>
+                <option value="Recepção / Atendimento">Recepção / Atendimento</option>
+                <option value="Administrativo / Diretoria">Administrativo / Diretoria</option>
+                <option value="Logística / Apoio">Logística / Apoio</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Função Detalhada</label>
+              <input type="text" name="function" id="form-prof-function" placeholder="Ex: Coleta de Sangue e Triagem" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data de Admissão</label>
+              <input type="date" name="admissionDate" id="form-prof-admissionDate" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Tipo de Contrato</label>
+              <select name="contractType" id="form-prof-contractType" class="form-input">
+                <option value="">Selecione...</option>
+                <option value="CLT Permanente">CLT Permanente</option>
+                <option value="CLT Experiência">CLT Experiência</option>
+                <option value="Prestador de Serviço (PJ)">Prestador de Serviço (PJ)</option>
+                <option value="Estágio">Estágio</option>
+                <option value="Temporário">Temporário</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Jornada de Trabalho semanal</label>
+              <input type="text" name="workday" id="form-prof-workday" placeholder="Ex: 44h semanais (Seg a Sáb)" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Supervisor / Gestor Imediato</label>
+              <input type="text" name="supervisor" id="form-prof-supervisor" placeholder="Nome do supervisor" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Situação / Status Atual</label>
+              <select name="status" id="form-prof-status" onchange="toggleTerminationReasonField()" class="form-input font-bold">
+                <option value="Ativo" class="text-emerald-600 font-bold">Ativo</option>
+                <option value="Férias" class="text-amber-600 font-bold">Férias</option>
+                <option value="Licença" class="text-indigo-600 font-bold">Licença</option>
+                <option value="Afastado" class="text-rose-600 font-bold">Afastado</option>
+                <option value="Desligado" class="text-gray-500 font-bold">Desligado</option>
+              </select>
+            </div>
+
+            <div id="container-terminationReason" class="md:col-span-3 hidden">
+              <label class="block text-[10px] font-bold text-rose-700 uppercase tracking-wider font-mono mb-1">Motivo do Desligamento</label>
+              <input type="text" name="terminationReason" id="form-prof-terminationReason" placeholder="Ex: Pedido de demissão, Rescisão contratual sem justa causa, Fim de contrato de experiência..." class="form-input border-rose-300 bg-rose-50/40 text-rose-900 font-medium">
+            </div>
+          </div>
+
+          <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl space-y-4">
+            <h4 class="text-xs font-bold text-indigo-900 font-mono uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+              </svg>
+              Credenciais de Acesso ao Painel Admin
+            </h4>
+            <p class="text-[10px] text-indigo-800/80 leading-relaxed">
+              Opcional. Defina um usuário e senha caso este profissional necessite de acesso ao sistema do laboratório para cadastros ou emissão de laudos.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-indigo-900 uppercase tracking-wider font-mono mb-1">Usuário de Acesso</label>
+                <input type="text" name="username" id="form-prof-username" placeholder="Ex: monara.idem" class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-xs font-semibold text-brand-dark">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-indigo-900 uppercase tracking-wider font-mono mb-1">Senha de Acesso</label>
+                <input type="password" name="password" id="form-prof-password" placeholder="Defina a senha" class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-xs font-semibold text-brand-dark">
+              </div>
+            </div>
+            
+            <div class="pt-2">
+              <label class="block text-[10px] font-bold text-indigo-900 uppercase tracking-wider font-mono mb-1">Perfil de Acesso do Profissional</label>
+              <select name="profileId" id="form-prof-profileId" class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-xs font-semibold text-[#1b2914]">
+                <option value="">Selecione um perfil de acesso...</option>
+                <% if (typeof profiles !== 'undefined' && profiles) { %>
+                  <% profiles.forEach(profile => { %>
+                    <option value="<%= profile.id %>"><%= profile.name %></option>
+                  <% }) %>
+                <% } %>
+              </select>
+              <p class="text-[9px] text-indigo-800/60 mt-1">Determina quais telas da administração o profissional logado poderá visualizar e interagir.</p>
+            </div>
+          </div>
+
+          <!-- Apresentação na Página Pública -->
+          <div class="bg-brand-softBg/35 p-5 rounded-2xl border border-brand-light/10 space-y-4">
+            <h4 class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Apresentação no Site do Laboratório</h4>
+            
+            <div class="flex items-start gap-3">
+              <input type="checkbox" name="showOnAbout" id="form-prof-showOnAbout" value="true" checked class="mt-1 w-4 h-4 rounded text-brand-dark focus:ring-brand-dark border-brand-light/30 bg-brand-neutralLight">
+              <div class="space-y-1">
+                <label for="form-prof-showOnAbout" class="text-xs font-bold text-brand-dark select-none cursor-pointer">
+                  Exibir no Corpo Clínico ("Sobre Nós" / Membros em Destaque)
+                </label>
+                <p class="text-[10px] text-gray-400 leading-relaxed">Se ativado, o profissional será listado publicamente para pacientes conhecerem o corpo de profissionais técnicos do InovaLab.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Título Acadêmico Curto (Apresentação Pública)</label>
+                <input type="text" name="title" id="form-prof-title" placeholder="Ex: Farmacêutica/Bioquímica | CRF 28129" class="form-input">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Minicurrículo / Resumo da Experiência</label>
+                <textarea name="description" id="form-prof-description" rows="3" placeholder="Breve currículo que aparece na página institucional para o público..." class="form-input font-sans leading-relaxed"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 3: FORMAÇÃO E REGISTRO ---------------- -->
+        <div id="panel-tab-formacao" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">🎓 3. Formação Acadêmica & Registro de Classe</h3>
+            <p class="text-[10px] text-gray-400">Armazene graduações, especializações de relevância para auditorias da Vigilância Sanitária e DICQ.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-brand-softBg/30 rounded-2xl border border-brand-light/10">
+            <div class="md:col-span-2">
+              <h4 class="text-xs font-extrabold text-brand-dark font-mono uppercase tracking-wider">Formação de Nível Superior / Geral</h4>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Pós-Graduação (Especializações / MBA)</label>
+              <input type="text" name="postGrad" id="form-prof-postGrad" placeholder="Ex: Especialização em Citopatologia Clínica" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Especialidades Adicionais</label>
+              <input type="text" name="specializations" id="form-prof-specializations" placeholder="Ex: Hematologia Avançada" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Mestrado</label>
+              <input type="text" name="masterDegree" id="form-prof-masterDegree" placeholder="Ex: Mestre em Ciências Farmacêuticas" class="form-input">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Doutorado</label>
+              <input type="text" name="doctorateDegree" id="form-prof-doctorateDegree" placeholder="Ex: Doutora em Biologia Celular" class="form-input">
+            </div>
+          </div>
+
+          <!-- Cursos e Diplomas Registrados -->
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <h4 class="text-xs font-extrabold text-brand-dark font-mono uppercase tracking-wider">Histórico de Cursos & Graduações</h4>
+              <span class="text-[9px] text-gray-400 font-bold uppercase">Muito importante para auditorias clínicas</span>
+            </div>
+
+            <!-- Adicionar Graduação Form -->
+            <div class="bg-gray-50 border border-gray-200 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-4">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Curso / Graduação</label>
+                <input type="text" id="edu-course" placeholder="Ex: Farmácia e Bioquímica" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Instituição</label>
+                <input type="text" id="edu-institution" placeholder="Ex: UEL" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Conclusão</label>
+                <input type="date" id="edu-date" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Anexar Diploma</label>
+                <input type="file" id="edu-diploma-file" accept=".pdf,image/*" onchange="readEduFile(event)" class="text-[10px] w-full text-gray-500 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-brand-softBg file:text-brand-dark cursor-pointer">
+                <input type="hidden" id="edu-diploma-base64">
+                <input type="hidden" id="edu-diploma-filename">
+              </div>
+              <div class="md:col-span-1">
+                <button type="button" onclick="addEducationRow()" class="w-full py-2.5 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl cursor-pointer">
+                  +
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabela de Graduações -->
+            <div class="overflow-x-auto rounded-2xl border border-brand-light/10">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-brand-softBg/30 text-[9px] font-bold uppercase tracking-widest text-brand-dark/70 border-b border-brand-light/10 font-mono">
+                    <th class="py-2.5 px-4">Curso / Graduação</th>
+                    <th class="py-2.5 px-4">Instituição</th>
+                    <th class="py-2.5 px-4">Data Conclusão</th>
+                    <th class="py-2.5 px-4">Anexo / Diploma</th>
+                    <th class="py-2.5 px-4 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="education-table-body" class="divide-y divide-brand-light/5 text-xs text-gray-600 font-medium">
+                  <!-- Linhas adicionadas via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Registro de Classe Profissional (Ex: CRBM, CRM, CRF, COREN) -->
+          <div class="space-y-4 pt-4 border-t border-brand-light/10">
+            <h4 class="text-xs font-extrabold text-brand-dark font-mono uppercase tracking-wider">🏥 Registro de Classe Profissional (Ex: CRBM, CRM, CRF, COREN)</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Conselho / Tipo de Registro</label>
+                <select name="regType" id="form-prof-regType" class="form-input">
+                  <option value="">Selecione...</option>
+                  <option value="CRF (Farmácia)">CRF (Farmácia)</option>
+                  <option value="CRBM (Biomedicina)">CRBM (Biomedicina)</option>
+                  <option value="CRM (Medicina)">CRM (Medicina)</option>
+                  <option value="COREN (Enfermagem)">COREN (Enfermagem)</option>
+                  <option value="CRBio (Biologia)">CRBio (Biologia)</option>
+                  <option value="Outro">Outro Conselho</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Número do Registro</label>
+                <input type="text" name="regNumber" id="form-prof-regNumber" placeholder="Ex: 28129" class="form-input">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">UF do Registro</label>
+                <input type="text" name="regState" id="form-prof-regState" placeholder="Ex: PR" class="form-input">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data de Validade</label>
+                <input type="date" name="regValidity" id="form-prof-regValidity" class="form-input">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Documento Digitalizado</label>
+                <input type="file" id="regDoc-file" accept=".pdf,image/*" onchange="handleRegDocUpload(event)" class="text-[10px] w-full text-gray-500 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand-softBg file:text-brand-dark cursor-pointer">
+                <input type="hidden" name="regDocFile" id="form-prof-regDocFile">
+                <input type="hidden" id="form-prof-regDocFileName">
+                <div id="regdoc-preview-container" class="hidden text-[10px] text-emerald-600 font-semibold font-mono mt-1 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Documento Anexado
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 4: TREINAMENTOS ---------------- -->
+        <div id="panel-tab-treinamentos" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">📚 4. Treinamentos Realizados</h3>
+            <p class="text-[10px] text-gray-400">Monitore as capacitações internas e externas de biossegurança, POPs e operação técnica.</p>
+          </div>
+
+          <!-- Formulário para Adicionar Treinamento -->
+          <div class="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4">
+            <h4 class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Logar Novo Treinamento</h4>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-3">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Treinamento / Tema</label>
+                <input type="text" id="train-name" placeholder="Ex: Biossegurança em Laboratório" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data Realização</label>
+                <input type="date" id="train-date" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Instrutor / Órgão</label>
+                <input type="text" id="train-instructor" placeholder="Ex: Dra. Camila Ramos" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-1.5 md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Carga Horária</label>
+                <input type="text" id="train-hours" placeholder="Ex: 8 horas" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-1">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Avaliação</label>
+                <input type="text" id="train-grade" placeholder="Ex: 95%" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Certificado (PDF / Imagem)</label>
+                <input type="file" id="train-cert-file" accept=".pdf,image/*" onchange="readTrainFile(event)" class="text-[9px] w-full text-gray-500 file:py-1 file:px-2 file:border-0 file:bg-brand-softBg file:text-brand-dark cursor-pointer">
+                <input type="hidden" id="train-cert-base64">
+                <input type="hidden" id="train-cert-filename">
+              </div>
+              <div class="md:col-span-1">
+                <button type="button" onclick="addTrainingRow()" class="w-full py-2.5 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl cursor-pointer">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Treinamentos -->
+          <div class="overflow-x-auto rounded-3xl border border-brand-light/10">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-brand-softBg/30 text-[9px] font-bold uppercase tracking-widest text-brand-dark/70 border-b border-brand-light/10 font-mono">
+                  <th class="py-3 px-4">Treinamento / Tema</th>
+                  <th class="py-3 px-4">Data</th>
+                  <th class="py-3 px-4">Instrutor</th>
+                  <th class="py-3 px-4">Carga Horária</th>
+                  <th class="py-3 px-4">Avaliação / Nota</th>
+                  <th class="py-3 px-4">Certificado</th>
+                  <th class="py-3 px-4 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="trainings-table-body" class="divide-y divide-brand-light/5 text-xs text-gray-600 font-medium">
+                <!-- Inserido dinamicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 5: VACINAÇÃO ---------------- -->
+        <div id="panel-tab-vacinacao" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">💉 5. Controle de Vacinação Ocupacional</h3>
+            <p class="text-[10px] text-gray-400">Fundamental para atendimento de normas regulamentadoras e segurança biológica do laboratório.</p>
+          </div>
+
+          <!-- Controle Dinâmico de Vacinas -->
+          <div class="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4">
+            <h4 class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Registrar Nova Vacina</h4>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-3">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Vacina / Imunizante</label>
+                <select id="vac-name" class="form-input bg-white font-bold text-brand-dark">
+                  <option value="Hepatite B">Hepatite B</option>
+                  <option value="Tétano">Tétano / Dupla Adulto</option>
+                  <option value="Influenza (Gripe)">Influenza (Gripe)</option>
+                  <option value="COVID-19">COVID-19</option>
+                  <option value="Tríplice Viral">Tríplice Viral (Caxumba, Sarampo, Rubéola)</option>
+                  <option value="Outras">Outros Imunizantes</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Dose / Detalhes</label>
+                <input type="text" id="vac-dose" placeholder="Ex: 1ª Dose, Reforço" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data de Aplicação</label>
+                <input type="date" id="vac-date" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Lote / Fabricante</label>
+                <input type="text" id="vac-batch" placeholder="Ex: Lote 1234 - Butantan" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Anexar Comprovante</label>
+                <input type="file" id="vac-file" accept=".pdf,image/*" onchange="readVacFile(event)" class="text-[9px] w-full text-gray-500 file:py-1 file:px-2 file:border-0 file:bg-brand-softBg file:text-brand-dark cursor-pointer">
+                <input type="hidden" id="vac-base64">
+                <input type="hidden" id="vac-filename">
+              </div>
+              <div class="md:col-span-1">
+                <button type="button" onclick="addVaccinationRow()" class="w-full py-2.5 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl cursor-pointer">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Vacinação -->
+          <div class="overflow-x-auto rounded-3xl border border-brand-light/10">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-brand-softBg/30 text-[9px] font-bold uppercase tracking-widest text-brand-dark/70 border-b border-brand-light/10 font-mono">
+                  <th class="py-3 px-4">Vacina / Imunizante</th>
+                  <th class="py-3 px-4">Dose / Tipo</th>
+                  <th class="py-3 px-4">Data Aplicação</th>
+                  <th class="py-3 px-4">Lote / Laboratório</th>
+                  <th class="py-3 px-4">Comprovante</th>
+                  <th class="py-3 px-4 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="vaccinations-table-body" class="divide-y divide-brand-light/5 text-xs text-gray-600 font-medium">
+                <!-- Linhas injetadas via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 6: DOCUMENTOS DIGITAIS ---------------- -->
+        <div id="panel-tab-documentos" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">📂 6. Central de Documentos Digitais</h3>
+            <p class="text-[10px] text-gray-400">Guarde e acesse cópias autenticadas do RG, CPF, diplomas, contratos de trabalho e currículos em PDF.</p>
+          </div>
+
+          <!-- Upload de Documentos com Drag & Drop Simulador -->
+          <div class="bg-brand-softBg/35 p-6 rounded-3xl border border-dashed border-brand-light/50 space-y-4">
+            <h4 class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Adicionar Novo Documento</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Categoria do Documento</label>
+                <select id="doc-type" class="form-input bg-white font-bold text-brand-dark">
+                  <option value="RG / Identidade">RG / Identidade</option>
+                  <option value="CPF">CPF</option>
+                  <option value="Diploma de Formação">Diploma de Formação</option>
+                  <option value="Registro Profissional">Registro Profissional</option>
+                  <option value="Contrato de Trabalho">Contrato de Trabalho</option>
+                  <option value="Currículo">Currículo Atualizado</option>
+                  <option value="Certificados de Cursos">Certificados Adicionais</option>
+                  <option value="Outros">Outros Documentos Importantes</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Nome / Descrição do Arquivo</label>
+                <div class="flex gap-2">
+                  <input type="text" id="doc-name" placeholder="Ex: RG Monara - Frente e Verso" class="form-input bg-white">
+                  
+                  <div class="relative shrink-0">
+                    <input type="file" id="doc-upload-file" accept=".pdf,image/*" onchange="readDocFile(event)" class="absolute inset-0 opacity-0 cursor-pointer w-24">
+                    <button type="button" class="px-3 py-2.5 bg-brand-softBg hover:bg-brand-light/20 text-brand-dark text-xs font-extrabold rounded-xl border border-brand-light/25 select-none pointer-events-none">
+                      Escolher...
+                    </button>
+                  </div>
+                  
+                  <button type="button" onclick="addDocumentRow()" class="px-5 py-2.5 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl cursor-pointer">
+                    Salvar
+                  </button>
+                </div>
+                <input type="hidden" id="doc-base64">
+                <input type="hidden" id="doc-filename">
+                <span id="doc-selected-info" class="text-[10px] text-indigo-600 font-mono font-medium block mt-1.5 hidden"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Documentos Cadastrados -->
+          <div class="overflow-x-auto rounded-3xl border border-brand-light/10">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-brand-softBg/30 text-[9px] font-bold uppercase tracking-widest text-brand-dark/70 border-b border-brand-light/10 font-mono">
+                  <th class="py-3 px-4">Categoria</th>
+                  <th class="py-3 px-4">Nome do Documento</th>
+                  <th class="py-3 px-4">Nome do Arquivo Original</th>
+                  <th class="py-3 px-4">Data de Armazenamento</th>
+                  <th class="py-3 px-4">Anexo / Visualizar</th>
+                  <th class="py-3 px-4 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="documents-table-body" class="divide-y divide-brand-light/5 text-xs text-gray-600 font-medium">
+                <!-- Linhas injetadas dinamicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ---------------- TAB 7: FÉRIAS E AUSÊNCIAS ---------------- -->
+        <div id="panel-tab-ausencias" class="form-panel space-y-6 hidden">
+          <div class="border-b border-brand-light/10 pb-2">
+            <h3 class="text-xs font-black text-brand-dark font-mono uppercase tracking-widest">📅 7. Controle de Férias & Ausências</h3>
+            <p class="text-[10px] text-gray-400">Histórico de afastamentos legais, banco de horas, faltas justificadas e férias coletivas/individuais.</p>
+          </div>
+
+          <!-- Log de Férias/Ausências -->
+          <div class="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4">
+            <h4 class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Lançar Nova Férias ou Ausência</h4>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-3">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Tipo de Evento</label>
+                <select id="abs-type" class="form-input bg-white font-bold text-brand-dark">
+                  <option value="Férias Regulamentares">Férias Regulamentares</option>
+                  <option value="Banco de Horas (Folga)">Banco de Horas (Folga)</option>
+                  <option value="Licença Médica (Atestado)">Licença Médica (Atestado)</option>
+                  <option value="Licença Maternidade/Paternidade">Licença Maternidade/Paternidade</option>
+                  <option value="Afastamento Previdenciário (INSS)">Afastamento Previdenciário (INSS)</option>
+                  <option value="Falta Justificada">Falta Justificada</option>
+                  <option value="Folga Geral / Outros">Folga Geral / Outros</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data Início</label>
+                <input type="date" id="abs-start" class="form-input bg-white" onchange="calcAbsenceDays()">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Data Fim</label>
+                <input type="date" id="abs-end" class="form-input bg-white" onchange="calcAbsenceDays()">
+              </div>
+              <div class="md:col-span-1.5 md:col-span-1">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Dias</label>
+                <input type="number" id="abs-days" readonly class="form-input bg-gray-100 font-bold text-brand-dark">
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-[9px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Observações / Motivo</label>
+                <input type="text" id="abs-notes" placeholder="Ex: Férias do período aquisitivo 2024/2025" class="form-input bg-white">
+              </div>
+              <div class="md:col-span-1">
+                <button type="button" onclick="addAbsenceRow()" class="w-full py-2.5 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl cursor-pointer">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Ausências -->
+          <div class="overflow-x-auto rounded-3xl border border-brand-light/10">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-brand-softBg/30 text-[9px] font-bold uppercase tracking-widest text-brand-dark/70 border-b border-brand-light/10 font-mono">
+                  <th class="py-3 px-4">Tipo de Evento</th>
+                  <th class="py-3 px-4">Data Início</th>
+                  <th class="py-3 px-4">Data Fim</th>
+                  <th class="py-3 px-4">Total de Dias</th>
+                  <th class="py-3 px-4">Observações</th>
+                  <th class="py-3 px-4 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="absences-table-body" class="divide-y divide-brand-light/5 text-xs text-gray-600 font-medium">
+                <!-- Linhas injetadas via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Botões de Ações de Submissão -->
+        <div class="flex justify-between items-center pt-6 border-t border-brand-light/10">
+          <div class="text-[10px] text-gray-400 font-mono">
+            * Campos obrigatórios para salvamento simples do funcionário.
+          </div>
+          <div class="flex gap-3">
+            <button type="button" onclick="hideAddProfForm()" class="px-5 py-3 bg-brand-softBg hover:bg-brand-light/20 text-brand-dark text-xs font-bold rounded-xl transition-all cursor-pointer">
+              Fechar
+            </button>
+            <button type="submit" id="submit-btn" class="px-6 py-3 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer font-mono uppercase tracking-wider">
+              Salvar Colaborador & Ficha
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Filtros de Busca de Colaboradores -->
+    <div class="bg-white p-5 rounded-3xl border border-brand-light/10 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+      <div class="md:col-span-5 relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <svg class="h-4.5 w-4.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="text" id="employee-search" oninput="filterEmployees()" placeholder="Buscar por Nome do Colaborador, Cargo ou CPF..." 
+               class="w-full pl-11 pr-4 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-semibold text-brand-dark" autocomplete="off">
+      </div>
+
+      <div class="md:col-span-3">
+        <select id="employee-filter-role" onchange="filterEmployees()" 
+                class="w-full px-3 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-bold text-brand-dark cursor-pointer">
+          <option value="all">Todos os Cargos</option>
+          <option value="Responsável Técnico">Responsável Técnico</option>
+          <option value="Bioquímico(a)">Bioquímico(a)</option>
+          <option value="Biomédico(a)">Biomédico(a)</option>
+          <option value="Recepcionista">Recepcionista</option>
+          <option value="Analista de Laboratório">Analista de Laboratório</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <select id="employee-filter-status" onchange="filterEmployees()" 
+                class="w-full px-3 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-bold text-brand-dark cursor-pointer">
+          <option value="all">Todas Situações</option>
+          <option value="Ativo">Ativo</option>
+          <option value="Férias">Férias</option>
+          <option value="Licença">Licença</option>
+          <option value="Afastado">Afastado</option>
+          <option value="Desligado">Desligado</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <button onclick="clearEmployeeFilters()" class="w-full py-3 bg-brand-softBg hover:bg-brand-light/10 text-brand-dark text-xs font-bold rounded-xl transition-all font-mono uppercase tracking-wider cursor-pointer">
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de Colaboradores (Cards Modernos para Ficha Funcional) -->
+    <div id="employees-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% professionals.forEach(prof => { %>
+        <%
+          let isDesligado = (prof.status === 'Desligado' || prof.status === 'Inativo');
+          // Configurações de Badge de Situação
+          let statusColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+          if (prof.status === 'Férias') statusColor = "bg-amber-50 text-amber-700 border-amber-100";
+          else if (prof.status === 'Licença') statusColor = "bg-indigo-50 text-indigo-700 border-indigo-100";
+          else if (prof.status === 'Afastado') statusColor = "bg-rose-50 text-rose-700 border-rose-100";
+          else if (isDesligado) statusColor = "bg-gray-100 text-gray-600 border-gray-200";
+
+          let cardStyle = isDesligado ? "opacity-60 bg-gray-50/80 grayscale-[20%] border-gray-300 border-dashed hover:opacity-100 hover:grayscale-0 hover:bg-white" : "bg-white border-brand-light/15 shadow-sm hover:shadow-md";
+        %>
+        <div class="employee-card rounded-3xl border transition-all p-6 flex flex-col justify-between space-y-4 <%= cardStyle %>"
+             data-name="<%= prof.name.toLowerCase() %>"
+             data-role="<%= (prof.role || '').toLowerCase() %>"
+             data-cpf="<%= (prof.cpf || '').toLowerCase() %>"
+             data-status="<%= prof.status || 'Ativo' %>">
+          
+          <div class="space-y-4">
+            <!-- Cabeçalho com Foto e Situação -->
+            <div class="flex justify-between items-start gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-brand-softBg border border-brand-light/30 flex items-center justify-center overflow-hidden shrink-0">
+                  <% if (prof.photo) { %>
+                    <img src="<%= prof.photo %>" class="w-full h-full object-cover">
+                  <% } else { %>
+                    <svg class="w-7 h-7 text-brand-dark/40" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  <% } %>
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-brand-dark leading-tight"><%= prof.name %></h3>
+                  <p class="text-[10px] text-gray-400 font-mono"><%= prof.role %></p>
+                </div>
+              </div>
+
+              <span class="px-2.5 py-1 rounded-full border text-[9px] font-extrabold uppercase font-mono tracking-wider shrink-0 <%= statusColor %>">
+                <%= prof.status || 'Ativo' %>
+              </span>
+            </div>
+
+            <% if (isDesligado && prof.terminationReason) { %>
+              <div class="bg-rose-50/80 border border-rose-200/80 p-2.5 rounded-2xl text-[10px]">
+                <span class="text-[9px] font-bold text-rose-700 uppercase tracking-wider block font-mono">Motivo do Desligamento</span>
+                <span class="text-rose-950 font-semibold"><%= prof.terminationReason %></span>
+              </div>
+            <% } %>
+
+            <!-- Dados Compactados da Ficha -->
+            <div class="grid grid-cols-2 gap-x-2 gap-y-3 bg-brand-softBg/30 p-3.5 rounded-2xl text-[10px]">
+              <div>
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block font-mono">Setor</span>
+                <span class="text-brand-dark font-semibold"><%= prof.sector || 'Não cadastrado' %></span>
+              </div>
+              <div>
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block font-mono">Matrícula</span>
+                <span class="text-brand-dark font-mono font-bold"><%= prof.registration || 'Não cadastrada' %></span>
+              </div>
+              <div>
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block font-mono">Conselho / Registro</span>
+                <span class="text-brand-dark font-mono font-semibold"><%= prof.regType ? `${prof.regType.split(' ')[0]} ${prof.regNumber}` : 'Não cadastrado' %></span>
+              </div>
+              <div>
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider block font-mono">Admissão</span>
+                <span class="text-brand-dark font-mono"><%= prof.admissionDate ? new Date(prof.admissionDate).toLocaleDateString('pt-BR') : 'Não cadastrada' %></span>
+              </div>
+            </div>
+
+            <!-- Resumo das Fichas Auxiliares -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[9px] font-bold font-mono">
+              <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded">
+                🎓 <%= (prof.education || []).length %> Graduações
+              </span>
+              <span class="bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded">
+                📚 <%= (prof.trainings || []).length %> Treinamentos
+              </span>
+              <span class="bg-amber-50 border border-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                💉 <%= (prof.vaccinations || []).length %> Vacinas
+              </span>
+              <span class="bg-rose-50 border border-rose-100 text-rose-700 px-2 py-0.5 rounded">
+                📂 <%= (prof.documents || []).length %> Arquivos
+              </span>
+            </div>
+          </div>
+
+          <!-- Ações Funcionais -->
+          <div class="flex items-center gap-2 pt-2 border-t border-brand-light/5">
+            <button onclick="editProf('<%= JSON.stringify(prof).replace(/'/g, "\\'") %>')" class="w-full py-2.5 bg-brand-softBg hover:bg-brand-dark text-brand-dark hover:text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 font-mono uppercase tracking-wider">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              <span>Gerenciar Ficha</span>
+            </button>
+            <a href="/admin/profissionais/delete/<%= prof.id %>" onclick="return confirm('Deseja realmente desligar/excluir este colaborador do sistema de recursos humanos? Esta ação é irreversível.')" class="p-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white rounded-xl transition-all cursor-pointer" title="Remover Colaborador">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      <% }) %>
+
+      <!-- No results message -->
+      <div id="no-employees" class="hidden col-span-full py-16 text-center text-gray-400 font-medium font-sans animate-fade-in">
+        <div class="flex flex-col items-center justify-center space-y-3 bg-white rounded-3xl p-8 border border-brand-light/10 shadow-sm max-w-md mx-auto">
+          <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <p class="text-sm font-bold text-gray-600">Nenhum colaborador encontrado.</p>
+          <p class="text-[11px] text-gray-400">Tente fazer outra pesquisa ou remover os filtros ativos acima.</p>
+          <button type="button" onclick="clearEmployeeFilters()" class="text-xs text-indigo-600 font-extrabold hover:underline cursor-pointer">Ver Todos</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .form-input {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-brand-light, #8da673);
+    border-color: rgba(141, 166, 115, 0.3);
+    background-color: #fafbfa;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1b2914;
+    transition: all 0.2s;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: #284701;
+    box-shadow: 0 0 0 1px #284701;
+  }
+  .form-tab-btn {
+    color: #4b5563;
+    background-color: transparent;
+  }
+  .form-tab-btn.active {
+    color: #ffffff;
+    background-color: #284701;
+    box-shadow: 0 4px 10px rgba(40, 71, 1, 0.15);
+  }
+</style>
+
+<script>
+  // Listas locais de apoio para arrays do form
+  let localEducation = [];
+  let localTrainings = [];
+  let localVaccinations = [];
+  let localDocuments = [];
+  let localAbsences = [];
+
+  // Alterna Abas do Form
+  function switchFormTab(tabId) {
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+    document.querySelectorAll('.form-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${tabId}`).classList.add('active');
+  }
+
+  function toggleTerminationReasonField() {
+    const statusVal = document.getElementById('form-prof-status').value;
+    const container = document.getElementById('container-terminationReason');
+    if (statusVal === 'Desligado') {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+
+  // Alterna o Formulário Principal de Exibição
+  function toggleAddProfForm() {
+    const panel = document.getElementById('add-prof-panel');
+    panel.classList.toggle('hidden');
+    
+    // Reseta form para estado "Add" caso estivesse editando
+    document.getElementById('form-title').innerText = "Cadastrar Novo Colaborador";
+    document.getElementById('prof-form').action = "/admin/profissionais/add";
+    document.getElementById('form-prof-id').value = "";
+    document.getElementById('prof-form').reset();
+    document.getElementById('form-prof-showOnAbout').checked = true;
+    document.getElementById('submit-btn').innerText = "Salvar Colaborador & Ficha";
+
+    if (document.getElementById('form-prof-terminationReason')) {
+      document.getElementById('form-prof-terminationReason').value = "";
+    }
+    toggleTerminationReasonField();
+
+    // Reseta foto
+    document.getElementById('avatar-preview').src = "";
+    document.getElementById('avatar-preview').classList.add('hidden');
+    document.getElementById('avatar-placeholder').classList.remove('hidden');
+
+    // Reseta arrays locais
+    localEducation = [];
+    localTrainings = [];
+    localVaccinations = [];
+    localDocuments = [];
+    localAbsences = [];
+    
+    renderAllTables();
+    switchFormTab('tab-pessoais');
+  }
+
+  function hideAddProfForm() {
+    document.getElementById('add-prof-panel').classList.add('hidden');
+  }
+
+  // Preenche Ficha de Colaborador para Edição
+  function editProf(profStr) {
+    const prof = JSON.parse(profStr);
+    
+    // Mostra o formulário
+    const panel = document.getElementById('add-prof-panel');
+    panel.classList.remove('hidden');
+    
+    document.getElementById('form-title').innerText = "Gerenciar Ficha Funcional: " + prof.name;
+    document.getElementById('prof-form').action = "/admin/profissionais/edit";
+    document.getElementById('submit-btn').innerText = "Salvar Alterações";
+    
+    // Preenche os campos Básicos/Pessoais
+    document.getElementById('form-prof-id').value = prof.id;
+    document.getElementById('form-prof-name').value = prof.name;
+    document.getElementById('form-prof-socialName').value = prof.socialName || "";
+    document.getElementById('form-prof-cpf').value = prof.cpf || "";
+    document.getElementById('form-prof-rg').value = prof.rg || "";
+    document.getElementById('form-prof-birthDate').value = prof.birthDate || "";
+    document.getElementById('form-prof-gender').value = prof.gender || "";
+    document.getElementById('form-prof-maritalStatus').value = prof.maritalStatus || "";
+    document.getElementById('form-prof-nationality').value = prof.nationality || "";
+    document.getElementById('form-prof-phone').value = prof.phone || "";
+    document.getElementById('form-prof-mobile').value = prof.mobile || "";
+    document.getElementById('form-prof-email').value = prof.email || "";
+    document.getElementById('form-prof-address').value = prof.address || "";
+    document.getElementById('form-prof-city').value = prof.city || "";
+    document.getElementById('form-prof-state').value = prof.state || "";
+    document.getElementById('form-prof-zipCode').value = prof.zipCode || "";
+    
+    // Preenche Foto do Colaborador
+    if (prof.photo) {
+      document.getElementById('form-prof-photo').value = prof.photo;
+      document.getElementById('avatar-preview').src = prof.photo;
+      document.getElementById('avatar-preview').classList.remove('hidden');
+      document.getElementById('avatar-placeholder').classList.add('hidden');
+    } else {
+      document.getElementById('form-prof-photo').value = "";
+      document.getElementById('avatar-preview').src = "";
+      document.getElementById('avatar-preview').classList.add('hidden');
+      document.getElementById('avatar-placeholder').classList.remove('hidden');
+    }
+
+    // Preenche Dados Profissionais
+    document.getElementById('form-prof-registration').value = prof.registration || "";
+    document.getElementById('form-prof-role').value = prof.role || "";
+    document.getElementById('form-prof-sector').value = prof.sector || "";
+    document.getElementById('form-prof-function').value = prof.function || "";
+    document.getElementById('form-prof-admissionDate').value = prof.admissionDate || "";
+    document.getElementById('form-prof-contractType').value = prof.contractType || "";
+    document.getElementById('form-prof-workday').value = prof.workday || "";
+    document.getElementById('form-prof-supervisor').value = prof.supervisor || "";
+    document.getElementById('form-prof-status').value = prof.status || "Ativo";
+    if (document.getElementById('form-prof-terminationReason')) {
+      document.getElementById('form-prof-terminationReason').value = prof.terminationReason || "";
+    }
+    toggleTerminationReasonField();
+
+    // Preenche Acessos & Site
+    document.getElementById('form-prof-username').value = prof.username || "";
+    document.getElementById('form-prof-password').value = prof.password || "";
+    document.getElementById('form-prof-profileId').value = prof.profileId || "";
+    document.getElementById('form-prof-showOnAbout').checked = prof.showOnAbout !== false;
+    document.getElementById('form-prof-title').value = prof.title || "";
+    document.getElementById('form-prof-description').value = prof.description || "";
+
+    // Preenche Formação
+    document.getElementById('form-prof-postGrad').value = prof.postGrad || "";
+    document.getElementById('form-prof-specializations').value = prof.specializations || "";
+    document.getElementById('form-prof-masterDegree').value = prof.masterDegree || "";
+    document.getElementById('form-prof-doctorateDegree').value = prof.doctorateDegree || "";
+
+    // Preenche Registro de Classe
+    document.getElementById('form-prof-regType').value = prof.regType || "";
+    document.getElementById('form-prof-regNumber').value = prof.regNumber || "";
+    document.getElementById('form-prof-regState').value = prof.regState || "";
+    document.getElementById('form-prof-regValidity').value = prof.regValidity || "";
+    document.getElementById('form-prof-regDocFile').value = prof.regDocFile || "";
+    
+    if (prof.regDocFile) {
+      document.getElementById('regdoc-preview-container').classList.remove('hidden');
+    } else {
+      document.getElementById('regdoc-preview-container').classList.add('hidden');
+    }
+
+    // Atribui os arrays do EJS para os arrays locais
+    localEducation = Array.isArray(prof.education) ? prof.education : [];
+    localTrainings = Array.isArray(prof.trainings) ? prof.trainings : [];
+    localVaccinations = Array.isArray(prof.vaccinations) ? prof.vaccinations : [];
+    localDocuments = Array.isArray(prof.documents) ? prof.documents : [];
+    localAbsences = Array.isArray(prof.absences) ? prof.absences : [];
+
+    renderAllTables();
+    switchFormTab('tab-pessoais');
+
+    panel.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Métodos auxiliares para converter Uploads de Arquivos para Base64 no Client
+  function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const base64Str = evt.target.result;
+      document.getElementById('form-prof-photo').value = base64Str;
+      document.getElementById('avatar-preview').src = base64Str;
+      document.getElementById('avatar-preview').classList.remove('hidden');
+      document.getElementById('avatar-placeholder').classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleRegDocUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('form-prof-regDocFile').value = evt.target.result;
+      document.getElementById('form-prof-regDocFileName').value = file.name;
+      document.getElementById('regdoc-preview-container').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Lê arquivos de graduações
+  function readEduFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('edu-diploma-base64').value = evt.target.result;
+      document.getElementById('edu-diploma-filename').value = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Lê arquivos de treinamentos
+  function readTrainFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('train-cert-base64').value = evt.target.result;
+      document.getElementById('train-cert-filename').value = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Lê comprovantes de vacinas
+  function readVacFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('vac-base64').value = evt.target.result;
+      document.getElementById('vac-filename').value = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Lê documentos digitais genéricos
+  function readDocFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById('doc-base64').value = evt.target.result;
+      document.getElementById('doc-filename').value = file.name;
+      
+      const infoEl = document.getElementById('doc-selected-info');
+      infoEl.innerText = `Selecionado: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+      infoEl.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------------- GESTÃO DINÂMICA DAS TABELAS INTERATIVAS ----------------
+
+  function renderAllTables() {
+    renderEducationTable();
+    renderTrainingsTable();
+    renderVaccinationsTable();
+    renderDocumentsTable();
+    renderAbsencesTable();
+
+    // Sincroniza inputs ocultos serializados antes de enviar ao Express
+    document.getElementById('form-serialized-education').value = JSON.stringify(localEducation);
+    document.getElementById('form-serialized-trainings').value = JSON.stringify(localTrainings);
+    document.getElementById('form-serialized-vaccinations').value = JSON.stringify(localVaccinations);
+    document.getElementById('form-serialized-documents').value = JSON.stringify(localDocuments);
+    document.getElementById('form-serialized-absences').value = JSON.stringify(localAbsences);
+  }
+
+  // TABELA 1: Educação / Graduações
+  function addEducationRow() {
+    const course = document.getElementById('edu-course').value.trim();
+    const institution = document.getElementById('edu-institution').value.trim();
+    const date = document.getElementById('edu-date').value;
+    const file = document.getElementById('edu-diploma-base64').value;
+    const filename = document.getElementById('edu-diploma-filename').value;
+
+    if (!course || !institution) {
+      alert("Por favor, preencha o Curso e a Instituição da Graduação.");
+      return;
+    }
+
+    localEducation.push({
+      id: Date.now().toString(),
+      course,
+      institution,
+      date,
+      file,
+      filename
+    });
+
+    // Limpa campos
+    document.getElementById('edu-course').value = '';
+    document.getElementById('edu-institution').value = '';
+    document.getElementById('edu-date').value = '';
+    document.getElementById('edu-diploma-file').value = '';
+    document.getElementById('edu-diploma-base64').value = '';
+    document.getElementById('edu-diploma-filename').value = '';
+
+    renderAllTables();
+  }
+
+  function removeEducationRow(id) {
+    localEducation = localEducation.filter(item => item.id !== id);
+    renderAllTables();
+  }
+
+  function renderEducationTable() {
+    const tbody = document.getElementById('education-table-body');
+    tbody.innerHTML = '';
+    
+    if (localEducation.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-400">Nenhum registro de graduação cadastrado.</td></tr>`;
+      return;
+    }
+
+    localEducation.forEach(item => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-brand-softBg/20 border-b border-brand-light/5">
+          <td class="py-3 px-4 font-bold text-brand-dark">${item.course}</td>
+          <td class="py-3 px-4">${item.institution}</td>
+          <td class="py-3 px-4 font-mono">${item.date ? new Date(item.date).toLocaleDateString('pt-BR') : '-'}</td>
+          <td class="py-3 px-4">
+            ${item.file ? `<a href="${item.file}" download="${item.filename || 'diploma'}" class="text-indigo-600 font-bold hover:underline font-mono text-[10px] flex items-center gap-1">📥 Baixar Diploma</a>` : '<span class="text-gray-400 font-mono text-[10px]">Sem anexo</span>'}
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" onclick="removeEducationRow('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 p-1 rounded-lg transition-all font-bold">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // TABELA 2: Treinamentos
+  function addTrainingRow() {
+    const name = document.getElementById('train-name').value.trim();
+    const date = document.getElementById('train-date').value;
+    const instructor = document.getElementById('train-instructor').value.trim();
+    const hours = document.getElementById('train-hours').value.trim();
+    const grade = document.getElementById('train-grade').value.trim();
+    const file = document.getElementById('train-cert-base64').value;
+    const filename = document.getElementById('train-cert-filename').value;
+
+    if (!name) {
+      alert("Por favor, preencha o Nome do Treinamento.");
+      return;
+    }
+
+    localTrainings.push({
+      id: Date.now().toString(),
+      name,
+      date,
+      instructor,
+      hours,
+      grade,
+      file,
+      filename
+    });
+
+    // Limpa campos
+    document.getElementById('train-name').value = '';
+    document.getElementById('train-date').value = '';
+    document.getElementById('train-instructor').value = '';
+    document.getElementById('train-hours').value = '';
+    document.getElementById('train-grade').value = '';
+    document.getElementById('train-cert-file').value = '';
+    document.getElementById('train-cert-base64').value = '';
+    document.getElementById('train-cert-filename').value = '';
+
+    renderAllTables();
+  }
+
+  function removeTrainingRow(id) {
+    localTrainings = localTrainings.filter(item => item.id !== id);
+    renderAllTables();
+  }
+
+  function renderTrainingsTable() {
+    const tbody = document.getElementById('trainings-table-body');
+    tbody.innerHTML = '';
+
+    if (localTrainings.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-gray-400">Nenhum treinamento registrado ainda.</td></tr>`;
+      return;
+    }
+
+    localTrainings.forEach(item => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-brand-softBg/20 border-b border-brand-light/5">
+          <td class="py-3 px-4 font-bold text-brand-dark">${item.name}</td>
+          <td class="py-3 px-4 font-mono">${item.date ? new Date(item.date).toLocaleDateString('pt-BR') : '-'}</td>
+          <td class="py-3 px-4">${item.instructor || '-'}</td>
+          <td class="py-3 px-4 font-mono">${item.hours || '-'}</td>
+          <td class="py-3 px-4 font-mono text-indigo-600 font-bold">${item.grade || '-'}</td>
+          <td class="py-3 px-4">
+            ${item.file ? `<a href="${item.file}" download="${item.filename || 'certificado'}" class="text-indigo-600 font-bold hover:underline font-mono text-[10px]">📥 Baixar Certificado</a>` : '<span class="text-gray-400">Sem anexo</span>'}
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" onclick="removeTrainingRow('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 p-1 rounded-lg transition-all font-bold">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // TABELA 3: Vacinação
+  function addVaccinationRow() {
+    const name = document.getElementById('vac-name').value;
+    const dose = document.getElementById('vac-dose').value.trim();
+    const date = document.getElementById('vac-date').value;
+    const batch = document.getElementById('vac-batch').value.trim();
+    const file = document.getElementById('vac-base64').value;
+    const filename = document.getElementById('vac-filename').value;
+
+    if (!date) {
+      alert("Por favor, insira a Data de Aplicação da Vacina.");
+      return;
+    }
+
+    localVaccinations.push({
+      id: Date.now().toString(),
+      name,
+      dose,
+      date,
+      batch,
+      file,
+      filename
+    });
+
+    // Limpa campos
+    document.getElementById('vac-dose').value = '';
+    document.getElementById('vac-date').value = '';
+    document.getElementById('vac-batch').value = '';
+    document.getElementById('vac-file').value = '';
+    document.getElementById('vac-base64').value = '';
+    document.getElementById('vac-filename').value = '';
+
+    renderAllTables();
+  }
+
+  function removeVaccinationRow(id) {
+    localVaccinations = localVaccinations.filter(item => item.id !== id);
+    renderAllTables();
+  }
+
+  function renderVaccinationsTable() {
+    const tbody = document.getElementById('vaccinations-table-body');
+    tbody.innerHTML = '';
+
+    if (localVaccinations.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-400">Nenhum registro de vacinação cadastrado.</td></tr>`;
+      return;
+    }
+
+    localVaccinations.forEach(item => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-brand-softBg/20 border-b border-brand-light/5">
+          <td class="py-3 px-4 font-bold text-brand-dark">${item.name}</td>
+          <td class="py-3 px-4 font-semibold text-gray-500">${item.dose || '-'}</td>
+          <td class="py-3 px-4 font-mono">${item.date ? new Date(item.date).toLocaleDateString('pt-BR') : '-'}</td>
+          <td class="py-3 px-4 font-mono text-gray-500">${item.batch || '-'}</td>
+          <td class="py-3 px-4">
+            ${item.file ? `<a href="${item.file}" download="${item.filename || 'comprovante-vacina'}" class="text-emerald-600 font-bold hover:underline font-mono text-[10px]">📥 Baixar Comprovante</a>` : '<span class="text-gray-400">Sem comprovante</span>'}
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" onclick="removeVaccinationRow('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 p-1 rounded-lg transition-all font-bold">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // TABELA 4: Documentos Digitais Genéricos
+  function addDocumentRow() {
+    const type = document.getElementById('doc-type').value;
+    const name = document.getElementById('doc-name').value.trim();
+    const file = document.getElementById('doc-base64').value;
+    const filename = document.getElementById('doc-filename').value;
+
+    if (!name || !file) {
+      alert("Por favor, preencha o Nome do Documento e selecione um Arquivo.");
+      return;
+    }
+
+    localDocuments.push({
+      id: Date.now().toString(),
+      type,
+      name,
+      file,
+      filename,
+      uploadDate: new Date().toISOString()
+    });
+
+    // Limpa campos
+    document.getElementById('doc-name').value = '';
+    document.getElementById('doc-file-info');
+    document.getElementById('doc-upload-file').value = '';
+    document.getElementById('doc-base64').value = '';
+    document.getElementById('doc-filename').value = '';
+    
+    const infoEl = document.getElementById('doc-selected-info');
+    infoEl.innerText = '';
+    infoEl.classList.add('hidden');
+
+    renderAllTables();
+  }
+
+  function removeDocumentRow(id) {
+    localDocuments = localDocuments.filter(item => item.id !== id);
+    renderAllTables();
+  }
+
+  function renderDocumentsTable() {
+    const tbody = document.getElementById('documents-table-body');
+    tbody.innerHTML = '';
+
+    if (localDocuments.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-400">Nenhum documento digitalizado armazenado nesta ficha.</td></tr>`;
+      return;
+    }
+
+    localDocuments.forEach(item => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-brand-softBg/20 border-b border-brand-light/5">
+          <td class="py-3 px-4"><span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded font-mono text-[9px] uppercase font-bold">${item.type}</span></td>
+          <td class="py-3 px-4 font-bold text-brand-dark">${item.name}</td>
+          <td class="py-3 px-4 font-mono text-[10px] text-gray-400">${item.filename || '-'}</td>
+          <td class="py-3 px-4 font-mono text-gray-400">${new Date(item.uploadDate).toLocaleDateString('pt-BR')}</td>
+          <td class="py-3 px-4">
+            <a href="${item.file}" download="${item.filename || 'documento'}" class="text-indigo-600 font-bold hover:underline font-mono text-[10px] flex items-center gap-1">📥 Baixar Arquivo</a>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" onclick="removeDocumentRow('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 p-1 rounded-lg transition-all font-bold">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // TABELA 5: Ausências e Férias
+  function calcAbsenceDays() {
+    const start = document.getElementById('abs-start').value;
+    const end = document.getElementById('abs-end').value;
+
+    if (!start || !end) return;
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    
+    if (endDate < startDate) {
+      document.getElementById('abs-days').value = 0;
+      return;
+    }
+
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Incluindo o próprio dia de início
+    document.getElementById('abs-days').value = diffDays;
+  }
+
+  function addAbsenceRow() {
+    const type = document.getElementById('abs-type').value;
+    const start = document.getElementById('abs-start').value;
+    const end = document.getElementById('abs-end').value;
+    const days = parseInt(document.getElementById('abs-days').value) || 0;
+    const notes = document.getElementById('abs-notes').value.trim();
+
+    if (!start || !end || days <= 0) {
+      alert("Por favor, selecione datas de Início e Fim válidas.");
+      return;
+    }
+
+    localAbsences.push({
+      id: Date.now().toString(),
+      type,
+      start,
+      end,
+      days,
+      notes
+    });
+
+    // Limpa campos
+    document.getElementById('abs-start').value = '';
+    document.getElementById('abs-end').value = '';
+    document.getElementById('abs-days').value = '';
+    document.getElementById('abs-notes').value = '';
+
+    renderAllTables();
+  }
+
+  function removeAbsenceRow(id) {
+    localAbsences = localAbsences.filter(item => item.id !== id);
+    renderAllTables();
+  }
+
+  function renderAbsencesTable() {
+    const tbody = document.getElementById('absences-table-body');
+    tbody.innerHTML = '';
+
+    if (localAbsences.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-400">Nenhum evento de ausência ou férias registrado.</td></tr>`;
+      return;
+    }
+
+    localAbsences.forEach(item => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-brand-softBg/20 border-b border-brand-light/5">
+          <td class="py-3 px-4 font-bold text-brand-dark">${item.type}</td>
+          <td class="py-3 px-4 font-mono">${new Date(item.start).toLocaleDateString('pt-BR')}</td>
+          <td class="py-3 px-4 font-mono">${new Date(item.end).toLocaleDateString('pt-BR')}</td>
+          <td class="py-3 px-4 font-mono font-bold text-indigo-700">${item.days} dias</td>
+          <td class="py-3 px-4 font-medium text-gray-500">${item.notes || '-'}</td>
+          <td class="py-3 px-4 text-right">
+            <button type="button" onclick="removeAbsenceRow('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 p-1 rounded-lg transition-all font-bold">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // ---------------- FILTROS DE PESQUISA & BUSCA DE COLABORADORES ----------------
+
+  function filterEmployees() {
+    const searchVal = document.getElementById('employee-search').value.toLowerCase().trim();
+    const roleVal = document.getElementById('employee-filter-role').value.toLowerCase().trim();
+    const statusVal = document.getElementById('employee-filter-status').value.toLowerCase().trim();
+
+    const cards = document.querySelectorAll('.employee-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const name = card.getAttribute('data-name') || '';
+      const role = card.getAttribute('data-role') || '';
+      const cpf = card.getAttribute('data-cpf') || '';
+      const status = card.getAttribute('data-status') || '';
+
+      // 1. Busca por texto
+      const matchesSearch = !searchVal || name.includes(searchVal) || role.includes(searchVal) || cpf.includes(searchVal);
+
+      // 2. Filtro de Cargo
+      const matchesRole = roleVal === 'all' || role.includes(roleVal);
+
+      // 3. Filtro de Status
+      const matchesStatus = statusVal === 'all' || status.toLowerCase() === statusVal;
+
+      if (matchesSearch && matchesRole && matchesStatus) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    const noResults = document.getElementById('no-employees');
+    if (visibleCount === 0) {
+      noResults.classList.remove('hidden');
+    } else {
+      noResults.classList.add('hidden');
+    }
+  }
+
+  function clearEmployeeFilters() {
+    document.getElementById('employee-search').value = '';
+    document.getElementById('employee-filter-role').value = 'all';
+    document.getElementById('employee-filter-status').value = 'all';
+    filterEmployees();
+  }
+
+  // Mascaras de campo
+  function maskCPF(i) {
+    let v = i.value;
+    if (isNaN(v.charAt(v.length-1))) {
+      i.value = v.substring(0, v.length-1);
+      return;
+    }
+    i.setAttribute("maxlength", "14");
+    if (v.length === 3 || v.length === 7) i.value += ".";
+    if (v.length === 11) i.value += "-";
+  }
+
+  function maskPhone(i) {
+    let v = i.value.replace(/\D/g, "");
+    if (v.length > 11) v = v.substring(0, 11);
+    
+    if (v.length > 10) {
+      i.value = "(" + v.substring(0, 2) + ") " + v.substring(2, 7) + "-" + v.substring(7, 11);
+    } else if (v.length > 6) {
+      i.value = "(" + v.substring(0, 2) + ") " + v.substring(2, 6) + "-" + v.substring(6, 10);
+    } else if (v.length > 2) {
+      i.value = "(" + v.substring(0, 2) + ") " + v.substring(2);
+    } else if (v.length > 0) {
+      i.value = "(" + v;
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

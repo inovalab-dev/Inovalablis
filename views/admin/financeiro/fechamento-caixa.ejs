@@ -1,0 +1,1793 @@
+<%- include('../../partials/header') %>
+
+<main class="min-h-screen bg-brand-neutralLight/45 pb-16">
+  
+  <!-- BANNER CABEÇALHO -->
+  <section class="bg-white border-b border-brand-light/10 py-8">
+    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+          <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+          <span>&rsaquo;</span>
+          <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Financeiro / Recepção</span>
+          <span>&rsaquo;</span>
+          <span class="text-brand-gold font-bold font-mono uppercase text-[10px]">Conferência & Histórico de Caixas</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight flex items-center gap-2.5">
+          <svg class="w-7 h-7 text-brand-gold shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Conferência & Histórico de Fechamentos de Caixa
+        </h1>
+        <p class="text-xs text-gray-500 max-w-4xl">
+          Painel administrativo para conciliação dos caixas da recepção (Particular e SUS). Valide e marque a flag de conferido, filtre por período e acompanhe o fluxo financeiro.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" onclick="openImportCsvModal()" class="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer border border-emerald-500/30">
+          <svg class="w-4 h-4 text-emerald-200 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span>Importar Arquivo CSV</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-400 text-slate-900 font-black uppercase">CSV</span>
+        </button>
+        <button type="button" onclick="openDeleteMonthModal()" class="text-xs font-bold bg-rose-700 hover:bg-rose-800 text-white px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer border border-rose-600">
+          <svg class="w-4 h-4 text-rose-200 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Excluir Mês</span>
+        </button>
+        <a href="/admin/recepcao/fechamento-caixa" class="text-xs font-bold bg-brand-dark hover:bg-brand-light text-white px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Lançar Novo Fechamento</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALERTAS -->
+  <% if (typeof query !== 'undefined' && query.success) { %>
+    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between text-xs font-semibold shadow-sm">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <% if (query.success === 'deleted_month') { %>
+            <span>Todos os fechamentos de caixa do mês <%= query.mes || '' %> (<%= query.count || 0 %> lançamento(s)) foram excluídos com sucesso.</span>
+          <% } else { %>
+            <span>Operação realizada com sucesso no fechamento de caixa.</span>
+          <% } %>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 text-base">&times;</button>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+    <!-- Sub-Navegação Unificada -->
+    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap bg-white px-4 py-2.5 rounded-xl border border-gray-100 shadow-sm">
+      <a href="/admin/financeiro/dashboard" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dashboard') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Dashboard
+      </a>
+      <a href="/admin/financeiro/relatorio-faturamento" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-relatorio-faturamento') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Relatório de Faturamento
+      </a>
+      <a href="/admin/financeiro/pessoas" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-pessoas') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Clientes / Fornecedores
+      </a>
+      <a href="/admin/financeiro/contas-pagar" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-contas-pagar') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Contas a Pagar
+      </a>
+      <a href="/admin/financeiro/contas-receber" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-contas-receber') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Contas a Receber
+      </a>
+      <a href="/admin/financeiro/fechamento-caixa" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-[#284701] text-[#284701] transition-all flex items-center gap-1.5">
+        Fechamento de Caixa
+      </a>
+      <a href="/admin/financeiro/fluxo-caixa" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-fluxo-caixa') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Fluxo de Caixa
+      </a>
+      <a href="/admin/financeiro/dre" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dre') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5" title="Demonstrativo de Resultado">
+        Demonstrativo de Resultado
+      </a>
+      <a href="/admin/financeiro/movimentacoes" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-movimentacoes') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Movimentações
+      </a>
+      <a href="/admin/financeiro/configuracoes" class="px-4 py-2 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-configuracoes') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+        Configurações
+      </a>
+    </div>
+
+    <!-- DASHBOARD DE MÉTRICAS (FINANCEIRO / RECEPTIVO) -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-3">
+      
+      <!-- Metric 1: Total Entradas (Faturado) -->
+      <div class="bg-white p-4 rounded-2xl border border-brand-light/20 shadow-sm col-span-2 sm:col-span-2 lg:col-span-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Total Entradas (Faturamento)</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          </div>
+        </div>
+        <div class="mt-2">
+          <div id="dash-total-entradas" class="text-xl font-black text-emerald-800 font-mono">R$ 0,00</div>
+          <p class="text-[9px] text-gray-400 mt-0.5">Soma de todas as formas de pagamento</p>
+        </div>
+      </div>
+
+      <!-- Metric 2: Dinheiro -->
+      <div class="bg-white p-3.5 rounded-2xl border border-emerald-100 shadow-sm">
+        <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider font-mono">Dinheiro</span>
+        <div id="dash-dinheiro" class="text-base font-extrabold text-emerald-950 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-emerald-600 mt-0.5">Espécie entrado</p>
+      </div>
+
+      <!-- Metric 2.1: Saídas em Dinheiro -->
+      <div class="bg-white p-3.5 rounded-2xl border border-rose-200 shadow-sm">
+        <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider font-mono">(-) Saídas Caixa</span>
+        <div id="dash-saidas" class="text-base font-extrabold text-rose-700 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-rose-600 mt-0.5">Combustível/Pão/Insumos</p>
+      </div>
+
+      <!-- Metric 3: PIX -->
+      <div class="bg-white p-3.5 rounded-2xl border border-teal-100 shadow-sm">
+        <span class="text-[10px] font-bold text-teal-800 uppercase tracking-wider font-mono">PIX</span>
+        <div id="dash-pix" class="text-base font-extrabold text-teal-950 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-teal-600 mt-0.5">Transferências PIX</p>
+      </div>
+
+      <!-- Metric 4: Cartão Crédito -->
+      <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-sm">
+        <span class="text-[10px] font-bold text-indigo-800 uppercase tracking-wider font-mono">C. Crédito</span>
+        <div id="dash-credito" class="text-base font-extrabold text-indigo-950 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-indigo-600 mt-0.5">Vendas crédito</p>
+      </div>
+
+      <!-- Metric 5: Cartão Débito -->
+      <div class="bg-white p-3.5 rounded-2xl border border-purple-100 shadow-sm">
+        <span class="text-[10px] font-bold text-purple-800 uppercase tracking-wider font-mono">C. Débito</span>
+        <div id="dash-debito" class="text-base font-extrabold text-purple-950 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-purple-600 mt-0.5">Vendas débito</p>
+      </div>
+
+      <!-- Metric 6: Cheque -->
+      <div class="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
+        <span class="text-[10px] font-bold text-gray-700 uppercase tracking-wider font-mono">Cheque</span>
+        <div id="dash-cheque" class="text-base font-extrabold text-gray-900 font-mono mt-1">R$ 0,00</div>
+        <p class="text-[9px] text-gray-500 mt-0.5">Cheques pré</p>
+      </div>
+
+      <!-- Metric 7: Total Retirada / Sangria -->
+      <div class="bg-brand-neutralDark text-white p-4 rounded-2xl border border-brand-gold/30 shadow-md col-span-2 sm:col-span-2 lg:col-span-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-brand-gold uppercase tracking-wider font-mono">Retirada (Sangria Total)</span>
+          <div class="w-7 h-7 rounded-lg bg-brand-gold/20 text-brand-gold flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </div>
+        </div>
+        <div class="mt-2">
+          <div id="dash-retirada" class="text-xl font-black text-brand-gold font-mono">R$ 0,00</div>
+          <p class="text-[9px] text-white/60 mt-0.5">Total a recolher das recepções em espécie</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BARRA DE CONTROLE MENSAL DA CONFERÊNCIA -->
+    <div class="bg-brand-neutralDark text-white p-4 rounded-2xl border border-brand-gold/30 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-gold/20 text-brand-gold flex items-center justify-center shrink-0 border border-brand-gold/30">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-brand-gold uppercase tracking-widest font-mono">Competência / Mês de Referência</span>
+          <h3 id="current-month-display" class="text-xl font-black text-white font-mono leading-tight flex items-center gap-2">
+            <span>Carregando mês...</span>
+          </h3>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Botão Mês Anterior -->
+        <button type="button" onclick="changeMonth(-1)" 
+                class="px-3 py-2 bg-white/10 hover:bg-brand-gold hover:text-brand-dark text-white rounded-xl transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold font-mono cursor-pointer border border-white/10" title="Voltar 1 Mês">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span class="hidden sm:inline">Anterior</span>
+        </button>
+
+        <!-- Seletor de Mês (Input Month) -->
+        <div class="relative">
+          <input type="month" id="filter-month-picker" onchange="onMonthPickerChange()" 
+                 class="bg-white/10 text-white font-extrabold font-mono text-xs px-3 py-2 rounded-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-brand-gold cursor-pointer hover:bg-white/15 transition-all">
+        </div>
+
+        <!-- Botão Próximo Mês -->
+        <button type="button" onclick="changeMonth(1)" 
+                class="px-3 py-2 bg-white/10 hover:bg-brand-gold hover:text-brand-dark text-white rounded-xl transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold font-mono cursor-pointer border border-white/10" title="Avançar 1 Mês">
+          <span class="hidden sm:inline">Próximo</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <!-- Botão Mês Atual -->
+        <button type="button" onclick="goToCurrentMonth()" 
+                class="px-3.5 py-2 bg-brand-gold text-brand-dark hover:bg-yellow-400 text-xs font-black rounded-xl transition-all shadow-sm font-mono cursor-pointer" title="Ir para Mês Atual">
+          Mês Atual
+        </button>
+
+        <!-- Botão Ver Todos -->
+        <button type="button" onclick="showAllMonths()" 
+                class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-all shadow-sm font-mono cursor-pointer border border-white/10" title="Exibir Todos os Lançamentos">
+          Todos
+        </button>
+      </div>
+    </div>
+
+    <!-- PAINEL PRINCIPAL COM FILTROS E TABELA DE CONFERÊNCIA -->
+    <div class="bg-white rounded-2xl border border-brand-light/20 shadow-sm p-6 space-y-5">
+      
+      <!-- BARRA DE FILTROS -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h2 class="text-base font-bold text-brand-dark flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            <span>Filtros e Conciliação</span>
+          </h2>
+          <p class="text-[11px] text-gray-500">Filtre por recepção, intervalo de datas ou status de conferência.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          
+          <!-- Filtro Recepção -->
+          <div>
+            <label class="block text-[10px] font-bold text-gray-600 uppercase font-mono mb-1">Recepção</label>
+            <select id="filter-recepcao" onchange="applyFilters()" class="text-xs font-bold px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-gold focus:outline-none">
+              <option value="Todas" selected>Todas as Recepções</option>
+              <option value="Recepção Particular">Recepção Particular</option>
+              <option value="Recepção SUS">Recepção SUS</option>
+            </select>
+          </div>
+
+          <!-- Filtro Status -->
+          <div>
+            <label class="block text-[10px] font-bold text-gray-600 uppercase font-mono mb-1">Status Conferência</label>
+            <select id="filter-status" onchange="applyFilters()" class="text-xs font-bold px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-gold focus:outline-none">
+              <option value="Todos" selected>Todos os Status</option>
+              <option value="Aguardando Conferência">Aguardando Conferência</option>
+              <option value="Conferido">Conferidos</option>
+            </select>
+          </div>
+
+          <!-- Data Inicial -->
+          <div>
+            <label class="block text-[10px] font-bold text-gray-600 uppercase font-mono mb-1">Data Inicial</label>
+            <input type="date" id="filter-date-start" onchange="applyFilters()" class="text-xs font-bold font-mono px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-gold focus:outline-none">
+          </div>
+
+          <!-- Data Final -->
+          <div>
+            <label class="block text-[10px] font-bold text-gray-600 uppercase font-mono mb-1">Data Final</label>
+            <input type="date" id="filter-date-end" onchange="applyFilters()" class="text-xs font-bold font-mono px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-gold focus:outline-none">
+          </div>
+
+          <!-- Busca por texto -->
+          <div>
+            <label class="block text-[10px] font-bold text-gray-600 uppercase font-mono mb-1">Buscar</label>
+            <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Nome do responsável..." class="text-xs px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-brand-gold focus:outline-none w-36">
+          </div>
+
+          <!-- Limpar Filtros -->
+          <div class="self-end">
+            <button onclick="clearFilters()" class="text-xs font-bold text-gray-500 hover:text-brand-dark px-3 py-2 border border-gray-200 hover:bg-gray-100 rounded-xl transition-all">
+              Limpar
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TABELA HISTÓRICO COM CONFERÊNCIA DE CAIXA -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[1300px]">
+          <thead>
+            <tr class="bg-gray-50 border-y border-gray-200 text-[10px] font-bold text-gray-500 uppercase font-mono">
+              <th class="py-3 px-3 text-center">Conferido?</th>
+              <th class="py-3 px-3">Data</th>
+              <th class="py-3 px-3">Recepção</th>
+              <th class="py-3 px-3">Lançado por</th>
+              <th class="py-3 px-3 text-right">Troco Ant.</th>
+              <th class="py-3 px-3 text-right">Dinheiro</th>
+              <th class="py-3 px-3 text-right text-rose-700">(-) Saídas Caixa</th>
+              <th class="py-3 px-3 text-right">PIX</th>
+              <th class="py-3 px-3 text-right">Crédito</th>
+              <th class="py-3 px-3 text-right">Débito</th>
+              <th class="py-3 px-3 text-right">Cheque</th>
+              <th class="py-3 px-3 text-right font-black">Total Entradas</th>
+              <th class="py-3 px-3 text-right">Troco Seg.</th>
+              <th class="py-3 px-3 text-right text-brand-dark font-black">Retirada (Sangria)</th>
+              <th class="py-3 px-3 text-center">Print Anexo</th>
+              <th class="py-3 px-3 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="closures-table-body" class="divide-y divide-gray-100 text-xs">
+            <% if (closures && closures.length > 0) { %>
+              <% closures.forEach(c => { %>
+                <tr class="hover:bg-gray-50/80 transition-colors closure-row" 
+                    data-id="<%= c.id %>"
+                    data-recepcao="<%= c.recepcao || 'Recepção Particular' %>"
+                    data-status="<%= c.status || 'Fechado' %>"
+                    data-date="<%= c.data || '' %>"
+                    data-responsavel="<%= (c.responsavel || '').toLowerCase() %>"
+                    data-dinheiro="<%= c.dinheiro || 0 %>"
+                    data-saidas="<%= c.saidasDinheiroTotal || 0 %>"
+                    data-pix="<%= c.pix || 0 %>"
+                    data-credito="<%= c.cartaoCredito || 0 %>"
+                    data-debito="<%= c.cartaoDebito || 0 %>"
+                    data-cheque="<%= c.cheque || 0 %>"
+                    data-total-entradas="<%= c.totalEntradas || 0 %>"
+                    data-retirada="<%= c.retiradaDinheiro || 0 %>"
+                    data-troco-seguinte="<%= c.trocoSeguinte || 0 %>">
+                  
+                  <!-- Toggle Flag Conferido -->
+                  <td class="py-3 px-3 text-center whitespace-nowrap">
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer" title="Marcar / Desmarcar como Conferido">
+                      <input type="checkbox" 
+                             class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer"
+                             <%= (c.status === 'Conferido') ? 'checked' : '' %>
+                             onchange="toggleConferido('<%= c.id %>', this.checked)">
+                      <span id="badge-status-<%= c.id %>" class="text-[9px] px-2 py-0.5 rounded-full font-mono font-bold <%= (c.status === 'Conferido') ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300' %>">
+                        <%= (c.status === 'Conferido') ? 'Conferido' : 'Pendente' %>
+                      </span>
+                    </label>
+                  </td>
+
+                  <!-- Data -->
+                  <td class="py-3 px-3 font-bold font-mono text-gray-900 whitespace-nowrap">
+                    <%= c.dataBr %>
+                  </td>
+
+                  <!-- Recepção -->
+                  <td class="py-3 px-3 font-bold text-gray-800 whitespace-nowrap">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold <%= (c.recepcao === 'Recepção SUS') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200' %>">
+                      <%= c.recepcao || 'Recepção Particular' %>
+                    </span>
+                  </td>
+
+                  <!-- Responsável -->
+                  <td class="py-3 px-3 font-semibold text-gray-700 whitespace-nowrap">
+                    <%= c.responsavel %>
+                  </td>
+
+                  <!-- Troco Anterior -->
+                  <td class="py-3 px-3 text-right font-mono text-gray-700 whitespace-nowrap">
+                    <div class="font-bold">R$ <%= c.trocoAnteriorFmt %></div>
+                    <% if (c.trocoAnteriorEditado) { %>
+                      <div class="inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 rounded px-1.5 py-0.5 text-[9px] font-bold font-sans mt-0.5" title="Troco do dia anterior foi alterado manualmente! Troco carregado originalmente era R$ <%= c.trocoAnteriorOriginalFmt %>">
+                        ✏️ Editado (Orig: R$ <%= c.trocoAnteriorOriginalFmt %>)
+                      </div>
+                    <% } %>
+                  </td>
+
+                  <!-- Dinheiro -->
+                  <td class="py-3 px-3 text-right font-mono font-bold text-emerald-700 whitespace-nowrap">
+                    R$ <%= c.dinheiroFmt %>
+                  </td>
+
+                  <!-- Saídas Dinheiro (Despesas Caixa) -->
+                  <td class="py-3 px-3 text-right font-mono font-bold text-rose-700 bg-rose-50/30 whitespace-nowrap" title="<%= (c.saidasDinheiro && c.saidasDinheiro.length) ? c.saidasDinheiro.map(s => s.tipo + ': R$ ' + s.valor).join(' | ') : 'Nenhuma saída em dinheiro' %>">
+                    <% if (c.saidasDinheiroTotal > 0) { %>
+                      - R$ <%= c.saidasDinheiroTotalFmt %>
+                    <% } else { %>
+                      <span class="text-gray-300">R$ 0,00</span>
+                    <% } %>
+                  </td>
+
+                  <!-- PIX -->
+                  <td class="py-3 px-3 text-right font-mono text-teal-700 whitespace-nowrap">
+                    R$ <%= c.pixFmt %>
+                  </td>
+
+                  <!-- Crédito -->
+                  <td class="py-3 px-3 text-right font-mono text-indigo-700 whitespace-nowrap">
+                    R$ <%= c.cartaoCreditoFmt %>
+                  </td>
+
+                  <!-- Débito -->
+                  <td class="py-3 px-3 text-right font-mono text-purple-700 whitespace-nowrap">
+                    R$ <%= c.cartaoDebitoFmt %>
+                  </td>
+
+                  <!-- Cheque -->
+                  <td class="py-3 px-3 text-right font-mono text-gray-700 whitespace-nowrap">
+                    R$ <%= c.chequeFmt %>
+                  </td>
+
+                  <!-- Total Entradas -->
+                  <td class="py-3 px-3 text-right font-mono font-black text-gray-900 bg-emerald-50/50 whitespace-nowrap">
+                    R$ <%= c.totalEntradasFmt %>
+                  </td>
+
+                  <!-- Troco Seguinte -->
+                  <td class="py-3 px-3 text-right font-mono text-amber-700 whitespace-nowrap">
+                    R$ <%= c.trocoSeguinteFmt %>
+                  </td>
+
+                  <!-- Retirada (Sangria) -->
+                  <td class="py-3 px-3 text-right font-mono font-black text-brand-dark bg-brand-gold/10 whitespace-nowrap">
+                    R$ <%= c.retiradaDinheiroFmt %>
+                  </td>
+
+                  <!-- Print Anexo -->
+                  <td class="py-3 px-3 text-center whitespace-nowrap">
+                    <% if (c.comprovantePrint) { %>
+                      <button type="button" onclick="openImageModal('<%= c.comprovantePrint %>')" 
+                              class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-1 rounded-lg border border-indigo-200 transition-all cursor-pointer"
+                              title="Ver Print Anexado do Outro Sistema">
+                        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>Ver Print</span>
+                      </button>
+                    <% } else { %>
+                      <span class="text-gray-300 font-mono text-[10px]">-</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Ações -->
+                  <td class="py-3 px-3 text-center whitespace-nowrap">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button type="button" onclick="printReceipt('<%= c.id %>')" title="Imprimir Comprovante (Ticket)"
+                              class="p-1.5 text-gray-600 hover:text-brand-dark hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                      </button>
+                      <button type="button" onclick='openEditModal(<%- JSON.stringify(c) %>)' title="Editar Lançamento"
+                              class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+                      <form action="/admin/recepcao/fechamento-caixa/delete" method="POST" onsubmit="return confirm('Excluir este fechamento de caixa?');" class="inline">
+                        <input type="hidden" name="id" value="<%= c.id %>">
+                        <button type="submit" title="Excluir Lançamento"
+                                class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="14" class="py-12 text-center text-xs text-gray-400 font-mono">
+                  Nenhum fechamento de caixa encontrado no sistema.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL EDIÇÃO PELO ADMINISTRADOR -->
+<div id="edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 p-6 space-y-5">
+    
+    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+      <h3 class="text-base font-extrabold text-brand-dark flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        <span>Editar Fechamento de Caixa</span>
+      </h3>
+      <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-700 text-lg cursor-pointer">&times;</button>
+    </div>
+
+    <form id="edit-closure-form" action="/admin/recepcao/fechamento-caixa/save" method="POST" class="space-y-4">
+      <input type="hidden" id="edit-id" name="id">
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono mb-1">Recepção</label>
+          <select id="edit-recepcao" name="recepcao" required class="w-full text-xs font-bold px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+            <option value="Recepção Particular">Recepção Particular</option>
+            <option value="Recepção SUS">Recepção SUS</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono mb-1">Data</label>
+          <input type="date" id="edit-date" name="data" required class="w-full text-xs font-bold font-mono px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono mb-1">Responsável</label>
+          <input type="text" id="edit-responsavel" name="responsavel" required class="w-full text-xs font-bold px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <div>
+          <label class="block text-[10px] font-bold text-blue-800 uppercase font-mono mb-1">Troco Dia Ant.</label>
+          <input type="number" step="0.01" id="edit-troco-anterior" name="trocoAnterior" required class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-emerald-800 uppercase font-mono mb-1">Dinheiro</label>
+          <input type="number" step="0.01" id="edit-dinheiro" name="dinheiro" required class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-teal-800 uppercase font-mono mb-1">PIX</label>
+          <input type="number" step="0.01" id="edit-pix" name="pix" class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-indigo-800 uppercase font-mono mb-1">C. Crédito</label>
+          <input type="number" step="0.01" id="edit-cartao-credito" name="cartaoCredito" class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-purple-800 uppercase font-mono mb-1">C. Débito</label>
+          <input type="number" step="0.01" id="edit-cartao-debito" name="cartaoDebito" class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-700 uppercase font-mono mb-1">Cheque</label>
+          <input type="number" step="0.01" id="edit-cheque" name="cheque" class="w-full text-xs font-bold font-mono px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-amber-800 uppercase font-mono mb-1">Troco Próximo Dia</label>
+          <input type="number" step="0.01" id="edit-troco-seguinte" name="trocoSeguinte" required class="w-full text-xs font-bold font-mono px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono mb-1">Status Conferência</label>
+          <select id="edit-status" name="status" class="w-full text-xs font-bold px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+            <option value="Fechado">Aguardando Conferência</option>
+            <option value="Conferido">Conferido</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono mb-1">Observações</label>
+        <textarea id="edit-observacoes" name="observacoes" rows="2" class="w-full text-xs p-2.5 bg-gray-50 border border-gray-200 rounded-xl"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+        <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl">Cancelar</button>
+        <button type="submit" class="px-5 py-2.5 text-xs font-extrabold bg-brand-dark text-white hover:bg-brand-light rounded-xl shadow cursor-pointer">Salvar Alterações</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- MODAL DE IMPORTAÇÃO AUTOMÁTICA DE CSV DO FECHAMENTO DE CAIXA -->
+<div id="import-csv-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto" onclick="closeImportCsvModal()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-gray-200 overflow-hidden" onclick="event.stopPropagation()">
+    
+    <!-- CABEÇALHO DO MODAL -->
+    <div class="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between gap-4 border-b border-slate-800 shrink-0">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-widest">Importador de Arquivo CSV</span>
+          <span class="text-slate-400 text-xs font-mono">• Delimitado por Ponto e Vírgula (;)</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5 font-mono">
+          <svg class="w-6 h-6 text-brand-gold shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span>Importar Relatório de Caixa (CSV)</span>
+        </h2>
+        <p class="text-xs text-slate-300 max-w-2xl font-sans">
+          Selecione o arquivo CSV. O sistema ignorará a primeira linha e agrupará os lançamentos por data e recepção, definindo o status como <strong class="text-emerald-400">Conferido</strong>.
+        </p>
+      </div>
+
+      <button onclick="closeImportCsvModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition-all cursor-pointer">
+        &times;
+      </button>
+    </div>
+
+    <!-- CORPO DO MODAL -->
+    <div class="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-gray-50/50">
+
+      <!-- ZONA DE DROP E UPLOAD -->
+      <div id="csv-upload-zone" class="border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/40 hover:bg-emerald-50 p-6 sm:p-8 rounded-3xl text-center transition-all cursor-pointer relative" onclick="document.getElementById('csv-file-input').click()">
+        <input type="file" id="csv-file-input" accept=".csv,text/csv,text/plain" class="hidden" onchange="handleCsvFileSelected(event)">
+        
+        <div class="space-y-3 pointer-events-none">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-black text-gray-800 font-mono">Clique para selecionar ou arraste o arquivo CSV aqui</p>
+            <p class="text-xs text-gray-500 font-sans mt-0.5">Formato: Data do Fechamento *; Lançado Por; Tipo de pagamento; Valor; Recepção</p>
+          </div>
+          <span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-emerald-600 text-white shadow-sm">
+            📄 Relatório de Caixa Formato CSV (ponto e vírgula)
+          </span>
+        </div>
+      </div>
+
+      <!-- ITEM SELECIONADO E PREVIEW -->
+      <div id="csv-selected-preview" class="hidden bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-lg shrink-0">
+            📊
+          </div>
+          <div class="truncate">
+            <p id="csv-file-name" class="text-xs font-bold text-gray-900 font-mono truncate">relatorio_caixa.csv</p>
+            <p id="csv-file-size" class="text-[10px] text-gray-500 font-mono">0 KB</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="clearSelectedCsv()" class="text-xs font-bold text-rose-600 hover:text-rose-800 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer">
+            Remover
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTADO DA LEITURA DO CSV -->
+      <div id="csv-result-container" class="hidden space-y-5">
+        
+        <!-- HEADER RESUMO DO CSV -->
+        <div class="bg-emerald-900 text-white p-4 sm:p-5 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-800">
+          <div class="space-y-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 uppercase">Leitura Concluída</span>
+            <div id="csv-meta-info" class="text-xs font-bold font-mono text-emerald-100">
+              Lançamentos Agrupados
+            </div>
+          </div>
+
+          <div class="bg-emerald-950/80 p-3 rounded-xl border border-emerald-800 text-right">
+            <span class="text-[10px] font-bold uppercase tracking-wider font-mono text-emerald-400 block">Total Geral Faturado</span>
+            <span id="csv-total-geral" class="text-2xl font-black font-mono text-white">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- CARDS DOS GRUPOS ENCONTRADOS -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Fechamentos de Caixa para Lançamento (Conferido):</span>
+            </h3>
+            <span class="text-[10px] text-gray-500 font-mono">Confira os agrupamentos por data antes de confirmar</span>
+          </div>
+
+          <div id="csv-grouped-list" class="space-y-4">
+            <!-- Lista dinâmica dos fechamentos agrupados -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RODAPÉ DO MODAL -->
+    <div class="bg-white p-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      <p class="text-[11px] text-gray-500 font-mono flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Os lançamentos serão importados com o status "Conferido" e integrados ao Financeiro.</span>
+      </p>
+      
+      <div class="flex items-center justify-end gap-2 shrink-0">
+        <button type="button" onclick="closeImportCsvModal()" class="px-4 py-2 rounded-xl text-xs font-bold font-mono text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" id="btn-save-imported-csv-batch" onclick="saveImportedCsvBatch()" class="hidden px-6 py-2.5 rounded-xl text-xs font-black font-mono uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-2">
+          <span>⚡ Importar Lançamentos (Conferido)</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PARA EXCLUIR FECHAMENTOS POR MÊS -->
+<div id="delete-month-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-[80] hidden flex items-center justify-center p-4" onclick="closeDeleteMonthModal()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-200 overflow-hidden" onclick="event.stopPropagation()">
+    
+    <div class="bg-rose-900 text-white p-5 flex items-center justify-between gap-4 border-b border-rose-800">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-6 h-6 text-rose-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <h3 class="text-base font-black font-mono text-white">Excluir Lançamentos por Mês</h3>
+      </div>
+      <button onclick="closeDeleteMonthModal()" class="text-rose-200 hover:text-white text-xl font-bold">&times;</button>
+    </div>
+
+    <form action="/admin/recepcao/fechamento-caixa/delete-mes" method="POST" class="p-6 space-y-4">
+      <p class="text-xs text-gray-600 font-sans">
+        Selecione o mês para remover <strong>todos</strong> os registros de fechamento de caixa pertencentes a esse período.
+      </p>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 font-mono uppercase mb-1">Mês de Referência (AAAA-MM):</label>
+        <input type="month" id="delete-mes-input" name="mes" required class="w-full text-sm font-bold font-mono p-3 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+      </div>
+
+      <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-sans space-y-1">
+        <strong class="font-bold font-mono uppercase text-amber-800 flex items-center gap-1">⚠️ Atenção:</strong>
+        <p>Esta ação é irreversível. Todos os lançamentos do mês informado serão excluídos permanentemente.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="closeDeleteMonthModal()" class="px-4 py-2 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" onclick="return confirm('Tem certeza que deseja EXCLUIR TODOS os lançamentos deste mês?')" class="px-5 py-2.5 text-xs font-black font-mono uppercase bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow cursor-pointer">
+          🗑️ Confirmar Exclusão
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- MODAL DE VISUALIZAÇÃO DE IMAGEM EM TAMANHO REAL (PRINT DO SISTEMA) -->
+<div id="image-zoom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+  <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2" onclick="event.stopPropagation()">
+    <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-brand-gold text-sm font-bold cursor-pointer flex items-center gap-1">
+      <span>&times; Fechar Visualização</span>
+    </button>
+    <img id="image-zoom-src" src="" alt="Print Ampliado" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/20">
+  </div>
+</div>
+
+<!-- MODAL IMPRESSÃO COMPROVANTE (TICKET SLIP) -->
+<div id="print-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 p-6 space-y-4">
+    
+    <div class="flex items-center justify-between border-b border-gray-100 pb-3 no-print">
+      <h3 class="text-sm font-bold text-brand-dark flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Comprovante de Fechamento de Caixa</span>
+      </h3>
+      <button onclick="closePrintModal()" class="text-gray-400 hover:text-gray-700 text-lg cursor-pointer">&times;</button>
+    </div>
+
+    <!-- AREA IMPRESSA (TICKET SLIP) -->
+    <div id="printable-area" class="p-4 bg-white text-gray-900 border border-gray-200 rounded-xl space-y-4 font-sans">
+      
+      <!-- Cabeçalho Ticket -->
+      <div class="text-center border-b border-dashed border-gray-300 pb-3 space-y-1">
+        <h2 class="text-base font-extrabold text-brand-dark uppercase tracking-wider">INOVALAB ANÁLISES CLÍNICAS</h2>
+        <p id="print-recepcao-title" class="text-[11px] font-bold text-brand-gold uppercase font-mono"></p>
+        <p id="print-date-resp" class="text-xs font-semibold text-gray-700 font-mono mt-1"></p>
+      </div>
+
+      <!-- Resumo Valores Recebidos -->
+      <div class="space-y-1.5 text-xs">
+        <div class="font-bold text-[11px] text-gray-800 uppercase font-mono border-b border-gray-100 pb-1">1. Entradas por Forma de Pagamento</div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Dinheiro (Espécie):</span> <span id="p-dinheiro" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">PIX:</span> <span id="p-pix" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cartão de Crédito:</span> <span id="p-cartao-credito" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cartão de Débito:</span> <span id="p-cartao-debito" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cheque:</span> <span id="p-cheque" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono text-sm font-black pt-1 border-t border-gray-200">
+          <span>Total Faturado:</span> <span id="p-total-entradas" class="text-emerald-700">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Conciliação do Caixa -->
+      <div class="space-y-1.5 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <div class="font-bold text-[11px] text-gray-800 uppercase font-mono border-b border-gray-200 pb-1">2. Apuração do Caixa em Espécie</div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">(+) Troco Inicial (Dia Ant.):</span> <span id="p-troco-anterior" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">(+) Dinheiro Recebido:</span> <span id="p-dinheiro-esp" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono font-bold text-gray-900 border-t border-gray-200 pt-1">
+          <span>(=) Total Bruto Espécie:</span> <span id="p-total-especie">R$ 0,00</span>
+        </div>
+
+        <!-- Saídas do caixa em dinheiro -->
+        <div id="p-saidas-container" class="hidden space-y-1 py-1 border-t border-rose-200 text-rose-800 bg-rose-50/50 p-1.5 rounded">
+          <div class="flex justify-between font-mono font-bold">
+            <span>(-) Saídas / Despesas Caixa:</span>
+            <span id="p-saidas-total">R$ 0,00</span>
+          </div>
+          <div id="p-saidas-list" class="text-[10px] space-y-0.5 font-mono"></div>
+        </div>
+
+        <div class="flex justify-between font-mono text-amber-800"><span class="text-gray-600">(-) Troco Próximo Dia (Mantido):</span> <span id="p-troco-seguinte" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono text-sm font-black pt-1.5 border-t border-gray-300 text-brand-dark">
+          <span>(=) RETIRADA (SANGRIA):</span> <span id="p-retirada" class="text-base text-brand-dark">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Print Anexo Preview no Ticket -->
+      <div id="p-print-box" class="hidden text-xs space-y-1 no-print border-t border-gray-200 pt-2">
+        <span class="font-bold text-[10px] text-gray-500 uppercase font-mono">Print do Sistema Anexado:</span>
+        <div class="flex items-center gap-2 bg-indigo-50 p-2 rounded-lg border border-indigo-200">
+          <img id="p-print-img" src="" alt="Print Anexo" class="w-14 h-14 object-cover rounded border border-indigo-300 cursor-pointer" onclick="openImageModal(this.src)">
+          <button type="button" onclick="openImageModal(document.getElementById('p-print-img').src)" class="text-[11px] font-bold text-indigo-700 hover:underline">
+            Ampliar Print do Sistema
+          </button>
+        </div>
+      </div>
+
+      <!-- Observações -->
+      <div id="p-obs-box" class="text-xs space-y-1">
+        <span class="font-bold text-[10px] text-gray-500 uppercase font-mono">Observações:</span>
+        <p id="p-observacoes" class="italic text-gray-700 text-[11px] bg-gray-50 p-2 rounded border border-gray-100"></p>
+      </div>
+
+      <!-- Assinaturas -->
+      <div class="pt-6 grid grid-cols-2 gap-4 text-center text-[10px] font-mono text-gray-600">
+        <div>
+          <div class="border-t border-gray-400 pt-1">Recepcionista / Caixa</div>
+        </div>
+        <div>
+          <div class="border-t border-gray-400 pt-1">Conferido por (Gerência)</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flex items-center justify-end gap-2 no-print pt-2">
+      <button onclick="closePrintModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer">Fechar</button>
+      <button onclick="triggerPrint()" class="px-5 py-2 text-xs font-extrabold bg-brand-dark text-white hover:bg-brand-light rounded-xl shadow cursor-pointer flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Imprimir Comprovante</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printable-area, #printable-area * {
+      visibility: visible;
+    }
+    #printable-area {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      border: none !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  const closuresData = <%- JSON.stringify(closures || []) %>;
+
+  function formatMoney(num) {
+    const val = Number(num) || 0;
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function openImageModal(src) {
+    if (!src) return;
+    document.getElementById('image-zoom-src').src = src;
+    document.getElementById('image-zoom-modal').classList.remove('hidden');
+  }
+
+  function closeImageModal() {
+    document.getElementById('image-zoom-modal').classList.add('hidden');
+  }
+
+  // Alterna o status Conferido vs Fechado/Pendente
+  async function toggleConferido(id, isChecked) {
+    const newStatus = isChecked ? 'Conferido' : 'Fechado';
+    const badgeEl = document.getElementById(`badge-status-${id}`);
+
+    try {
+      const res = await fetch('/admin/recepcao/fechamento-caixa/toggle-conferido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus })
+      });
+
+      if (res.ok) {
+        if (badgeEl) {
+          if (isChecked) {
+            badgeEl.innerText = 'Conferido';
+            badgeEl.className = 'text-[9px] px-2 py-0.5 rounded-full font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+          } else {
+            badgeEl.innerText = 'Pendente';
+            badgeEl.className = 'text-[9px] px-2 py-0.5 rounded-full font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300';
+          }
+        }
+        
+        // Atualizar atributo data-status na linha da tabela
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+          row.setAttribute('data-status', newStatus);
+        }
+
+        // Atualizar no JS data array
+        const item = closuresData.find(c => c.id === id);
+        if (item) item.status = newStatus;
+
+      } else {
+        alert('Erro ao atualizar status do fechamento.');
+      }
+    } catch (err) {
+      console.error('Erro no toggle status:', err);
+      alert('Erro de rede ao alterar status.');
+    }
+  }
+
+  let currentSelectedMonth = ''; // Formato YYYY-MM ou 'ALL'
+
+  const monthNamesPt = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  function updateMonthDisplay() {
+    const displayEl = document.getElementById('current-month-display');
+    const pickerEl = document.getElementById('filter-month-picker');
+
+    if (!currentSelectedMonth || currentSelectedMonth === 'ALL') {
+      if (displayEl) displayEl.innerText = 'TODOS OS MESES';
+      if (pickerEl) pickerEl.value = '';
+      return;
+    }
+
+    if (pickerEl) pickerEl.value = currentSelectedMonth;
+
+    const parts = currentSelectedMonth.split('-');
+    if (parts.length === 2) {
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const monthName = monthNamesPt[monthIdx] || parts[1];
+      if (displayEl) displayEl.innerHTML = `${monthName.toUpperCase()} / <span class="text-brand-gold">${year}</span>`;
+    }
+  }
+
+  function changeMonth(delta) {
+    if (!currentSelectedMonth || currentSelectedMonth === 'ALL') {
+      const now = new Date();
+      currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    const parts = currentSelectedMonth.split('-');
+    let year = parseInt(parts[0], 10);
+    let month = parseInt(parts[1], 10) + delta;
+
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    } else if (month < 1) {
+      month = 12;
+      year -= 1;
+    }
+
+    currentSelectedMonth = `${year}-${String(month).padStart(2, '0')}`;
+    updateMonthDisplay();
+    applyFilters();
+  }
+
+  function onMonthPickerChange() {
+    const picker = document.getElementById('filter-month-picker');
+    if (picker && picker.value) {
+      currentSelectedMonth = picker.value;
+      updateMonthDisplay();
+      applyFilters();
+    }
+  }
+
+  function goToCurrentMonth() {
+    const now = new Date();
+    currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    updateMonthDisplay();
+    applyFilters();
+  }
+
+  function showAllMonths() {
+    currentSelectedMonth = 'ALL';
+    updateMonthDisplay();
+    applyFilters();
+  }
+
+  // Aplica filtros e recalcula totais da Dashboard
+  function applyFilters() {
+    const recepcaoVal = document.getElementById('filter-recepcao').value;
+    const statusVal = document.getElementById('filter-status').value;
+    const dateStartVal = document.getElementById('filter-date-start').value;
+    const dateEndVal = document.getElementById('filter-date-end').value;
+    const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
+
+    const rows = document.querySelectorAll('.closure-row');
+
+    let sumEntradas = 0;
+    let sumDinheiro = 0;
+    let sumSaidas = 0;
+    let sumPix = 0;
+    let sumCredito = 0;
+    let sumDebito = 0;
+    let sumCheque = 0;
+    let sumRetirada = 0;
+
+    rows.forEach(r => {
+      const rowRecepcao = r.getAttribute('data-recepcao') || 'Recepção Particular';
+      const rowStatus = r.getAttribute('data-status') || 'Fechado';
+      const rowDate = r.getAttribute('data-date') || '';
+      const rowResp = r.getAttribute('data-responsavel') || '';
+
+      // Filtro por Mês de Referência
+      let matchMonth = true;
+      if (currentSelectedMonth && currentSelectedMonth !== 'ALL') {
+        matchMonth = rowDate.startsWith(currentSelectedMonth);
+      }
+
+      const matchRecepcao = (recepcaoVal === 'Todas') || (rowRecepcao === recepcaoVal);
+      
+      let matchStatus = true;
+      if (statusVal === 'Conferido') matchStatus = (rowStatus === 'Conferido');
+      else if (statusVal === 'Aguardando Conferência') matchStatus = (rowStatus !== 'Conferido');
+
+      let matchDate = true;
+      if (dateStartVal && rowDate < dateStartVal) matchDate = false;
+      if (dateEndVal && rowDate > dateEndVal) matchDate = false;
+
+      let matchSearch = true;
+      if (searchVal && !rowResp.includes(searchVal)) matchSearch = false;
+
+      if (matchMonth && matchRecepcao && matchStatus && matchDate && matchSearch) {
+        r.style.display = '';
+
+        sumEntradas += parseFloat(r.getAttribute('data-total-entradas')) || 0;
+        sumDinheiro += parseFloat(r.getAttribute('data-dinheiro')) || 0;
+        sumSaidas += parseFloat(r.getAttribute('data-saidas')) || 0;
+        sumPix += parseFloat(r.getAttribute('data-pix')) || 0;
+        sumCredito += parseFloat(r.getAttribute('data-credito')) || 0;
+        sumDebito += parseFloat(r.getAttribute('data-debito')) || 0;
+        sumCheque += parseFloat(r.getAttribute('data-cheque')) || 0;
+        sumRetirada += parseFloat(r.getAttribute('data-retirada')) || 0;
+
+      } else {
+        r.style.display = 'none';
+      }
+    });
+
+    // Atualizar Dashboard
+    document.getElementById('dash-total-entradas').innerText = `R$ ${formatMoney(sumEntradas)}`;
+    document.getElementById('dash-dinheiro').innerText = `R$ ${formatMoney(sumDinheiro)}`;
+    if (document.getElementById('dash-saidas')) {
+      document.getElementById('dash-saidas').innerText = `R$ ${formatMoney(sumSaidas)}`;
+    }
+    document.getElementById('dash-pix').innerText = `R$ ${formatMoney(sumPix)}`;
+    document.getElementById('dash-credito').innerText = `R$ ${formatMoney(sumCredito)}`;
+    document.getElementById('dash-debito').innerText = `R$ ${formatMoney(sumDebito)}`;
+    document.getElementById('dash-cheque').innerText = `R$ ${formatMoney(sumCheque)}`;
+    document.getElementById('dash-retirada').innerText = `R$ ${formatMoney(sumRetirada)}`;
+  }
+
+  function clearFilters() {
+    document.getElementById('filter-recepcao').value = 'Todas';
+    document.getElementById('filter-status').value = 'Todos';
+    document.getElementById('filter-date-start').value = '';
+    document.getElementById('filter-date-end').value = '';
+    document.getElementById('filter-search').value = '';
+    goToCurrentMonth();
+  }
+
+  // Inicializar filtro com o mês atual ao carregar a página
+  document.addEventListener('DOMContentLoaded', () => {
+    goToCurrentMonth();
+  });
+
+  function openEditModal(c) {
+    document.getElementById('edit-id').value = c.id;
+    document.getElementById('edit-recepcao').value = c.recepcao || 'Recepção Particular';
+    document.getElementById('edit-date').value = c.data;
+    document.getElementById('edit-responsavel').value = c.responsavel || '';
+    document.getElementById('edit-troco-anterior').value = (c.trocoAnterior || 0).toFixed(2);
+    document.getElementById('edit-dinheiro').value = (c.dinheiro || 0).toFixed(2);
+    document.getElementById('edit-pix').value = (c.pix || 0).toFixed(2);
+    document.getElementById('edit-cartao-credito').value = (c.cartaoCredito || 0).toFixed(2);
+    document.getElementById('edit-cartao-debito').value = (c.cartaoDebito || 0).toFixed(2);
+    document.getElementById('edit-cheque').value = (c.cheque || 0).toFixed(2);
+    document.getElementById('edit-troco-seguinte').value = (c.trocoSeguinte || 0).toFixed(2);
+    document.getElementById('edit-status').value = c.status || 'Fechado';
+    document.getElementById('edit-observacoes').value = c.observacoes || '';
+
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+  }
+
+  function printReceipt(id) {
+    const c = closuresData.find(item => item.id === id);
+    if (!c) return;
+
+    document.getElementById('print-recepcao-title').innerText = c.recepcao || 'RECEPÇÃO';
+    document.getElementById('print-date-resp').innerText = `DATA: ${c.dataBr} | LANÇADO POR: ${c.responsavel}`;
+    document.getElementById('p-dinheiro').innerText = `R$ ${c.dinheiroFmt}`;
+    document.getElementById('p-pix').innerText = `R$ ${c.pixFmt}`;
+    document.getElementById('p-cartao-credito').innerText = `R$ ${c.cartaoCreditoFmt}`;
+    document.getElementById('p-cartao-debito').innerText = `R$ ${c.cartaoDebitoFmt}`;
+    document.getElementById('p-cheque').innerText = `R$ ${c.chequeFmt}`;
+    document.getElementById('p-total-entradas').innerText = `R$ ${c.totalEntradasFmt}`;
+
+    const trocoAntEl = document.getElementById('p-troco-anterior');
+    if (c.trocoAnteriorEditado) {
+      trocoAntEl.innerHTML = `R$ ${c.trocoAnteriorFmt} <span class="text-[10px] text-amber-800 font-bold block">(✏️ Editado - Orig: R$ ${c.trocoAnteriorOriginalFmt || formatMoney(c.trocoAnteriorOriginal)})</span>`;
+    } else {
+      trocoAntEl.innerText = `R$ ${c.trocoAnteriorFmt}`;
+    }
+    document.getElementById('p-dinheiro-esp').innerText = `R$ ${c.dinheiroFmt}`;
+    document.getElementById('p-total-especie').innerText = `R$ ${formatMoney((c.trocoAnterior || 0) + (c.dinheiro || 0))}`;
+
+    // Saídas em dinheiro no comprovante
+    const saideiras = c.saidasDinheiro || [];
+    const containerSaidas = document.getElementById('p-saidas-container');
+    const listSaidas = document.getElementById('p-saidas-list');
+    const totalSaidas = document.getElementById('p-saidas-total');
+
+    if (saideiras.length > 0) {
+      containerSaidas.classList.remove('hidden');
+      totalSaidas.innerText = `R$ ${c.saidasDinheiroTotalFmt || formatMoney(c.saidasDinheiroTotal || 0)}`;
+      listSaidas.innerHTML = saideiras.map(s => `<div>&bull; ${s.tipo}: ${s.descricao} (R$ ${formatMoney(s.valor)})</div>`).join('');
+    } else {
+      containerSaidas.classList.add('hidden');
+    }
+
+    document.getElementById('p-troco-seguinte').innerText = `R$ ${c.trocoSeguinteFmt}`;
+    document.getElementById('p-retirada').innerText = `R$ ${c.retiradaDinheiroFmt}`;
+
+    // Print Anexo no Comprovante
+    const printBox = document.getElementById('p-print-box');
+    const printImg = document.getElementById('p-print-img');
+    if (c.comprovantePrint) {
+      printImg.src = c.comprovantePrint;
+      printBox.classList.remove('hidden');
+    } else {
+      printBox.classList.add('hidden');
+    }
+
+    const obsText = c.observacoes && c.observacoes.trim() ? c.observacoes : 'Sem observações registradas.';
+    document.getElementById('p-observacoes').innerText = obsText;
+
+    document.getElementById('print-modal').classList.remove('hidden');
+  }
+
+  function closePrintModal() {
+    document.getElementById('print-modal').classList.add('hidden');
+  }
+
+  function triggerPrint() {
+    window.print();
+  }
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    applyFilters();
+  });
+
+  // --- IMPORTAÇÃO DE FECHAMENTO DE CAIXA VIA ARQUIVO CSV ---
+  let parsedCsvItemsGlobal = [];
+
+  function openImportCsvModal() {
+    const modal = document.getElementById('import-csv-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeImportCsvModal() {
+    const modal = document.getElementById('import-csv-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function openDeleteMonthModal() {
+    const modal = document.getElementById('delete-month-modal');
+    const input = document.getElementById('delete-mes-input');
+    if (input) {
+      if (currentSelectedMonth && currentSelectedMonth !== 'ALL') {
+        input.value = currentSelectedMonth;
+      } else {
+        const now = new Date();
+        input.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+    }
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeDeleteMonthModal() {
+    const modal = document.getElementById('delete-month-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function handleCsvFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    processCsvFile(file);
+  }
+
+  function processCsvFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const csvText = e.target.result;
+      document.getElementById('csv-file-name').innerText = file.name;
+      document.getElementById('csv-file-size').innerText = (file.size / 1024).toFixed(1) + ' KB';
+
+      document.getElementById('csv-upload-zone').classList.add('hidden');
+      document.getElementById('csv-selected-preview').classList.remove('hidden');
+
+      const items = parseCsvText(csvText);
+      parsedCsvItemsGlobal = items;
+      renderGroupedCsvResults(items);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function parseCsvLine(line) {
+    const sep = line.includes(';') ? ';' : (line.includes('\t') ? '\t' : ',');
+    const cols = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === sep && !inQuotes) {
+        cols.push(cur.trim().replace(/^"|"$/g, ''));
+        cur = '';
+      } else {
+        cur += char;
+      }
+    }
+    cols.push(cur.trim().replace(/^"|"$/g, ''));
+    return cols;
+  }
+
+  function fixMojibake(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/\uFFFD/g, 'e')
+      .replace(/Ã©/g, 'e').replace(/Ã‰/g, 'e')
+      .replace(/Ãª/g, 'e').replace(/ÃŠ/g, 'e')
+      .replace(/Ã¡/g, 'a').replace(/Ã /g, 'a')
+      .replace(/Ã£/g, 'a').replace(/Ã¢/g, 'a')
+      .replace(/Ã /g, 'a').replace(/Ã/g, 'a')
+      .replace(/Ã­/g, 'i').replace(/Ã/g, 'i')
+      .replace(/Ã³/g, 'o').replace(/Ã´/g, 'o')
+      .replace(/Ãµ/g, 'o').replace(/Ã'/g, 'o')
+      .replace(/Ãº/g, 'u').replace(/Ãœ/g, 'u')
+      .replace(/Ã§/g, 'c').replace(/Ã‡/g, 'c');
+  }
+
+  function normalizeStr(raw) {
+    if (!raw) return '';
+    return fixMojibake(raw)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function parseMoneyValue(val) {
+    if (val === null || val === undefined) return 0;
+    let str = String(val).trim();
+    if (!str || str === '-' || str === 'R$' || str === 'R$ -') return 0;
+
+    str = str.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+             .replace(/R\$\s*/gi, '')
+             .replace(/\s/g, '')
+             .replace(/"/g, '');
+    if (!str) return 0;
+
+    if (str.includes(',') && str.includes('.')) {
+      if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+      } else {
+        str = str.replace(/,/g, '');
+      }
+    } else if (str.includes(',')) {
+      str = str.replace(',', '.');
+    } else if (str.includes('.')) {
+      const parts = str.split('.');
+      if (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3) {
+        str = str.replace('.', '');
+      }
+    }
+
+    const num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function parseDateStringToIso(rawDateStr) {
+    if (!rawDateStr) return null;
+    let str = String(rawDateStr).trim().split(' ')[0].split('T')[0];
+    if (!str) return null;
+
+    if (str.includes('/') || (str.includes('-') && str.indexOf('-') === 2)) {
+      const sep = str.includes('/') ? '/' : '-';
+      const parts = str.split(sep);
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        let year = parts[2];
+        if (year.length === 2) year = '20' + year;
+        if (parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12 && parseInt(day, 10) >= 1 && parseInt(day, 10) <= 31) {
+          return {
+            isoDate: `${year}-${month}-${day}`,
+            dateBr: `${day}/${month}/${year}`
+          };
+        }
+      }
+    }
+
+    if (str.includes('-') || str.includes('/')) {
+      const sep = str.includes('-') ? '-' : '/';
+      const parts = str.split(sep);
+      if (parts.length === 3 && parts[0].length === 4) {
+        const year = parts[0];
+        const month = parts[1].padStart(2, '0');
+        const day = parts[2].padStart(2, '0');
+        return {
+          isoDate: `${year}-${month}-${day}`,
+          dateBr: `${day}/${month}/${year}`
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function classifyPaymentType(rawText) {
+    if (!rawText) return 'dinheiro';
+    const norm = normalizeStr(rawText);
+    if (!norm) return 'dinheiro';
+
+    // 1. DÉBITO
+    const isDeb = (
+      norm.includes('deb') || 
+      norm === 'cd' || 
+      norm === 'c d' || 
+      norm.includes('cartao d') || 
+      norm.includes('c deb') ||
+      norm.includes('maestro') || 
+      norm.includes('banricompras') || 
+      norm.includes('electron')
+    );
+
+    // 2. CRÉDITO
+    const isCred = (
+      norm.includes('cred') || 
+      norm === 'cc' || 
+      norm === 'c c' || 
+      norm.includes('cartao c') || 
+      norm.includes('c cred') ||
+      norm.includes('visa') || 
+      norm.includes('master') || 
+      norm.includes('hiper') || 
+      norm.includes('elo') || 
+      norm.includes('amex') || 
+      norm.includes('american express')
+    );
+
+    if (isDeb && !isCred) return 'cartaoDebito';
+    if (isCred && !isDeb) return 'cartaoCredito';
+
+    if (isDeb && isCred) {
+      if (norm.includes('debito') && !norm.includes('credito')) return 'cartaoDebito';
+      if (norm.includes('credito') && !norm.includes('debito')) return 'cartaoCredito';
+      if (norm.includes('c deb') || norm.includes('cartao d')) return 'cartaoDebito';
+      return 'cartaoCredito';
+    }
+
+    // 3. PIX
+    if (norm.includes('pix') || norm.includes('transferencia') || norm.includes('ted') || norm.includes('doc') || norm.includes('qr')) {
+      return 'pix';
+    }
+
+    // 4. CHEQUE
+    if (norm.includes('cheque') || norm.includes('chq')) {
+      return 'cheque';
+    }
+
+    // 5. DINHEIRO
+    if (norm.includes('dinheiro') || norm.includes('especie') || norm.includes('esp') || norm.includes('cash') || norm.includes('moeda')) {
+      return 'dinheiro';
+    }
+
+    // 6. CARTÃO GENÉRICO
+    if (
+      norm.includes('cartao') || 
+      norm.includes('card') || 
+      norm.includes('tef') || 
+      norm.includes('pos') || 
+      norm.includes('cielo') || 
+      norm.includes('rede') || 
+      norm.includes('stone') || 
+      norm.includes('getnet') || 
+      norm.includes('pagseguro')
+    ) {
+      return 'cartaoCredito';
+    }
+
+    return 'dinheiro';
+  }
+
+  function extractFirstName(fullName) {
+    if (!fullName) return 'Importado via CSV';
+    let clean = fixMojibake(fullName).trim();
+    if (!clean || clean.toLowerCase() === 'importado via csv') return 'Importado via CSV';
+
+    const parts = clean.split(/[\s\/,]+/);
+    let first = parts[0] || '';
+    if ((first.toLowerCase() === 'dr' || first.toLowerCase() === 'dra' || first.toLowerCase() === 'dr.') && parts[1]) {
+      first = parts[1];
+    }
+    if (!first) return 'Importado via CSV';
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }
+
+  function parseCsvText(text) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return [];
+
+    const firstCols = parseCsvLine(lines[0]);
+    const isHeader = firstCols.some(c => {
+      const norm = normalizeStr(c);
+      return (
+        norm.includes('data') || 
+        norm.includes('lancado') || 
+        norm.includes('operador') || 
+        norm.includes('tipo') || 
+        norm.includes('valor') || 
+        norm.includes('recepcao') || 
+        norm.includes('dinheiro') || 
+        norm.includes('pix') || 
+        norm.includes('cred') || 
+        norm.includes('deb') || 
+        norm.includes('cartao')
+      );
+    });
+
+    let colDinheiroIdx = -1;
+    let colPixIdx = -1;
+    let colCartaoCreditoIdx = -1;
+    let colCartaoDebitoIdx = -1;
+    let colChequeIdx = -1;
+    let colCartaoGenericoIdx = -1;
+
+    let colDateIdx = -1;
+    let colOperadorIdx = -1;
+    let colRecepcaoIdx = -1;
+    let colTipoIdx = -1;
+    let colValorIdx = -1;
+
+    if (isHeader) {
+      firstCols.forEach((c, idx) => {
+        const norm = normalizeStr(c);
+
+        if (
+          norm.includes('cred') || 
+          norm === 'cc' || 
+          norm === 'c c' || 
+          norm.includes('cartao c') || 
+          norm.includes('c cred')
+        ) {
+          if (!norm.includes('deb') && !norm.includes('cartao d')) {
+            colCartaoCreditoIdx = idx;
+          }
+        }
+
+        if (
+          norm.includes('deb') || 
+          norm === 'cd' || 
+          norm === 'c d' || 
+          norm.includes('cartao d') || 
+          norm.includes('c deb') ||
+          norm.includes('maestro') ||
+          norm.includes('electron')
+        ) {
+          colCartaoDebitoIdx = idx;
+        }
+
+        if (norm.includes('dinheiro') || norm === 'esp' || norm.includes('especie') || norm.includes('cash')) {
+          colDinheiroIdx = idx;
+        }
+
+        if (norm.includes('pix') || norm.includes('transferencia') || norm.includes('ted') || norm.includes('doc') || norm.includes('qr')) {
+          colPixIdx = idx;
+        }
+
+        if (norm.includes('cheque') || norm.includes('chq')) {
+          colChequeIdx = idx;
+        }
+
+        if (
+          (norm.includes('cartao') || norm.includes('card') || norm.includes('pos') || norm.includes('tef')) && 
+          colCartaoCreditoIdx === -1 && 
+          colCartaoDebitoIdx === -1
+        ) {
+          colCartaoGenericoIdx = idx;
+        }
+
+        if (norm.includes('data') || norm.includes('dt') || norm.includes('dia') || norm.includes('emissao')) {
+          colDateIdx = idx;
+        } else if (norm.includes('lancado') || norm.includes('operador') || norm.includes('responsavel') || norm.includes('usuario') || norm.includes('atendente') || norm.includes('func')) {
+          colOperadorIdx = idx;
+        } else if (norm.includes('recepcao') || norm.includes('caixa') || norm.includes('unidade') || norm.includes('local') || norm.includes('setor')) {
+          colRecepcaoIdx = idx;
+        } else if (norm.includes('tipo') || norm.includes('forma') || norm.includes('meio') || norm.includes('pagamento') || norm.includes('pagto') || norm.includes('modalidade') || norm.includes('historico') || norm.includes('operacao') || norm.includes('descricao')) {
+          colTipoIdx = idx;
+        } else if (norm.includes('valor') || norm.includes('monto') || norm.includes('total') || norm.includes('quantia') || norm.includes('vlr') || norm.includes('val')) {
+          colValorIdx = idx;
+        }
+      });
+    }
+
+    const isMultiColumn = (
+      colCartaoCreditoIdx !== -1 || 
+      colCartaoDebitoIdx !== -1 || 
+      (colDinheiroIdx !== -1 && colPixIdx !== -1) || 
+      (colDinheiroIdx !== -1 && colCartaoGenericoIdx !== -1)
+    );
+    const startIndex = isHeader ? 1 : 0;
+    const rows = [];
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+
+      const cols = parseCsvLine(line);
+      if (cols.length < 2) continue;
+
+      let dateObj = null;
+      if (colDateIdx !== -1 && cols[colDateIdx]) {
+        dateObj = parseDateStringToIso(cols[colDateIdx]);
+      }
+      if (!dateObj) {
+        for (let cIdx = 0; cIdx < cols.length; cIdx++) {
+          const testD = parseDateStringToIso(cols[cIdx]);
+          if (testD) {
+            dateObj = testD;
+            break;
+          }
+        }
+      }
+      if (!dateObj) continue;
+
+      let rawLancadoPor = '';
+      if (colOperadorIdx !== -1 && cols[colOperadorIdx]) {
+        rawLancadoPor = cols[colOperadorIdx];
+      }
+      const lancadoPor = extractFirstName(rawLancadoPor);
+
+      let recepcao = 'Recepção Particular';
+      if (colRecepcaoIdx !== -1 && cols[colRecepcaoIdx]) {
+        const cleanRec = fixMojibake(cols[colRecepcaoIdx]).trim();
+        if (cleanRec) recepcao = cleanRec;
+      }
+
+      if (isMultiColumn) {
+        const valDinheiro = colDinheiroIdx !== -1 ? parseMoneyValue(cols[colDinheiroIdx]) : 0;
+        const valPix = colPixIdx !== -1 ? parseMoneyValue(cols[colPixIdx]) : 0;
+        let valCredito = colCartaoCreditoIdx !== -1 ? parseMoneyValue(cols[colCartaoCreditoIdx]) : 0;
+        let valDebito = colCartaoDebitoIdx !== -1 ? parseMoneyValue(cols[colCartaoDebitoIdx]) : 0;
+        const valCheque = colChequeIdx !== -1 ? parseMoneyValue(cols[colChequeIdx]) : 0;
+        const valCartaoGen = colCartaoGenericoIdx !== -1 ? parseMoneyValue(cols[colCartaoGenericoIdx]) : 0;
+
+        if (valCartaoGen > 0 && valCredito === 0 && valDebito === 0) {
+          valCredito = valCartaoGen;
+        }
+
+        if (valDinheiro > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'dinheiro', valor: valDinheiro, recepcao });
+        if (valPix > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'pix', valor: valPix, recepcao });
+        if (valCredito > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cartaoCredito', valor: valCredito, recepcao });
+        if (valDebito > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cartaoDebito', valor: valDebito, recepcao });
+        if (valCheque > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cheque', valor: valCheque, recepcao });
+
+      } else {
+        let rawTipo = '';
+        if (colTipoIdx !== -1 && cols[colTipoIdx]) {
+          rawTipo = cols[colTipoIdx];
+        }
+
+        let rawValorStr = '0';
+        if (colValorIdx !== -1 && cols[colValorIdx] !== undefined) {
+          rawValorStr = cols[colValorIdx];
+        }
+
+        if (!rawTipo || !rawValorStr || colValorIdx === -1) {
+          for (let cIdx = 0; cIdx < cols.length; cIdx++) {
+            const colVal = cols[cIdx];
+            const parsedV = parseMoneyValue(colVal);
+            if (parsedV > 0 && rawValorStr === '0' && cIdx !== colDateIdx) {
+              rawValorStr = colVal;
+            } else {
+              const classT = classifyPaymentType(colVal);
+              if (classT !== 'dinheiro' || colVal.toLowerCase().includes('dinheiro') || colVal.toLowerCase().includes('especie')) {
+                rawTipo = colVal;
+              }
+            }
+          }
+        }
+
+        const tipoPagamento = classifyPaymentType(rawTipo);
+        const valorNum = parseMoneyValue(rawValorStr);
+
+        if (valorNum > 0) {
+          rows.push({
+            date: dateObj.isoDate,
+            dateBr: dateObj.dateBr,
+            lancadoPor,
+            tipoPagamento,
+            valor: valorNum,
+            recepcao
+          });
+        }
+      }
+    }
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = `${r.date}_${r.recepcao}`;
+      if (!grouped[key]) {
+        grouped[key] = {
+          data: r.date,
+          dataBr: r.dateBr,
+          recepcao: r.recepcao,
+          dinheiro: 0,
+          pix: 0,
+          cartaoCredito: 0,
+          cartaoDebito: 0,
+          cheque: 0,
+          operadoresSet: new Set(),
+          totalLancamentos: 0
+        };
+      }
+
+      grouped[key][r.tipoPagamento] = (grouped[key][r.tipoPagamento] || 0) + r.valor;
+      if (r.lancadoPor) grouped[key].operadoresSet.add(r.lancadoPor);
+      grouped[key].totalLancamentos++;
+    });
+
+    return Object.values(grouped).map(g => {
+      const totalEntradas = g.dinheiro + g.pix + g.cartaoCredito + g.cartaoDebito + g.cheque;
+      const ops = Array.from(g.operadoresSet).filter(Boolean);
+      return {
+        data: g.data,
+        dataBr: g.dataBr,
+        recepcao: g.recepcao,
+        dinheiro: Math.round(g.dinheiro * 100) / 100,
+        pix: Math.round(g.pix * 100) / 100,
+        cartaoCredito: Math.round(g.cartaoCredito * 100) / 100,
+        cartaoDebito: Math.round(g.cartaoDebito * 100) / 100,
+        cheque: Math.round(g.cheque * 100) / 100,
+        totalEntradas: Math.round(totalEntradas * 100) / 100,
+        responsavel: ops.join(', ') || 'Importado via CSV',
+        status: 'Conferido',
+        totalLancamentos: g.totalLancamentos,
+        observacoes: `Importado via CSV (${g.totalLancamentos} itens)`
+      };
+    });
+  }
+
+  function clearSelectedCsv() {
+    parsedCsvItemsGlobal = [];
+    document.getElementById('csv-file-input').value = '';
+    document.getElementById('csv-upload-zone').classList.remove('hidden');
+    document.getElementById('csv-selected-preview').classList.add('hidden');
+    document.getElementById('csv-result-container').classList.add('hidden');
+    document.getElementById('btn-save-imported-csv-batch').classList.add('hidden');
+  }
+
+  function renderGroupedCsvResults(items) {
+    const container = document.getElementById('csv-result-container');
+    const groupedList = document.getElementById('csv-grouped-list');
+    const metaInfo = document.getElementById('csv-meta-info');
+    const totalGeralEl = document.getElementById('csv-total-geral');
+    const btnSaveBatch = document.getElementById('btn-save-imported-csv-batch');
+
+    if (!items || items.length === 0) {
+      alert('Nenhum lançamento válido encontrado no arquivo CSV.');
+      return;
+    }
+
+    let totalGeral = 0;
+    items.forEach(it => {
+      totalGeral += it.totalEntradas;
+    });
+
+    if (metaInfo) {
+      metaInfo.innerText = `${items.length} Fechamento(s) de Caixa Identificado(s) | Status: Conferido`;
+    }
+
+    if (totalGeralEl) {
+      totalGeralEl.innerText = `R$ ${formatMoney(totalGeral)}`;
+    }
+
+    groupedList.innerHTML = items.map((st, idx) => {
+      return `
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                ${idx + 1}
+              </span>
+              <div>
+                <h4 class="text-xs font-black font-mono text-gray-900 uppercase">Data: ${st.dataBr} (${st.data})</h4>
+                <p class="text-[10px] text-gray-500 font-mono">Operadores: ${st.responsavel} • Linhas lidas: ${st.totalLancamentos}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Status: Conferido
+              </span>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-gray-100 text-gray-800 border border-gray-300">
+                ${st.recepcao}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+              <span class="text-[9px] font-bold text-emerald-800 uppercase block">Dinheiro</span>
+              <span class="text-xs font-bold text-emerald-900">R$ ${formatMoney(st.dinheiro)}</span>
+            </div>
+            <div class="bg-teal-50 p-2 rounded-xl border border-teal-100">
+              <span class="text-[9px] font-bold text-teal-800 uppercase block">PIX</span>
+              <span class="text-xs font-bold text-teal-900">R$ ${formatMoney(st.pix)}</span>
+            </div>
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-100">
+              <span class="text-[9px] font-bold text-blue-800 uppercase block">Crédito</span>
+              <span class="text-xs font-bold text-blue-900">R$ ${formatMoney(st.cartaoCredito)}</span>
+            </div>
+            <div class="bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+              <span class="text-[9px] font-bold text-indigo-800 uppercase block">Débito</span>
+              <span class="text-xs font-bold text-indigo-900">R$ ${formatMoney(st.cartaoDebito)}</span>
+            </div>
+            <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 col-span-2 sm:col-span-1">
+              <span class="text-[9px] font-bold text-gray-700 uppercase block">Cheque</span>
+              <span class="text-xs font-bold text-gray-900">R$ ${formatMoney(st.cheque)}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[10px] font-bold text-gray-500 font-mono">Total do Fechamento: <strong class="text-emerald-900">R$ ${formatMoney(st.totalEntradas)}</strong></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.classList.remove('hidden');
+    if (btnSaveBatch) btnSaveBatch.classList.remove('hidden');
+  }
+
+  async function saveImportedCsvBatch() {
+    if (!parsedCsvItemsGlobal || parsedCsvItemsGlobal.length === 0) {
+      alert('Nenhum fechamento para importar.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-save-imported-csv-batch');
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch('/api/admin/recepcao/fechamento-caixa/salvar-lote-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: parsedCsvItemsGlobal })
+      });
+
+      const res = await response.json();
+      if (!res.success) {
+        throw new Error(res.error || 'Erro ao importar lançamentos do CSV.');
+      }
+
+      alert(res.message || 'Lançamentos importados e marcados como CONFERIDO com sucesso!');
+      closeImportCsvModal();
+      window.location.reload();
+    } catch (err) {
+      console.error('Erro ao importar CSV:', err);
+      alert('Falha ao gravar lançamentos: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

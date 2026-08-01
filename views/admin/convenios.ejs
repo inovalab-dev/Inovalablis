@@ -1,0 +1,807 @@
+<%- include('../partials/header', { page: 'admin-convenios' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab / LIS) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Cadastros</span>
+        <span>•</span>
+        <span class="text-emerald-700 font-bold">Convênios</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Convênios -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            +
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Gestão de Convênios
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Consulte, cadastre e gerencie planos de saúde e tabelas credenciadas
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewConvenioModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Convênio</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo dos Convênios -->
+  <% 
+    const totalConvenios = convenios.length;
+    const ativosConvenios = convenios.filter(c => c.ativo !== false && !c.proibido).length;
+    const inativosConvenios = convenios.filter(c => c.ativo === false).length;
+    const proibidosConvenios = convenios.filter(c => c.proibido).length;
+  %>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total Registrados</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalConvenios %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-lg">🏥</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Convênios Ativos</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5"><%= ativosConvenios %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">✅</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Inativos</p>
+        <p class="text-2xl font-black text-gray-600 font-mono mt-0.5"><%= inativosConvenios %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 text-lg">⏸️</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-red-600 uppercase font-mono tracking-wider">Proibidos / Bloqueados</p>
+        <p class="text-2xl font-black text-red-700 font-mono mt-0.5"><%= proibidosConvenios %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 text-lg">🚫</div>
+    </div>
+  </div>
+
+  <!-- TABELA / LISTA PRINCIPAL DE CONVÊNIOS (VISÃO INICIAL POR PADRÃO) -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Lista de Convênios</span>
+        <span id="conveniosCounterBadge" class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+          <%= totalConvenios %> cadastrados
+        </span>
+      </div>
+
+      <!-- Filtros de Estado & Campo de Busca -->
+      <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
+        <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200 text-xs font-bold w-full sm:w-auto justify-center">
+          <button type="button" onclick="setConvenioFilter('todos')" id="filter-btn-todos" class="conv-filter-btn px-3 py-1 rounded-lg bg-emerald-600 text-white transition-all cursor-pointer">Todos</button>
+          <button type="button" onclick="setConvenioFilter('ativos')" id="filter-btn-ativos" class="conv-filter-btn px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100 transition-all cursor-pointer">Ativos</button>
+          <button type="button" onclick="setConvenioFilter('inativos')" id="filter-btn-inativos" class="conv-filter-btn px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100 transition-all cursor-pointer">Inativos</button>
+          <button type="button" onclick="setConvenioFilter('proibidos')" id="filter-btn-proibidos" class="conv-filter-btn px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100 transition-all cursor-pointer">Proibidos</button>
+        </div>
+
+        <div class="relative w-full sm:w-72">
+          <input type="text" id="searchConveniosInput" onkeyup="filterConveniosTable()" placeholder="Buscar código, nome, CNPJ..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+          <span class="absolute left-2.5 top-2 text-gray-400 text-xs">🔍</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabela de Convênios -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-100/90 border-b border-gray-200 text-[10px] font-black text-gray-500 uppercase font-mono tracking-wider">
+            <th class="p-3 w-16 text-center">Cód</th>
+            <th class="p-3">Razão Social / Nome Fantasia</th>
+            <th class="p-3 w-40">Tabela de Preços</th>
+            <th class="p-3 w-32">CNPJ / CPF</th>
+            <th class="p-3 w-32">Cidade</th>
+            <th class="p-3 w-28">Registro ANS</th>
+            <th class="p-3 w-24 text-center">Status</th>
+            <th class="p-3 w-28 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="conveniosTableBody" class="divide-y divide-gray-100 text-xs font-medium">
+          <% convenios.forEach((c) => { %>
+            <tr class="hover:bg-emerald-50/40 transition-colors convenio-row cursor-pointer" data-status="<%= c.proibido ? 'proibidos' : (c.ativo === false ? 'inativos' : 'ativos') %>" onclick="editConvenio('<%= c.id %>')">
+              <td class="p-3 text-center font-mono font-bold text-gray-600"><%= c.codigo %></td>
+              <td class="p-3">
+                <div class="font-bold text-slate-800"><%= c.fantasia || c.razaoSocial %></div>
+                <div class="text-[10px] text-gray-400 truncate max-w-xs"><%= c.razaoSocial %></div>
+              </td>
+              <td class="p-3">
+                <% if (c.tabelaPrecoNome && c.tabelaPrecoNome !== 'Nenhuma Tabela' && c.tabelaPrecoNome !== 'Sem Tabela') { %>
+                  <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold font-mono text-[11px] rounded border border-emerald-200 inline-flex items-center gap-1">
+                    📋 <%= c.tabelaPrecoNome %>
+                  </span>
+                <% } else { %>
+                  <span class="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold font-mono text-[11px] rounded border border-amber-200 inline-flex items-center gap-1">
+                    ⚠️ Sem Tabela Vinculada
+                  </span>
+                <% } %>
+              </td>
+              <td class="p-3 font-mono text-gray-600"><%= c.cnpj || '-' %></td>
+              <td class="p-3 text-gray-600"><%= c.cidade || 'Cambará - PR' %></td>
+              <td class="p-3 font-mono text-gray-500"><%= c.ans || '-' %></td>
+              <td class="p-3 text-center">
+                <% if (c.proibido) { %>
+                  <span class="px-2.5 py-0.5 bg-red-100 text-red-800 font-bold text-[10px] rounded-full inline-flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span> Proibido
+                  </span>
+                <% } else if (c.ativo === false) { %>
+                  <span class="px-2.5 py-0.5 bg-gray-100 text-gray-600 font-bold text-[10px] rounded-full inline-flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inativo
+                  </span>
+                <% } else { %>
+                  <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full inline-flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Ativo
+                  </span>
+                <% } %>
+              </td>
+              <td class="p-3 text-center" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-center gap-1.5">
+                  <!-- Botão Editar -->
+                  <button type="button" onclick="editConvenio('<%= c.id %>')" class="p-1.5 bg-slate-100 hover:bg-emerald-600 text-slate-600 hover:text-white rounded-lg transition-all cursor-pointer" title="Editar Convênio">
+                    ✏️
+                  </button>
+
+                  <!-- Botão Alternar Ativo/Inativo -->
+                  <a href="/admin/convenios/toggle-status/<%= c.id %>" class="p-1.5 bg-slate-100 hover:bg-emerald-600 text-slate-600 hover:text-white rounded-lg transition-all cursor-pointer" title="<%= c.ativo === false ? 'Ativar Convênio' : 'Inativar Convênio' %>">
+                    <%= c.ativo === false ? '▶️' : '⏸️' %>
+                  </a>
+
+                  <!-- Botão Excluir -->
+                  <button type="button" onclick="deleteConvenio(event, '<%= c.id %>', '<%= (c.fantasia || c.razaoSocial || '').replace(/['"\\]/g, '') %>')" class="p-1.5 bg-slate-100 hover:bg-rose-600 text-slate-600 hover:text-white rounded-lg transition-all cursor-pointer" title="Excluir Convênio">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+
+          <% if (convenios.length === 0) { %>
+            <tr>
+              <td colspan="9" class="p-12 text-center text-gray-400 italic">
+                Nenhum convênio cadastrado até o momento. Clique no botão "+ Novo Convênio" para cadastrar.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DE CADASTRO / EDIÇÃO DE CONVÊNIO (ABRE APENAS AO CLICAR EM NOVO / EDITAR) -->
+<div id="convenioModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm overflow-y-auto">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-5xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+    
+    <!-- Cabeçalho do Modal estilo LIS -->
+    <div class="px-5 py-4 bg-emerald-950 text-white flex items-center justify-between border-b border-emerald-800 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
+          📋
+        </div>
+        <div>
+          <h3 id="convenioModalTitle" class="text-sm font-black uppercase font-mono tracking-wider text-white">
+            Cadastrar Novo Convênio
+          </h3>
+          <p class="text-[11px] text-emerald-200/70">Preencha os parâmetros e dados de faturamento do plano credenciado</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeConvenioModal()" class="text-emerald-300 hover:text-white text-lg font-bold transition-colors cursor-pointer p-1">
+        ✕
+      </button>
+    </div>
+
+    <!-- Barra de Abas Verde no Padrão LIS -->
+    <div class="border-b border-emerald-500 bg-emerald-50/40 flex flex-wrap gap-1 px-4 pt-2.5 shrink-0">
+      <button type="button" onclick="switchConvenioTab('dados-cadastrais')" id="tab-btn-dados-cadastrais" class="convenio-tab-btn px-4 py-2 text-xs font-bold font-sans rounded-t-lg transition-all border-t-2 border-x border-emerald-600 bg-white text-emerald-950 shadow-2xs">
+        Dados Cadastrais
+      </button>
+      <button type="button" onclick="switchConvenioTab('parametros')" id="tab-btn-parametros" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Parâmetros
+      </button>
+      <button type="button" onclick="switchConvenioTab('cobranca')" id="tab-btn-cobranca" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Cobrança
+      </button>
+      <button type="button" onclick="switchConvenioTab('adicionais')" id="tab-btn-adicionais" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Adicionais
+      </button>
+      <button type="button" onclick="switchConvenioTab('faturamento')" id="tab-btn-faturamento" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Faturamento / TISS
+      </button>
+      <button type="button" onclick="switchConvenioTab('apoio')" id="tab-btn-apoio" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Apoio
+      </button>
+      <button type="button" onclick="switchConvenioTab('mensagens')" id="tab-btn-mensagens" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Mensagens
+      </button>
+      <button type="button" onclick="switchConvenioTab('integracoes')" id="tab-btn-integracoes" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Integrações
+      </button>
+    </div>
+
+    <!-- Formulário Modal com Scroll Interno -->
+    <form id="convenioForm" action="/admin/convenios/save" method="POST" class="p-5 space-y-4 overflow-y-auto flex-1">
+      <input type="hidden" name="id" id="conv-id" value="">
+
+      <!-- TAB 1: DADOS CADASTRAIS ORGANIZADOS EM CARDS SEPARADOS -->
+      <div id="tab-panel-dados-cadastrais" class="convenio-tab-panel space-y-5">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          
+          <!-- CARD 1: IDENTIFICAÇÃO & DADOS EMPRESARIAIS (Cols 8) -->
+          <div class="lg:col-span-8 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+            <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center text-sm border border-emerald-200">
+                🏥
+              </div>
+              <div>
+                <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Identificação & Dados Empresariais</h4>
+                <p class="text-[11px] text-gray-500">Razão social, documentos fiscais e registro na ANS</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              <!-- Código -->
+              <div class="md:col-span-3 space-y-1">
+                <label for="conv-codigo" class="block text-xs font-bold text-slate-700">Código:</label>
+                <input type="text" name="codigo" id="conv-codigo" placeholder="Auto" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Tipo Pessoa -->
+              <div class="md:col-span-3 space-y-1">
+                <label for="conv-pessoa" class="block text-xs font-bold text-slate-700">Pessoa:</label>
+                <select name="pessoa" id="conv-pessoa" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800">
+                  <option value="Jurídica" selected>Jurídica</option>
+                  <option value="Física">Física</option>
+                </select>
+              </div>
+
+              <!-- Reg ANS -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-ans" class="block text-xs font-bold text-slate-700">Registro ANS:</label>
+                <input type="text" name="ans" id="conv-ans" placeholder="Ex: 312456" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Razão Social -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-razaoSocial" class="block text-xs font-bold text-slate-700">Razão Social: <span class="text-rose-500">*</span></label>
+                <input type="text" name="razaoSocial" id="conv-razaoSocial" required placeholder="Razão Social completa da operadora de saúde" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Nome Fantasia -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-fantasia" class="block text-xs font-bold text-slate-700">Nome Fantasia (Exibição nas Guias): <span class="text-rose-500">*</span></label>
+                <input type="text" name="fantasia" id="conv-fantasia" required placeholder="Ex: UNIMED, BRADESCO SAÚDE, CASSI..." class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Tabela de Preços -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-tabelaPrecoId" class="block text-xs font-extrabold text-emerald-900">Tabela de Preços: <span class="text-rose-500">*</span></label>
+                <select name="tabelaPrecoId" id="conv-tabelaPrecoId" required class="w-full px-3 py-2 bg-emerald-50/70 border border-emerald-300 rounded-xl text-xs font-extrabold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="">-- Selecione uma Tabela de Preço (Obrigatório) --</option>
+                  <% (typeof priceTables !== 'undefined' ? priceTables : []).forEach(pt => { %>
+                    <option value="<%= pt.id %>"><%= pt.codigo ? pt.codigo + ' - ' : '' %><%= pt.descricao %></option>
+                  <% }) %>
+                </select>
+                <p class="text-[10px] text-gray-500 font-sans">Cada convênio deve obrigatoriamente ter uma tabela de preços vinculada para precificação de exames em requisições e orçamentos.</p>
+              </div>
+
+              <!-- CNPJ / CPF -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-cnpj" class="block text-xs font-bold text-slate-700">CNPJ / CPF:</label>
+                <input type="text" name="cnpj" id="conv-cnpj" placeholder="00.000.000/0000-00" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Insc. Estadual -->
+              <div class="md:col-span-3 space-y-1">
+                <label for="conv-inscEstadual" class="block text-xs font-bold text-slate-700">Insc. Estadual:</label>
+                <input type="text" name="inscEstadual" id="conv-inscEstadual" placeholder="Isento / Nº" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- CEI / Municipal -->
+              <div class="md:col-span-3 space-y-1">
+                <label for="conv-inscMunicipal" class="block text-xs font-bold text-slate-700">Insc. Municipal:</label>
+                <input type="text" name="inscMunicipal" id="conv-inscMunicipal" placeholder="Nº Inscrição" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 4: STATUS & REGRAS DE ACESSO (Cols 4) -->
+          <div class="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-sm border border-gray-200">
+                  🔒
+                </div>
+                <div>
+                  <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Status & Controle</h4>
+                  <p class="text-[11px] text-gray-500">Acesso e bloqueios no sistema</p>
+                </div>
+              </div>
+
+              <div class="space-y-2.5">
+                <label class="flex items-center gap-3 cursor-pointer select-none p-2.5 bg-emerald-50/60 border border-emerald-200 rounded-xl hover:bg-emerald-50 transition-colors">
+                  <input type="checkbox" name="ativo" id="conv-ativo" value="true" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                  <div>
+                    <span class="block text-xs font-extrabold text-emerald-950">Convênio Ativo</span>
+                    <span class="block text-[10px] text-emerald-700">Disponível para seleção nas requisições</span>
+                  </div>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer select-none p-2.5 bg-rose-50/60 border border-rose-200 rounded-xl hover:bg-rose-50 transition-colors">
+                  <input type="checkbox" name="proibido" id="conv-proibido" value="true" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-gray-300">
+                  <div>
+                    <span class="block text-xs font-extrabold text-rose-950">Proibido / Bloqueado</span>
+                    <span class="block text-[10px] text-rose-700">Bloqueia atendimento e faturamento de guias</span>
+                  </div>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer select-none p-2.5 bg-amber-50/60 border border-amber-200 rounded-xl hover:bg-amber-50 transition-colors">
+                  <input type="checkbox" name="bloquearWeb" id="conv-bloquearWeb" value="true" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                  <div>
+                    <span class="block text-xs font-bold text-slate-800">Ocultar do Portal Web</span>
+                    <span class="block text-[10px] text-gray-500">Não exibe opção no agendamento online</span>
+                  </div>
+                </label>
+              </div>
+
+              <div class="pt-2 space-y-1.5">
+                <label for="conv-senhaWeb" class="block text-xs font-bold text-slate-700">Senha do Portal do Convênio:</label>
+                <input type="text" name="senhaWeb" id="conv-senhaWeb" placeholder="Senha de acesso webservice" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+            </div>
+
+            <button type="button" onclick="openContatosModal()" class="w-full py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-gray-300 rounded-xl text-xs font-bold transition-all cursor-pointer text-center shadow-2xs mt-3 flex items-center justify-center gap-1.5">
+              <span>📞</span>
+              <span>Gerenciar Contatos do Convênio</span>
+            </button>
+          </div>
+
+          <!-- CARD 2: ENDEREÇO & LOCALIZAÇÃO (Cols 6) -->
+          <div class="lg:col-span-6 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+            <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 font-bold flex items-center justify-center text-sm border border-blue-200">
+                📍
+              </div>
+              <div>
+                <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Endereço & Localização</h4>
+                <p class="text-[11px] text-gray-500">Sede administrativa e CEP da operadora</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              <!-- CEP -->
+              <div class="md:col-span-5 space-y-1">
+                <label for="conv-cep" class="block text-xs font-bold text-slate-700">CEP:</label>
+                <div class="relative flex items-center">
+                  <input type="text" name="cep" id="conv-cep" placeholder="86390-000" class="w-full pr-8 pl-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+                  <button type="button" onclick="searchCepModal()" class="absolute right-2 text-gray-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Buscar CEP">🔍</button>
+                </div>
+              </div>
+
+              <!-- Cidade -->
+              <div class="md:col-span-7 space-y-1">
+                <label for="conv-cidade" class="block text-xs font-bold text-slate-700">Cidade / UF:</label>
+                <div class="relative flex items-center">
+                  <input type="text" name="cidade" id="conv-cidade" value="Cambará - PR" class="w-full pr-8 pl-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                  <button type="button" onclick="searchCidadeModal()" class="absolute right-2 text-gray-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Buscar Cidade">🔍</button>
+                </div>
+              </div>
+
+              <!-- Logradouro (Tipo + Endereço) -->
+              <div class="md:col-span-9 space-y-1">
+                <label for="conv-endereco" class="block text-xs font-bold text-slate-700">Logradouro / Endereço:</label>
+                <div class="flex gap-2">
+                  <select name="tipoEndereco" id="conv-tipoEndereco" class="w-24 px-2 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 shrink-0 font-medium">
+                    <option value="Rua" selected>Rua</option>
+                    <option value="Avenida">Avenida</option>
+                    <option value="Alameda">Alameda</option>
+                    <option value="Praça">Praça</option>
+                    <option value="Rodovia">Rodovia</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                  <input type="text" name="endereco" id="conv-endereco" placeholder="Nome da rua ou avenida" class="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+              </div>
+
+              <!-- Número -->
+              <div class="md:col-span-3 space-y-1">
+                <label for="conv-numero" class="block text-xs font-bold text-slate-700">Número:</label>
+                <input type="text" name="numero" id="conv-numero" placeholder="Nº" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Bairro -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-bairro" class="block text-xs font-bold text-slate-700">Bairro:</label>
+                <div class="relative flex items-center">
+                  <input type="text" name="bairro" id="conv-bairro" placeholder="Nome do bairro" class="w-full pr-8 pl-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                  <button type="button" onclick="searchBairroModal()" class="absolute right-2 text-gray-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Buscar Bairro">🔍</button>
+                </div>
+              </div>
+
+              <!-- Complemento -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-complemento" class="block text-xs font-bold text-slate-700">Complemento:</label>
+                <input type="text" name="complemento" id="conv-complemento" placeholder="Sala, Edifício, Bloco" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: CANAIS DE CONTATO & OBSERVAÇÕES (Cols 6) -->
+          <div class="lg:col-span-6 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+            <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+              <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 font-bold flex items-center justify-center text-sm border border-purple-200">
+                📞
+              </div>
+              <div>
+                <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Contatos & Observações</h4>
+                <p class="text-[11px] text-gray-500">Telefones, e-mails do faturamento e notas internas</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              <!-- Fone -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-fone" class="block text-xs font-bold text-slate-700">Telefone Principal:</label>
+                <input type="text" name="fone" id="conv-fone" placeholder="(00) 0000-0000" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Fax -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-fax" class="block text-xs font-bold text-slate-700">Telefone Secundário / Fax:</label>
+                <input type="text" name="fax" id="conv-fax" placeholder="(00) 0000-0000" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Contato / Setor -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-contato" class="block text-xs font-bold text-slate-700">Pessoa / Setor de Contato:</label>
+                <input type="text" name="contato" id="conv-contato" placeholder="Ex: Maria (Setor de Faturamento e Auditoria)" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- E-mail 1 -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-email1" class="block text-xs font-bold text-slate-700">E-mail Faturamento:</label>
+                <input type="email" name="email1" id="conv-email1" placeholder="faturamento@convenio.com" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- E-mail 2 -->
+              <div class="md:col-span-6 space-y-1">
+                <label for="conv-email2" class="block text-xs font-bold text-slate-700">E-mail Guias / Autorização:</label>
+                <input type="email" name="email2" id="conv-email2" placeholder="guias@convenio.com" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Site -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-site" class="block text-xs font-bold text-slate-700">Site / Portal Autorizador:</label>
+                <input type="text" name="site" id="conv-site" placeholder="https://www.convenio.com.br/portal-prestador" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <!-- Observações -->
+              <div class="md:col-span-12 space-y-1">
+                <label for="conv-observacao" class="block text-xs font-bold text-slate-700">Observações & Regras do Convênio:</label>
+                <textarea name="observacao" id="conv-observacao" rows="2" placeholder="Ex: Exige autorização prévia para exames de genética, prazo de envio das guias dia 25..." class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 resize-y"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- PAINÉIS ADICIONAIS DAS DEMAIS ABAS (LIS) -->
+      <div id="tab-panel-parametros" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">⚙️ Parâmetros Técnicos do Convênio</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Configuração de prazos para faturamento de guias, tabelas de cobrança AMB/CBHPM/TUSS e regras de carência automática.</p>
+      </div>
+
+      <div id="tab-panel-cobranca" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">💵 Dados de Cobrança e Glosas</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Vencimento mensal das faturas, contas bancárias para crédito TISS e margem de glosa permitida.</p>
+      </div>
+
+      <div id="tab-panel-adicionais" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">📑 Campos Adicionais de Regulação</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Informações adicionais da operadora, código do estipulante e formulários técnicos customizados.</p>
+      </div>
+
+      <div id="tab-panel-faturamento" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">🏥 Padrão TISS / Faturamento XML</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Versão da TISS (3.05.00 / 4.01.00), código do prestador na operadora e hash de validação do lote TISS.</p>
+      </div>
+
+      <div id="tab-panel-apoio" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">🔬 Roteamento de Laboratórios de Apoio</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Laboratório de apoio padrão para exames deste convênio e tabela comparativa de custos de repasse.</p>
+      </div>
+
+      <div id="tab-panel-mensagens" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">💬 Mensagens Personalizadas nos Laudos</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Texto do rodapé do laudo para pacientes deste convênio e alertas na tela de atendimento da recepção.</p>
+      </div>
+
+      <div id="tab-panel-integracoes" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-xs font-bold text-slate-800 uppercase font-mono">🔌 Webservice de Autorização Online TISS</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Chave de API do autorizador da operadora, token de e-carteirinha e protocolo automático de elegibilidade.</p>
+      </div>
+
+    </form>
+
+    <!-- Rodapé Fix do Modal com Botões de Ação -->
+    <div class="p-4 bg-slate-50 border-t border-gray-200 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="closeConvenioModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+          Cancelar / Voltar
+        </button>
+        <button type="button" id="btnDeleteConvenioModal" onclick="deleteConvenioFromModal()" class="hidden px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-rose-300 flex items-center gap-1.5">
+          <span>🗑️</span> Excluir Convênio
+        </button>
+      </div>
+
+      <button type="button" onclick="submitConvenioForm()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span>Salvar Convênio</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let conveniosList = <%- JSON.stringify(convenios) %>;
+  let activeFilterStatus = 'todos';
+
+  function openNewConvenioModal() {
+    resetConvenioForm();
+    document.getElementById('convenioModalTitle').innerText = 'Cadastrar Novo Convênio';
+    const btnDel = document.getElementById('btnDeleteConvenioModal');
+    if (btnDel) btnDel.classList.add('hidden');
+    document.getElementById('convenioModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeConvenioModal() {
+    document.getElementById('convenioModal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function switchConvenioTab(tabId) {
+    document.querySelectorAll('.convenio-tab-btn').forEach(btn => {
+      btn.classList.remove('border-t-2', 'border-emerald-600', 'bg-white', 'text-emerald-950', 'shadow-2xs');
+      btn.classList.add('border-transparent', 'text-slate-600');
+    });
+
+    const activeBtn = document.getElementById('tab-btn-' + tabId);
+    if (activeBtn) {
+      activeBtn.classList.remove('border-transparent', 'text-slate-600');
+      activeBtn.classList.add('border-t-2', 'border-emerald-600', 'bg-white', 'text-emerald-950', 'shadow-2xs');
+    }
+
+    document.querySelectorAll('.convenio-tab-panel').forEach(panel => panel.classList.add('hidden'));
+    const activePanel = document.getElementById('tab-panel-' + tabId);
+    if (activePanel) activePanel.classList.remove('hidden');
+  }
+
+  function resetConvenioForm() {
+    document.getElementById('convenioForm').reset();
+    document.getElementById('conv-id').value = '';
+    
+    let maxCod = 0;
+    conveniosList.forEach(c => {
+      const num = parseInt(c.codigo, 10);
+      if (!isNaN(num) && num > maxCod) maxCod = num;
+    });
+    document.getElementById('conv-codigo').value = String(maxCod + 1);
+    document.getElementById('conv-pessoa').value = 'Jurídica';
+    document.getElementById('conv-cidade').value = 'Cambará - PR';
+    document.getElementById('conv-tipoEndereco').value = 'Rua';
+    document.getElementById('conv-tabelaPrecoId').value = '';
+    document.getElementById('conv-ativo').checked = true;
+    document.getElementById('conv-proibido').checked = false;
+    document.getElementById('conv-bloquearWeb').checked = false;
+    
+    switchConvenioTab('dados-cadastrais');
+  }
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  }
+
+  function setChecked(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  }
+
+  function editConvenio(id) {
+    const c = conveniosList.find(item => String(item.id) === String(id));
+    if (!c) return;
+
+    setVal('conv-id', c.id);
+    setVal('conv-codigo', c.codigo);
+    setVal('conv-pessoa', c.pessoa || 'Jurídica');
+    setVal('conv-razaoSocial', c.razaoSocial);
+    setVal('conv-fantasia', c.fantasia);
+    setVal('conv-tabelaPrecoId', c.tabelaPrecoId);
+    setVal('conv-cnpj', c.cnpj);
+    setVal('conv-inscEstadual', c.inscEstadual);
+    setVal('conv-cei', c.cei);
+    setVal('conv-inscMunicipal', c.inscMunicipal);
+    setVal('conv-cidade', c.cidade || 'Cambará - PR');
+    setVal('conv-tipoEndereco', c.tipoEndereco || 'Rua');
+    setVal('conv-endereco', c.endereco);
+    setVal('conv-numero', c.numero);
+    setVal('conv-complemento', c.complemento);
+    setVal('conv-ans', c.ans);
+    setVal('conv-bairro', c.bairro);
+    setVal('conv-cep', c.cep);
+    setVal('conv-fone', c.fone);
+    setVal('conv-fax', c.fax);
+    setVal('conv-contato', c.contato);
+    setVal('conv-email1', c.email1);
+    setVal('conv-email2', c.email2);
+    setVal('conv-site', c.site);
+    setVal('conv-observacao', c.observacao);
+    setVal('conv-senhaWeb', c.senhaWeb);
+
+    setChecked('conv-proibido', c.proibido);
+    setChecked('conv-bloquearWeb', c.bloquearWeb);
+    setChecked('conv-ativo', c.ativo !== false);
+
+    const titleEl = document.getElementById('convenioModalTitle');
+    if (titleEl) titleEl.innerText = 'Editar Convênio - ' + (c.fantasia || c.razaoSocial);
+
+    const btnDel = document.getElementById('btnDeleteConvenioModal');
+    if (btnDel) btnDel.classList.remove('hidden');
+
+    switchConvenioTab('dados-cadastrais');
+    const modal = document.getElementById('convenioModal');
+    if (modal) modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function deleteConvenio(e, id, name) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const targetId = id || (document.getElementById('conv-id') ? document.getElementById('conv-id').value : '');
+    if (!targetId) return;
+
+    const convName = name || (document.getElementById('conv-fantasia') ? document.getElementById('conv-fantasia').value : '') || 'este convênio';
+
+    if (confirm('Tem certeza que deseja excluir o convênio "' + convName + '"?')) {
+      fetch('/admin/convenios/delete/' + encodeURIComponent(targetId), {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          window.location.href = '/admin/convenios/delete/' + encodeURIComponent(targetId);
+        }
+      })
+      .catch(() => {
+        window.location.href = '/admin/convenios/delete/' + encodeURIComponent(targetId);
+      });
+    }
+  }
+
+  function deleteConvenioFromModal() {
+    const id = document.getElementById('conv-id').value;
+    const fantasia = document.getElementById('conv-fantasia').value;
+    const razao = document.getElementById('conv-razaoSocial').value;
+    deleteConvenio(null, id, fantasia || razao || 'este convênio');
+  }
+
+  function submitConvenioForm() {
+    const form = document.getElementById('convenioForm');
+    const tabSel = document.getElementById('conv-tabelaPrecoId');
+    if (tabSel && !tabSel.value) {
+      switchConvenioTab('dados-cadastrais');
+      tabSel.focus();
+      tabSel.reportValidity();
+      return;
+    }
+    if (!form.checkValidity()) {
+      switchConvenioTab('dados-cadastrais');
+      form.reportValidity();
+      return;
+    }
+    form.submit();
+  }
+
+  function setConvenioFilter(status) {
+    activeFilterStatus = status;
+    document.querySelectorAll('.conv-filter-btn').forEach(btn => {
+      btn.classList.remove('bg-emerald-600', 'text-white');
+      btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+    });
+
+    const activeBtn = document.getElementById('filter-btn-' + status);
+    if (activeBtn) {
+      activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+      activeBtn.classList.add('bg-emerald-600', 'text-white');
+    }
+
+    filterConveniosTable();
+  }
+
+  function filterConveniosTable() {
+    const q = document.getElementById('searchConveniosInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.convenio-row');
+    
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const status = row.getAttribute('data-status');
+
+      const matchesSearch = !q || text.includes(q);
+      const matchesFilter = activeFilterStatus === 'todos' || status === activeFilterStatus;
+
+      if (matchesSearch && matchesFilter) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  function searchCidadeModal() {
+    const cidade = prompt('Digite o nome da cidade / UF:', document.getElementById('conv-cidade').value);
+    if (cidade !== null) document.getElementById('conv-cidade').value = cidade;
+  }
+
+  function searchBairroModal() {
+    const bairro = prompt('Digite o nome do bairro:', document.getElementById('conv-bairro').value);
+    if (bairro !== null) document.getElementById('conv-bairro').value = bairro;
+  }
+
+  function searchCepModal() {
+    const cep = prompt('Digite o CEP:', document.getElementById('conv-cep').value);
+    if (cep !== null) document.getElementById('conv-cep').value = cep;
+  }
+
+  function openContatosModal() {
+    alert('Cadastro de contatos adicionais do convênio (Telefones diretos, setores e e-mails extras).');
+  }
+
+  // Atalho Teclado ESC para fechar modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeConvenioModal();
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

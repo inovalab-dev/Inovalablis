@@ -1,0 +1,1404 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 md:p-8 w-full max-w-full mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- Cabeçalho -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Gestão Financeira</p>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight">Configurações Financeiras</h1>
+      </div>
+    </div>
+    
+    <!-- Botões de Ação Dinâmicos correspondentes a cada Aba -->
+    <div class="flex items-center gap-3">
+      <button id="btn-add-conta" onclick="openModal('add-bank-modal')" class="hidden inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Conta Bancária
+      </button>
+
+      <button id="btn-add-documento" onclick="openModal('add-doc-modal')" class="hidden inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Novo Tipo de Documento
+      </button>
+
+      <button id="btn-add-categoria" onclick="openModal('add-cat-modal')" class="hidden inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Categoria
+      </button>
+
+      <button id="btn-add-plano" onclick="openAddModal()" class="hidden inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Conta / Sub-Conta
+      </button>
+    </div>
+  </div>
+
+  <!-- Sub-Navegação Unificada -->
+  <div class="flex border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
+    <a href="/admin/financeiro/dashboard" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dashboard') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Dashboard
+    </a>
+    <a href="/admin/financeiro/relatorio-faturamento" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-relatorio-faturamento') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Relatório de Faturamento
+    </a>
+    <a href="/admin/financeiro/pessoas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-pessoas') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Clientes / Fornecedores
+    </a>
+    <a href="/admin/financeiro" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Contas Pagar / Receber
+    </a>
+    <a href="/admin/financeiro/fechamento-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && (page === 'admin-financeiro-fechamento-caixa' || page === 'admin-fechamento-caixa')) ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Fechamento de Caixa
+    </a>
+    <a href="/admin/financeiro/fluxo-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-fluxo-caixa') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Fluxo de Caixa
+    </a>
+    <a href="/admin/financeiro/dre" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dre') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5" title="Demonstrativo de Resultado">
+      Demonstrativo de Resultado
+    </a>
+    <a href="/admin/financeiro/movimentacoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-movimentacoes') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Movimentações
+    </a>
+    <a href="/admin/financeiro/configuracoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-configuracoes') ? 'border-[#284701] text-[#284701]' : 'border-[#284701] text-[#284701]' %> transition-all flex items-center gap-1.5">
+      Configurações
+    </a>
+  </div>
+
+  <!-- Abas de Navegação das Configurações -->
+  <div class="flex flex-wrap border-b border-gray-200 gap-2">
+    <button onclick="switchTab('contas-bancarias')" id="tab-btn-contas-bancarias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 transition-all">
+      Contas Bancárias
+    </button>
+    <button onclick="switchTab('documentos')" id="tab-btn-documentos" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 transition-all">
+      Tipos de Documentos
+    </button>
+    <button onclick="switchTab('categorias')" id="tab-btn-categorias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 transition-all">
+      Categorias
+    </button>
+    <button onclick="switchTab('plano-contas')" id="tab-btn-plano-contas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 transition-all">
+      Plano de Contas
+    </button>
+  </div>
+
+  <!-- Alertas de Feedback -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <%= success_msg %>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <%= error_msg %>
+    </div>
+  <% } %>
+
+  <!-- ================= ABA 1: CONTAS BANCÁRIAS ================= -->
+  <div id="panel-contas-bancarias" class="tab-panel hidden flex flex-col gap-6">
+    <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+      <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.33l-7.5-5-7.5 5V21m16.5 0H3"/>
+            </svg>
+            Contas Bancárias Cadastradas
+          </h2>
+          <p class="text-xs text-brand-neutralDark/60 mt-1">Gerencie as contas correntes, poupanças ou caixas internos utilizados para movimentações financeiras do laboratório.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-mono font-bold text-gray-500">Pesquisar:</label>
+          <input type="text" id="bankSearch" onkeyup="filterBanksTable()" placeholder="Buscar conta..." class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#284701]">
+        </div>
+      </div>
+
+      <% if (bankAccounts.length === 0) { %>
+        <div class="p-12 text-center text-gray-400">
+          <p class="font-bold">Nenhuma conta bancária cadastrada.</p>
+          <button onclick="openModal('add-bank-modal')" class="text-[#284701] font-bold hover:underline mt-2 inline-block">Cadastrar primeira conta</button>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse" id="banksTable">
+            <thead>
+              <tr class="border-b border-brand-softBg bg-brand-softBg/20">
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider w-24">Código</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Descrição / Nome do Banco</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider text-right w-36">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-brand-softBg">
+              <% bankAccounts.forEach(account => { %>
+                <tr class="hover:bg-brand-softBg/10 transition-colors">
+                  <td class="p-4 text-xs font-bold font-mono text-brand-neutralDark/50">#<%= account.id %></td>
+                  <td class="p-4 text-sm font-black text-[#284701] bank-description-cell"><%= account.description %></td>
+                  <td class="p-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button onclick="editBankAccount(<%= JSON.stringify(account) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                      </button>
+                      <button onclick="confirmDeleteBankAccount('<%= account.id %>', '<%= account.description %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 bg-brand-softBg/10 border-t border-brand-softBg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-gray-500">
+          <div>Mostrando <%= bankAccounts.length %> registros</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ================= ABA 2: TIPOS DE DOCUMENTOS ================= -->
+  <div id="panel-documentos" class="tab-panel hidden flex flex-col gap-6">
+    <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+      <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Tipos de Documentos Cadastrados
+          </h2>
+          <p class="text-xs text-brand-neutralDark/60 mt-1">Defina os tipos de documentos de pagamento aceitos e utilizados no caixa (ex: Boleto, Cartão, PIX, Cheque).</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-mono font-bold text-gray-500">Pesquisar:</label>
+          <input type="text" id="docSearch" onkeyup="filterDocsTable()" placeholder="Buscar tipo..." class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#284701]">
+        </div>
+      </div>
+
+      <% if (documentTypes.length === 0) { %>
+        <div class="p-12 text-center text-gray-400">
+          <p class="font-bold">Nenhum tipo de documento cadastrado.</p>
+          <button onclick="openModal('add-doc-modal')" class="text-[#284701] font-bold hover:underline mt-2 inline-block">Cadastrar primeiro documento</button>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse" id="docsTable">
+            <thead>
+              <tr class="border-b border-brand-softBg bg-brand-softBg/20">
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider w-24">Código</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Descrição</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider text-right w-36">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-brand-softBg">
+              <% documentTypes.forEach(doc => { %>
+                <tr class="hover:bg-brand-softBg/10 transition-colors">
+                  <td class="p-4 text-xs font-bold font-mono text-brand-neutralDark/50">#<%= doc.id %></td>
+                  <td class="p-4 text-sm font-black text-[#284701] doc-description-cell"><%= doc.description %></td>
+                  <td class="p-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button onclick="editDocumentType(<%= JSON.stringify(doc) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                      </button>
+                      <button onclick="confirmDeleteDocumentType('<%= doc.id %>', '<%= doc.description %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 bg-brand-softBg/10 border-t border-brand-softBg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-gray-500">
+          <div>Mostrando <%= documentTypes.length %> registros</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ================= ABA 3: CATEGORIAS ================= -->
+  <div id="panel-categorias" class="tab-panel hidden flex flex-col gap-6">
+    <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+      <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            Categorias de Plano de Contas Ativas
+          </h2>
+          <p class="text-xs text-brand-neutralDark/60 mt-1">Gerencie os grupos e classificações do plano de contas para a estruturação do DRE (Demonstrativo do Resultado do Exercício).</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-mono font-bold text-gray-500">Pesquisar:</label>
+          <input type="text" id="catSearch" onkeyup="filterCatsTable()" placeholder="Buscar categoria..." class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#284701]">
+        </div>
+      </div>
+
+      <% if (accountCategories.length === 0) { %>
+        <div class="p-12 text-center text-gray-400">
+          <p class="font-bold">Nenhuma categoria cadastrada.</p>
+          <button onclick="openModal('add-cat-modal')" class="text-[#284701] font-bold hover:underline mt-2 inline-block">Cadastrar primeira categoria</button>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse" id="catsTable">
+            <thead>
+              <tr class="border-b border-brand-softBg bg-brand-softBg/20">
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider w-24">Código</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Descrição</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Indicador</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Faixa no DRE</th>
+                <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider text-right w-36">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-brand-softBg">
+              <% accountCategories.forEach(cat => { %>
+                <tr class="hover:bg-brand-softBg/10 transition-colors">
+                  <td class="p-4 text-xs font-bold font-mono text-brand-neutralDark/50">#<%= cat.id %></td>
+                  <td class="p-4 text-sm font-black text-[#284701] cat-description-cell"><%= cat.description %></td>
+                  <td class="p-4 text-xs">
+                    <% if (cat.indicator === 'Crédito') { %>
+                      <span class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 font-bold font-mono uppercase text-[9px] border border-emerald-100">
+                        Crédito (+)
+                      </span>
+                    <% } else { %>
+                      <span class="px-2.5 py-1 rounded bg-rose-50 text-rose-700 font-bold font-mono uppercase text-[9px] border border-rose-100">
+                        Débito (-)
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="p-4 text-xs font-bold text-brand-neutralDark/70 font-mono"><%= cat.dreRange %></td>
+                  <td class="p-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button onclick="editCategory(<%= JSON.stringify(cat) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                      </button>
+                      <button onclick="confirmDeleteCategory('<%= cat.id %>', '<%= cat.description %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 bg-brand-softBg/10 border-t border-brand-softBg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-gray-500">
+          <div>Mostrando <%= accountCategories.length %> registros</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ================= ABA 4: PLANO DE CONTAS INTERATIVO (3 NÍVEIS) ================= -->
+  <div id="panel-plano-contas" class="tab-panel hidden flex flex-col gap-6">
+    
+    <!-- Cabeçalho de Ações e Estatísticas do Plano de Contas (Full Width) -->
+    <div class="bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0 border border-[#284701]/20 shadow-xs">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 8.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-xl font-black text-[#284701] tracking-tight">Árvore de Plano de Contas</h2>
+            <span class="px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded-md bg-[#284701]/10 text-[#284701]">3 Níveis Dinâmicos</span>
+          </div>
+          <p class="text-xs text-brand-neutralDark/70 mt-1">
+            <strong>Nível 1:</strong> Faixa DRE (1 a 6) &nbsp;•&nbsp; 
+            <strong>Nível 2:</strong> Categoria do Plano (ex: 1.1) &nbsp;•&nbsp; 
+            <strong>Nível 3:</strong> Item do Plano (ex: 1.1.1)
+          </p>
+        </div>
+      </div>
+
+      <!-- Métricas e Ações Globais -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="hidden sm:flex items-center gap-4 px-4 py-2 bg-brand-softBg/20 rounded-xl border border-brand-softBg text-xs font-mono">
+          <div>
+            <span class="text-brand-neutralDark/60 block text-[10px] uppercase font-bold">Categorias</span>
+            <span id="stat-total-categories" class="font-bold text-[#284701] text-sm"><%= accountCategories.length %></span>
+          </div>
+          <div class="w-px h-6 bg-gray-200"></div>
+          <div>
+            <span class="text-brand-neutralDark/60 block text-[10px] uppercase font-bold">Itens Cadastrados</span>
+            <span id="stat-total-accounts" class="font-bold text-[#284701] text-sm"><%= chartOfAccountsTree.length %></span>
+          </div>
+        </div>
+
+        <button onclick="openModal('add-cat-modal')" class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#284701] border border-gray-300 font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+          <svg class="w-4 h-4 text-[#284701]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          Nova Categoria
+        </button>
+
+        <button onclick="openModal('add-plano-modal')" class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#284701] border border-gray-300 font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+          <svg class="w-4 h-4 text-[#284701]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          Nova Conta
+        </button>
+
+        <button onclick="saveTreeOrder()" id="btn-save-order" class="px-5 py-2.5 bg-[#284701] hover:bg-[#3d6b1d] text-white rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center gap-2 active:scale-95">
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Salvar Alterações
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Filtro e Controles de Expansão (Full Width) -->
+    <div class="bg-white p-4 rounded-2xl border border-brand-softBg custom-shadow flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="relative w-full md:w-96">
+        <svg class="w-4 h-4 absolute left-3.5 top-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        <input type="text" id="tree-search-input" oninput="renderTree()" placeholder="Buscar por código ou descrição do plano..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:border-[#284701] focus:ring focus:ring-[#284701]/10 transition-all bg-gray-50/50">
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+        <button type="button" onclick="expandAllTreeNodes()" class="px-3.5 py-2 rounded-xl bg-[#284701]/10 hover:bg-[#284701]/20 text-[#284701] border border-[#284701]/20 font-bold text-xs font-mono transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Expandir todos os 3 níveis (Faixas, Categorias e Contas)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+          Expandir Tudo
+        </button>
+        <button type="button" onclick="expandLevel1TreeNodes()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold text-xs font-mono transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Expandir apenas Faixas do DRE (Nível 1)">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+          Expandir Nível 1
+        </button>
+        <button type="button" onclick="collapseAllTreeNodes()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold text-xs font-mono transition-all flex items-center gap-1.5 shadow-xs active:scale-95" title="Recolher tudo">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>
+          Recolher Tudo
+        </button>
+      </div>
+    </div>
+
+    <!-- Canvas Principal da Árvore de 3 Níveis (Ocupa 100% da Largura da Tela) -->
+    <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow p-6">
+      <div id="tree-container" class="space-y-4"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ================= MODAIS DE CADASTRO / EDIÇÃO ================= -->
+
+<!-- MODAL: Adicionar Conta Bancária -->
+<div id="add-bank-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Conta Bancária
+      </h3>
+      <button onclick="closeModal('add-bank-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/contas-bancarias/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Conta *</label>
+        <input type="text" name="description" required placeholder="Ex: Sicredi, Banco do Brasil, Caixa Interno" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-bank-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Criar Conta
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Conta Bancária -->
+<div id="edit-bank-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Conta Bancária
+      </h3>
+      <button onclick="closeModal('edit-bank-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/contas-bancarias/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-bank-id">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Conta *</label>
+        <input type="text" name="description" id="edit-bank-description" required placeholder="Ex: Banco Sicoob" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-bank-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Adicionar Documento -->
+<div id="add-doc-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Novo Tipo de Documento
+      </h3>
+      <button onclick="closeModal('add-doc-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/documentos/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" required placeholder="Ex: Boleto, Pix, Cheque, Dinheiro" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-doc-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Tipo
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Documento -->
+<div id="edit-doc-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Tipo de Documento
+      </h3>
+      <button onclick="closeModal('edit-doc-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/documentos/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-doc-id">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" id="edit-doc-description" required placeholder="Ex: Boleto, Pix" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-doc-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Adicionar Categoria -->
+<div id="add-cat-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Categoria de Plano de Contas
+      </h3>
+      <button onclick="closeModal('add-cat-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/categorias/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Categoria *</label>
+        <input type="text" name="description" required placeholder="Ex: Receitas Exames, Custos Variáveis" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Indicador financeiro *</label>
+        <select name="indicator" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Débito">Débito (-)</option>
+          <option value="Crédito">Crédito (+)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Faixa no DRE *</label>
+        <select name="dreRange" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all bg-white text-[#1b2914]">
+          <option value="Receitas">Receitas</option>
+          <option value="Deduções sobre vendas">Deduções sobre vendas</option>
+          <option value="Custos variáveis">Custos variáveis</option>
+          <option value="Custos fixos">Custos fixos</option>
+          <option value="Despesas financeiras">Despesas financeiras</option>
+          <option value="Investimentos">Investimentos</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-cat-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Categoria
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Categoria -->
+<div id="edit-cat-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Categoria
+      </h3>
+      <button onclick="closeModal('edit-cat-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/categorias/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-cat-id">
+      
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição da Categoria *</label>
+        <input type="text" name="description" id="edit-cat-description" required placeholder="Ex: Receitas Exames" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Indicador financeiro *</label>
+        <select name="indicator" id="edit-cat-indicator" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+          <option value="Débito">Débito (-)</option>
+          <option value="Crédito">Crédito (+)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Faixa no DRE *</label>
+        <select name="dreRange" id="edit-cat-dreRange" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all bg-white text-[#1b2914]">
+          <option value="Receitas">Receitas</option>
+          <option value="Deduções sobre vendas">Deduções sobre vendas</option>
+          <option value="Custos variáveis">Custos variables</option>
+          <option value="Custos fixos">Custos fixos</option>
+          <option value="Despesas financeiras">Despesas financeiras</option>
+          <option value="Investimentos">Investimentos</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-cat-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Adicionar Item no Plano de Contas Completo -->
+<div id="add-plano-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nova Conta / Sub-Conta
+      </h3>
+      <button onclick="closeModal('add-plano-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/plano-contas/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" required placeholder="Ex: Aluguel, Insumos de TI" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Categoria *</label>
+        <select name="categoryId" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all bg-white text-[#1b2914]">
+          <% accountCategories.forEach(cat => { %>
+            <option value="<%= cat.id %>"><%= cat.description %> (<%= cat.indicator %>)</option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-plano-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Criar Conta
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Conta do Plano de Contas -->
+<div id="edit-plano-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Conta
+      </h3>
+      <button onclick="closeModal('edit-plano-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/plano-contas/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-plano-id">
+      
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" id="edit-plano-description" required placeholder="Ex: Aluguel" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Categoria *</label>
+        <select name="categoryId" id="edit-plano-categoryId" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all bg-white text-[#1b2914]">
+          <% accountCategories.forEach(cat => { %>
+            <option value="<%= cat.id %>"><%= cat.description %> (<%= cat.indicator %>)</option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-plano-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= SCRIPTS DE COMPORTAMENTO ================= -->
+<script>
+  // Variáveis globais do plano de contas herdadas do servidor
+  let rawTree = <%- JSON.stringify(chartOfAccountsTree) %>;
+  let rawCategories = <%- JSON.stringify(accountCategories) %>;
+  let activeTab = '<%= currentTab %>';
+
+  // 1. ALTERNADOR DE ABAS DINÂMICO (SPA-feel com persistência de URL)
+  function switchTab(tabId) {
+    activeTab = tabId;
+
+    // Atualizar URL de forma elegante
+    const newUrl = window.location.pathname + '?tab=' + tabId;
+    window.history.pushState({ tab: tabId }, '', newUrl);
+
+    // Ocultar todos os painéis e botões de ação do topo
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+    
+    document.getElementById('btn-add-conta').classList.add('hidden');
+    document.getElementById('btn-add-documento').classList.add('hidden');
+    document.getElementById('btn-add-categoria').classList.add('hidden');
+    document.getElementById('btn-add-plano').classList.add('hidden');
+
+    // Desativar estilo visual de todas as abas
+    const tabButtons = ['contas-bancarias', 'documentos', 'categorias', 'plano-contas'];
+    tabButtons.forEach(id => {
+      const btn = document.getElementById('tab-btn-' + id);
+      if (btn) {
+        btn.className = "px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all";
+      }
+    });
+
+    // Ativar o painel correspondente e o botão correspondente
+    const activePanel = document.getElementById('panel-' + tabId);
+    if (activePanel) activePanel.classList.remove('hidden');
+
+    if (tabId === 'contas-bancarias') {
+      document.getElementById('btn-add-conta').classList.remove('hidden');
+    } else if (tabId === 'documentos') {
+      document.getElementById('btn-add-documento').classList.remove('hidden');
+    } else if (tabId === 'categorias') {
+      document.getElementById('btn-add-categoria').classList.remove('hidden');
+    } else if (tabId === 'plano-contas') {
+      document.getElementById('btn-add-plano').classList.remove('hidden');
+      renderTree(); // Certificar que a árvore renderiza atualizada
+    }
+
+    // Ativar o botão de tab ativo
+    const activeBtn = document.getElementById('tab-btn-' + tabId);
+    if (activeBtn) {
+      activeBtn.className = "px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-[#284701] text-[#284701] transition-all";
+    }
+  }
+
+  // Monitorar mudança de histórico de navegação (botão Voltar/Avançar do navegador)
+  window.addEventListener('popstate', (event) => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') || 'contas-bancarias';
+    switchTab(tab);
+  });
+
+  // 2. FUNÇÕES GERAIS DOS MODAIS
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        const dialog = modal.querySelector('div');
+        if (dialog) {
+          dialog.classList.remove('scale-95');
+          dialog.classList.add('scale-100');
+        }
+      }, 50);
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      const dialog = modal.querySelector('div');
+      if (dialog) {
+        dialog.classList.remove('scale-100');
+        dialog.classList.add('scale-95');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 150);
+    }
+  }
+
+  // 3. ABA 1: CONTAS BANCÁRIAS (Ações)
+  function editBankAccount(account) {
+    document.getElementById('edit-bank-id').value = account.id;
+    document.getElementById('edit-bank-description').value = account.description;
+    openModal('edit-bank-modal');
+  }
+
+  function confirmDeleteBankAccount(id, description) {
+    if (confirm('Deseja realmente excluir a conta bancária "' + description + '"?')) {
+      window.location.href = '/admin/financeiro/contas-bancarias/delete/' + id;
+    }
+  }
+
+  function filterBanksTable() {
+    const filter = document.getElementById('bankSearch').value.toLowerCase();
+    const table = document.getElementById('banksTable');
+    if (!table) return;
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+      const tdDesc = trs[i].querySelector('.bank-description-cell');
+      if (tdDesc) {
+        const text = tdDesc.textContent || tdDesc.innerText;
+        trs[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  }
+
+  // 4. ABA 2: TIPOS DE DOCUMENTO (Ações)
+  function editDocumentType(doc) {
+    document.getElementById('edit-doc-id').value = doc.id;
+    document.getElementById('edit-doc-description').value = doc.description;
+    openModal('edit-doc-modal');
+  }
+
+  function confirmDeleteDocumentType(id, description) {
+    if (confirm('Deseja realmente excluir o tipo de documento "' + description + '"?')) {
+      window.location.href = '/admin/financeiro/documentos/delete/' + id;
+    }
+  }
+
+  function filterDocsTable() {
+    const filter = document.getElementById('docSearch').value.toLowerCase();
+    const table = document.getElementById('docsTable');
+    if (!table) return;
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+      const tdDesc = trs[i].querySelector('.doc-description-cell');
+      if (tdDesc) {
+        const text = tdDesc.textContent || tdDesc.innerText;
+        trs[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  }
+
+  // 5. ABA 3: CATEGORIAS (Ações)
+  function editCategory(cat) {
+    document.getElementById('edit-cat-id').value = cat.id;
+    document.getElementById('edit-cat-description').value = cat.description;
+    document.getElementById('edit-cat-indicator').value = cat.indicator;
+    document.getElementById('edit-cat-dreRange').value = cat.dreRange || 'Receitas';
+    openModal('edit-cat-modal');
+  }
+
+  function confirmDeleteCategory(id, description) {
+    if (confirm('Deseja realmente excluir a categoria de plano de contas "' + description + '"?')) {
+      window.location.href = '/admin/financeiro/categorias/delete/' + id;
+    }
+  }
+
+  function filterCatsTable() {
+    const filter = document.getElementById('catSearch').value.toLowerCase();
+    const table = document.getElementById('catsTable');
+    if (!table) return;
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+      const tdDesc = trs[i].querySelector('.cat-description-cell');
+      if (tdDesc) {
+        const text = tdDesc.textContent || tdDesc.innerText;
+        trs[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+      }
+    }
+  }
+
+  // 6. ABA 4: PLANO DE CONTAS INTERATIVO (Árvore e Arraste)
+  function renderTree() {
+    const container = document.getElementById('tree-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Organizar itens em hierarquia
+    const roots = buildHierarchy(rawTree);
+    
+    if (roots.length === 0) {
+      container.innerHTML = '<p class="text-center text-gray-400 p-8">Nenhuma conta cadastrada.</p>';
+      return;
+    }
+
+    roots.forEach(root => {
+      container.appendChild(createTreeNodeElement(root, 0));
+    });
+  }
+
+  // ================= 6. ÁRVORE DINÂMICA DE PLANO DE CONTAS (3 NÍVEIS) =================
+  const DRE_RANGES = [
+    'Receitas',
+    'Deduções sobre vendas',
+    'Custos variáveis',
+    'Custos fixos',
+    'Despesas financeiras',
+    'Investimentos'
+  ];
+
+  let expandedTreeNodes = new Set();
+  DRE_RANGES.forEach((_, idx) => expandedTreeNodes.add(`dre-${idx + 1}`));
+  rawCategories.forEach(c => expandedTreeNodes.add(`cat-${c.id}`));
+
+  function recalculateTreeCodes() {
+    DRE_RANGES.forEach((rangeName, rangeIdx) => {
+      const level1Code = String(rangeIdx + 1);
+      
+      const matchedCategories = rawCategories.filter(c => (c.dreRange || 'Receitas').trim().toLowerCase() === rangeName.toLowerCase());
+      
+      matchedCategories.forEach((cat, catIdx) => {
+        const level2Code = `${level1Code}.${catIdx + 1}`;
+        cat.code = level2Code;
+
+        const matchedAccounts = rawTree.filter(a => String(a.categoryId) === String(cat.id));
+        matchedAccounts.forEach((acc, accIdx) => {
+          const level3Code = `${level2Code}.${accIdx + 1}`;
+          acc.code = level3Code;
+        });
+      });
+    });
+  }
+
+  function expandAllTreeNodes() {
+    DRE_RANGES.forEach((_, idx) => expandedTreeNodes.add(`dre-${idx + 1}`));
+    rawCategories.forEach(c => expandedTreeNodes.add(`cat-${c.id}`));
+    renderTree();
+  }
+
+  function expandLevel1TreeNodes() {
+    expandedTreeNodes.clear();
+    DRE_RANGES.forEach((_, idx) => expandedTreeNodes.add(`dre-${idx + 1}`));
+    renderTree();
+  }
+
+  function collapseAllTreeNodes() {
+    expandedTreeNodes.clear();
+    renderTree();
+  }
+
+  function openAddCatForRange(rangeName) {
+    const rangeSelect = document.querySelector('select[name="dreRange"]');
+    if (rangeSelect) rangeSelect.value = rangeName;
+    openModal('add-cat-modal');
+  }
+
+  function openAddAccountForCategory(catId) {
+    const catSelects = document.querySelectorAll('select[name="categoryId"]');
+    catSelects.forEach(s => s.value = catId);
+    openModal('add-plano-modal');
+  }
+
+  function moveAccount(accId, direction) {
+    const acc = rawTree.find(x => String(x.id) === String(accId));
+    if (!acc) return;
+
+    const sameCatAccounts = rawTree.filter(x => String(x.categoryId) === String(acc.categoryId));
+    const idx = sameCatAccounts.findIndex(x => String(x.id) === String(accId));
+    
+    if (direction === -1 && idx > 0) {
+      const prevAcc = sameCatAccounts[idx - 1];
+      const mainIdxA = rawTree.findIndex(x => String(x.id) === String(acc.id));
+      const mainIdxB = rawTree.findIndex(x => String(x.id) === String(prevAcc.id));
+      const temp = rawTree[mainIdxA];
+      rawTree[mainIdxA] = rawTree[mainIdxB];
+      rawTree[mainIdxB] = temp;
+    } else if (direction === 1 && idx < sameCatAccounts.length - 1) {
+      const nextAcc = sameCatAccounts[idx + 1];
+      const mainIdxA = rawTree.findIndex(x => String(x.id) === String(acc.id));
+      const mainIdxB = rawTree.findIndex(x => String(x.id) === String(nextAcc.id));
+      const temp = rawTree[mainIdxA];
+      rawTree[mainIdxA] = rawTree[mainIdxB];
+      rawTree[mainIdxB] = temp;
+    }
+
+    renderTree();
+  }
+
+  function moveCategory(catId, direction) {
+    const cat = rawCategories.find(x => String(x.id) === String(catId));
+    if (!cat) return;
+
+    const sameRangeCats = rawCategories.filter(x => (x.dreRange || 'Receitas').trim().toLowerCase() === (cat.dreRange || 'Receitas').trim().toLowerCase());
+    const idx = sameRangeCats.findIndex(x => String(x.id) === String(catId));
+
+    if (direction === -1 && idx > 0) {
+      const prevCat = sameRangeCats[idx - 1];
+      const mainIdxA = rawCategories.findIndex(x => String(x.id) === String(cat.id));
+      const mainIdxB = rawCategories.findIndex(x => String(x.id) === String(prevCat.id));
+      const temp = rawCategories[mainIdxA];
+      rawCategories[mainIdxA] = rawCategories[mainIdxB];
+      rawCategories[mainIdxB] = temp;
+    } else if (direction === 1 && idx < sameRangeCats.length - 1) {
+      const nextCat = sameRangeCats[idx + 1];
+      const mainIdxA = rawCategories.findIndex(x => String(x.id) === String(cat.id));
+      const mainIdxB = rawCategories.findIndex(x => String(x.id) === String(nextCat.id));
+      const temp = rawCategories[mainIdxA];
+      rawCategories[mainIdxA] = rawCategories[mainIdxB];
+      rawCategories[mainIdxB] = temp;
+    }
+
+    renderTree();
+  }
+
+  // HTML5 Drag and drop handlers
+  let draggedAccId = null;
+
+  function handleAccDragStart(e) {
+    draggedAccId = this.dataset.accId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedAccId);
+    this.classList.add('opacity-40');
+    e.stopPropagation();
+  }
+
+  function handleAccDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    this.classList.add('bg-emerald-50', 'border-emerald-300');
+    return false;
+  }
+
+  function handleAccDragLeave(e) {
+    this.classList.remove('bg-emerald-50', 'border-emerald-300');
+  }
+
+  function handleAccDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    this.classList.remove('bg-emerald-50', 'border-emerald-300');
+
+    const targetAccId = this.dataset.accId;
+    const targetCatId = this.dataset.catId;
+
+    if (!draggedAccId || draggedAccId === targetAccId) return;
+
+    const acc = rawTree.find(x => String(x.id) === String(draggedAccId));
+    if (acc) {
+      acc.categoryId = targetCatId;
+      const accIdx = rawTree.findIndex(x => String(x.id) === String(draggedAccId));
+      const targetIdx = rawTree.findIndex(x => String(x.id) === String(targetAccId));
+      if (accIdx !== -1 && targetIdx !== -1) {
+        const [moved] = rawTree.splice(accIdx, 1);
+        rawTree.splice(targetIdx, 0, moved);
+      }
+      renderTree();
+    }
+  }
+
+  function renderTree() {
+    recalculateTreeCodes();
+    const container = document.getElementById('tree-container');
+    if (!container) return;
+
+    const searchQuery = (document.getElementById('tree-search-input')?.value || '').toLowerCase().trim();
+    container.innerHTML = '';
+
+    const statCat = document.getElementById('stat-total-categories');
+    const statAcc = document.getElementById('stat-total-accounts');
+    if (statCat) statCat.textContent = rawCategories.length;
+    if (statAcc) statAcc.textContent = rawTree.length;
+
+    DRE_RANGES.forEach((rangeName, rangeIdx) => {
+      const level1Code = String(rangeIdx + 1);
+      const dreNodeId = `dre-${rangeIdx + 1}`;
+      
+      const categoriesInRange = rawCategories.filter(c => (c.dreRange || 'Receitas').trim().toLowerCase() === rangeName.toLowerCase());
+      const totalAccountsInRange = rawTree.filter(a => categoriesInRange.some(c => String(c.id) === String(a.categoryId))).length;
+
+      if (searchQuery) {
+        const matchesSearch = rangeName.toLowerCase().includes(searchQuery) ||
+          categoriesInRange.some(c => c.description.toLowerCase().includes(searchQuery) ||
+            rawTree.some(a => String(a.categoryId) === String(c.id) && (a.description.toLowerCase().includes(searchQuery) || (a.code && a.code.includes(searchQuery))))
+          );
+        if (!matchesSearch) return;
+      }
+
+      const isExpanded = expandedTreeNodes.has(dreNodeId) || searchQuery.length > 0;
+
+      // NÍVEL 1 CARD (Faixa DRE)
+      const level1Card = document.createElement('div');
+      level1Card.className = 'bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4 transition-all hover:border-brand-gold/40';
+      
+      let headerBg = 'bg-slate-50 border-b border-gray-200';
+      let codeBadge = 'bg-slate-800 text-white';
+      if (rangeName === 'Receitas') {
+        headerBg = 'bg-emerald-50/70 border-b border-emerald-100';
+        codeBadge = 'bg-emerald-700 text-white';
+      } else if (rangeName.includes('Deduções') || rangeName.includes('Custos')) {
+        headerBg = 'bg-rose-50/50 border-b border-rose-100';
+        codeBadge = 'bg-rose-700 text-white';
+      } else if (rangeName.includes('Investimentos') || rangeName.includes('Despesas')) {
+        headerBg = 'bg-amber-50/50 border-b border-amber-100';
+        codeBadge = 'bg-amber-700 text-white';
+      }
+
+      const level1Header = document.createElement('div');
+      level1Header.className = `p-4 flex items-center justify-between cursor-pointer select-none ${headerBg}`;
+      level1Header.onclick = (e) => {
+        if (e.target.closest('.action-btn')) return;
+        if (expandedTreeNodes.has(dreNodeId)) expandedTreeNodes.delete(dreNodeId);
+        else expandedTreeNodes.add(dreNodeId);
+        renderTree();
+      };
+
+      level1Header.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="p-1.5 rounded-lg hover:bg-black/10 text-gray-700 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+          </div>
+          <span class="px-3 py-1 text-xs font-mono font-black rounded-lg ${codeBadge} shadow-sm">${level1Code}</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-black text-gray-900 tracking-tight">${rangeName}</h3>
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded bg-white/80 text-gray-600 border border-gray-200">Nível 1 - Faixa DRE</span>
+            </div>
+            <p class="text-[11px] text-gray-500 font-medium">${categoriesInRange.length} categorias • ${totalAccountsInRange} itens no plano</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openAddCatForRange('${rangeName}')" class="action-btn px-3 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-[#284701] border border-gray-200 text-xs font-bold font-mono transition-all flex items-center gap-1 shadow-sm active:scale-95" title="Adicionar Categoria nesta faixa">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            Nova Categoria
+          </button>
+        </div>
+      `;
+
+      level1Card.appendChild(level1Header);
+
+      if (isExpanded) {
+        const level1Body = document.createElement('div');
+        level1Body.className = 'p-4 bg-gray-50/50 space-y-3 border-t border-gray-100';
+
+        if (categoriesInRange.length === 0) {
+          level1Body.innerHTML = `
+            <div class="p-4 text-center text-xs text-gray-400 font-mono bg-white rounded-xl border border-dashed border-gray-200">
+              Nenhuma categoria vinculada a esta faixa do DRE.
+            </div>
+          `;
+        } else {
+          categoriesInRange.forEach((cat) => {
+            const catNodeId = `cat-${cat.id}`;
+            const isCatExpanded = expandedTreeNodes.has(catNodeId) || searchQuery.length > 0;
+            const accountsInCat = rawTree.filter(a => String(a.categoryId) === String(cat.id));
+
+            // NÍVEL 2 CARD (Categoria)
+            const catCard = document.createElement('div');
+            catCard.className = 'bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all hover:border-[#284701]/30';
+
+            const catHeader = document.createElement('div');
+            catHeader.className = 'p-3 bg-white flex items-center justify-between border-b border-gray-100 hover:bg-gray-50/80 cursor-pointer select-none';
+            catHeader.onclick = (e) => {
+              if (e.target.closest('.action-btn')) return;
+              if (expandedTreeNodes.has(catNodeId)) expandedTreeNodes.delete(catNodeId);
+              else expandedTreeNodes.add(catNodeId);
+              renderTree();
+            };
+
+            const isCredit = cat.indicator === 'Crédito';
+            const indicatorBadge = isCredit 
+              ? '<span class="px-2 py-0.5 text-[10px] font-bold font-mono uppercase rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">Crédito (+)</span>'
+              : '<span class="px-2 py-0.5 text-[10px] font-bold font-mono uppercase rounded-md bg-rose-50 text-rose-700 border border-rose-200">Débito (-)</span>';
+
+            catHeader.innerHTML = `
+              <div class="flex items-center gap-2.5">
+                <div class="p-1 rounded hover:bg-gray-200 text-gray-600 transition-transform duration-200 ${isCatExpanded ? 'rotate-90' : ''}">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                </div>
+                <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-[#284701] text-white shadow-xs">${cat.code}</span>
+                <span class="text-xs font-black text-gray-900">${cat.description}</span>
+                ${indicatorBadge}
+                <span class="text-[10px] text-gray-400 font-mono font-semibold ml-1">(${accountsInCat.length} itens)</span>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button type="button" onclick="moveCategory('${cat.id}', -1)" class="action-btn p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors" title="Mover categoria para cima">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>
+                </button>
+                <button type="button" onclick="moveCategory('${cat.id}', 1)" class="action-btn p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors" title="Mover categoria para baixo">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                </button>
+                <div class="w-px h-4 bg-gray-200 mx-1"></div>
+                <button type="button" onclick="openAddAccountForCategory('${cat.id}')" class="action-btn px-2.5 py-1 text-[11px] font-bold font-mono text-[#284701] bg-[#284701]/5 hover:bg-[#284701]/10 rounded-lg transition-colors border border-[#284701]/10 flex items-center gap-1" title="Adicionar Item nesta Categoria">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                  Nova Conta
+                </button>
+                <button type="button" onclick="editCategory(${JSON.stringify(cat).replace(/"/g, '&quot;')})" class="action-btn p-1.5 text-gray-400 hover:text-[#284701] hover:bg-gray-100 rounded transition-colors" title="Editar Categoria">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
+                </button>
+              </div>
+            `;
+
+            catCard.appendChild(catHeader);
+
+            if (isCatExpanded) {
+              const catBody = document.createElement('div');
+              catBody.className = 'p-3 bg-gray-50/80 space-y-1 border-t border-gray-100 pl-6 md:pl-8';
+
+              if (accountsInCat.length === 0) {
+                catBody.innerHTML = `
+                  <div class="p-3 text-center text-xs text-gray-400 font-mono bg-white rounded-lg border border-dashed border-gray-200">
+                    Nenhuma conta/sub-conta nesta categoria. Clique em "+ Nova Conta" acima para adicionar.
+                  </div>
+                `;
+              } else {
+                accountsInCat.forEach((acc) => {
+                  // NÍVEL 3 ROW (Item do Plano de Contas)
+                  const accRow = document.createElement('div');
+                  accRow.className = 'flex items-center justify-between p-2.5 bg-white border border-gray-200 hover:border-gray-300 rounded-lg shadow-xs transition-all drag-account-item';
+                  accRow.dataset.accId = acc.id;
+                  accRow.dataset.catId = cat.id;
+                  accRow.draggable = true;
+
+                  accRow.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                      <div class="text-gray-300 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1 shrink-0" title="Arraste para reordenar ou mover de categoria">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75h16.5M3.75 9h16.5M3.75 14.25h16.5M3.75 19.5h16.5"/></svg>
+                      </div>
+                      <span class="px-2 py-0.5 text-xs font-mono font-bold rounded bg-gray-100 text-gray-800 border border-gray-200">${acc.code}</span>
+                      <span class="text-xs font-bold text-gray-800">${acc.description}</span>
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                      <button type="button" onclick="moveAccount('${acc.id}', -1)" class="p-1 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors" title="Mover para cima">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>
+                      </button>
+                      <button type="button" onclick="moveAccount('${acc.id}', 1)" class="p-1 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors" title="Mover para baixo">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                      </button>
+                      <div class="w-px h-3 bg-gray-200 mx-1"></div>
+                      <button type="button" onclick="editAccount(${JSON.stringify(acc).replace(/"/g, '&quot;')})" class="p-1 text-gray-400 hover:text-[#284701] hover:bg-gray-50 rounded transition-colors" title="Editar Item">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
+                      </button>
+                      <button type="button" onclick="confirmDeleteAccount('${acc.id}', '${acc.description}')" class="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Excluir Item">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                      </button>
+                    </div>
+                  `;
+
+                  accRow.addEventListener('dragstart', handleAccDragStart);
+                  accRow.addEventListener('dragover', handleAccDragOver);
+                  accRow.addEventListener('dragleave', handleAccDragLeave);
+                  accRow.addEventListener('drop', handleAccDrop);
+
+                  catBody.appendChild(accRow);
+                });
+              }
+
+              catCard.appendChild(catBody);
+            }
+
+            level1Body.appendChild(catCard);
+          });
+        }
+
+        level1Card.appendChild(level1Body);
+      }
+
+      container.appendChild(level1Card);
+    });
+  }
+
+  function saveTreeOrder() {
+    const btn = document.getElementById('btn-save-order');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin w-4 h-4 mr-1 inline" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        Salvando...
+      `;
+    }
+
+    recalculateTreeCodes();
+
+    fetch('/admin/financeiro/plano-contas/reorder', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ tree: rawTree, categories: rawCategories })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Salvar Alterações
+        `;
+      }
+      if (data.success) {
+        alert('Plano de contas e estrutura de 3 níveis salvos com sucesso!');
+        window.location.reload();
+      } else {
+        alert('Erro ao salvar plano de contas: ' + (data.error || 'Erro desconhecido'));
+      }
+    })
+    .catch(err => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          Salvar Alterações
+        `;
+      }
+      console.error('Erro de rede:', err);
+      alert('Erro de rede ao salvar plano de contas.');
+    });
+  }
+
+  function openAddModal() {
+    openModal('add-plano-modal');
+  }
+
+  function editAccount(account) {
+    document.getElementById('edit-plano-id').value = account.id;
+    document.getElementById('edit-plano-description').value = account.description;
+    document.getElementById('edit-plano-categoryId').value = account.categoryId;
+    openModal('edit-plano-modal');
+  }
+
+  function confirmDeleteAccount(id, description) {
+    if (confirm('Deseja realmente excluir a conta "' + description + '"? Sub-contas dependentes também perderão sua referência.')) {
+      window.location.href = '/admin/financeiro/plano-contas/delete/' + id;
+    }
+  }
+
+  // 7. CARREGAMENTO INICIAL
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const queryTab = params.get('tab');
+    if (queryTab) {
+      activeTab = queryTab;
+    }
+    switchTab(activeTab);
+  });
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Tags de SEO Otimizadas para o Google (InovaLab Cambará) -->
+  <title><%= typeof seoTitle !== 'undefined' ? seoTitle : 'InovaLab Análises Clínicas | Cambará - PR | Exames e Diagnósticos' %></title>
+  <meta name="description" content="<%= typeof seoDescription !== 'undefined' ? seoDescription : 'O Laboratório InovaLab é a principal referência em exames de sangue, exames toxicológicos para CNH, sexagem fetal e análises clínicas em Cambará - PR e região. Atendimento humanizado e resultados online rápidos.' %>">
+  <meta name="keywords" content="<%= typeof seoKeywords !== 'undefined' ? seoKeywords : 'laboratório cambará, inovalab cambará, exames de sangue cambará, exame toxicológico cambará, sexagem fetal cambará, exame de gravidez cambará, análises clínicas cambará, resultado de exame online' %>">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Canonical Link para evitar conteúdo duplicado -->
+  <link rel="canonical" href="https://www.inovalabcambara.com.br<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '' %>">
+  
+  <!-- SEO Local / Geotagging para dominar as buscas locais em Cambará e Norte do Paraná -->
+  <meta name="geo.region" content="BR-PR">
+  <meta name="geo.placename" content="Cambará">
+  <meta name="geo.position" content="-23.0456;-50.0734">
+  <meta name="ICBM" content="-23.0456, -50.0734">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.inovalabcambara.com.br<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '' %>">
+  <meta property="og:title" content="<%= typeof seoTitle !== 'undefined' ? seoTitle : 'InovaLab Análises Clínicas | Cambará - PR' %>">
+  <meta property="og:description" content="<%= typeof seoDescription !== 'undefined' ? seoDescription : 'InovaLab é a sua melhor escolha para exames laboratoriais em Cambará-PR. Rapidez, tecnologia avançada e compromisso com a sua saúde.' %>">
+  <meta property="og:image" content="https://www.inovalabcambara.com.br/imagens/logo-share.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.inovalabcambara.com.br<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '' %>">
+  <meta name="twitter:title" content="<%= typeof seoTitle !== 'undefined' ? seoTitle : 'InovaLab Análises Clínicas | Cambará - PR' %>">
+  <meta name="twitter:description" content="<%= typeof seoDescription !== 'undefined' ? seoDescription : 'InovaLab é a sua melhor escolha para exames laboratoriais em Cambará-PR. Rapidez, tecnologia avançada e compromisso com a sua saúde.' %>">
+  <meta name="twitter:image" content="https://www.inovalabcambara.com.br/imagens/logo-share.png">
+
+  <!-- Google Analytics (gtag.js) com Monitoramento de Conversões (WhatsApp / Resultados) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J6L1MKQ396"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JDJJ5SWS4V', {
+      'page_title': '<%= typeof seoTitle !== "undefined" ? seoTitle : "InovaLab Análises Clínicas | Cambará" %>',
+      'page_path': window.location.pathname
+    });
+
+    // Funções de Rastreamento de Eventos e Conversão no Google Analytics
+    function trackWhatsAppClick(label) {
+      gtag('event', 'click_whatsapp_contato', {
+        'event_category': 'Conversão',
+        'event_label': label || 'WhatsApp Geral',
+        'value': 1
+      });
+    }
+
+    function trackResultAccess() {
+      gtag('event', 'acesso_resultados_online', {
+        'event_category': 'Conversão',
+        'event_label': 'Portal de Resultados do Paciente',
+        'value': 1
+      });
+    }
+
+    function trackExamSearch(query) {
+      gtag('event', 'search_exame_guia', {
+        'search_term': query,
+        'event_category': 'Engajamento'
+      });
+    }
+  </script>
+
+  <!-- Dados Estruturados Schema.org JSON-LD para o Google Search (SEO Local de Alto Nível) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MedicalBusiness",
+    "name": "Laboratório InovaLab - Análises Clínicas",
+    "alternateName": "InovaLab Cambará",
+    "description": "O Laboratório InovaLab é a principal referência em exames de sangue, exames toxicológicos para CNH e concursos, teste de DNA (paternidade) e exames de sexagem fetal em Cambará - PR e região.",
+    "url": "https://www.inovalabcambara.com.br",
+    "logo": "https://www.inovalabcambara.com.br/imagens/logo-share.png",
+    "image": "https://www.inovalabcambara.com.br/imagens/logo-share.png",
+    "telephone": "+55-43-99618-3406",
+    "priceRange": "$$",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Rua Dr. Miguel Pedroso, 876",
+      "addressLocality": "Cambará",
+      "addressRegion": "PR",
+      "postalCode": "86390-000",
+      "addressCountry": "BR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -23.0456,
+      "longitude": -50.0734
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "opens": "06:30",
+      "closes": "17:30"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+55-43-99618-3406",
+      "contactType": "Atendimento e Agendamento",
+      "areaServed": "BR",
+      "availableLanguage": ["Portuguese"]
+    },
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Exames e Diagnósticos do InovaLab",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "MedicalTest",
+            "name": "Exame Toxicológico de Larga Janela",
+            "description": "Exame toxicológico para renovação de CNH (Categorias C, D e E), admissional, demissional e concursos públicos em Cambará-PR.",
+            "code": {
+              "@type": "MedicalCode",
+              "code": "TOXI10",
+              "codingSystem": "Toxicológico"
+            }
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "MedicalTest",
+            "name": "Exame de DNA / Teste de Paternidade",
+            "description": "Teste de paternidade e exames de DNA seguros, 100% confidenciais e com altíssima precisão em Cambará-PR.",
+            "code": {
+              "@type": "MedicalCode",
+              "code": "DNAPAT",
+              "codingSystem": "Genética"
+            }
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "MedicalTest",
+            "name": "Exame de Sexagem Fetal",
+            "description": "Descubra o sexo do seu bebê com total rapidez e segurança a partir de amostra de sangue materno, desde a 8ª semana.",
+            "code": {
+              "@type": "MedicalCode",
+              "code": "SEXFET",
+              "codingSystem": "Genética"
+            }
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "MedicalTest",
+            "name": "Hemograma Completo e Exames de Sangue",
+            "description": "Exames básicos de rotina, check-up de saúde completo, colesterol, diabetes e hormônios com coleta sem dor."
+          }
+        }
+      ]
+    }
+  }
+  </script>
+
+  <!-- Google Fonts: Inter para interface moderna e JetBrains Mono para dados técnicos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#284701',      // Verde Escuro Principal (Rico em tom oliva)
+              light: '#8da673',     // Verde Claro de Apoio/Hovers
+              gold: '#c5a875',      // Dourado/Bronze Elegante
+              neutralDark: '#284701', // Verde escuro para fundo de menus/sidebars
+              neutralLight: '#fafbfa', // Fundo off-white limpo
+              softBg: '#f1f5ef',    // Fundo verde suave para contraste
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Global LIS Keyboard Shortcut Helper Engine -->
+  <script>
+    window.LIS_SHORTCUTS = <%- JSON.stringify(locals.shortcuts || {}) %>;
+
+    window.getShortcutLabel = function(actionId) {
+      const sc = window.LIS_SHORTCUTS && window.LIS_SHORTCUTS[actionId];
+      if (!sc || sc.enabled === false) return '';
+      const parts = [];
+      if (sc.ctrlKey) parts.push('Ctrl');
+      if (sc.altKey) parts.push('Alt');
+      if (sc.shiftKey) parts.push('Shift');
+      
+      let keyDisplay = sc.key ? sc.key.toUpperCase() : '';
+      if (sc.key === 'Escape') keyDisplay = 'ESC';
+      if (sc.key === 'Enter') keyDisplay = 'Enter';
+      if (sc.key === ' ') keyDisplay = 'Espaço';
+      
+      parts.push(keyDisplay);
+      return parts.join('+');
+    };
+
+    window.matchShortcut = function(e, actionId) {
+      const sc = window.LIS_SHORTCUTS && window.LIS_SHORTCUTS[actionId];
+      if (!sc || sc.enabled === false) return false;
+      
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      if (!!sc.ctrlKey !== isCtrlOrCmd) return false;
+      if (!!sc.altKey !== e.altKey) return false;
+      if (!!sc.shiftKey !== e.shiftKey) return false;
+
+      const key = e.key ? e.key.toLowerCase() : '';
+      const targetKey = sc.key ? sc.key.toLowerCase() : '';
+
+      if (targetKey === 'escape' && key === 'escape') return true;
+      if (targetKey === 'enter' && key === 'enter') return true;
+      return key === targetKey;
+    };
+  </script>
+  
+  <style>
+    /* Custom utility animations */
+    .fade-in {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .custom-shadow {
+      box-shadow: 0 4px 20px -2px rgba(40, 71, 1, 0.08);
+    }
+    .custom-shadow-hover:hover {
+      box-shadow: 0 10px 30px -4px rgba(40, 71, 1, 0.14);
+    }
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+    details summary {
+      list-style: none;
+    }
+  </style>
+</head>
+<body class="bg-brand-neutralLight text-brand-neutralDark font-sans flex flex-col min-h-screen antialiased selection:bg-brand-light selection:text-brand-dark">
+
+  <% if (isAdmin) { %>
+    <!-- Estrutura de Sidebar para Administração -->
+    <div class="flex flex-col md:flex-row min-h-screen w-full min-w-0 bg-brand-neutralLight/45">
+      
+      <!-- Sidebar de Navegação à Esquerda (Desktop) -->
+      <aside id="admin-sidebar" class="hidden md:flex flex-col w-64 bg-[#284701] text-white h-screen sticky top-0 shrink-0 border-r border-[#3b661d]/30 z-40 transition-all duration-300">
+        <!-- Cabeçalho da Sidebar -->
+        <div class="p-4 border-b border-white/10 flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <a href="/admin" class="flex items-center sidebar-logo-full overflow-hidden">
+              <%- include('logo', { layout: 'horizontal', variant: 'dark', showSlogan: false, height: 'h-8' }) %>
+            </a>
+            <a href="/admin" class="hidden sidebar-logo-mini justify-center items-center w-10 h-10 rounded-xl bg-brand-gold/15 text-brand-gold font-bold text-sm font-mono shrink-0 hover:bg-brand-gold/25 transition-colors" title="InovaLab Admin">
+              IL
+            </a>
+            <button id="admin-sidebar-toggle-btn" type="button" title="Recolher / Expandir Menu Lateral" class="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all shrink-0 flex items-center justify-center focus:outline-none">
+              <svg id="sidebar-toggle-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+              </svg>
+            </button>
+          </div>
+          <% if (locals.adminUserName) { %>
+            <div class="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/5 mt-1 sidebar-user-card">
+              <div class="w-7 h-7 rounded-lg bg-brand-gold/10 text-brand-gold flex items-center justify-center text-xs font-bold font-mono shrink-0">
+                <%= adminUserName.charAt(0).toUpperCase() %>
+              </div>
+              <div class="overflow-hidden sidebar-text">
+                <p class="text-[10px] text-white/40 uppercase tracking-wider leading-none font-mono font-bold">Usuário Logado</p>
+                <p class="text-xs font-bold text-white/90 truncate mt-0.5 leading-tight"><%= adminUserName %></p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+        
+        <!-- Links da Sidebar -->
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <% if (locals.userPermissions && userPermissions.dashboard) { %>
+            <div>
+              <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest px-3 block mb-1.5 font-mono sidebar-section-title">Principal</span>
+              <a href="/admin" title="Painel Geral" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-dashboard' ? 'text-brand-gold bg-white/10 border-l-4 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span class="sidebar-text">Painel Geral</span>
+              </a>
+            </div>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.exames || userPermissions.comparador)) { %>
+            <% const isCadastrosActive = ['admin-medicos', 'admin-exames', 'admin-exames-instrucoes', 'admin-comparador', 'admin-convenios', 'admin-tabela-precos', 'admin-recipientes', 'admin-setores', 'admin-locais-coleta', 'admin-laboratorios'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isCadastrosActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Cadastros</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/medicos" title="Médicos" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-medicos' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-blue-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                  <span class="sidebar-text">Médicos</span>
+                </a>
+                <a href="/admin/laboratorios" title="Laboratório de Apoio" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-laboratorios' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                  <span class="sidebar-text">Laboratório de Apoio</span>
+                </a>
+                <a href="/admin/locais-coleta" title="Locais de Coleta" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-locais-coleta' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-teal-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                  <span class="sidebar-text">Locais de Coleta</span>
+                </a>
+                <a href="/admin/setores" title="Setores" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-setores' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5m-6 0h6M9 7h1m-1 4h1m4-4h1m-1 4h1"/></svg>
+                  <span class="sidebar-text">Setores</span>
+                </a>
+                <a href="/admin/convenios" title="Convênios" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-convenios' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  <span class="sidebar-text">Convênios</span>
+                </a>
+                <a href="/admin/recipientes" title="Recipientes" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-recipientes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                  <span class="sidebar-text">Recipientes</span>
+                </a>
+                <% if (userPermissions.exames) { %>
+                  <a href="/admin/exames" title="Exames" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-exames' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-text">Exames</span>
+                  </a>
+                  <a href="/admin/tabela-precos" title="Tabela de Preços" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-tabela-precos' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/></svg>
+                    <span class="sidebar-text">Tabela de Preços</span>
+                  </a>
+                  <a href="/admin/exames/instrucoes" title="Instruções" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-exames-instrucoes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <span class="sidebar-text">Instruções</span>
+                  </a>
+                <% } %>
+                <% if (userPermissions.comparador) { %>
+                  <a href="/admin/comparador" title="Tabela de Custo" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-comparador' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span class="sidebar-text">Tabela de Custo</span>
+                  </a>
+                <% } %>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.orcamentos || userPermissions.exames)) { %>
+            <% const isRecepcaoActive = ['admin-fechamento-caixa', 'admin-requisitions', 'admin-cisnorpi', 'admin-budgets', 'admin-leitor', 'admin-pacientes', 'admin-agendamentos', 'admin-coleta', 'admin-recebimento'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isRecepcaoActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Recepção LIS</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/recepcao/pacientes" title="Pacientes (PEP)" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-pacientes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  <span class="sidebar-text">Pacientes (PEP)</span>
+                </a>
+                <% if (userPermissions.requisicoes) { %>
+                  <a href="/admin/requisicoes" title="Requisições (OS)" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-requisitions' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-text">Requisições (OS)</span>
+                  </a>
+                <% } %>
+                <% if (userPermissions.orcamentos) { %>
+                  <a href="/admin/orcamentos" title="Orçamentos" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-budgets' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1M14 4a2 2 0 00-2 2v1M14 4v4m6-4v4a2 2 0 01-2 2h-3"/></svg>
+                    <span class="sidebar-text">Orçamentos</span>
+                  </a>
+                <% } %>
+                <a href="/admin/recepcao/agendamentos" title="Agendamentos" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-agendamentos' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="sidebar-text">Agendamentos</span>
+                </a>
+                <% if (userPermissions.requisicoes) { %>
+                  <a href="/admin/recepcao/coleta" title="Coleta de Materiais" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-coleta' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    <span class="sidebar-text">Coleta de Materiais</span>
+                  </a>
+                  <a href="/admin/recepcao/recebimento" title="Recebimento Materiais" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-recebimento' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <span class="sidebar-text">Recebimento Materiais</span>
+                  </a>
+                  <a href="/admin/recepcao/fechamento-caixa" title="Fechamento Caixa" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-fechamento-caixa' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/></svg>
+                    <span class="sidebar-text">Fechamento Caixa</span>
+                  </a>
+                  <a href="/admin/cisnorpi" title="Cisnorpi" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-cisnorpi' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    <span class="sidebar-text">Cisnorpi</span>
+                  </a>
+                <% } %>
+                <% if (userPermissions.exames) { %>
+                  <a href="/admin/leitor" title="Leitor Guia (IA)" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-leitor' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="sidebar-text">Leitor Guia (IA)</span>
+                  </a>
+                <% } %>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames)) { %>
+            <% const isTriagemActive = ['admin-triagem-amostras'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isTriagemActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Triagem</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/triagem/amostras" title="Triagem de Amostras" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-triagem-amostras' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <span class="sidebar-text">Triagem de Amostras</span>
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames || userPermissions.laudos || userPermissions.digitacao)) { %>
+            <% const isResultadosActive = ['admin-resultados-digitacao'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isResultadosActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Resultados</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/resultados/digitacao" title="Digitação de Resultados" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-resultados-digitacao' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <span class="sidebar-text">Digitação</span>
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames || userPermissions.interfaceamiento !== false)) { %>
+            <% const isInterfaceActive = ['admin-interfaceamento'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isInterfaceActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Interface</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/interfaceamento" title="Interfaceamento" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-interfaceamento' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="sidebar-text">Interfaceamento</span>
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames)) { %>
+            <% const isLabExternoActive = ['admin-lab-externo-config', 'admin-lab-externo-materiais-alvaro', 'admin-triagem-criar-lote', 'admin-lab-externo-alvaro', 'admin-lab-externo-pardini'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isLabExternoActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  <span class="sidebar-text">Laboratório Externo</span>
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/triagem/criar-lote" title="Criar Lote" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-triagem-criar-lote' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                  <span class="sidebar-text">Criar Lote</span>
+                </a>
+                <a href="/admin/lab-externo/alvaro" title="Exames Álvaro" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-alvaro' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <span class="sidebar-text">Exames Álvaro</span>
+                </a>
+                <a href="/admin/lab-externo/pardini" title="Exames Pardini" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-pardini' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <span class="sidebar-text">Exames Pardini</span>
+                </a>
+                <a href="/admin/lab-externo/materiais-alvaro" title="Materiais Álvaro" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-materiais-alvaro' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <span class="sidebar-text">Materiais Álvaro</span>
+                </a>
+                <a href="/admin/lab-externo/config" title="Config Apoio" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-config' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="sidebar-text">Config Apoio</span>
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && userPermissions.financeiro) { %>
+            <% const isFinanceiroActive = ['admin-financeiro-dashboard', 'admin-financeiro-relatorio-faturamento', 'admin-financeiro-pessoas', 'admin-financeiro-contas-pagar', 'admin-financeiro-contas-receber', 'admin-financeiro-fechamento-caixa', 'admin-financeiro-fluxo-caixa', 'admin-financeiro-dre', 'admin-financeiro-movimentacoes', 'admin-financeiro-configuracoes', 'admin-financeiro'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isFinanceiroActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Gestão Financeira
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/financeiro/dashboard" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-dashboard' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  Dashboard
+                </a>
+                <a href="/admin/financeiro/relatorio-faturamento" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-relatorio-faturamento' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                  Faturamento
+                </a>
+                <a href="/admin/financeiro/pessoas" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-pessoas' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                  Clientes / Fornecedores
+                </a>
+                <a href="/admin/financeiro/contas-pagar" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-contas-pagar' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  Contas a Pagar
+                </a>
+                <a href="/admin/financeiro/contas-receber" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-contas-receber' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1M14 4a2 2 0 00-2 2v1M14 4v4m6-4v4a2 2 0 01-2 2h-3"/></svg>
+                  Contas a Receber
+                </a>
+                <a href="/admin/financeiro/fechamento-caixa" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-fechamento-caixa' || page === 'admin-fechamento-caixa' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Conferência Caixa
+                </a>
+                <a href="/admin/financeiro/fluxo-caixa" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-fluxo-caixa' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
+                  Fluxo de Caixa
+                </a>
+                <a href="/admin/financeiro/dre" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-dre' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  DRE - Resultado
+                </a>
+                <a href="/admin/financeiro/movimentacoes" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-movimentacoes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                  Movimentações
+                </a>
+                <a href="/admin/financeiro/configuracoes" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-configuracoes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  Configurações
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && (userPermissions.pops || userPermissions.nao_conformidades || userPermissions.avaliacoes || userPermissions.documentos)) { %>
+            <% const isQualidadeActive = ['admin-pops', 'admin-temperaturas', 'admin-nao-conformidades', 'admin-avaliacoes', 'admin-documentos'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isQualidadeActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Gestão de Qualidade
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <% if (userPermissions.pops) { %>
+                  <a href="/admin/pops" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-pops' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    Wiki de POPs
+                  </a>
+                  <a href="/admin/temperaturas" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-temperaturas' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    Monitoramento
+                  </a>
+                <% } %>
+                <% if (userPermissions.nao_conformidades) { %>
+                  <a href="/admin/nao-conformidades" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-nao-conformidades' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Não Conformidades
+                  </a>
+                <% } %>
+                <% if (userPermissions.avaliacoes) { %>
+                  <a href="/admin/avaliacoes" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-avaliacoes' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.243.58 1.8l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.11L12.01 13.01a1 1 0 00-1.17 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.11l1.518-4.674a1 1 0 00-.364-1.118L2.5 10.116c-.78-.57-.38-1.81.58-1.8h4.908a1 1 0 00.95-.69l1.518-4.674z"/></svg>
+                    Avaliações & NPS
+                  </a>
+                <% } %>
+                <% if (userPermissions.documentos) { %>
+                  <a href="/admin/documentos" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-documentos' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                    <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                    Documentos
+                  </a>
+                <% } %>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && userPermissions.blog) { %>
+            <% const isConteudoActive = ['admin-blog'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isConteudoActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Conteúdo
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/blog" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-blog' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M9 9h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Matérias do Blog
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.adminProfessionalId) { %>
+            <% const isEspacoColaboradorActive = ['admin-meu-rh'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isEspacoColaboradorActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Espaço do Colaborador
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/meu-rh" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-meu-rh' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+                  Meu Painel (RH)
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && userPermissions.profissionais) { %>
+            <% const isRHActive = ['admin-profissionais', 'admin-financeiro-rh', 'admin-rh-ferias', 'admin-escala-plantao'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isRHActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Recursos Humanos
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/profissionais" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-profissionais' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  Funcionários & RH
+                </a>
+                <a href="/admin/financeiro/rh" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-rh' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/></svg>
+                  Painel Financeiro
+                </a>
+                <a href="/admin/financeiro/ferias" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-rh-ferias' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  Escala de Férias
+                </a>
+                <a href="/admin/financeiro/escala-plantao" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-escala-plantao' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  Escala PS
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <% if (locals.userPermissions && userPermissions.controle_acesso) { %>
+            <% const isAdminSecActive = ['admin-controle-acesso', 'admin-impressoras', 'admin-atalhos'].includes(page); %>
+            <details class="group my-1 text-white/90" <%= isAdminSecActive ? 'open' : '' %>>
+              <summary class="flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/50 hover:text-white uppercase tracking-widest font-mono cursor-pointer rounded-lg hover:bg-white/5 transition-colors select-none">
+                <span class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-brand-gold/70 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Administração
+                </span>
+              </summary>
+              <div class="mt-1 pl-2 space-y-1 border-l border-white/10 ml-3">
+                <a href="/admin/controle-acesso" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-controle-acesso' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  Controle de Acesso
+                </a>
+                <a href="/admin/impressoras" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-impressoras' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"/></svg>
+                  Conf. Impressoras
+                </a>
+                <a href="/admin/atalhos" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-atalhos' ? 'text-brand-gold bg-white/10 border-l-2 border-brand-gold pl-2' : 'text-white/80 hover:text-white hover:bg-white/5' %>">
+                  <svg class="w-3.5 h-3.5 shrink-0 opacity-70 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                  Atalhos de Teclado
+                </a>
+              </div>
+            </details>
+          <% } %>
+
+          <div class="pt-6 border-t border-white/10 mt-6 space-y-1.5">
+            <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold font-mono text-white/50 hover:text-white hover:bg-white/5 transition-colors border border-dashed border-white/10">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              Voltar ao Site
+            </a>
+            <a href="/admin/logout" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold font-mono text-rose-300 hover:bg-rose-950/30 hover:text-rose-200 transition-colors">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              Sair da Conta
+            </a>
+          </div>
+        </nav>
+        
+        <!-- Rodapé da Sidebar -->
+        <div class="p-4 border-t border-white/10 text-[10px] text-white/30 font-mono text-center">
+          Painel Admin v2.0
+        </div>
+      </aside>
+
+      <!-- Área de Conteúdo Principal à Direita -->
+      <div class="flex-1 flex flex-col min-h-screen w-full min-w-0 overflow-x-hidden bg-brand-neutralLight/45">
+        <!-- Header Mobile Simplificado -->
+        <header class="md:hidden bg-[#284701] text-white sticky top-0 z-50 border-b border-[#3b661d]/30 flex items-center justify-between h-16 px-4 shrink-0 shadow">
+          <a href="/admin">
+            <%- include('logo', { layout: 'horizontal', variant: 'dark', showSlogan: false, height: 'h-8' }) %>
+          </a>
+          <button id="admin-mobile-menu-btn" class="p-2 rounded-lg hover:bg-white/5 text-white/80 hover:text-white focus:outline-none transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </header>
+
+        <!-- Menu Mobile Admin Dropdown -->
+        <div id="admin-mobile-dropdown" class="hidden md:hidden bg-[#284701] border-b border-white/10 text-white shrink-0 shadow-lg max-h-[80vh] overflow-y-auto">
+          <div class="px-3 pt-2 pb-4 space-y-1">
+            <% if (locals.adminUserName) { %>
+              <div class="px-3 py-2 flex items-center gap-2 bg-white/5 rounded-xl mb-2 border border-white/5">
+                <div class="w-6 h-6 rounded bg-brand-gold/10 text-brand-gold flex items-center justify-center text-[10px] font-bold font-mono">
+                  <%= adminUserName.charAt(0).toUpperCase() %>
+                </div>
+                <div class="overflow-hidden">
+                  <p class="text-[9px] text-white/30 uppercase tracking-wider leading-none font-mono font-bold">Logado como</p>
+                  <p class="text-xs font-bold text-white/90 truncate mt-0.5"><%= adminUserName %></p>
+                </div>
+              </div>
+            <% } %>
+
+            <% if (locals.userPermissions && userPermissions.dashboard) { %>
+              <a href="/admin" class="block px-3 py-2 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-dashboard' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Painel Geral</a>
+            <% } %>
+            
+            <% if (locals.userPermissions && (userPermissions.exames || userPermissions.comparador)) { %>
+              <% const isCadastrosActiveMob = ['admin-medicos', 'admin-exames', 'admin-exames-instrucoes', 'admin-comparador', 'admin-convenios', 'admin-recipientes', 'admin-locais-coleta', 'admin-laboratorios'].includes(page); %>
+              <details class="group my-1" <%= isCadastrosActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Cadastros
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/medicos" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-medicos' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Médicos</a>
+                  <a href="/admin/laboratorios" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-laboratorios' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Laboratório de Apoio</a>
+                  <a href="/admin/locais-coleta" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-locais-coleta' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Locais de Coleta</a>
+                  <a href="/admin/convenios" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-convenios' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Convênios</a>
+                  <a href="/admin/recipientes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-recipientes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Recipientes</a>
+                  <% if (userPermissions.exames) { %>
+                    <a href="/admin/exames" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-exames' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Exames</a>
+                    <a href="/admin/exames/instrucoes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-exames-instrucoes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Instruções de Exames</a>
+                  <% } %>
+                  <% if (userPermissions.comparador) { %>
+                    <a href="/admin/comparador" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-comparador' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Tabela de Custo</a>
+                  <% } %>
+                </div>
+              </details>
+            <% } %>
+            
+            <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.orcamentos || userPermissions.exames)) { %>
+              <% const isRecepcaoActiveMob = ['admin-fechamento-caixa', 'admin-requisitions', 'admin-cisnorpi', 'admin-budgets', 'admin-leitor', 'admin-pacientes', 'admin-agendamentos', 'admin-coleta', 'admin-recebimento'].includes(page); %>
+              <details class="group my-1" <%= isRecepcaoActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Recepção
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/recepcao/pacientes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-pacientes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Pacientes (PEP)</a>
+                  <% if (userPermissions.orcamentos) { %>
+                    <a href="/admin/orcamentos" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-budgets' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Orçamentos</a>
+                  <% } %>
+                  <a href="/admin/recepcao/agendamentos" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-agendamentos' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Agendamentos</a>
+                  <% if (userPermissions.requisicoes) { %>
+                    <a href="/admin/requisicoes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-requisitions' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Requisições (OS)</a>
+                    <a href="/admin/recepcao/coleta" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-coleta' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Coleta de Materiais</a>
+                    <a href="/admin/recepcao/recebimento" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-recebimento' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Recebimento Materiais</a>
+                    <a href="/admin/recepcao/fechamento-caixa" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-fechamento-caixa' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Fechamento de Caixa</a>
+                    <a href="/admin/cisnorpi" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-cisnorpi' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Tabela Cisnorpi</a>
+                  <% } %>
+                  <% if (userPermissions.exames) { %>
+                    <a href="/admin/leitor" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-leitor' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Leitor de Guia (IA)</a>
+                  <% } %>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames)) { %>
+              <% const isTriagemActiveMob = ['admin-triagem-amostras'].includes(page); %>
+              <details class="group my-1" <%= isTriagemActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Triagem
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/triagem/amostras" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-triagem-amostras' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Triagem de Amostras</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames || userPermissions.laudos || userPermissions.digitacao)) { %>
+              <% const isResultadosActiveMob = ['admin-resultados-digitacao'].includes(page); %>
+              <details class="group my-1" <%= isResultadosActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Resultados
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/resultados/digitacao" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-resultados-digitacao' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Digitação</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames || userPermissions.interfaceamiento !== false)) { %>
+              <% const isInterfaceActiveMob = ['admin-interfaceamento'].includes(page); %>
+              <details class="group my-1" <%= isInterfaceActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Interfaceamento
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/interfaceamento" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-interfaceamento' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Interfaceamento</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && (userPermissions.requisicoes || userPermissions.exames)) { %>
+              <% const isLabExternoActiveMob = ['admin-lab-externo-config', 'admin-lab-externo-materiais-alvaro', 'admin-triagem-criar-lote', 'admin-lab-externo-alvaro', 'admin-lab-externo-pardini'].includes(page); %>
+              <details class="group my-1" <%= isLabExternoActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Laboratório Externo
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/triagem/criar-lote" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-triagem-criar-lote' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Criar Lote</a>
+                  <a href="/admin/lab-externo/alvaro" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-alvaro' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Exames Álvaro</a>
+                  <a href="/admin/lab-externo/pardini" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-pardini' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Exames Pardini</a>
+                  <a href="/admin/lab-externo/materiais-alvaro" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-materiais-alvaro' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Materiais Álvaro</a>
+                  <a href="/admin/lab-externo/config" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-lab-externo-config' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Config Apoio</a>
+                </div>
+              </details>
+            <% } %>
+            
+            <% if (locals.userPermissions && userPermissions.financeiro) { %>
+              <% const isFinanceiroActiveMob = ['admin-financeiro-dashboard', 'admin-financeiro-relatorio-faturamento', 'admin-financeiro-pessoas', 'admin-financeiro-contas-pagar', 'admin-financeiro-contas-receber', 'admin-financeiro-fechamento-caixa', 'admin-financeiro-fluxo-caixa', 'admin-financeiro-dre', 'admin-financeiro-movimentacoes', 'admin-financeiro-configuracoes', 'admin-financeiro'].includes(page); %>
+              <details class="group my-1" <%= isFinanceiroActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Gestão Financeira
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/financeiro/dashboard" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-dashboard' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Dashboard</a>
+                  <a href="/admin/financeiro/relatorio-faturamento" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-relatorio-faturamento' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Relatório de Faturamento</a>
+                  <a href="/admin/financeiro/pessoas" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-pessoas' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Clientes / Fornecedores</a>
+                  <a href="/admin/financeiro/contas-pagar" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-contas-pagar' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Contas a Pagar</a>
+                  <a href="/admin/financeiro/contas-receber" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-contas-receber' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Contas a Receber</a>
+                  <a href="/admin/financeiro/fechamento-caixa" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-fechamento-caixa' || page === 'admin-fechamento-caixa' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Conferência de Caixa</a>
+                  <a href="/admin/financeiro/fluxo-caixa" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-fluxo-caixa' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Fluxo de Caixa</a>
+                  <a href="/admin/financeiro/dre" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-dre' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">DRE - Resultado</a>
+                  <a href="/admin/financeiro/movimentacoes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-movimentacoes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Movimentações</a>
+                  <a href="/admin/financeiro/configuracoes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-configuracoes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Configurações</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && (userPermissions.pops || userPermissions.nao_conformidades || userPermissions.avaliacoes || userPermissions.documentos)) { %>
+              <% const isQualidadeActiveMob = ['admin-pops', 'admin-temperaturas', 'admin-nao-conformidades', 'admin-avaliacoes', 'admin-documentos'].includes(page); %>
+              <details class="group my-1" <%= isQualidadeActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Qualidade
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <% if (userPermissions.pops) { %>
+                    <a href="/admin/pops" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-pops' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Wiki de POPs</a>
+                    <a href="/admin/temperaturas" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-temperaturas' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Monitoramento Ambiental</a>
+                  <% } %>
+                  <% if (userPermissions.nao_conformidades) { %>
+                    <a href="/admin/nao-conformidades" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-nao-conformidades' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Não Conformidade</a>
+                  <% } %>
+                  <% if (userPermissions.avaliacoes) { %>
+                    <a href="/admin/avaliacoes" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-avaliacoes' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Avaliações & NPS</a>
+                  <% } %>
+                  <% if (userPermissions.documentos) { %>
+                    <a href="/admin/documentos" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-documentos' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Gestão de Documentos</a>
+                  <% } %>
+                </div>
+              </details>
+            <% } %>
+            
+            <% if (locals.userPermissions && userPermissions.blog) { %>
+              <% const isConteudoActiveMob = ['admin-blog'].includes(page); %>
+              <details class="group my-1" <%= isConteudoActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Conteúdo
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/blog" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-blog' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Matérias do Blog</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.adminProfessionalId) { %>
+              <% const isEspacoColaboradorActiveMob = ['admin-meu-rh'].includes(page); %>
+              <details class="group my-1" <%= isEspacoColaboradorActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Espaço do Colaborador
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/meu-rh" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-meu-rh' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Meu Painel (RH)</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && userPermissions.profissionais) { %>
+              <% const isRHActiveMob = ['admin-profissionais', 'admin-financeiro-rh', 'admin-rh-ferias', 'admin-escala-plantao'].includes(page); %>
+              <details class="group my-1" <%= isRHActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Recursos Humanos
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/profissionais" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-profissionais' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Funcionários & RH</a>
+                  <a href="/admin/financeiro/rh" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-financeiro-rh' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Painel Financeiro de RH</a>
+                  <a href="/admin/financeiro/ferias" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-rh-ferias' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Escala de Férias</a>
+                  <a href="/admin/financeiro/escala-plantao" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-escala-plantao' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Escala Pronto Socorro</a>
+                </div>
+              </details>
+            <% } %>
+
+            <% if (locals.userPermissions && userPermissions.controle_acesso) { %>
+              <% const isAdminSecActiveMob = ['admin-controle-acesso', 'admin-impressoras', 'admin-atalhos'].includes(page); %>
+              <details class="group my-1" <%= isAdminSecActiveMob ? 'open' : '' %>>
+                <summary class="flex items-center justify-between px-3 py-2 text-xs font-bold text-white/60 uppercase tracking-wider font-mono cursor-pointer rounded-lg hover:bg-white/5 select-none">
+                  Administração
+                  <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </summary>
+                <div class="pl-3 space-y-1 my-1 border-l border-white/10 ml-2">
+                  <a href="/admin/controle-acesso" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-controle-acesso' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Controle de Acesso</a>
+                  <a href="/admin/impressoras" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-impressoras' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Conf. Impressoras</a>
+                  <a href="/admin/atalhos" class="block px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all <%= page === 'admin-atalhos' ? 'text-brand-gold bg-white/5' : 'text-white/80 hover:bg-white/5' %>">Atalhos de Teclado</a>
+                </div>
+              </details>
+            <% } %>
+            
+            <div class="border-t border-white/10 my-2 pt-2"></div>
+            <a href="/" class="block px-3 py-2 rounded-lg text-xs font-bold font-mono text-white/50 hover:bg-white/5">Voltar ao Site</a>
+            <a href="/admin/logout" class="block px-3 py-2.5 rounded-lg text-xs font-bold font-mono text-rose-300 hover:bg-rose-950/30">Sair da Conta</a>
+          </div>
+        </div>
+
+        <!-- Container do Conteúdo Principal do Admin -->
+        <main class="flex-1 flex flex-col w-full min-w-0">
+  <% } else { %>
+    <!-- Cabeçalho Principal (Site Público) -->
+    <header class="sticky top-0 z-50 bg-[#284701]/95 backdrop-blur-md border-b border-[#3b661d]/60 shadow-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          
+          <!-- Logotipo customizado e autêntico -->
+          <a href="/" class="flex items-center group transition-transform duration-200 active:scale-95" id="logo-brand">
+            <%- include('logo', { layout: 'horizontal', variant: 'dark', showSlogan: true, height: 'h-11' }) %>
+          </a>
+
+          <!-- Menu Desktop -->
+          <nav class="hidden md:flex items-center space-x-1" id="nav-desktop">
+            <a href="/" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'home' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">Início</a>
+            <a href="/sobre" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'sobre' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">O Laboratório</a>
+            <a href="/servicos" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'servicos' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">Serviços</a>
+            <a href="/preparo" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'preparo' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">Guia de Exames</a>
+            <a href="/blog" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'blog' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">Blog & Dicas</a>
+            <a href="/contato" class="px-3 py-2 text-sm font-semibold rounded-lg transition-colors <%= page === 'contato' ? 'text-[#dfc293] bg-white/10 border border-white/5' : 'text-[#fafbfa]/80 hover:text-white hover:bg-white/5' %>">Contato</a>
+            
+            <a href="/resultados" onclick="trackResultAccess()" class="ml-4 inline-flex items-center justify-center px-4 py-2 border-2 border-[#dfc293] text-sm font-bold rounded-xl text-[#dfc293] hover:bg-[#dfc293] hover:text-[#113a1c] transition-all duration-200">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Área do Paciente
+            </a>
+          </nav>
+
+          <!-- Botão Menu Mobile -->
+          <div class="flex items-center md:hidden">
+            <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 focus:outline-none transition-colors" aria-expanded="false">
+              <span class="sr-only">Abrir menu</span>
+              <!-- Ícone Menu fechado (três barras) -->
+              <svg class="block h-6 w-6" id="icon-menu" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <!-- Ícone Menu aberto (X) -->
+              <svg class="hidden h-6 w-6" id="icon-close" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Menu Mobile Dropdown -->
+      <div class="hidden md:hidden bg-[#284701] border-b border-white/10" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+          <a href="/" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">Início</a>
+          <a href="/sobre" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">O Laboratório</a>
+          <a href="/servicos" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">Serviços</a>
+          <a href="/preparo" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">Guia de Exames</a>
+          <a href="/blog" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">Blog & Dicas</a>
+          <a href="/contato" class="block px-3 py-2.5 rounded-lg text-base font-medium text-white/90 hover:bg-white/5 transition-colors">Contato</a>
+          <a href="/resultados" onclick="trackResultAccess()" class="block px-3 py-3 rounded-lg text-base font-semibold text-center bg-[#dfc293] text-[#113a1c] hover:bg-[#ebd2a9] transition-colors mt-4 mx-3">
+            Resultados Online
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <script>
+      // Controle do menu mobile
+      const menuBtn = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const iconMenu = document.getElementById('icon-menu');
+      const iconClose = document.getElementById('icon-close');
+
+      if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+          const isExpanded = menuBtn.getAttribute('aria-expanded') === 'true';
+          menuBtn.setAttribute('aria-expanded', !isExpanded);
+          
+          mobileMenu.classList.toggle('hidden');
+          iconMenu.classList.toggle('hidden');
+          iconClose.classList.toggle('hidden');
+        });
+      }
+
+      // Fechar menu mobile ao clicar em um link
+      const mobileLinks = mobileMenu ? mobileMenu.querySelectorAll('a') : [];
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          iconMenu.classList.remove('hidden');
+          iconClose.classList.add('hidden');
+          if (menuBtn) {
+            menuBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      });
+    </script>
+  <% } %>
+
+  <!-- Style e Script para Collapse da Sidebar Administrativa -->
+  <style>
+    #admin-sidebar.sidebar-collapsed {
+      width: 5rem !important; /* 80px */
+    }
+    #admin-sidebar.sidebar-collapsed .sidebar-text,
+    #admin-sidebar.sidebar-collapsed .sidebar-section-title,
+    #admin-sidebar.sidebar-collapsed .sidebar-user-card,
+    #admin-sidebar.sidebar-collapsed .sidebar-logo-full {
+      display: none !important;
+    }
+    #admin-sidebar.sidebar-collapsed .sidebar-logo-mini {
+      display: flex !important;
+    }
+    #admin-sidebar.sidebar-collapsed #sidebar-toggle-icon {
+      transform: rotate(180deg);
+    }
+    #admin-sidebar.sidebar-collapsed summary span svg {
+      display: none;
+    }
+    #admin-sidebar.sidebar-collapsed nav {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    #admin-sidebar.sidebar-collapsed details > div {
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      border-left: none !important;
+    }
+    #admin-sidebar.sidebar-collapsed a, 
+    #admin-sidebar.sidebar-collapsed summary {
+      justify-content: center !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.getElementById('admin-sidebar');
+      const toggleBtn = document.getElementById('admin-sidebar-toggle-btn');
+      if (!sidebar || !toggleBtn) return;
+
+      // Restore collapsed state from localStorage
+      const isCollapsed = localStorage.getItem('inovalab_sidebar_collapsed') === 'true';
+      if (isCollapsed) {
+        sidebar.classList.add('sidebar-collapsed');
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('sidebar-collapsed');
+        const collapsedNow = sidebar.classList.contains('sidebar-collapsed');
+        localStorage.setItem('inovalab_sidebar_collapsed', collapsedNow ? 'true' : 'false');
+      });
+    });
+  </script>

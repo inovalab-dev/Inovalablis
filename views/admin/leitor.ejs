@@ -1,0 +1,876 @@
+<%- include('../partials/header', { page: 'admin' }) %>
+
+<!-- Middleware de Proteção Admin Visual -->
+<script>
+  // Garantir cookie de autenticação visualmente rápido
+  if (!document.cookie.includes('admin_token=')) {
+    window.location.href = '/admin/login';
+  }
+</script>
+
+<section class="py-8 bg-brand-softBg/30 min-h-screen">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Breadcrumb -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Leitor de Guia (IA)</span>
+      </div>
+      <a href="/admin" class="inline-flex items-center gap-2 text-xs font-bold text-brand-dark hover:text-brand-light transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Voltar ao Painel
+      </a>
+    </div>
+
+    <!-- Título Principal -->
+    <div class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-dark tracking-tight">Scanner de Guia Médica</h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-1">Capture ou envie a imagem de uma guia de exames para extrair automaticamente os exames, códigos do sistema e laboratórios de apoio.</p>
+    </div>
+
+    <% if (!apiKeyConfigured) { %>
+      <!-- Aviso de Chave de API Ausente -->
+      <div class="bg-amber-50 border border-amber-200 rounded-3xl p-6 mb-8 flex flex-col sm:flex-row gap-4 items-start">
+        <div class="p-3 bg-amber-100 text-amber-800 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-amber-900">Chave de API do Gemini não configurada</h3>
+          <p class="text-xs text-amber-700/90 mt-1 leading-relaxed">Para utilizar o Leitor de Guia Inteligente, é necessário que a variável de ambiente <code class="font-mono font-bold text-amber-950 bg-amber-200/50 px-1 rounded">GEMINI_API_KEY</code> esteja configurada no painel de controle (Settings > Secrets). O sistema operará em modo de simulação demonstrativa na ausência desta chave.</p>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- COLUNA ESQUERDA: CAPTURA E UPLOAD -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Bloco de Origem da Imagem -->
+        <div class="bg-white rounded-3xl border border-brand-light/15 p-6 shadow-sm">
+          <h2 class="text-sm font-extrabold text-brand-dark font-mono uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-brand-light"></span>
+            1. Capturar ou Enviar Guia
+          </h2>
+
+          <!-- Abas para alternar Camera / Arquivo -->
+          <div class="flex bg-brand-softBg/60 p-1 rounded-2xl mb-5">
+            <button onclick="switchTab('camera')" id="tab-camera" class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer bg-white text-brand-dark shadow-sm">
+              Câmera do Celular / Web
+            </button>
+            <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer text-gray-500 hover:text-brand-dark">
+              Upload de Arquivo
+            </button>
+          </div>
+
+          <!-- SEÇÃO DA CÂMERA -->
+          <div id="section-camera" class="space-y-4">
+            <div class="relative bg-brand-neutralDark rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center border border-brand-light/10 shadow-inner">
+              
+              <!-- Video Stream -->
+              <video id="video-stream" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+              
+              <!-- Canvas Oculto para Snapshot -->
+              <canvas id="snapshot-canvas" class="hidden"></canvas>
+              
+              <!-- Foto Capturada Preview -->
+              <img id="image-preview" class="w-full h-full object-contain hidden" alt="Foto da Guia">
+
+              <!-- Placeholder Inicial -->
+              <div id="camera-placeholder" class="text-center p-6 space-y-3 z-10">
+                <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto text-brand-light animate-pulse">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <p class="text-xs font-semibold text-gray-300">A câmera está desativada.</p>
+                <button type="button" onclick="startCamera()" class="px-4 py-2 bg-brand-light/95 hover:bg-brand-light text-brand-dark text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-md inline-block">
+                  Ativar Câmera
+                </button>
+              </div>
+
+              <!-- Overlay Visual Guia de Enquadramento -->
+              <div id="scanner-reticle" class="absolute inset-8 border-2 border-brand-light/30 border-dashed rounded-xl pointer-events-none hidden">
+                <div class="absolute inset-0 bg-brand-dark/5"></div>
+              </div>
+            </div>
+
+            <!-- Controles da Câmera -->
+            <div id="camera-controls" class="flex flex-wrap gap-2 justify-center hidden">
+              <button type="button" onclick="captureSnapshot()" class="flex-1 py-3 px-4 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M19 12h.01M12 5h.01M12 19h.01M12 12h.01M8 12h.01M16 12h.01"/></svg>
+                Tirar Foto da Guia
+              </button>
+              <button type="button" onclick="stopCamera()" class="py-3 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center" title="Desligar Câmera">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- SEÇÃO DE FILE UPLOAD (DRAG AND DROP) -->
+          <div id="section-upload" class="space-y-4 hidden">
+            <div id="drop-zone" class="border-2 border-dashed border-brand-light/30 bg-brand-neutralLight hover:bg-brand-softBg/30 rounded-2xl p-8 text-center transition-all cursor-pointer relative" onclick="triggerFileSelect()">
+              <input type="file" id="file-input" class="hidden" accept="image/*,application/pdf" onchange="handleFileSelect(event)">
+              <div class="space-y-3">
+                <div class="w-12 h-12 bg-brand-softBg text-brand-dark rounded-full flex items-center justify-center mx-auto">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-brand-dark">Arraste o arquivo ou clique para selecionar</p>
+                  <p class="text-[10px] text-gray-400 mt-1">Formatos suportados: PDF, PNG, JPG, JPEG (Máx. 10MB)</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- File Preview Container -->
+            <div id="upload-preview-container" class="relative bg-brand-neutralDark rounded-2xl overflow-hidden aspect-[4/3] border border-brand-light/10 shadow-inner hidden">
+              <img id="upload-preview" class="w-full h-full object-contain" alt="Upload Preview">
+              
+              <!-- PDF Preview Card -->
+              <div id="pdf-preview-card" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-brand-neutralDark text-white hidden">
+                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-3 text-brand-light">
+                  <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 9h1.5m1 0H13m-4 4h4m-4 4h4"/>
+                  </svg>
+                </div>
+                <p id="pdf-file-name" class="text-xs font-bold text-white max-w-xs truncate px-4"></p>
+                <p id="pdf-file-size" class="text-[10px] text-gray-400 mt-1 font-mono"></p>
+                <span class="mt-4 bg-brand-light text-brand-dark text-[9px] font-mono font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Documento PDF Pronto</span>
+              </div>
+
+              <button onclick="clearUpload()" class="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all z-10" title="Remover Arquivo">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Ação Principal: Enviar para Análise -->
+          <div class="mt-6 pt-5 border-t border-brand-light/10">
+            <button type="button" id="btn-analyze" disabled onclick="sendToIA()" class="w-full py-4 px-6 bg-brand-dark hover:bg-brand-light disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-extrabold rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              Analisar Guia com Inteligência Artificial
+            </button>
+            
+            <button type="button" id="btn-reset" onclick="resetAll()" class="w-full mt-2 py-3 px-6 bg-brand-softBg hover:bg-brand-light/20 text-brand-dark text-xs font-bold rounded-2xl transition-all hidden flex items-center justify-center gap-2 cursor-pointer">
+              Tirar Outra Foto / Novo Scan
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Informativo da Recepção -->
+        <div class="bg-brand-softBg/50 rounded-3xl p-5 border border-brand-light/10 text-[11px] leading-relaxed text-brand-dark/85">
+          <h4 class="font-bold font-mono text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5 text-brand-dark">
+            <svg class="w-4 h-4 text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Dicas para Melhor Leitura
+          </h4>
+          <ul class="list-disc pl-4 space-y-1">
+            <li>Garanta um ambiente bem iluminado para evitar sombras e borrões nas letras.</li>
+            <li>Centralize os exames da guia médica dentro da moldura tracejada.</li>
+            <li>O sistema entende abreviações médicas comuns (ex: HMG, EAS, TSH, Urina I, Glicose).</li>
+            <li>Se faltar algum exame na leitura, você poderá registrá-lo posteriormente.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- COLUNA DIREITA: RESULTADOS E REQUISIÇÃO -->
+      <div class="lg:col-span-7">
+        
+        <!-- ESTADO INICIAL (VAZIO) -->
+        <div id="results-empty-state" class="bg-white rounded-3xl border border-brand-light/15 p-12 text-center shadow-sm h-full flex flex-col items-center justify-center space-y-6">
+          <div class="w-16 h-16 bg-brand-softBg text-brand-light rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-brand-dark/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-brand-dark font-mono uppercase tracking-wider">Aguardando Captura</h3>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto mb-4">Tire uma foto ou faça upload da imagem da requisição médica na coluna esquerda para obter a análise.</p>
+            
+            <div class="relative max-w-md mx-auto pt-4 border-t border-brand-light/10 space-y-3">
+              <p class="text-xs font-bold text-brand-dark font-mono uppercase tracking-wider">Ou Monte a Requisição Manualmente</p>
+              
+              <div class="relative">
+                <input type="text" id="empty-search-input" oninput="filterManualSearch('empty')" placeholder="Digite o nome de um exame para adicionar..." class="w-full px-4 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-semibold">
+                <div id="empty-search-dropdown" class="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-brand-light/20 rounded-xl shadow-lg z-50 hidden text-left divide-y divide-brand-light/5"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADO DE LOADING ANIMADO -->
+        <div id="results-loading-state" class="bg-white rounded-3xl border border-brand-light/15 p-12 text-center shadow-sm h-full flex flex-col items-center justify-center space-y-6 hidden">
+          <div class="relative flex items-center justify-center">
+            <!-- Pulsar Circles -->
+            <div class="w-20 h-20 border-4 border-brand-light/10 border-t-brand-dark rounded-full animate-spin"></div>
+            <div class="absolute w-12 h-12 bg-brand-softBg rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-brand-dark animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-sm font-extrabold text-brand-dark font-mono uppercase tracking-wider">Analisando Imagem...</h3>
+            <div class="space-y-1 font-mono text-[10px] text-gray-400">
+              <p id="loading-step-1" class="text-brand-dark font-bold">● Lendo canais ópticos e texto da imagem</p>
+              <p id="loading-step-2">○ Extraindo exames médicos via Gemini AI</p>
+              <p id="loading-step-3">○ Cruzando com os códigos do sistema</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADO COM RESULTADOS -->
+        <div id="results-success-state" class="space-y-6 hidden">
+          
+          <!-- Box Geral de Resultados -->
+          <div class="bg-white rounded-3xl border border-brand-light/15 p-6 shadow-sm">
+            <div class="border-b border-brand-light/10 pb-4 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h2 class="text-base font-extrabold text-brand-dark font-mono uppercase tracking-wider" id="results-title-header">Exames na Requisição</h2>
+                <p class="text-[11px] text-gray-400 mt-0.5">Exames selecionados e cruzados com o banco de dados</p>
+              </div>
+              <div class="flex gap-1">
+                <span id="badge-total-scanned" class="bg-brand-softBg text-brand-dark border border-brand-light/20 font-bold font-mono text-[10px] px-2.5 py-1 rounded-full uppercase">
+                  Total: 0
+                </span>
+                <span id="badge-total-matched" class="bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold font-mono text-[10px] px-2.5 py-1 rounded-full uppercase">
+                  Cruzado: 0
+                </span>
+              </div>
+            </div>
+
+            <!-- Adicionar Exame Manualmente (Input Rápido) -->
+            <div class="relative mb-5 bg-brand-softBg/20 p-3 rounded-2xl border border-brand-light/10">
+              <label class="block text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Adicionar mais exames manualmente:</label>
+              <div class="relative">
+                <input type="text" id="success-search-input" oninput="filterManualSearch('success')" placeholder="Escreva o nome do exame para adicionar..." class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-semibold">
+                <div id="success-search-dropdown" class="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-brand-light/20 rounded-xl shadow-lg z-50 hidden text-left divide-y divide-brand-light/5"></div>
+              </div>
+            </div>
+
+            <!-- Lista de Linhas / Itens Encontrados -->
+            <div id="scanned-exams-list" class="divide-y divide-brand-light/10">
+              <!-- Renderizado Dinamicamente -->
+            </div>
+          </div>
+
+          <!-- RESUMO DE REQUISIÇÃO (Para agilizar a vida da recepcionista) -->
+          <div class="bg-brand-neutralDark text-white rounded-3xl p-6 shadow-lg border border-brand-light/20 relative overflow-hidden">
+            <!-- Background Accent -->
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-light/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+              <h3 class="text-sm font-extrabold font-mono uppercase tracking-widest text-brand-light">Requisição Rápida Gerada</h3>
+              <button onclick="copyToClipboard()" class="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl transition-all cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h6m-6 4h6"/></svg>
+                Copiar Resumo
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed text-gray-200">
+              
+              <!-- Lista de Códigos de Digitação -->
+              <div class="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                <p class="font-extrabold font-mono text-[10px] uppercase tracking-wider text-amber-300">Códigos para o Sistema de Gestão</p>
+                <div id="summary-codes" class="space-y-1.5 font-mono text-[11px]">
+                  <!-- Injetado dinamicamente -->
+                </div>
+              </div>
+
+              <!-- Distribuição para Apoio -->
+              <div class="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                <p class="font-extrabold font-mono text-[10px] uppercase tracking-wider text-emerald-300">Roteamento de Amostras (Lab Apoio)</p>
+                <div id="summary-routing" class="space-y-2">
+                  <!-- Injetado dinamicamente -->
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Informações Rápidas Adicionais -->
+            <div class="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row justify-between text-[11px] text-gray-400 gap-2">
+              <div class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Fidelidade garantida via IA InovaLab</span>
+              </div>
+              <div class="font-mono" id="current-scan-time"></div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- SCRIPTS DE COMPORTAMENTO DO SCANNER -->
+<script>
+  let activeTab = 'camera';
+  let videoStreamObj = null;
+  let activeBase64Image = null;
+
+  // Gerenciamento de Abas
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-camera').className = tab === 'camera' 
+      ? 'flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer bg-white text-brand-dark shadow-sm'
+      : 'flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer text-gray-500 hover:text-brand-dark';
+
+    document.getElementById('tab-upload').className = tab === 'upload'
+      ? 'flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer bg-white text-brand-dark shadow-sm'
+      : 'flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer text-gray-500 hover:text-brand-dark';
+
+    if (tab === 'camera') {
+      document.getElementById('section-camera').classList.remove('hidden');
+      document.getElementById('section-upload').classList.add('hidden');
+    } else {
+      document.getElementById('section-camera').classList.add('hidden');
+      document.getElementById('section-upload').classList.remove('hidden');
+      stopCamera();
+    }
+  }
+
+  // Ativar Câmera
+  async function startCamera() {
+    try {
+      const constraints = {
+        video: { facingMode: 'environment' }, // Preferência câmera de trás (mobile)
+        audio: false
+      };
+      videoStreamObj = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      const video = document.getElementById('video-stream');
+      video.srcObject = videoStreamObj;
+      video.classList.remove('hidden');
+      
+      document.getElementById('camera-placeholder').classList.add('hidden');
+      document.getElementById('scanner-reticle').classList.remove('hidden');
+      document.getElementById('camera-controls').classList.remove('hidden');
+    } catch (error) {
+      console.error("Erro ao ativar câmera:", error);
+      alert("Não foi possível acessar a câmera do dispositivo. Por favor, conceda permissão de acesso à câmera no seu navegador ou utilize o upload de imagem.");
+    }
+  }
+
+  // Desativar Câmera
+  function stopCamera() {
+    if (videoStreamObj) {
+      videoStreamObj.getTracks().forEach(track => track.stop());
+      videoStreamObj = null;
+    }
+    const video = document.getElementById('video-stream');
+    video.srcObject = null;
+    video.classList.add('hidden');
+    
+    document.getElementById('camera-placeholder').classList.remove('hidden');
+    document.getElementById('scanner-reticle').classList.add('hidden');
+    document.getElementById('camera-controls').classList.add('hidden');
+  }
+
+  // Capturar Snapshot
+  function captureSnapshot() {
+    const video = document.getElementById('video-stream');
+    const canvas = document.getElementById('snapshot-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Configurar tamanho do canvas proporcional ao vídeo
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    // Desenhar frame do vídeo no canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Converter para base64
+    activeBase64Image = canvas.toDataURL('image/jpeg', 0.8);
+
+    // Mostrar Preview
+    const imgPreview = document.getElementById('image-preview');
+    imgPreview.src = activeBase64Image;
+    imgPreview.classList.remove('hidden');
+
+    // Desativar/ocultar vídeo
+    video.classList.add('hidden');
+    document.getElementById('scanner-reticle').classList.add('hidden');
+    
+    // Habilitar botão de análise
+    document.getElementById('btn-analyze').removeAttribute('disabled');
+  }
+
+  // Trigger File Input Click
+  function triggerFileSelect() {
+    document.getElementById('file-input').click();
+  }
+
+  // Selecionar Arquivo do Computador/Celular
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      alert("Por favor, selecione apenas arquivos de imagem ou PDF.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      activeBase64Image = e.target.result;
+      
+      const img = document.getElementById('upload-preview');
+      const pdfCard = document.getElementById('pdf-preview-card');
+      
+      if (file.type === 'application/pdf') {
+        img.classList.add('hidden');
+        pdfCard.classList.remove('hidden');
+        document.getElementById('pdf-file-name').innerText = file.name;
+        
+        const sizeKB = (file.size / 1024).toFixed(1);
+        document.getElementById('pdf-file-size').innerText = `${sizeKB} KB`;
+      } else {
+        pdfCard.classList.add('hidden');
+        img.classList.remove('hidden');
+        img.src = activeBase64Image;
+      }
+      
+      document.getElementById('drop-zone').classList.add('hidden');
+      document.getElementById('upload-preview-container').classList.remove('hidden');
+      
+      // Habilitar botão de análise
+      document.getElementById('btn-analyze').removeAttribute('disabled');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Limpar Upload
+  function clearUpload() {
+    activeBase64Image = null;
+    document.getElementById('file-input').value = "";
+    document.getElementById('drop-zone').classList.remove('hidden');
+    document.getElementById('upload-preview-container').classList.add('hidden');
+    document.getElementById('btn-analyze').setAttribute('disabled', 'true');
+    
+    document.getElementById('upload-preview').classList.remove('hidden');
+    document.getElementById('pdf-preview-card').classList.add('hidden');
+  }
+
+  // Resetar Tudo para Novo Scan
+  function resetAll() {
+    activeBase64Image = null;
+    document.getElementById('btn-analyze').removeAttribute('disabled');
+    document.getElementById('btn-analyze').classList.remove('hidden');
+    document.getElementById('btn-reset').classList.add('hidden');
+    
+    // Oculta estados de sucesso/erro
+    document.getElementById('results-success-state').classList.add('hidden');
+    document.getElementById('results-empty-state').classList.remove('hidden');
+
+    if (activeTab === 'camera') {
+      document.getElementById('image-preview').classList.add('hidden');
+      document.getElementById('image-preview').src = "";
+      startCamera();
+    } else {
+      clearUpload();
+    }
+  }
+
+  // Enviar Imagem para a API
+  async function sendToIA() {
+    if (!activeBase64Image) return;
+
+    // Desliga a câmera ativa se houver para economizar recursos
+    stopCamera();
+
+    // Mudar estado para Loading
+    document.getElementById('results-empty-state').classList.add('hidden');
+    document.getElementById('results-success-state').classList.add('hidden');
+    document.getElementById('results-loading-state').classList.remove('hidden');
+
+    // Desativar botões
+    document.getElementById('btn-analyze').setAttribute('disabled', 'true');
+
+    // Simular passos do loading de forma elegante
+    const step1 = document.getElementById('loading-step-1');
+    const step2 = document.getElementById('loading-step-2');
+    const step3 = document.getElementById('loading-step-3');
+
+    setTimeout(() => {
+      step1.className = "text-emerald-600 font-bold";
+      step1.innerText = "✓ Imagem lida com sucesso";
+      step2.className = "text-brand-dark font-bold animate-pulse";
+      step2.innerText = "● Extraindo exames médicos via Gemini AI...";
+    }, 1200);
+
+    setTimeout(() => {
+      step2.className = "text-emerald-600 font-bold";
+      step2.innerText = "✓ Exames extraídos com sucesso";
+      step3.className = "text-brand-dark font-bold animate-pulse";
+      step3.innerText = "● Cruzando dados com a base local do laboratório...";
+    }, 2800);
+
+    try {
+      const response = await fetch('/api/admin/leitor/analisar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          image: activeBase64Image,
+          mimeType: activeBase64Image.split(';')[0].split(':')[1] || 'image/jpeg'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Erro desconhecido na análise.");
+      }
+
+      // Exibir Resultados na UI
+      displayScanResults(data);
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "Ocorreu um erro ao comunicar com a IA. Verifique as configurações ou tente novamente.");
+      
+      // Volta ao estado anterior
+      document.getElementById('results-loading-state').classList.add('hidden');
+      document.getElementById('results-empty-state').classList.remove('hidden');
+      document.getElementById('btn-analyze').removeAttribute('disabled');
+      
+      // Reseta passos
+      step1.className = "text-brand-dark font-bold";
+      step1.innerText = "● Lendo canais ópticos e texto da imagem";
+      step2.className = "";
+      step2.innerText = "○ Extraindo exames médicos via Gemini AI";
+      step3.className = "";
+      step3.innerText = "○ Cruzando com os códigos do sistema";
+    }
+  }
+
+  // Dados Locais e Globais de Exames
+  const allAvailableExams = <%- JSON.stringify(exams) %>;
+  let currentRequisitionExams = [];
+
+  // Filtrar Busca Manual
+  function filterManualSearch(state) {
+    const input = document.getElementById(state + '-search-input');
+    const dropdown = document.getElementById(state + '-search-dropdown');
+    const q = input.value.toLowerCase().trim();
+
+    if (!q) {
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    const filtered = allAvailableExams.filter(e => 
+      e.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q) || 
+      (e.code && e.code.toLowerCase().includes(q))
+    ).slice(0, 8);
+
+    if (filtered.length === 0) {
+      dropdown.innerHTML = `
+        <div class="p-3 text-xs text-gray-400 font-mono italic bg-white rounded-xl shadow-md border border-brand-light/10">
+          Nenhum exame correspondente encontrado.
+        </div>
+      `;
+    } else {
+      dropdown.innerHTML = filtered.map(e => `
+        <button type="button" onclick="addExamManually('${e.id}', '${state}')" class="w-full text-left px-4 py-3 text-xs text-brand-dark hover:bg-brand-softBg hover:text-brand-dark transition-colors font-bold flex justify-between items-center cursor-pointer border-b border-brand-light/5 bg-white last:border-0">
+          <span>${e.name}</span>
+          <span class="text-[9px] font-bold font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded uppercase">${e.code || 'S/C'}</span>
+        </button>
+      `).join('');
+    }
+    dropdown.classList.remove('hidden');
+    
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function closeDropdown(ev) {
+      if (!input.contains(ev.target) && !dropdown.contains(ev.target)) {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+  }
+
+  // Adicionar Exame Manualmente à Requisição
+  function addExamManually(examId, state) {
+    const exam = allAvailableExams.find(e => e.id === examId);
+    if (!exam) return;
+
+    // Evitar duplicados
+    const exists = currentRequisitionExams.some(e => e.id === exam.id);
+    if (exists) {
+      alert("Este exame já está na lista!");
+      document.getElementById(state + '-search-input').value = '';
+      document.getElementById(state + '-search-dropdown').classList.add('hidden');
+      return;
+    }
+
+    currentRequisitionExams.push({
+      id: exam.id,
+      name: exam.name,
+      matched: true,
+      code: exam.code || 'A_DEFINIR',
+      supportLab: exam.supportLab || 'Próprio',
+      timeframe: exam.timeframe || '24h',
+      fasting: exam.fasting || 'Não obrigatório'
+    });
+
+    document.getElementById(state + '-search-input').value = '';
+    document.getElementById(state + '-search-dropdown').classList.add('hidden');
+
+    // Mudar estados visualmente para exibir resultados
+    document.getElementById('results-empty-state').classList.add('hidden');
+    document.getElementById('results-success-state').classList.remove('hidden');
+    document.getElementById('btn-analyze').classList.add('hidden');
+    document.getElementById('btn-reset').classList.remove('hidden');
+
+    renderRequisition();
+  }
+
+  // Remover Exame da Requisição
+  function removeExamFromRequisition(index) {
+    currentRequisitionExams.splice(index, 1);
+    if (currentRequisitionExams.length === 0) {
+      document.getElementById('results-success-state').classList.add('hidden');
+      document.getElementById('results-empty-state').classList.remove('hidden');
+      document.getElementById('btn-reset').classList.add('hidden');
+      document.getElementById('btn-analyze').classList.remove('hidden');
+    } else {
+      renderRequisition();
+    }
+  }
+
+  // Preencher Resultados na Tela após análise da IA
+  function displayScanResults(data) {
+    currentRequisitionExams = data.exames.map(item => ({
+      id: item.id || null,
+      name: item.name,
+      matched: item.matched,
+      code: item.code || 'A_DEFINIR',
+      supportLab: item.supportLab || 'Próprio',
+      timeframe: item.timeframe || '24h',
+      fasting: item.fasting || 'Não obrigatório'
+    }));
+
+    renderRequisition();
+  }
+
+  // Renderizador principal da tabela de requisição e cartões de resumo
+  function renderRequisition() {
+    const listContainer = document.getElementById('scanned-exams-list');
+    listContainer.innerHTML = '';
+
+    const totalCount = currentRequisitionExams.length;
+    const matchedCount = currentRequisitionExams.filter(e => e.matched).length;
+
+    document.getElementById('badge-total-scanned').innerText = `Total: ${totalCount}`;
+    document.getElementById('badge-total-matched').innerText = `Cruzado: ${matchedCount}`;
+
+    currentRequisitionExams.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = "py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all hover:bg-brand-softBg/20 px-2 rounded-xl";
+      
+      let badgeHtml = "";
+      let actionHtml = "";
+
+      if (item.matched) {
+        badgeHtml = `
+          <div class="flex flex-wrap items-center gap-1.5 mt-1">
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 font-bold font-mono text-[9px] px-2 py-0.5 rounded uppercase">
+              Cod: ${item.code}
+            </span>
+            <span class="text-[9px] font-bold font-mono px-2 py-0.5 rounded uppercase ${item.supportLab === 'Próprio' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'}">
+              ${item.supportLab}
+            </span>
+          </div>
+        `;
+
+        actionHtml = `
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 font-mono">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Sincronizado
+              </span>
+              <p class="text-[10px] text-gray-400 font-mono mt-0.5">${item.timeframe} • ${item.fasting}</p>
+            </div>
+            <button type="button" onclick="removeExamFromRequisition(${index})" class="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Remover Exame">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        `;
+      } else {
+        badgeHtml = `
+          <div class="flex flex-wrap items-center gap-1.5 mt-1">
+            <span class="bg-rose-50 text-rose-700 border border-rose-100 font-bold font-mono text-[9px] px-2 py-0.5 rounded uppercase">
+              Não Cadastrado
+            </span>
+            <span class="text-[9px] text-gray-400">Verifique a grafia</span>
+          </div>
+        `;
+
+        actionHtml = `
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <a href="/admin/exames?newExamName=${encodeURIComponent(item.name)}" class="inline-flex items-center gap-1 text-[10px] font-extrabold text-brand-dark bg-brand-softBg/80 hover:bg-brand-light/30 px-2 py-1 rounded-lg transition-colors">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                Cadastrar Exame
+              </a>
+            </div>
+            <button type="button" onclick="removeExamFromRequisition(${index})" class="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Remover Exame">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        `;
+      }
+
+      row.innerHTML = `
+        <div class="space-y-0.5">
+          <p class="text-xs font-bold text-brand-dark">${item.name}</p>
+          ${badgeHtml}
+        </div>
+        ${actionHtml}
+      `;
+
+      listContainer.appendChild(row);
+    });
+
+    // Preencher Card de Resumo de Requisição Rápida
+    const summaryCodesContainer = document.getElementById('summary-codes');
+    const summaryRoutingContainer = document.getElementById('summary-routing');
+
+    summaryCodesContainer.innerHTML = '';
+    summaryRoutingContainer.innerHTML = '';
+
+    // Filtra apenas os exames sincronizados (que possuem código)
+    const matchedExams = currentRequisitionExams.filter(e => e.matched);
+
+    if (matchedExams.length > 0) {
+      // 1. Códigos do Sistema
+      matchedExams.forEach(item => {
+        const itemHtml = `
+          <div class="flex justify-between border-b border-white/5 pb-1 select-all hover:bg-white/5 px-1.5 rounded">
+            <span class="text-gray-300">${item.name}</span>
+            <span class="text-amber-300 font-extrabold">${item.code}</span>
+          </div>
+        `;
+        summaryCodesContainer.innerHTML += itemHtml;
+      });
+
+      // 2. Destino de Laboratórios (Agrupado por Laboratório de Apoio)
+      const labsAgruped = {};
+      matchedExams.forEach(item => {
+        const lab = item.supportLab || "Próprio";
+        if (!labsAgruped[lab]) labsAgruped[lab] = [];
+        labsAgruped[lab].push(item.name);
+      });
+
+      Object.keys(labsAgruped).forEach(lab => {
+        const itemHtml = `
+          <div class="space-y-0.5">
+            <p class="font-bold text-[10px] text-emerald-300 uppercase tracking-wide font-mono">${lab}</p>
+            <p class="text-[10px] text-gray-300 italic pl-2 leading-tight">${labsAgruped[lab].join(', ')}</p>
+          </div>
+        `;
+        summaryRoutingContainer.innerHTML += itemHtml;
+      });
+    } else {
+      summaryCodesContainer.innerHTML = `<span class="text-rose-400 italic text-[10px]">Nenhum exame sincronizado disponível para gerar códigos.</span>`;
+      summaryRoutingContainer.innerHTML = `<span class="text-rose-400 italic text-[10px]">Sem dados para roteamento.</span>`;
+    }
+
+    // Hora de atualização
+    const now = new Date();
+    document.getElementById('current-scan-time').innerText = `Atualizado às ${now.toLocaleTimeString('pt-BR')}`;
+
+    // Alternar visualizações de estados se necessário
+    document.getElementById('results-loading-state').classList.add('hidden');
+    document.getElementById('results-success-state').classList.remove('hidden');
+
+    // Botão de Novo Scan
+    document.getElementById('btn-analyze').classList.add('hidden');
+    document.getElementById('btn-reset').classList.remove('hidden');
+
+    // Limpar passos do Loading
+    const step1 = document.getElementById('loading-step-1');
+    const step2 = document.getElementById('loading-step-2');
+    const step3 = document.getElementById('loading-step-3');
+    step1.className = "text-brand-dark font-bold";
+    step1.innerText = "● Lendo canais ópticos e texto da imagem";
+    step2.className = "";
+    step2.innerText = "○ Extraindo exames médicos via Gemini AI";
+    step3.className = "";
+    step3.innerText = "○ Cruzando com os códigos do sistema";
+  }
+
+  // Copiar resumo de códigos e laboratórios de destino
+  function copyToClipboard() {
+    const codes = [];
+    const elements = document.querySelectorAll('#summary-codes > div');
+    elements.forEach(el => {
+      const name = el.children[0].innerText;
+      const code = el.children[1].innerText;
+      codes.push(`${name}: ${code}`);
+    });
+
+    const routings = [];
+    const routingsElements = document.querySelectorAll('#summary-routing > div');
+    routingsElements.forEach(el => {
+      const lab = el.children[0].innerText;
+      const exams = el.children[1].innerText;
+      routings.push(`Enviar para [${lab}]: ${exams}`);
+    });
+
+    const summaryText = `--- INOVALAB REQUISIÇÃO RÁPIDA ---\n\n` +
+                        `CÓDIGOS PARA SISTEMA:\n` +
+                        (codes.length > 0 ? codes.join('\n') : 'Nenhum exame sincronizado.') +
+                        `\n\nROTEAMENTO DE AMOSTRAS:\n` +
+                        (routings.length > 0 ? routings.join('\n') : 'Nenhum roteamento disponível.') +
+                        `\n\nGerado automaticamente via Leitor Digital IA.`;
+
+    navigator.clipboard.writeText(summaryText)
+      .then(() => alert("Resumo de exames e roteamento copiado para a área de transferência!"))
+      .catch(err => console.error("Erro ao copiar:", err));
+  }
+
+  // Capturar parâmetro de novo cadastro se necessário
+  window.addEventListener('DOMContentLoaded', () => {
+    // Configurar drag and drop para a área de upload (drop-zone)
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('bg-brand-softBg/50', 'border-brand-dark');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('bg-brand-softBg/50', 'border-brand-dark');
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          const fileInput = document.getElementById('file-input');
+          fileInput.files = files;
+          
+          const synthEvent = { target: { files: files } };
+          handleFileSelect(synthEvent);
+        }
+      }, false);
+    }
+
+    console.log("Leitor de Guia de Exames carregado.");
+  });
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,273 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 md:p-8 max-w-7xl mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- Cabeçalho -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Gestão Financeira</p>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight">Tipos de Documentos</h1>
+      </div>
+    </div>
+    
+    <button onclick="openModal('add-doc-modal')" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+      Novo Tipo de Documento
+    </button>
+  </div>
+
+  <!-- Abas de Navegação Financeira -->
+  <div class="flex flex-wrap border-b border-gray-200 gap-2">
+    <a href="/admin/financeiro" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Fluxo de Caixa
+    </a>
+    <a href="/admin/financeiro/contas-bancarias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Contas Bancárias
+    </a>
+    <a href="/admin/financeiro/documentos" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-[#284701] text-[#284701] transition-all">
+      Tipos de Documentos
+    </a>
+    <a href="/admin/financeiro/categorias" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Categorias
+    </a>
+    <a href="/admin/financeiro/plano-contas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300 transition-all">
+      Plano de Contas
+    </a>
+  </div>
+
+  <!-- Alertas de Feedback -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <%= success_msg %>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <%= error_msg %>
+    </div>
+  <% } %>
+
+  <!-- Tabela de Documentos -->
+  <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+          <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+          Tipos de Documentos Cadastrados
+        </h2>
+        <p class="text-xs text-brand-neutralDark/60 mt-1">Defina os tipos de documentos de pagamento aceitos e utilizados no caixa (ex: Boleto, Cartão, PIX, Cheque).</p>
+      </div>
+
+      <!-- Barra de Pesquisa Rápida -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-mono font-bold text-gray-500">Pesquisar:</label>
+        <input type="text" id="docSearch" onkeyup="filterDocsTable()" placeholder="Buscar tipo..." class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#284701]">
+      </div>
+    </div>
+
+    <% if (documentTypes.length === 0) { %>
+      <div class="p-12 text-center text-gray-400">
+        <p class="font-bold">Nenhum tipo de documento cadastrado.</p>
+        <button onclick="openModal('add-doc-modal')" class="text-[#284701] font-bold hover:underline mt-2 inline-block">Cadastrar primeiro documento</button>
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="docsTable">
+          <thead>
+            <tr class="border-b border-brand-softBg bg-brand-softBg/20">
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider w-24">Código</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider">Descrição</th>
+              <th class="p-4 text-xs font-bold font-mono text-brand-neutralDark/60 uppercase tracking-wider text-right w-36">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-brand-softBg">
+            <% documentTypes.forEach(doc => { %>
+              <tr class="hover:bg-brand-softBg/10 transition-colors">
+                <td class="p-4 text-xs font-bold font-mono text-brand-neutralDark/50">#<%= doc.id %></td>
+                <td class="p-4 text-sm font-black text-[#284701] doc-description-cell"><%= doc.description %></td>
+                <td class="p-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button onclick="editDocumentType(<%= JSON.stringify(doc) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    </button>
+                    <button onclick="confirmDeleteDocumentType('<%= doc.id %>', '<%= doc.description %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rodapé de paginação falso combinando com o design da imagem -->
+      <div class="p-4 bg-brand-softBg/10 border-t border-brand-softBg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-gray-500">
+        <div>
+          Mostrando de 1 até <%= documentTypes.length %> de <%= documentTypes.length %> registros
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="px-2.5 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed">Anterior</button>
+          <span class="px-3 py-1 bg-[#284701] text-white rounded font-bold">1</span>
+          <button class="px-2.5 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed">Próximo</button>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+</div>
+
+<!-- MODAL: Adicionar Documento -->
+<div id="add-doc-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Novo Tipo de Documento
+      </h3>
+      <button onclick="closeModal('add-doc-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/documentos/add" method="POST" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" required placeholder="Ex: Boleto, Pix, Cheque, Dinheiro" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-doc-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Tipo
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Documento -->
+<div id="edit-doc-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Tipo de Documento
+      </h3>
+      <button onclick="closeModal('edit-doc-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/documentos/edit" method="POST" class="p-6 flex flex-col gap-4">
+      <input type="hidden" name="id" id="edit-doc-id">
+      <div>
+        <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição *</label>
+        <input type="text" name="description" id="edit-doc-description" required placeholder="Ex: Boleto, Pix" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-doc-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        const dialog = modal.querySelector('div');
+        if (dialog) {
+          dialog.classList.remove('scale-95');
+          dialog.classList.add('scale-100');
+        }
+      }, 50);
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      const dialog = modal.querySelector('div');
+      if (dialog) {
+        dialog.classList.remove('scale-100');
+        dialog.classList.add('scale-95');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 150);
+    }
+  }
+
+  function editDocumentType(doc) {
+    document.getElementById('edit-doc-id').value = doc.id;
+    document.getElementById('edit-doc-description').value = doc.description;
+    openModal('edit-doc-modal');
+  }
+
+  function confirmDeleteDocumentType(id, description) {
+    if (confirm('Deseja realmente excluir o tipo de documento "' + description + '"?')) {
+      window.location.href = '/admin/financeiro/documentos/delete/' + id;
+    }
+  }
+
+  function filterDocsTable() {
+    const input = document.getElementById('docSearch');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('docsTable');
+    if (!table) return;
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) {
+      const tdDesc = trs[i].querySelector('.doc-description-cell');
+      if (tdDesc) {
+        const text = tdDesc.textContent || tdDesc.innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+          trs[i].style.display = "";
+        } else {
+          trs[i].style.display = "none";
+        }
+      }
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

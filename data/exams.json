@@ -1,0 +1,134 @@
+[
+  {
+    "id": "1",
+    "name": "Hemograma Completo",
+    "category": "Sangue",
+    "fasting": "Recomendado 3h",
+    "timeframe": "24 horas",
+    "instructions": "Evitar o consumo de bebidas alcoólicas nas 72 horas que antecedem o exame. Evitar esforço físico intenso antes da coleta.",
+    "code": "HEMO01",
+    "supportLab": "Próprio",
+    "pricePrivate": 35.00
+  },
+  {
+    "id": "2",
+    "name": "Glicemia de Jejum",
+    "category": "Diabetes",
+    "fasting": "Obrigatório 8h a 12h",
+    "timeframe": "24 horas",
+    "instructions": "Manter jejum absoluto de alimentos sólidos e líquidos (exceto água em quantidade moderada) por 8 a 12 horas.",
+    "code": "GLIC02",
+    "supportLab": "Próprio",
+    "pricePrivate": 20.00
+  },
+  {
+    "id": "3",
+    "name": "Colesterol Total e Frações",
+    "category": "Cardiovascular",
+    "fasting": "Desejável 12h",
+    "timeframe": "24 horas",
+    "instructions": "Manter a sua dieta habitual nos 3 dias anteriores ao exame. Não praticar atividade física vigorosa antes da coleta.",
+    "code": "COLE03",
+    "supportLab": "Álvaro Apoio",
+    "pricePrivate": 40.00
+  },
+  {
+    "id": "4",
+    "name": "TSH (Hormônio Tireoestimulante)",
+    "category": "Hormônios",
+    "fasting": "Recomendado 4h",
+    "timeframe": "48 horas",
+    "instructions": "Realizar a coleta preferencialmente pela manhã (até às 10h). Informar se utiliza medicamentos para a tireoide.",
+    "code": "TSH04",
+    "supportLab": "Hermes Pardini",
+    "pricePrivate": 50.00
+  },
+  {
+    "id": "5",
+    "name": "Creatinina (Função Renal)",
+    "category": "Rim",
+    "fasting": "Não obrigatório",
+    "timeframe": "24 horas",
+    "instructions": "Evitar a ingestão excessiva de carne vermelha nas 24 horas que antecedem o exame. Repouso de 15 minutos.",
+    "code": "CREA05",
+    "supportLab": "Próprio",
+    "pricePrivate": 25.00
+  },
+  {
+    "id": "6",
+    "name": "Urina Tipo 1 (EAS)",
+    "category": "Urina",
+    "fasting": "Não obrigatório",
+    "timeframe": "24 horas",
+    "instructions": "Coletar preferencialmente a primeira urina da manhã. Realizar higiene íntima rigorosa, desprezar o primeiro jato e coletar o jato médio.",
+    "code": "EAS06",
+    "supportLab": "Próprio",
+    "pricePrivate": 22.00
+  },
+  {
+    "id": "7",
+    "name": "Papanicolau (Preventivo)",
+    "category": "Ginecologia",
+    "fasting": "Não aplicável",
+    "timeframe": "5 dias úteis",
+    "instructions": "Não estar no período menstrual. Não utilizar cremes ou duchas vaginais e não ter relações sexuais nas 48h anteriores.",
+    "code": "PAPA07",
+    "supportLab": "Fleury Grupo",
+    "pricePrivate": 80.00
+  },
+  {
+    "id": "8",
+    "name": "Vitamina D (25-hidroxivitamina D)",
+    "category": "Vitaminas",
+    "fasting": "Não obrigatório",
+    "timeframe": "3 dias úteis",
+    "instructions": "Coleta de sangue comum por punção venosa. Informar se faz uso de suplementação diária de Vitamina D.",
+    "code": "VITD08",
+    "supportLab": "Álvaro Apoio",
+    "pricePrivate": 90.00
+  },
+  {
+    "id": "9",
+    "name": "Beta HCG Quantitativo (Gravidez)",
+    "category": "Hormônios",
+    "fasting": "Não obrigatório",
+    "timeframe": "4 horas",
+    "instructions": "Exame de sangue para diagnóstico de gravidez. Pode ser realizado a qualquer hora do dia. Resultado rápido para sua tranquilidade.",
+    "code": "BHCG09",
+    "supportLab": "Próprio",
+    "pricePrivate": 45.00
+  },
+  {
+    "id": "10",
+    "name": "Exame Toxicológico (Larga Janela)",
+    "category": "Toxicologia",
+    "fasting": "Não obrigatório",
+    "timeframe": "5 dias úteis",
+    "instructions": "Coleta de queratina (cabelo ou pelos corporais). Indicado para renovação de CNH C, D e E, e concursos públicos.",
+    "code": "TOXI10",
+    "supportLab": "DB Diagnósticos",
+    "pricePrivate": 220.00
+  },
+  {
+    "id": "11",
+    "name": "Parasitológico de Fezes (EPF)",
+    "category": "Fezes",
+    "fasting": "Não aplicável",
+    "timeframe": "24 horas",
+    "instructions": "Coletar amostra em frasco limpo fornecido pelo laboratório. Enviar imediatamente ou manter refrigerado por no máximo 12h.",
+    "code": "EPF11",
+    "supportLab": "Próprio",
+    "pricePrivate": 25.00
+  },
+  {
+    "id": "12",
+    "name": "Uréia (Avaliação Renal)",
+    "category": "Rim",
+    "fasting": "Não obrigatório",
+    "timeframe": "24 horas",
+    "instructions": "Evitar atividades físicas extremas na véspera da coleta. O jejum não é obrigatório, mas é aconselhável jejum de 3 horas.",
+    "code": "UREI12",
+    "supportLab": "Próprio",
+    "pricePrivate": 20.00
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "MED-1",
+    "codigo": "1",
+    "nome": "Dr. Carlos Eduardo Silva",
+    "conselho": "CRM",
+    "numero": "123456",
+    "uf": "PR",
+    "especialidade": "Clínica Geral",
+    "telefone": "(43) 99888-1122",
+    "email": "carlos.silva@medicos.com.br",
+    "status": "Ativo",
+    "createdAt": "2026-01-15T10:00:00.000Z"
+  },
+  {
+    "id": "MED-2",
+    "codigo": "2",
+    "nome": "Dra. Mariana Souza Santos",
+    "conselho": "CRM",
+    "numero": "654321",
+    "uf": "SP",
+    "especialidade": "Cardiologia",
+    "telefone": "(11) 98765-4321",
+    "email": "mariana.souza@medicos.com.br",
+    "status": "Ativo",
+    "createdAt": "2026-02-10T14:30:00.000Z"
+  },
+  {
+    "id": "MED-3",
+    "codigo": "3",
+    "nome": "Dr. Fernando Ribeiro",
+    "conselho": "CRO",
+    "numero": "45678",
+    "uf": "PR",
+    "especialidade": "Odontologia",
+    "telefone": "(43) 99777-3344",
+    "email": "fernando.ribeiro@odontologia.com.br",
+    "status": "Ativo",
+    "createdAt": "2026-03-05T09:15:00.000Z"
+  }
+]

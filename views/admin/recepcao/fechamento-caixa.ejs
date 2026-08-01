@@ -1,0 +1,1896 @@
+<%- include('../../partials/header') %>
+
+<main class="min-h-screen bg-brand-neutralLight/45 pb-16">
+  
+  <!-- BANNER CABEÇALHO -->
+  <section class="bg-white border-b border-brand-light/10 py-6 sm:py-8">
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+          <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+          <span>&rsaquo;</span>
+          <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Recepção</span>
+          <span>&rsaquo;</span>
+          <span class="text-brand-gold font-bold font-mono uppercase text-[10px]">Fechamento de Caixa</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight flex items-center gap-2.5">
+          <svg class="w-7 h-7 text-brand-gold shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/>
+          </svg>
+          Lançamento de Fechamento de Caixa
+        </h1>
+        <p class="text-xs text-gray-500">
+          Preencha o movimento arrecadado no dia. O troco do dia anterior é carregado automaticamente por recepção.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENSAGENS DE SUCESSO OU ERRO -->
+  <% if (typeof query !== 'undefined' && query.success) { %>
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-semibold shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-6 h-6 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>
+            <div class="font-extrabold text-sm text-emerald-950">Fechamento Registrado com Sucesso!</div>
+            <div class="text-emerald-700 font-normal">O fechamento do caixa foi gravado e enviado para conferência da administração.</div>
+          </div>
+        </div>
+        <% if (query.lastId) { %>
+          <button type="button" onclick="printReceiptById('<%= query.lastId %>')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-all shadow text-xs flex items-center gap-1.5 shrink-0 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>Imprimir Comprovante</span>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+    <!-- FORMULÁRIO ÚNICO DE FECHAMENTO -->
+    <div class="bg-white rounded-3xl border border-brand-light/20 shadow-md p-6 sm:p-8 space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+        <div>
+          <h2 class="text-lg font-black text-brand-dark flex items-center gap-2">
+            <svg class="w-6 h-6 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            <span>Lançamento Diário do Caixa</span>
+          </h2>
+          <p class="text-xs text-gray-500">Selecione a recepção, informe a data e os valores recebidos por cada forma de pagamento ou importe do PDF do relatório.</p>
+        </div>
+
+        <button type="button" onclick="openImportCsvModal()" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-emerald-500/30 shrink-0">
+          <svg class="w-4 h-4 text-emerald-200 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span>Importar Relatório CSV</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-400 text-slate-900 font-black uppercase">CSV</span>
+        </button>
+      </div>
+
+      <form id="cash-closure-form" action="/admin/recepcao/fechamento-caixa/save" method="POST">
+        <input type="hidden" id="closure-id" name="id" value="">
+        <input type="hidden" id="closure-status" name="status" value="Fechado">
+        <input type="hidden" id="closure-responsavel" name="responsavel" value="<%= adminUserName %>">
+
+        <!-- BANNER INDICADOR DE MODO DE EDIÇÃO / ALERTA DE BLOQUEIO -->
+        <div id="edit-mode-banner" class="hidden mb-4 bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 font-bold text-lg">
+              ✏️
+            </div>
+            <div>
+              <p id="edit-mode-title" class="text-xs font-black uppercase font-mono tracking-wider text-amber-950">Modo de Edição de Fechamento Existente</p>
+              <p id="edit-mode-desc" class="text-[11px] text-amber-800 font-medium">Você está alterando os dados de um lançamento já cadastrado no sistema.</p>
+            </div>
+          </div>
+          <button type="button" onclick="cancelEditMode()" class="text-xs font-bold text-amber-900 hover:text-amber-950 underline px-2 py-1">
+            Cancelar Edição
+          </button>
+        </div>
+
+        <!-- LAYOUT DE 2 COLUNAS EM TELAS WIDE -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- COLUNA ESQUERDA: DADOS DE ENTRADA, VALORES E SAÍDAS -->
+          <div class="lg:col-span-7 space-y-6">
+
+            <!-- CABEÇALHO DO LANÇAMENTO: SELEÇÃO DA RECEPÇÃO E DATA -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/80 p-4 rounded-2xl border border-gray-200">
+              
+              <!-- Recepção (Combobox) -->
+              <div>
+                <label class="block text-xs font-bold text-gray-800 uppercase font-mono mb-1.5">
+                  Recepção *
+                </label>
+                <select id="closure-recepcao" name="recepcao" required onchange="onRecepcaoOrDateChanged()"
+                        class="w-full text-xs font-bold text-gray-900 bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-brand-gold focus:outline-none shadow-sm">
+                  <option value="Recepção Particular" selected>Recepção Particular</option>
+                  <option value="Recepção SUS">Recepção SUS</option>
+                </select>
+                <p class="text-[10px] text-gray-500 mt-1">Identificação da recepção do lançamento.</p>
+              </div>
+
+              <!-- Data do Fechamento (Carregada Automática) -->
+              <div>
+                <label class="block text-xs font-bold text-gray-800 uppercase font-mono mb-1.5">
+                  Data do Fechamento *
+                </label>
+                <input type="date" id="closure-date" name="data" required 
+                       value="" 
+                       onchange="onRecepcaoOrDateChanged()"
+                       class="w-full text-xs font-bold font-mono px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-gold focus:outline-none shadow-sm">
+                <p class="text-[10px] text-gray-500 mt-1">Data correspondente ao fechamento.</p>
+              </div>
+
+            </div>
+
+            <!-- PASSO 1: TROCO DO DIA ANTERIOR (CARREGADO AUTOMATICAMENTE E BLOQUEADO) -->
+            <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 space-y-2">
+              <input type="hidden" id="closure-troco-anterior-original" name="trocoAnteriorOriginal" value="0.00">
+              <input type="hidden" id="closure-troco-anterior-editado" name="trocoAnteriorEditado" value="false">
+
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-extrabold text-blue-900 uppercase font-mono flex items-center gap-2">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  1. Troco do Dia Anterior (Carregado Automático)
+                </label>
+                <span id="troco-anterior-badge" class="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full border border-blue-200">Buscando...</span>
+              </div>
+
+              <div class="relative flex items-center">
+                <span class="absolute left-3.5 text-sm font-bold text-blue-700 font-mono z-10 pointer-events-none">R$</span>
+                <input type="number" step="0.01" min="0" id="closure-troco-anterior" name="trocoAnterior" value="0.00" required readonly
+                       oninput="onTrocoAnteriorUserChange()"
+                       class="w-full pl-10 pr-28 py-2.5 text-base font-extrabold font-mono text-blue-950 bg-blue-100/50 border border-blue-300 rounded-xl cursor-not-allowed shadow-sm transition-all focus:outline-none">
+                
+                <button type="button" id="btn-edit-troco-anterior" onclick="toggleEditTrocoAnterior()" 
+                        class="absolute right-2 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-100 border border-blue-300 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        title="Clique no lápis para alterar manualmente este troco">
+                  <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  <span id="btn-edit-troco-label">Editar</span>
+                </button>
+              </div>
+
+              <div id="troco-anterior-edit-alert" class="hidden text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-300 p-2 rounded-xl flex items-center gap-1.5 mt-1">
+                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span><strong>Atenção:</strong> Troco do dia anterior alterado manualmente. Esta edição ficará destacada na conferência.</span>
+              </div>
+
+              <p class="text-[11px] text-blue-800">
+                Fundo de troco carregado do fechamento anterior desta recepção. O campo fica bloqueado para evitar inconsistências e só é liberado para alteração ao clicar no botão do lápis.
+              </p>
+            </div>
+
+            <!-- PASSO 2: LANÇAMENTO DAS ENTRADAS / FORMAS DE PAGAMENTO -->
+            <div class="border border-gray-200 rounded-2xl p-4 space-y-4 bg-gray-50/40">
+              <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                <label class="text-xs font-extrabold text-gray-900 uppercase font-mono">
+                  2. Valores Arrecadados Hoje (Entradas)
+                </label>
+                <span class="text-[10px] text-gray-500 font-mono">Informe os totais por tipo</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                
+                <!-- Dinheiro -->
+                <div class="bg-white p-3 rounded-xl border border-emerald-200 shadow-sm space-y-1">
+                  <label class="block text-[11px] font-bold text-emerald-900 uppercase font-mono">Dinheiro (Espécie) *</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-emerald-600 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-dinheiro" name="dinheiro" value="0.00" required
+                           oninput="recalculateTotals()"
+                           class="w-full pl-9 pr-3 py-2 text-sm font-bold font-mono text-emerald-950 bg-emerald-50/30 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                  </div>
+                </div>
+
+                <!-- PIX -->
+                <div class="bg-white p-3 rounded-xl border border-teal-200 shadow-sm space-y-1">
+                  <label class="block text-[11px] font-bold text-teal-900 uppercase font-mono">PIX</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-teal-600 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-pix" name="pix" value="0.00"
+                           oninput="recalculateTotals()"
+                           class="w-full pl-9 pr-3 py-2 text-sm font-bold font-mono text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                  </div>
+                </div>
+
+                <!-- Cartão de Crédito -->
+                <div class="bg-white p-3 rounded-xl border border-indigo-200 shadow-sm space-y-1">
+                  <label class="block text-[11px] font-bold text-indigo-900 uppercase font-mono">Cartão de Crédito</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-indigo-600 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-cartao-credito" name="cartaoCredito" value="0.00"
+                           oninput="recalculateTotals()"
+                           class="w-full pl-9 pr-3 py-2 text-sm font-bold font-mono text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                  </div>
+                </div>
+
+                <!-- Cartão de Débito -->
+                <div class="bg-white p-3 rounded-xl border border-purple-200 shadow-sm space-y-1">
+                  <label class="block text-[11px] font-bold text-purple-900 uppercase font-mono">Cartão de Débito</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-purple-600 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-cartao-debito" name="cartaoDebito" value="0.00"
+                           oninput="recalculateTotals()"
+                           class="w-full pl-9 pr-3 py-2 text-sm font-bold font-mono text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                  </div>
+                </div>
+
+                <!-- Cheque -->
+                <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-1 sm:col-span-2 lg:col-span-2">
+                  <label class="block text-[11px] font-bold text-gray-700 uppercase font-mono">Cheque</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs font-bold text-gray-500 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-cheque" name="cheque" value="0.00"
+                           oninput="recalculateTotals()"
+                           class="w-full pl-9 pr-3 py-2 text-sm font-bold font-mono text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Total Entradas Calculado -->
+              <div class="pt-3 border-t border-gray-200 flex items-center justify-between text-sm">
+                <span class="font-bold text-gray-700 uppercase font-mono text-xs">Total Faturado Hoje (Geral):</span>
+                <span id="display-total-entradas" class="font-black text-emerald-800 font-mono text-base">R$ 0,00</span>
+              </div>
+
+            </div>
+
+            <!-- PASSO 2.1: SAÍDAS E DESPESAS EM DINHEIRO DO CAIXA -->
+            <div class="border border-rose-200 bg-rose-50/40 rounded-2xl p-4 space-y-4">
+              <div class="flex items-center justify-between border-b border-rose-200/80 pb-2">
+                <label class="text-xs font-extrabold text-rose-900 uppercase font-mono flex items-center gap-2">
+                  <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Saídas / Despesas Retiradas do Caixa em Dinheiro
+                </label>
+                <span class="text-[10px] font-bold text-rose-700 font-mono">Combustível, Pão/Bolo, Insumos</span>
+              </div>
+
+              <p class="text-[11px] text-rose-800">
+                Se alguma quantia em dinheiro foi pega na gaveta hoje para compras do laboratório (ex: combustível do carro, pão/bolo, café ou insumos), registre aqui. O valor será descontado automaticamente do cálculo do troco e sangria.
+              </p>
+
+              <!-- Input oculto com JSON das saídas -->
+              <input type="hidden" id="closure-saidas-json" name="saidasDinheiro" value="[]">
+
+              <!-- Formulário rápido para adicionar saída -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-3 rounded-xl border border-rose-200 shadow-sm">
+                <div class="sm:col-span-4">
+                  <label class="block text-[10px] font-bold text-gray-700 uppercase font-mono mb-1">Tipo de Saída (Plano de Contas) *</label>
+                  <select id="expense-type" class="w-full text-xs font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                    <option value="">-- Selecione o Plano de Contas --</option>
+                    <% if (typeof planoDeContas !== 'undefined' && planoDeContas && planoDeContas.length > 0) { %>
+                      <% planoDeContas.forEach(function(account) { %>
+                        <% const accText = typeof account === 'string' ? account : (account.code ? account.code + ' - ' + account.description : account.description); %>
+                        <option value="<%= accText %>"><%= accText %></option>
+                      <% }); %>
+                    <% } else { %>
+                      <option value="Combustível / Abastecimento">🚗 Combustível / Abastecimento (Veículo)</option>
+                      <option value="Alimentação / Lanche">🥖 Alimentação / Lanche (Pão/Bolo/Café)</option>
+                      <option value="Insumos / Pequenas Compras">🧪 Insumos / Materiais do Laboratório</option>
+                      <option value="Outras Saídas em Dinheiro">💸 Outras Saídas de Caixa</option>
+                    <% } %>
+                  </select>
+                </div>
+
+                <div class="sm:col-span-5">
+                  <label class="block text-[10px] font-bold text-gray-700 uppercase font-mono mb-1">Descrição / Motivo</label>
+                  <input type="text" id="expense-desc" placeholder="Ex: Gasolina Gol Laboratório / Padaria"
+                         class="w-full text-xs px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                </div>
+
+                <div class="sm:col-span-3">
+                  <label class="block text-[10px] font-bold text-gray-700 uppercase font-mono mb-1">Valor (R$) *</label>
+                  <div class="relative">
+                    <span class="absolute left-2.5 top-2 text-xs font-bold text-rose-600 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0.01" id="expense-amount" placeholder="0,00"
+                           class="w-full pl-8 pr-2 py-2 text-xs font-bold font-mono text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="sm:col-span-12 flex justify-end">
+                  <button type="button" onclick="addExpenseItem()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition-all shadow flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>Adicionar Saída</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tabela de saídas adicionadas -->
+              <div id="expenses-list-container" class="hidden space-y-2">
+                <div class="text-[11px] font-bold text-rose-900 uppercase font-mono">Saídas Registradas neste Fechamento:</div>
+                <div class="bg-white rounded-xl border border-rose-200 overflow-hidden shadow-sm">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-rose-100/60 text-rose-900 font-bold font-mono text-[10px] uppercase">
+                      <tr>
+                        <th class="py-2 px-3">Tipo</th>
+                        <th class="py-2 px-3">Descrição</th>
+                        <th class="py-2 px-3 text-right">Valor</th>
+                        <th class="py-2 px-3 text-center">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody id="expenses-table-body" class="divide-y divide-rose-100 font-mono">
+                      <!-- linhas inseridas dinamicamente -->
+                    </tbody>
+                    <tfoot class="bg-rose-50 font-bold">
+                      <tr>
+                        <td colspan="2" class="py-2 px-3 text-rose-950 font-mono uppercase text-[11px]">Total das Saídas em Dinheiro:</td>
+                        <td id="expenses-total-display" class="py-2 px-3 text-right text-rose-700 text-sm">R$ 0,00</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- COLUNA DIREITA: TROCO SEGUINTE, SANGRIA, COMPROVANTE, OBSERVAÇÕES E BOTÃO -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- PASSO 3: DEFINE TROCO PRÓXIMO DIA E CALCULA RETIRADA -->
+            <div class="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-4 space-y-4">
+              <label class="text-xs font-extrabold text-amber-900 uppercase font-mono block">
+                3. Troco do Próximo Dia e Retirada (Sangria)
+              </label>
+
+              <div class="space-y-4">
+                
+                <div>
+                  <label class="block text-xs font-bold text-amber-900 uppercase font-mono mb-1">
+                    Troco a Ficar na Gaveta p/ Amanhã *
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3.5 top-3 text-sm font-bold text-amber-700 font-mono">R$</span>
+                    <input type="number" step="0.01" min="0" id="closure-troco-seguinte" name="trocoSeguinte" value="100.00" required
+                           oninput="recalculateTotals()"
+                           class="w-full pl-10 pr-4 py-2.5 text-base font-extrabold font-mono text-amber-950 bg-white border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm">
+                  </div>
+                  <p class="text-[10px] text-amber-800 mt-1">Digite o valor em cédulas/moedas que continuará na gaveta.</p>
+                </div>
+
+                <!-- RESULTADO SANGRIA -->
+                <div class="bg-brand-neutralDark text-white p-4.5 rounded-xl border border-brand-gold/40 flex flex-col justify-between shadow-inner space-y-2">
+                  <div class="flex items-center justify-between text-xs font-mono text-brand-gold font-bold uppercase">
+                    <span>Retirada em Dinheiro (Sangria):</span>
+                  </div>
+                  <div id="display-retirada" class="text-3xl font-black text-brand-gold font-mono my-1">
+                    R$ 0,00
+                  </div>
+                  <div class="text-[10px] text-white/70 font-mono">
+                    (=) (Troco Ant. + Dinheiro Entrado) - Saídas - Troco Próximo Dia
+                  </div>
+                  <div id="retirada-warning" class="hidden text-[10px] font-bold text-rose-200 bg-rose-950/80 p-2 rounded border border-rose-800 mt-1">
+                    ⚠️ Dinheiro em caixa insuficiente para cobrir o troco do dia seguinte.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- COMPROVANTE / PRINT DO OUTRO SISTEMA (CTRL+V OU ANEXO) -->
+            <div class="border border-indigo-200 bg-indigo-50/40 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between border-b border-indigo-200 pb-2">
+                <label class="text-xs font-extrabold text-indigo-900 uppercase font-mono flex items-center gap-2">
+                  <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  Comprovante / Print do Outro Sistema
+                </label>
+                <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full font-mono">Cole (Ctrl + V)</span>
+              </div>
+
+              <p class="text-[11px] text-indigo-800">
+                Tire um print da tela do seu outro sistema e <strong>pressione Ctrl + V em qualquer lugar desta página</strong> ou clique abaixo.
+              </p>
+
+              <input type="hidden" id="closure-comprovante-print" name="comprovantePrint" value="">
+
+              <!-- Dropzone / Area de Cole -->
+              <div id="paste-dropzone" 
+                   onclick="document.getElementById('file-print-input').click()"
+                   class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-white p-4 rounded-xl text-center cursor-pointer transition-all hover:bg-indigo-50/50 flex flex-col items-center justify-center gap-2">
+                <input type="file" id="file-print-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <div class="text-xs font-bold text-indigo-950">
+                  Clique para Selecionar ou <span class="text-indigo-600 underline">Cole com Ctrl + V</span>
+                </div>
+                <div class="text-[10px] text-gray-500">Formatos suportados: PNG, JPG, WEBP</div>
+              </div>
+
+              <!-- Preview da Imagem Anexada -->
+              <div id="print-preview-container" class="hidden relative bg-white p-3 rounded-xl border border-indigo-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <img id="print-preview-img" src="" alt="Print do Sistema" class="w-20 h-20 object-cover rounded-lg border border-gray-300 shadow-sm cursor-pointer" onclick="openImageModal(this.src)">
+                  <div>
+                    <div class="text-xs font-bold text-indigo-950">Print Anexado!</div>
+                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Imagem pronta para envio.</div>
+                    <button type="button" onclick="openImageModal(document.getElementById('print-preview-img').src)" class="text-[10px] font-bold text-indigo-600 hover:underline mt-1 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                      <span>Ver Ampliado</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button type="button" onclick="removePrintAttachment()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-3 py-1.5 rounded-lg border border-rose-200 transition-all flex items-center gap-1 shrink-0 cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <span>Remover</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- OBSERVAÇÕES -->
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">Observações do Turno</label>
+              <textarea id="closure-observacoes" name="observacoes" rows="2" placeholder="Digite eventuais observações de sangrias parciais, troco de moedas ou ocorrências no turno..."
+                        class="w-full text-xs p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold focus:outline-none"></textarea>
+            </div>
+
+            <!-- BOTAO SUBMIT -->
+            <div class="pt-2">
+              <button type="submit" class="w-full bg-brand-dark hover:bg-brand-light text-white font-extrabold text-sm py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <span id="submit-btn-text">Finalizar e Registrar Fechamento de Caixa</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL DE VISUALIZAÇÃO DE IMAGEM EM TAMANHO REAL -->
+<div id="image-zoom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+  <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2" onclick="event.stopPropagation()">
+    <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-brand-gold text-sm font-bold cursor-pointer flex items-center gap-1">
+      <span>&times; Fechar Visualização</span>
+    </button>
+    <img id="image-zoom-src" src="" alt="Print Ampliado" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/20">
+  </div>
+</div>
+
+<!-- MODAL DE LANÇAMENTO EXISTENTE ENCONTRADO -->
+<div id="existing-closure-modal" class="hidden fixed inset-0 bg-brand-neutralDark/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-brand-gold/30">
+    
+    <div id="existing-modal-icon-container" class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center mx-auto shadow-inner">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+
+    <div class="text-center space-y-2">
+      <h3 id="existing-modal-title" class="text-lg font-black text-brand-dark font-mono uppercase tracking-tight">Lançamento Existente Encontrado</h3>
+      <p id="existing-modal-desc" class="text-xs text-gray-600 leading-relaxed font-sans px-2"></p>
+    </div>
+
+    <!-- ACOES SE STATUS NÃO CONFERIDO (PERMITE EDITAR OU CANCELAR) -->
+    <div id="existing-actions-editable" class="space-y-2.5 pt-2">
+      <button type="button" onclick="loadExistingClosureToEdit()" 
+              class="w-full text-xs font-black bg-brand-gold hover:bg-yellow-400 text-brand-dark py-3.5 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 font-mono uppercase cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        <span>Carregar e Editar Fechamento Existente</span>
+      </button>
+
+      <button type="button" onclick="closeExistingModalAndReset()" 
+              class="w-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 font-mono cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <span>Cancelar / Escolher Outra Data ou Recepção</span>
+      </button>
+    </div>
+
+    <!-- ACOES SE STATUS FOR CONFERIDO (BLOQUEADO) -->
+    <div id="existing-actions-blocked" class="hidden space-y-3 pt-2">
+      <div class="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-center text-xs font-bold font-mono">
+        ⛔ Fechamento já conferido e trancado pela gerência. Não é permitido criar novo fechamento para esta mesma data e recepção.
+      </div>
+      <button type="button" onclick="closeExistingModalAndReset()" 
+              class="w-full text-xs font-bold bg-brand-dark hover:bg-brand-light text-white py-3.5 px-4 rounded-xl transition-all cursor-pointer font-mono uppercase">
+        Entendido (Limpar Data)
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL IMPRESSÃO COMPROVANTE (TICKET SLIP) -->
+<div id="print-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 p-6 space-y-4">
+    
+    <div class="flex items-center justify-between border-b border-gray-100 pb-3 no-print">
+      <h3 class="text-sm font-bold text-brand-dark flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Comprovante de Fechamento de Caixa</span>
+      </h3>
+      <button onclick="closePrintModal()" class="text-gray-400 hover:text-gray-700 text-lg cursor-pointer">&times;</button>
+    </div>
+
+    <!-- AREA IMPRESSA (TICKET SLIP) -->
+    <div id="printable-area" class="p-4 bg-white text-gray-900 border border-gray-200 rounded-xl space-y-4 font-sans">
+      
+      <!-- Cabeçalho Ticket -->
+      <div class="text-center border-b border-dashed border-gray-300 pb-3 space-y-1">
+        <h2 class="text-base font-extrabold text-brand-dark uppercase tracking-wider">INOVALAB ANÁLISES CLÍNICAS</h2>
+        <p id="print-recepcao-title" class="text-[11px] font-bold text-brand-gold uppercase font-mono"></p>
+        <p id="print-date-resp" class="text-xs font-semibold text-gray-700 font-mono mt-1"></p>
+      </div>
+
+      <!-- Resumo Valores Recebidos -->
+      <div class="space-y-1.5 text-xs">
+        <div class="font-bold text-[11px] text-gray-800 uppercase font-mono border-b border-gray-100 pb-1">1. Entradas por Forma de Pagamento</div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Dinheiro (Espécie):</span> <span id="p-dinheiro" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">PIX:</span> <span id="p-pix" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cartão de Crédito:</span> <span id="p-cartao-credito" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cartão de Débito:</span> <span id="p-cartao-debito" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">Cheque:</span> <span id="p-cheque" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono text-sm font-black pt-1 border-t border-gray-200">
+          <span>Total Faturado:</span> <span id="p-total-entradas" class="text-emerald-700">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Conciliação do Caixa -->
+      <div class="space-y-1.5 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <div class="font-bold text-[11px] text-gray-800 uppercase font-mono border-b border-gray-200 pb-1">2. Apuração do Caixa em Espécie</div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">(+) Troco Inicial (Dia Ant.):</span> <span id="p-troco-anterior" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono"><span class="text-gray-600">(+) Dinheiro Recebido:</span> <span id="p-dinheiro-esp" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono font-bold text-gray-900 border-t border-gray-200 pt-1">
+          <span>(=) Total Bruto Espécie:</span> <span id="p-total-especie">R$ 0,00</span>
+        </div>
+        
+        <!-- Saídas do caixa em dinheiro -->
+        <div id="p-saidas-container" class="hidden space-y-1 py-1 border-t border-rose-200 text-rose-800 bg-rose-50/50 p-1.5 rounded">
+          <div class="flex justify-between font-mono font-bold">
+            <span>(-) Saídas / Despesas Caixa:</span>
+            <span id="p-saidas-total">R$ 0,00</span>
+          </div>
+          <div id="p-saidas-list" class="text-[10px] space-y-0.5 font-mono"></div>
+        </div>
+
+        <div class="flex justify-between font-mono text-amber-800"><span class="text-gray-600">(-) Troco Próximo Dia (Mantido):</span> <span id="p-troco-seguinte" class="font-bold">R$ 0,00</span></div>
+        <div class="flex justify-between font-mono text-sm font-black pt-1.5 border-t border-gray-300 text-brand-dark">
+          <span>(=) RETIRADA (SANGRIA):</span> <span id="p-retirada" class="text-base text-brand-dark">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Print Anexo Preview no Ticket -->
+      <div id="p-print-box" class="hidden text-xs space-y-1 no-print border-t border-gray-200 pt-2">
+        <span class="font-bold text-[10px] text-gray-500 uppercase font-mono">Print do Sistema Anexado:</span>
+        <div class="flex items-center gap-2 bg-indigo-50 p-2 rounded-lg border border-indigo-200">
+          <img id="p-print-img" src="" alt="Print Anexo" class="w-14 h-14 object-cover rounded border border-indigo-300 cursor-pointer" onclick="openImageModal(this.src)">
+          <button type="button" onclick="openImageModal(document.getElementById('p-print-img').src)" class="text-[11px] font-bold text-indigo-700 hover:underline">
+            Ampliar Print do Sistema
+          </button>
+        </div>
+      </div>
+
+      <!-- Observações -->
+      <div id="p-obs-box" class="text-xs space-y-1">
+        <span class="font-bold text-[10px] text-gray-500 uppercase font-mono">Observações:</span>
+        <p id="p-observacoes" class="italic text-gray-700 text-[11px] bg-gray-50 p-2 rounded border border-gray-100"></p>
+      </div>
+
+      <!-- Assinaturas -->
+      <div class="pt-6 grid grid-cols-2 gap-4 text-center text-[10px] font-mono text-gray-600">
+        <div>
+          <div class="border-t border-gray-400 pt-1">Recepcionista / Caixa</div>
+        </div>
+        <div>
+          <div class="border-t border-gray-400 pt-1">Conferido por (Gerência)</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flex items-center justify-end gap-2 no-print pt-2">
+      <button onclick="closePrintModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer">Fechar</button>
+      <button onclick="triggerPrint()" class="px-5 py-2 text-xs font-extrabold bg-brand-dark text-white hover:bg-brand-light rounded-xl shadow cursor-pointer flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Imprimir Comprovante</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DE IMPORTAÇÃO AUTOMÁTICA DE FECHAMENTO DE CAIXA VIA CSV -->
+<div id="import-csv-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto" onclick="closeImportCsvModal()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-gray-200 overflow-hidden" onclick="event.stopPropagation()">
+    
+    <!-- CABEÇALHO DO MODAL -->
+    <div class="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between gap-4 border-b border-slate-800 shrink-0">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-widest">Importação CSV</span>
+          <span class="text-slate-400 text-xs font-mono">• Fechamento de Caixa Sem IA</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5 font-mono">
+          <svg class="w-6 h-6 text-brand-gold shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span>Importar Fechamentos de Caixa (Arquivo CSV)</span>
+        </h2>
+        <p class="text-xs text-slate-300 max-w-2xl font-sans">
+          Carregue o arquivo CSV exportado do sistema. Os lançamentos serão agrupados por data e recepção e registrados como <strong>CONFERIDO</strong>.
+        </p>
+      </div>
+
+      <button onclick="closeImportCsvModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition-all cursor-pointer">
+        &times;
+      </button>
+    </div>
+
+    <!-- CORPO DO MODAL -->
+    <div class="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-gray-50/50">
+
+      <!-- ZONA DE DROP E UPLOAD -->
+      <div id="csv-upload-zone" class="border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/40 hover:bg-emerald-50 p-6 sm:p-8 rounded-3xl text-center transition-all cursor-pointer relative" onclick="document.getElementById('csv-file-input').click()">
+        <input type="file" id="csv-file-input" accept=".csv,text/csv" class="hidden" onchange="handleCsvFileSelected(event)">
+        
+        <div class="space-y-3 pointer-events-none">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-black text-gray-800 font-mono">Clique para selecionar ou arraste o arquivo CSV aqui</p>
+            <p class="text-xs text-gray-500 font-sans mt-0.5">Formato aceito: Data do Fechamento *; Lançado Por; Tipo de pagamento; Valor; Recepção</p>
+          </div>
+          <span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-emerald-600 text-white shadow-sm">
+            📄 Arquivo .CSV Separado por Ponto e Vírgula (;)
+          </span>
+        </div>
+      </div>
+
+      <!-- ITEM SELECIONADO E PREVIEW -->
+      <div id="csv-selected-preview" class="hidden bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-lg shrink-0">
+            📊
+          </div>
+          <div class="truncate">
+            <p id="csv-file-name" class="text-xs font-bold text-gray-900 font-mono truncate">fechamentos.csv</p>
+            <p id="csv-file-size" class="text-[10px] text-gray-500 font-mono">0 KB</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="clearSelectedCsv()" class="text-xs font-bold text-rose-600 hover:text-rose-800 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-all cursor-pointer">
+            Remover
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTADO DA LEITURA DO CSV -->
+      <div id="csv-result-container" class="hidden space-y-5">
+        
+        <!-- HEADER RESUMO DOS FECHAMENTOS -->
+        <div class="bg-emerald-900 text-white p-4 sm:p-5 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-800">
+          <div class="space-y-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 uppercase">Leitura Concluída</span>
+            <p id="csv-meta-info" class="text-sm font-bold font-mono text-emerald-100">--</p>
+          </div>
+
+          <div class="bg-emerald-950/80 p-3 rounded-xl border border-emerald-800 text-right">
+            <span class="text-[10px] font-bold uppercase tracking-wider font-mono text-emerald-400 block">Total Geral Faturado</span>
+            <span id="csv-total-geral" class="text-2xl font-black font-mono text-white">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- LISTA DOS FECHAMENTOS AGRUPADOS -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Fechamentos Agrupados por Data e Recepção:</span>
+            </h3>
+            <span class="text-[10px] text-gray-500 font-mono">Status padrão: Conferido</span>
+          </div>
+
+          <div id="csv-grouped-list" class="space-y-4">
+            <!-- Lista dinâmica -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RODAPÉ DO MODAL -->
+    <div class="bg-white p-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      <p class="text-[11px] text-gray-500 font-mono flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Os lançamentos serão importados e marcados automaticamente como "Conferido".</span>
+      </p>
+      
+      <div class="flex items-center justify-end gap-2 shrink-0">
+        <button type="button" onclick="closeImportCsvModal()" class="px-4 py-2 rounded-xl text-xs font-bold font-mono text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" id="btn-save-imported-csv-batch" onclick="saveImportedCsvBatch()" class="hidden px-6 py-2.5 rounded-xl text-xs font-black font-mono uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-2">
+          <span>⚡ Importar e Gravar Lançamentos Conferidos</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printable-area, #printable-area * {
+      visibility: visible;
+    }
+    #printable-area {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      border: none !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  let expensesList = [];
+
+  function formatMoney(num) {
+    const val = Number(num) || 0;
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function parseMoneyInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return 0;
+    const val = parseFloat(el.value);
+    return isNaN(val) ? 0 : val;
+  }
+
+  // --- GERENCIAMENTO DE SAÍDAS / DESPESAS EM DINHEIRO ---
+  function addExpenseItem() {
+    const typeEl = document.getElementById('expense-type');
+    const descEl = document.getElementById('expense-desc');
+    const amountEl = document.getElementById('expense-amount');
+
+    const tipo = typeEl ? typeEl.value : '';
+    const descricao = descEl ? descEl.value.trim() : '';
+    const valor = parseFloat(amountEl ? amountEl.value : 0);
+
+    if (!tipo) {
+      alert('Por favor, selecione o Tipo de Saída (Plano de Contas).');
+      return;
+    }
+
+    if (isNaN(valor) || valor <= 0) {
+      alert('Por favor, informe um valor maior que zero para a saída.');
+      return;
+    }
+
+    expensesList.push({
+      id: 'EXP_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      tipo,
+      descricao: descricao || tipo,
+      valor
+    });
+
+    if (descEl) descEl.value = '';
+    if (amountEl) amountEl.value = '';
+
+    renderExpensesTable();
+    recalculateTotals();
+  }
+
+  function removeExpenseItem(expId) {
+    expensesList = expensesList.filter(item => item.id !== expId);
+    renderExpensesTable();
+    recalculateTotals();
+  }
+
+  function renderExpensesTable() {
+    const container = document.getElementById('expenses-list-container');
+    const tbody = document.getElementById('expenses-table-body');
+    const totalDisplay = document.getElementById('expenses-total-display');
+    const jsonInput = document.getElementById('closure-saidas-json');
+
+    if (jsonInput) {
+      jsonInput.value = JSON.stringify(expensesList);
+    }
+
+    let total = 0;
+    if (!tbody || !container) return;
+
+    if (expensesList.length === 0) {
+      container.classList.add('hidden');
+      tbody.innerHTML = '';
+      return;
+    }
+
+    container.classList.remove('hidden');
+    tbody.innerHTML = expensesList.map(item => {
+      total += item.valor;
+      return `
+        <tr>
+          <td class="py-2 px-3 font-bold text-rose-950">${item.tipo}</td>
+          <td class="py-2 px-3 text-gray-700">${item.descricao}</td>
+          <td class="py-2 px-3 text-right font-bold text-rose-700">R$ ${formatMoney(item.valor)}</td>
+          <td class="py-2 px-3 text-center">
+            <button type="button" onclick="removeExpenseItem('${item.id}')" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1 cursor-pointer" title="Remover Saída">&times;</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (totalDisplay) {
+      totalDisplay.innerText = `R$ ${formatMoney(total)}`;
+    }
+  }
+
+  function getExpensesTotal() {
+    return expensesList.reduce((acc, curr) => acc + (curr.valor || 0), 0);
+  }
+
+  // --- GERENCIAMENTO DE PRINT DO SISTEMA (COLE COM CTRL+V OU FILE) ---
+  function setPrintAttachment(base64Str) {
+    const inputEl = document.getElementById('closure-comprovante-print');
+    const previewContainer = document.getElementById('print-preview-container');
+    const previewImg = document.getElementById('print-preview-img');
+    const dropzone = document.getElementById('paste-dropzone');
+
+    if (inputEl) inputEl.value = base64Str;
+    if (previewImg) previewImg.src = base64Str;
+    if (previewContainer) previewContainer.classList.remove('hidden');
+    if (dropzone) dropzone.classList.add('hidden');
+  }
+
+  function removePrintAttachment() {
+    const inputEl = document.getElementById('closure-comprovante-print');
+    const previewContainer = document.getElementById('print-preview-container');
+    const previewImg = document.getElementById('print-preview-img');
+    const dropzone = document.getElementById('paste-dropzone');
+    const fileInput = document.getElementById('file-print-input');
+
+    if (inputEl) inputEl.value = '';
+    if (previewImg) previewImg.src = '';
+    if (fileInput) fileInput.value = '';
+    if (previewContainer) previewContainer.classList.add('hidden');
+    if (dropzone) dropzone.classList.remove('hidden');
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        setPrintAttachment(evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Capturar evento de Colar (Ctrl + V) na página
+  window.addEventListener('paste', function(e) {
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData || !clipboardData.items) return;
+
+    const items = clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          setPrintAttachment(evt.target.result);
+        };
+        reader.readAsDataURL(blob);
+        e.preventDefault();
+        break;
+      }
+    }
+  });
+
+  function openImageModal(src) {
+    if (!src) return;
+    document.getElementById('image-zoom-src').src = src;
+    document.getElementById('image-zoom-modal').classList.remove('hidden');
+  }
+
+  function closeImageModal() {
+    document.getElementById('image-zoom-modal').classList.add('hidden');
+  }
+
+  // --- RECALCULO AUTOMÁTICO DOS TOTAIS DO CAIXA ---
+  function recalculateTotals() {
+    const trocoAnterior = parseMoneyInput('closure-troco-anterior');
+    const dinheiro = parseMoneyInput('closure-dinheiro');
+    const pix = parseMoneyInput('closure-pix');
+    const cartaoCredito = parseMoneyInput('closure-cartao-credito');
+    const cartaoDebito = parseMoneyInput('closure-cartao-debito');
+    const cheque = parseMoneyInput('closure-cheque');
+    const trocoSeguinte = parseMoneyInput('closure-troco-seguinte');
+    const saidasDinheiro = getExpensesTotal();
+
+    const totalEntradas = dinheiro + pix + cartaoCredito + cartaoDebito + cheque;
+    const totalDinheiroEmCaixa = trocoAnterior + dinheiro; // Bruto em espécie
+    const retirada = totalDinheiroEmCaixa - saidasDinheiro - trocoSeguinte; // Sangria final
+
+    // Atualizar labels no formulário
+    document.getElementById('display-total-entradas').innerText = `R$ ${formatMoney(totalEntradas)}`;
+    document.getElementById('display-retirada').innerText = `R$ ${formatMoney(Math.max(0, retirada))}`;
+
+    const warningEl = document.getElementById('retirada-warning');
+    if (retirada < 0) {
+      warningEl.classList.remove('hidden');
+    } else {
+      warningEl.classList.add('hidden');
+    }
+  }
+
+  let isTrocoAnteriorUnlocked = false;
+
+  function toggleEditTrocoAnterior() {
+    const input = document.getElementById('closure-troco-anterior');
+    const btnLabel = document.getElementById('btn-edit-troco-label');
+    const btn = document.getElementById('btn-edit-troco-anterior');
+    const alertBox = document.getElementById('troco-anterior-edit-alert');
+    const editadoInput = document.getElementById('closure-troco-anterior-editado');
+
+    isTrocoAnteriorUnlocked = !isTrocoAnteriorUnlocked;
+
+    if (isTrocoAnteriorUnlocked) {
+      input.removeAttribute('readonly');
+      input.classList.remove('bg-blue-100/50', 'cursor-not-allowed');
+      input.classList.add('bg-white', 'cursor-text', 'focus:ring-2', 'focus:ring-blue-500');
+      input.focus();
+      if (btnLabel) btnLabel.innerText = 'Bloquear';
+      btn.classList.remove('bg-white', 'text-blue-700');
+      btn.classList.add('bg-amber-100', 'text-amber-900', 'border-amber-400');
+      
+      checkTrocoAnteriorEdited();
+    } else {
+      input.setAttribute('readonly', 'true');
+      input.classList.remove('bg-white', 'cursor-text', 'focus:ring-2', 'focus:ring-blue-500');
+      input.classList.add('bg-blue-100/50', 'cursor-not-allowed');
+      if (btnLabel) btnLabel.innerText = 'Editar';
+      btn.classList.remove('bg-amber-100', 'text-amber-900', 'border-amber-400');
+      btn.classList.add('bg-white', 'text-blue-700');
+      
+      checkTrocoAnteriorEdited();
+    }
+  }
+
+  function onTrocoAnteriorUserChange() {
+    checkTrocoAnteriorEdited();
+    recalculateTotals();
+  }
+
+  function checkTrocoAnteriorEdited() {
+    const currentVal = parseMoneyInput('closure-troco-anterior');
+    const originalVal = parseMoneyInput('closure-troco-anterior-original');
+    const editadoInput = document.getElementById('closure-troco-anterior-editado');
+    const alertBox = document.getElementById('troco-anterior-edit-alert');
+
+    const isDifferent = Math.abs(currentVal - originalVal) > 0.001;
+
+    if (isDifferent) {
+      if (editadoInput) editadoInput.value = 'true';
+      if (alertBox) alertBox.classList.remove('hidden');
+    } else {
+      if (editadoInput) editadoInput.value = isTrocoAnteriorUnlocked ? 'true' : 'false';
+      if (alertBox) {
+        if (isTrocoAnteriorUnlocked) alertBox.classList.remove('hidden');
+        else alertBox.classList.add('hidden');
+      }
+    }
+  }
+
+  async function fetchPreviousTroco(dateStr, recepcaoVal) {
+    try {
+      const badge = document.getElementById('troco-anterior-badge');
+      if (badge) badge.innerText = 'Carregando...';
+
+      const res = await fetch(`/api/recepcao/fechamento-caixa/ultimo-troco?data=${encodeURIComponent(dateStr)}&recepcao=${encodeURIComponent(recepcaoVal)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const val = (data && typeof data.trocoSeguinte === 'number') ? data.trocoSeguinte : 0;
+
+        document.getElementById('closure-troco-anterior').value = val.toFixed(2);
+        document.getElementById('closure-troco-anterior-original').value = val.toFixed(2);
+        document.getElementById('closure-troco-anterior-editado').value = 'false';
+
+        // Manter travado por padrão
+        const input = document.getElementById('closure-troco-anterior');
+        input.setAttribute('readonly', 'true');
+        input.classList.remove('bg-white', 'cursor-text', 'focus:ring-2', 'focus:ring-blue-500');
+        input.classList.add('bg-blue-100/50', 'cursor-not-allowed');
+
+        isTrocoAnteriorUnlocked = false;
+        const btnLabel = document.getElementById('btn-edit-troco-label');
+        if (btnLabel) btnLabel.innerText = 'Editar';
+        const alertBox = document.getElementById('troco-anterior-edit-alert');
+        if (alertBox) alertBox.classList.add('hidden');
+
+        if (badge) {
+          if (data && data.dataBr) {
+            badge.innerText = 'Carregado de ' + data.dataBr;
+          } else {
+            badge.innerText = 'Sem troco anterior (0,00)';
+          }
+        }
+        recalculateTotals();
+      }
+    } catch (err) {
+      console.error('Erro ao buscar troco anterior:', err);
+    }
+  }
+
+  let existingClosureData = null;
+
+  async function checkExistingClosure(dateVal, recepcaoVal) {
+    if (!dateVal || !recepcaoVal) return;
+
+    try {
+      const res = await fetch(`/api/recepcao/fechamento-caixa/buscar-existente?data=${encodeURIComponent(dateVal)}&recepcao=${encodeURIComponent(recepcaoVal)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.exists && data.closure) {
+          existingClosureData = data.closure;
+
+          const titleEl = document.getElementById('existing-modal-title');
+          const descEl = document.getElementById('existing-modal-desc');
+          const editableActions = document.getElementById('existing-actions-editable');
+          const blockedActions = document.getElementById('existing-actions-blocked');
+          const modalEl = document.getElementById('existing-closure-modal');
+
+          if (data.closure.status === 'Conferido') {
+            titleEl.innerText = 'Fechamento Já Conferido';
+            descEl.innerText = `Já existe um fechamento para a ${data.closure.recepcao} no dia ${data.closure.dataBr} que JÁ FOI CONFERIDO pela gerência. Não é permitido criar novo fechamento nem alterar registros conferidos.`;
+            editableActions.classList.add('hidden');
+            blockedActions.classList.remove('hidden');
+            modalEl.classList.remove('hidden');
+          } else {
+            titleEl.innerText = 'Lançamento Existente Encontrado';
+            descEl.innerText = `Já existe um fechamento cadastrado para a ${data.closure.recepcao} no dia ${data.closure.dataBr} (Lançado por: ${data.closure.responsavel || 'Recepcionista'}). Não é permitido duplicar lançamentos na mesma data e recepção. Você pode carregar para editar ou cancelar.`;
+            editableActions.classList.remove('hidden');
+            blockedActions.classList.add('hidden');
+            modalEl.classList.remove('hidden');
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar fechamento existente:', err);
+    }
+
+    // Se não encontrou lançamento existente na data/recepção, buscar troco do dia anterior
+    fetchPreviousTroco(dateVal, recepcaoVal);
+  }
+
+  function loadExistingClosureToEdit() {
+    if (!existingClosureData) return;
+
+    const c = existingClosureData;
+    document.getElementById('closure-id').value = c.id;
+    document.getElementById('closure-status').value = c.status || 'Fechado';
+    if (c.responsavel) document.getElementById('closure-responsavel').value = c.responsavel;
+
+    document.getElementById('closure-troco-anterior').value = (c.trocoAnterior || 0).toFixed(2);
+    document.getElementById('closure-troco-anterior-original').value = (c.trocoAnteriorOriginal || c.trocoAnterior || 0).toFixed(2);
+    document.getElementById('closure-troco-anterior-editado').value = c.trocoAnteriorEditado ? 'true' : 'false';
+
+    document.getElementById('closure-dinheiro').value = (c.dinheiro || 0).toFixed(2);
+    document.getElementById('closure-pix').value = (c.pix || 0).toFixed(2);
+    document.getElementById('closure-cartao-credito').value = (c.cartaoCredito || 0).toFixed(2);
+    document.getElementById('closure-cartao-debito').value = (c.cartaoDebito || 0).toFixed(2);
+    document.getElementById('closure-cheque').value = (c.cheque || 0).toFixed(2);
+    document.getElementById('closure-troco-seguinte').value = (c.trocoSeguinte || 0).toFixed(2);
+    document.getElementById('closure-observacoes').value = c.observacoes || '';
+
+    // Saídas em dinheiro
+    expensesList = (c.saidasDinheiro || []).map(s => ({
+      id: s.id || 'EXP_' + Math.random().toString(36).substring(2, 8),
+      tipo: s.tipo || 'Despesa/Outros',
+      descricao: s.descricao || '',
+      valor: parseFloat(s.valor) || 0
+    }));
+    renderExpensesTable();
+
+    // Print de anexo se houver
+    if (c.comprovantePrint) {
+      setPrintAttachment(c.comprovantePrint);
+    } else {
+      removePrintAttachment();
+    }
+
+    // Exibir Banner de Edição
+    const banner = document.getElementById('edit-mode-banner');
+    if (banner) {
+      banner.classList.remove('hidden');
+      document.getElementById('edit-mode-title').innerText = `Modo de Edição: Fechamento #${c.id}`;
+      document.getElementById('edit-mode-desc').innerText = `Alterando lançamento da ${c.recepcao} no dia ${c.dataBr}.`;
+    }
+
+    // Atualizar texto do botão submit
+    const btnText = document.getElementById('submit-btn-text');
+    if (btnText) btnText.innerText = `Salvar Alterações no Fechamento #${c.id}`;
+
+    recalculateTotals();
+
+    // Fechar modal
+    document.getElementById('existing-closure-modal').classList.add('hidden');
+  }
+
+  function cancelEditMode() {
+    existingClosureData = null;
+    document.getElementById('closure-id').value = '';
+    document.getElementById('closure-status').value = 'Fechado';
+
+    const banner = document.getElementById('edit-mode-banner');
+    if (banner) banner.classList.add('hidden');
+
+    const btnText = document.getElementById('submit-btn-text');
+    if (btnText) btnText.innerText = 'Finalizar e Registrar Fechamento de Caixa';
+
+    const dateVal = document.getElementById('closure-date').value;
+    const recepcaoVal = document.getElementById('closure-recepcao').value;
+    if (dateVal && recepcaoVal) {
+      fetchPreviousTroco(dateVal, recepcaoVal);
+    }
+  }
+
+  function closeExistingModalAndReset() {
+    document.getElementById('existing-closure-modal').classList.add('hidden');
+    const dateInput = document.getElementById('closure-date');
+    if (dateInput) dateInput.value = '';
+    cancelEditMode();
+  }
+
+  function onRecepcaoOrDateChanged() {
+    const dateVal = document.getElementById('closure-date').value;
+    const recepcaoVal = document.getElementById('closure-recepcao').value;
+    const currentClosureId = document.getElementById('closure-id').value;
+
+    if (dateVal && recepcaoVal && !currentClosureId) {
+      checkExistingClosure(dateVal, recepcaoVal);
+    }
+  }
+
+  // Validação no envio do formulário para evitar duplicidade
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('cash-closure-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        const currentClosureId = document.getElementById('closure-id').value;
+        const dateVal = document.getElementById('closure-date').value;
+        const recepcaoVal = document.getElementById('closure-recepcao').value;
+
+        if (!currentClosureId && dateVal && recepcaoVal) {
+          try {
+            const res = await fetch(`/api/recepcao/fechamento-caixa/buscar-existente?data=${encodeURIComponent(dateVal)}&recepcao=${encodeURIComponent(recepcaoVal)}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.exists && data.closure) {
+                e.preventDefault();
+                checkExistingClosure(dateVal, recepcaoVal);
+                return false;
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      });
+    }
+  });
+
+  async function printReceiptById(id) {
+    try {
+      const res = await fetch(`/api/recepcao/fechamento-caixa/detalhe?id=${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const c = await res.json();
+        if (c) {
+          document.getElementById('print-recepcao-title').innerText = c.recepcao || 'RECEPÇÃO';
+          document.getElementById('print-date-resp').innerText = `DATA: ${c.dataBr} | LANÇADO POR: ${c.responsavel}`;
+          document.getElementById('p-dinheiro').innerText = `R$ ${c.dinheiroFmt}`;
+          document.getElementById('p-pix').innerText = `R$ ${c.pixFmt}`;
+          document.getElementById('p-cartao-credito').innerText = `R$ ${c.cartaoCreditoFmt}`;
+          document.getElementById('p-cartao-debito').innerText = `R$ ${c.cartaoDebitoFmt}`;
+          document.getElementById('p-cheque').innerText = `R$ ${c.chequeFmt}`;
+          document.getElementById('p-total-entradas').innerText = `R$ ${c.totalEntradasFmt}`;
+
+          const trocoAntEl = document.getElementById('p-troco-anterior');
+          if (c.trocoAnteriorEditado) {
+            trocoAntEl.innerHTML = `R$ ${c.trocoAnteriorFmt} <span class="text-[10px] text-amber-800 font-bold block">(✏️ Editado - Orig: R$ ${c.trocoAnteriorOriginalFmt || formatMoney(c.trocoAnteriorOriginal)})</span>`;
+          } else {
+            trocoAntEl.innerText = `R$ ${c.trocoAnteriorFmt}`;
+          }
+
+          document.getElementById('p-dinheiro-esp').innerText = `R$ ${c.dinheiroFmt}`;
+          document.getElementById('p-total-especie').innerText = `R$ ${formatMoney((c.trocoAnterior || 0) + (c.dinheiro || 0))}`;
+
+          // Saídas em dinheiro no comprovante
+          const saideiras = c.saidasDinheiro || [];
+          const containerSaidas = document.getElementById('p-saidas-container');
+          const listSaidas = document.getElementById('p-saidas-list');
+          const totalSaidas = document.getElementById('p-saidas-total');
+
+          if (saideiras.length > 0) {
+            containerSaidas.classList.remove('hidden');
+            totalSaidas.innerText = `R$ ${c.saidasDinheiroTotalFmt || formatMoney(c.saidasDinheiroTotal || 0)}`;
+            listSaidas.innerHTML = saideiras.map(s => `<div>&bull; ${s.tipo}: ${s.descricao} (R$ ${formatMoney(s.valor)})</div>`).join('');
+          } else {
+            containerSaidas.classList.add('hidden');
+          }
+
+          document.getElementById('p-troco-seguinte').innerText = `R$ ${c.trocoSeguinteFmt}`;
+          document.getElementById('p-retirada').innerText = `R$ ${c.retiradaDinheiroFmt}`;
+
+          // Print Anexo no Comprovante
+          const printBox = document.getElementById('p-print-box');
+          const printImg = document.getElementById('p-print-img');
+          if (c.comprovantePrint) {
+            printImg.src = c.comprovantePrint;
+            printBox.classList.remove('hidden');
+          } else {
+            printBox.classList.add('hidden');
+          }
+
+          const obsText = c.observacoes && c.observacoes.trim() ? c.observacoes : 'Sem observações registradas.';
+          document.getElementById('p-observacoes').innerText = obsText;
+
+          document.getElementById('print-modal').classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar recibo:', err);
+    }
+  }
+
+  function closePrintModal() {
+    document.getElementById('print-modal').classList.add('hidden');
+  }
+
+  function triggerPrint() {
+    window.print();
+  }
+
+  // --- IMPORTAÇÃO DE RELATÓRIO DE CAIXA EM PDF / IMAGEM (IA) ---
+  let selectedPdfBase64 = null;
+  let selectedPdfMimeType = null;
+  let extractedDataGlobal = null;
+
+  function openImportPdfModal() {
+    const modal = document.getElementById('import-pdf-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeImportPdfModal() {
+    const modal = document.getElementById('import-pdf-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // --- IMPORTAÇÃO DE FECHAMENTO DE CAIXA VIA ARQUIVO CSV ---
+  let parsedCsvItemsGlobal = [];
+
+  function openImportCsvModal() {
+    const modal = document.getElementById('import-csv-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeImportCsvModal() {
+    const modal = document.getElementById('import-csv-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function handleCsvFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    processCsvFile(file);
+  }
+
+  function processCsvFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const csvText = e.target.result;
+      document.getElementById('csv-file-name').innerText = file.name;
+      document.getElementById('csv-file-size').innerText = (file.size / 1024).toFixed(1) + ' KB';
+
+      document.getElementById('csv-upload-zone').classList.add('hidden');
+      document.getElementById('csv-selected-preview').classList.remove('hidden');
+
+      const items = parseCsvText(csvText);
+      parsedCsvItemsGlobal = items;
+      renderGroupedCsvResults(items);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function parseCsvLine(line) {
+    const sep = line.includes(';') ? ';' : (line.includes('\t') ? '\t' : ',');
+    const cols = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === sep && !inQuotes) {
+        cols.push(cur.trim().replace(/^"|"$/g, ''));
+        cur = '';
+      } else {
+        cur += char;
+      }
+    }
+    cols.push(cur.trim().replace(/^"|"$/g, ''));
+    return cols;
+  }
+
+  function fixMojibake(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/\uFFFD/g, 'e')
+      .replace(/Ã©/g, 'e').replace(/Ã‰/g, 'e')
+      .replace(/Ãª/g, 'e').replace(/ÃŠ/g, 'e')
+      .replace(/Ã¡/g, 'a').replace(/Ã /g, 'a')
+      .replace(/Ã£/g, 'a').replace(/Ã¢/g, 'a')
+      .replace(/Ã /g, 'a').replace(/Ã/g, 'a')
+      .replace(/Ã­/g, 'i').replace(/Ã/g, 'i')
+      .replace(/Ã³/g, 'o').replace(/Ã´/g, 'o')
+      .replace(/Ãµ/g, 'o').replace(/Ã'/g, 'o')
+      .replace(/Ãº/g, 'u').replace(/Ãœ/g, 'u')
+      .replace(/Ã§/g, 'c').replace(/Ã‡/g, 'c');
+  }
+
+  function normalizeStr(raw) {
+    if (!raw) return '';
+    return fixMojibake(raw)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function parseMoneyValue(val) {
+    if (val === null || val === undefined) return 0;
+    let str = String(val).trim();
+    if (!str || str === '-' || str === 'R$' || str === 'R$ -') return 0;
+
+    str = str.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+             .replace(/R\$\s*/gi, '')
+             .replace(/\s/g, '')
+             .replace(/"/g, '');
+    if (!str) return 0;
+
+    if (str.includes(',') && str.includes('.')) {
+      if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+      } else {
+        str = str.replace(/,/g, '');
+      }
+    } else if (str.includes(',')) {
+      str = str.replace(',', '.');
+    } else if (str.includes('.')) {
+      const parts = str.split('.');
+      if (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3) {
+        str = str.replace('.', '');
+      }
+    }
+
+    const num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function parseDateStringToIso(rawDateStr) {
+    if (!rawDateStr) return null;
+    let str = String(rawDateStr).trim().split(' ')[0].split('T')[0];
+    if (!str) return null;
+
+    if (str.includes('/') || (str.includes('-') && str.indexOf('-') === 2)) {
+      const sep = str.includes('/') ? '/' : '-';
+      const parts = str.split(sep);
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        let year = parts[2];
+        if (year.length === 2) year = '20' + year;
+        if (parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12 && parseInt(day, 10) >= 1 && parseInt(day, 10) <= 31) {
+          return {
+            isoDate: `${year}-${month}-${day}`,
+            dateBr: `${day}/${month}/${year}`
+          };
+        }
+      }
+    }
+
+    if (str.includes('-') || str.includes('/')) {
+      const sep = str.includes('-') ? '-' : '/';
+      const parts = str.split(sep);
+      if (parts.length === 3 && parts[0].length === 4) {
+        const year = parts[0];
+        const month = parts[1].padStart(2, '0');
+        const day = parts[2].padStart(2, '0');
+        return {
+          isoDate: `${year}-${month}-${day}`,
+          dateBr: `${day}/${month}/${year}`
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function classifyPaymentType(rawText) {
+    if (!rawText) return 'dinheiro';
+    const norm = normalizeStr(rawText);
+    if (!norm) return 'dinheiro';
+
+    // 1. DÉBITO
+    const isDeb = (
+      norm.includes('deb') || 
+      norm === 'cd' || 
+      norm === 'c d' || 
+      norm.includes('cartao d') || 
+      norm.includes('c deb') ||
+      norm.includes('maestro') || 
+      norm.includes('banricompras') || 
+      norm.includes('electron')
+    );
+
+    // 2. CRÉDITO
+    const isCred = (
+      norm.includes('cred') || 
+      norm === 'cc' || 
+      norm === 'c c' || 
+      norm.includes('cartao c') || 
+      norm.includes('c cred') ||
+      norm.includes('visa') || 
+      norm.includes('master') || 
+      norm.includes('hiper') || 
+      norm.includes('elo') || 
+      norm.includes('amex') || 
+      norm.includes('american express')
+    );
+
+    if (isDeb && !isCred) return 'cartaoDebito';
+    if (isCred && !isDeb) return 'cartaoCredito';
+
+    if (isDeb && isCred) {
+      if (norm.includes('debito') && !norm.includes('credito')) return 'cartaoDebito';
+      if (norm.includes('credito') && !norm.includes('debito')) return 'cartaoCredito';
+      if (norm.includes('c deb') || norm.includes('cartao d')) return 'cartaoDebito';
+      return 'cartaoCredito';
+    }
+
+    // 3. PIX
+    if (norm.includes('pix') || norm.includes('transferencia') || norm.includes('ted') || norm.includes('doc') || norm.includes('qr')) {
+      return 'pix';
+    }
+
+    // 4. CHEQUE
+    if (norm.includes('cheque') || norm.includes('chq')) {
+      return 'cheque';
+    }
+
+    // 5. DINHEIRO
+    if (norm.includes('dinheiro') || norm.includes('especie') || norm.includes('esp') || norm.includes('cash') || norm.includes('moeda')) {
+      return 'dinheiro';
+    }
+
+    // 6. CARTÃO GENÉRICO
+    if (
+      norm.includes('cartao') || 
+      norm.includes('card') || 
+      norm.includes('tef') || 
+      norm.includes('pos') || 
+      norm.includes('cielo') || 
+      norm.includes('rede') || 
+      norm.includes('stone') || 
+      norm.includes('getnet') || 
+      norm.includes('pagseguro')
+    ) {
+      return 'cartaoCredito';
+    }
+
+    return 'dinheiro';
+  }
+
+  function extractFirstName(fullName) {
+    if (!fullName) return 'Importado via CSV';
+    let clean = fixMojibake(fullName).trim();
+    if (!clean || clean.toLowerCase() === 'importado via csv') return 'Importado via CSV';
+
+    const parts = clean.split(/[\s\/,]+/);
+    let first = parts[0] || '';
+    if ((first.toLowerCase() === 'dr' || first.toLowerCase() === 'dra' || first.toLowerCase() === 'dr.') && parts[1]) {
+      first = parts[1];
+    }
+    if (!first) return 'Importado via CSV';
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }
+
+  function parseCsvText(text) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return [];
+
+    const firstCols = parseCsvLine(lines[0]);
+    const isHeader = firstCols.some(c => {
+      const norm = normalizeStr(c);
+      return (
+        norm.includes('data') || 
+        norm.includes('lancado') || 
+        norm.includes('operador') || 
+        norm.includes('tipo') || 
+        norm.includes('valor') || 
+        norm.includes('recepcao') || 
+        norm.includes('dinheiro') || 
+        norm.includes('pix') || 
+        norm.includes('cred') || 
+        norm.includes('deb') || 
+        norm.includes('cartao')
+      );
+    });
+
+    let colDinheiroIdx = -1;
+    let colPixIdx = -1;
+    let colCartaoCreditoIdx = -1;
+    let colCartaoDebitoIdx = -1;
+    let colChequeIdx = -1;
+    let colCartaoGenericoIdx = -1;
+
+    let colDateIdx = -1;
+    let colOperadorIdx = -1;
+    let colRecepcaoIdx = -1;
+    let colTipoIdx = -1;
+    let colValorIdx = -1;
+
+    if (isHeader) {
+      firstCols.forEach((c, idx) => {
+        const norm = normalizeStr(c);
+
+        if (
+          norm.includes('cred') || 
+          norm === 'cc' || 
+          norm === 'c c' || 
+          norm.includes('cartao c') || 
+          norm.includes('c cred')
+        ) {
+          if (!norm.includes('deb') && !norm.includes('cartao d')) {
+            colCartaoCreditoIdx = idx;
+          }
+        }
+
+        if (
+          norm.includes('deb') || 
+          norm === 'cd' || 
+          norm === 'c d' || 
+          norm.includes('cartao d') || 
+          norm.includes('c deb') ||
+          norm.includes('maestro') ||
+          norm.includes('electron')
+        ) {
+          colCartaoDebitoIdx = idx;
+        }
+
+        if (norm.includes('dinheiro') || norm === 'esp' || norm.includes('especie') || norm.includes('cash')) {
+          colDinheiroIdx = idx;
+        }
+
+        if (norm.includes('pix') || norm.includes('transferencia') || norm.includes('ted') || norm.includes('doc') || norm.includes('qr')) {
+          colPixIdx = idx;
+        }
+
+        if (norm.includes('cheque') || norm.includes('chq')) {
+          colChequeIdx = idx;
+        }
+
+        if (
+          (norm.includes('cartao') || norm.includes('card') || norm.includes('pos') || norm.includes('tef')) && 
+          colCartaoCreditoIdx === -1 && 
+          colCartaoDebitoIdx === -1
+        ) {
+          colCartaoGenericoIdx = idx;
+        }
+
+        if (norm.includes('data') || norm.includes('dt') || norm.includes('dia') || norm.includes('emissao')) {
+          colDateIdx = idx;
+        } else if (norm.includes('lancado') || norm.includes('operador') || norm.includes('responsavel') || norm.includes('usuario') || norm.includes('atendente') || norm.includes('func')) {
+          colOperadorIdx = idx;
+        } else if (norm.includes('recepcao') || norm.includes('caixa') || norm.includes('unidade') || norm.includes('local') || norm.includes('setor')) {
+          colRecepcaoIdx = idx;
+        } else if (norm.includes('tipo') || norm.includes('forma') || norm.includes('meio') || norm.includes('pagamento') || norm.includes('pagto') || norm.includes('modalidade') || norm.includes('historico') || norm.includes('operacao') || norm.includes('descricao')) {
+          colTipoIdx = idx;
+        } else if (norm.includes('valor') || norm.includes('monto') || norm.includes('total') || norm.includes('quantia') || norm.includes('vlr') || norm.includes('val')) {
+          colValorIdx = idx;
+        }
+      });
+    }
+
+    const isMultiColumn = (
+      colCartaoCreditoIdx !== -1 || 
+      colCartaoDebitoIdx !== -1 || 
+      (colDinheiroIdx !== -1 && colPixIdx !== -1) || 
+      (colDinheiroIdx !== -1 && colCartaoGenericoIdx !== -1)
+    );
+    const startIndex = isHeader ? 1 : 0;
+    const rows = [];
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+
+      const cols = parseCsvLine(line);
+      if (cols.length < 2) continue;
+
+      let dateObj = null;
+      if (colDateIdx !== -1 && cols[colDateIdx]) {
+        dateObj = parseDateStringToIso(cols[colDateIdx]);
+      }
+      if (!dateObj) {
+        for (let cIdx = 0; cIdx < cols.length; cIdx++) {
+          const testD = parseDateStringToIso(cols[cIdx]);
+          if (testD) {
+            dateObj = testD;
+            break;
+          }
+        }
+      }
+      if (!dateObj) continue;
+
+      let rawLancadoPor = '';
+      if (colOperadorIdx !== -1 && cols[colOperadorIdx]) {
+        rawLancadoPor = cols[colOperadorIdx];
+      }
+      const lancadoPor = extractFirstName(rawLancadoPor);
+
+      let recepcao = 'Recepção Particular';
+      if (colRecepcaoIdx !== -1 && cols[colRecepcaoIdx]) {
+        const cleanRec = fixMojibake(cols[colRecepcaoIdx]).trim();
+        if (cleanRec) recepcao = cleanRec;
+      }
+
+      if (isMultiColumn) {
+        const valDinheiro = colDinheiroIdx !== -1 ? parseMoneyValue(cols[colDinheiroIdx]) : 0;
+        const valPix = colPixIdx !== -1 ? parseMoneyValue(cols[colPixIdx]) : 0;
+        let valCredito = colCartaoCreditoIdx !== -1 ? parseMoneyValue(cols[colCartaoCreditoIdx]) : 0;
+        let valDebito = colCartaoDebitoIdx !== -1 ? parseMoneyValue(cols[colCartaoDebitoIdx]) : 0;
+        const valCheque = colChequeIdx !== -1 ? parseMoneyValue(cols[colChequeIdx]) : 0;
+        const valCartaoGen = colCartaoGenericoIdx !== -1 ? parseMoneyValue(cols[colCartaoGenericoIdx]) : 0;
+
+        if (valCartaoGen > 0 && valCredito === 0 && valDebito === 0) {
+          valCredito = valCartaoGen;
+        }
+
+        if (valDinheiro > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'dinheiro', valor: valDinheiro, recepcao });
+        if (valPix > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'pix', valor: valPix, recepcao });
+        if (valCredito > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cartaoCredito', valor: valCredito, recepcao });
+        if (valDebito > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cartaoDebito', valor: valDebito, recepcao });
+        if (valCheque > 0) rows.push({ date: dateObj.isoDate, dateBr: dateObj.dateBr, lancadoPor, tipoPagamento: 'cheque', valor: valCheque, recepcao });
+
+      } else {
+        let rawTipo = '';
+        if (colTipoIdx !== -1 && cols[colTipoIdx]) {
+          rawTipo = cols[colTipoIdx];
+        }
+
+        let rawValorStr = '0';
+        if (colValorIdx !== -1 && cols[colValorIdx] !== undefined) {
+          rawValorStr = cols[colValorIdx];
+        }
+
+        if (!rawTipo || !rawValorStr || colValorIdx === -1) {
+          for (let cIdx = 0; cIdx < cols.length; cIdx++) {
+            const colVal = cols[cIdx];
+            const parsedV = parseMoneyValue(colVal);
+            if (parsedV > 0 && rawValorStr === '0' && cIdx !== colDateIdx) {
+              rawValorStr = colVal;
+            } else {
+              const classT = classifyPaymentType(colVal);
+              if (classT !== 'dinheiro' || colVal.toLowerCase().includes('dinheiro') || colVal.toLowerCase().includes('especie')) {
+                rawTipo = colVal;
+              }
+            }
+          }
+        }
+
+        const tipoPagamento = classifyPaymentType(rawTipo);
+        const valorNum = parseMoneyValue(rawValorStr);
+
+        if (valorNum > 0) {
+          rows.push({
+            date: dateObj.isoDate,
+            dateBr: dateObj.dateBr,
+            lancadoPor,
+            tipoPagamento,
+            valor: valorNum,
+            recepcao
+          });
+        }
+      }
+    }
+
+    const grouped = {};
+    rows.forEach(r => {
+      const key = `${r.date}_${r.recepcao}`;
+      if (!grouped[key]) {
+        grouped[key] = {
+          data: r.date,
+          dataBr: r.dateBr,
+          recepcao: r.recepcao,
+          dinheiro: 0,
+          pix: 0,
+          cartaoCredito: 0,
+          cartaoDebito: 0,
+          cheque: 0,
+          operadoresSet: new Set(),
+          totalLancamentos: 0
+        };
+      }
+
+      grouped[key][r.tipoPagamento] = (grouped[key][r.tipoPagamento] || 0) + r.valor;
+      if (r.lancadoPor) grouped[key].operadoresSet.add(r.lancadoPor);
+      grouped[key].totalLancamentos++;
+    });
+
+    return Object.values(grouped).map(g => {
+      const totalEntradas = g.dinheiro + g.pix + g.cartaoCredito + g.cartaoDebito + g.cheque;
+      const ops = Array.from(g.operadoresSet).filter(Boolean);
+      return {
+        data: g.data,
+        dataBr: g.dataBr,
+        recepcao: g.recepcao,
+        dinheiro: Math.round(g.dinheiro * 100) / 100,
+        pix: Math.round(g.pix * 100) / 100,
+        cartaoCredito: Math.round(g.cartaoCredito * 100) / 100,
+        cartaoDebito: Math.round(g.cartaoDebito * 100) / 100,
+        cheque: Math.round(g.cheque * 100) / 100,
+        totalEntradas: Math.round(totalEntradas * 100) / 100,
+        responsavel: ops.join(', ') || 'Importado via CSV',
+        status: 'Conferido',
+        totalLancamentos: g.totalLancamentos,
+        observacoes: `Importado via CSV (${g.totalLancamentos} itens)`
+      };
+    });
+  }
+
+  function clearSelectedCsv() {
+    parsedCsvItemsGlobal = [];
+    document.getElementById('csv-file-input').value = '';
+    document.getElementById('csv-upload-zone').classList.remove('hidden');
+    document.getElementById('csv-selected-preview').classList.add('hidden');
+    document.getElementById('csv-result-container').classList.add('hidden');
+    document.getElementById('btn-save-imported-csv-batch').classList.add('hidden');
+  }
+
+  function renderGroupedCsvResults(items) {
+    const container = document.getElementById('csv-result-container');
+    const groupedList = document.getElementById('csv-grouped-list');
+    const metaInfo = document.getElementById('csv-meta-info');
+    const totalGeralEl = document.getElementById('csv-total-geral');
+    const btnSaveBatch = document.getElementById('btn-save-imported-csv-batch');
+
+    if (!items || items.length === 0) {
+      alert('Nenhum lançamento válido encontrado no arquivo CSV.');
+      return;
+    }
+
+    let totalGeral = 0;
+    items.forEach(it => {
+      totalGeral += it.totalEntradas;
+    });
+
+    if (metaInfo) {
+      metaInfo.innerText = `${items.length} Fechamento(s) de Caixa Identificado(s) | Status: Conferido`;
+    }
+
+    if (totalGeralEl) {
+      totalGeralEl.innerText = `R$ ${formatMoney(totalGeral)}`;
+    }
+
+    groupedList.innerHTML = items.map((st, idx) => {
+      return `
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                ${idx + 1}
+              </span>
+              <div>
+                <h4 class="text-xs font-black font-mono text-gray-900 uppercase">Data: ${st.dataBr} (${st.data})</h4>
+                <p class="text-[10px] text-gray-500 font-mono">Operadores: ${st.responsavel} • Linhas lidas: ${st.totalLancamentos}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Status: Conferido
+              </span>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-gray-100 text-gray-800 border border-gray-300">
+                ${st.recepcao}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+              <span class="text-[9px] font-bold text-emerald-800 uppercase block">Dinheiro</span>
+              <span class="text-xs font-bold text-emerald-900">R$ ${formatMoney(st.dinheiro)}</span>
+            </div>
+            <div class="bg-teal-50 p-2 rounded-xl border border-teal-100">
+              <span class="text-[9px] font-bold text-teal-800 uppercase block">PIX</span>
+              <span class="text-xs font-bold text-teal-900">R$ ${formatMoney(st.pix)}</span>
+            </div>
+            <div class="bg-blue-50 p-2 rounded-xl border border-blue-100">
+              <span class="text-[9px] font-bold text-blue-800 uppercase block">Crédito</span>
+              <span class="text-xs font-bold text-blue-900">R$ ${formatMoney(st.cartaoCredito)}</span>
+            </div>
+            <div class="bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+              <span class="text-[9px] font-bold text-indigo-800 uppercase block">Débito</span>
+              <span class="text-xs font-bold text-indigo-900">R$ ${formatMoney(st.cartaoDebito)}</span>
+            </div>
+            <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 col-span-2 sm:col-span-1">
+              <span class="text-[9px] font-bold text-gray-700 uppercase block">Cheque</span>
+              <span class="text-xs font-bold text-gray-900">R$ ${formatMoney(st.cheque)}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[10px] font-bold text-gray-500 font-mono">Total do Fechamento: <strong class="text-emerald-900">R$ ${formatMoney(st.totalEntradas)}</strong></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.classList.remove('hidden');
+    if (btnSaveBatch) btnSaveBatch.classList.remove('hidden');
+  }
+
+  async function saveImportedCsvBatch() {
+    if (!parsedCsvItemsGlobal || parsedCsvItemsGlobal.length === 0) {
+      alert('Nenhum fechamento para importar.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-save-imported-csv-batch');
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch('/api/admin/recepcao/fechamento-caixa/salvar-lote-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: parsedCsvItemsGlobal })
+      });
+
+      const res = await response.json();
+      if (!res.success) {
+        throw new Error(res.error || 'Erro ao importar lançamentos do CSV.');
+      }
+
+      alert(res.message || 'Lançamentos importados e marcados como CONFERIDO com sucesso!');
+      closeImportCsvModal();
+      window.location.reload();
+    } catch (err) {
+      console.error('Erro ao importar CSV:', err);
+      alert('Falha ao gravar lançamentos: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  // Inicialização na carga da página
+  document.addEventListener('DOMContentLoaded', () => {
+    onRecepcaoOrDateChanged();
+  });
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,68 @@
+{
+  "newRecord": {
+    "id": "newRecord",
+    "action": "Novo Registro",
+    "scope": "Requisições / Pacientes / Geral",
+    "description": "Abre o formulário ou popup para cadastrar um novo registro",
+    "key": "n",
+    "ctrlKey": true,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  },
+  "save": {
+    "id": "save",
+    "action": "Salvar Formulário",
+    "scope": "Formulários / Modais",
+    "description": "Envia ou confirma os dados do formulário ativo",
+    "key": "s",
+    "ctrlKey": true,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  },
+  "cancel": {
+    "id": "cancel",
+    "action": "Cancelar / Limpar",
+    "scope": "Formulários / Modais",
+    "description": "Cancela a ação ou limpa os campos preenchidos",
+    "key": "c",
+    "ctrlKey": true,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  },
+  "closeModal": {
+    "id": "closeModal",
+    "action": "Fechar Modal (ESC)",
+    "scope": "Modais e Popups sobrepostas",
+    "description": "Fecha qualquer modal ativa no sistema ao pressionar a tecla configurada",
+    "key": "Escape",
+    "ctrlKey": false,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  },
+  "searchPatient": {
+    "id": "searchPatient",
+    "action": "Buscar Paciente",
+    "scope": "Requisições / Recepção",
+    "description": "Abre a popup de busca rápida de pacientes cadastrados",
+    "key": "p",
+    "ctrlKey": true,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  },
+  "quickSearch": {
+    "id": "quickSearch",
+    "action": "Foco na Busca Geral",
+    "scope": "Tabelas e Listagens",
+    "description": "Posiciona o cursor diretamente na caixa de pesquisa da página",
+    "key": "f",
+    "ctrlKey": true,
+    "altKey": false,
+    "shiftKey": false,
+    "enabled": true
+  }
+}

@@ -377,13 +377,20 @@
         <select id="selectPrintMode" onchange="setPrintMode(this.value)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-rose-500 focus:outline-none cursor-pointer">
           <option value="a4" selected>📄 Folha A4 (Várias etiquetas/página)</option>
           <option value="zebra">🏷️ Térmica / Zebra (1 por página)</option>
+          <option value="epl">📟 Térmica EPL / EPL2 (50x30mm / 203 DPI)</option>
         </select>
       </div>
 
-      <div class="flex items-center justify-end gap-2">
-        <button type="button" onclick="closeLabelPrintModal()" class="px-3.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-xs cursor-pointer transition-colors">Fechar</button>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button type="button" onclick="copyEplCommandsAll()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95" title="Copiar código EPL2 de todas as etiquetas para a área de transferência">
+          <span>📋</span> Copiar EPL2
+        </button>
+        <button type="button" onclick="printEplDirectAll()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95" title="Enviar impressão EPL2 diretamente para a impressora térmica">
+          <span>📡</span> Imprimir EPL (REST)
+        </button>
+        <button type="button" onclick="closeLabelPrintModal()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-xs cursor-pointer transition-colors">Fechar</button>
         <button type="button" onclick="simulateZebraPrint()" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95">
-          <span>🖨️</span> Imprimir Agora
+          <span>🖨️</span> Imprimir A4/Web
         </button>
       </div>
     </div>
@@ -1652,6 +1659,9 @@
             <span class="text-xs text-slate-500 font-bold truncate max-w-[180px]">
               (${item.grp.material || 'Diversos'})
             </span>
+            <button type="button" onclick="copyEplCommandsSingle(${idx})" class="ml-2 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-lg text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer shadow-2xs" title="Copiar código EPL2 deste tubo">
+              <span>📋</span> Copiar EPL
+            </button>
           </div>
 
           <div class="flex items-center justify-between sm:justify-end gap-3 bg-slate-100/90 px-3 py-1.5 rounded-xl border border-slate-200">
@@ -1679,6 +1689,15 @@
           </div>
         </div>
 
+        <!-- Accordion com o Código EPL2 Bruto do Tubo -->
+        <details class="no-print bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-emerald-400 font-mono">
+          <summary class="cursor-pointer font-bold text-slate-300 hover:text-white flex items-center justify-between select-none">
+            <span>▶ Ver Comando Bruto EPL2 (Impressora Térmica 203 DPI)</span>
+            <span class="text-[10px] text-amber-400 font-normal">Padrão Zebra / Argox / Eltron</span>
+          </summary>
+          <pre id="epl-code-preview-${idx}" class="mt-2 p-3 bg-black/80 rounded-lg text-[10.5px] overflow-x-auto whitespace-pre leading-relaxed border border-slate-800 text-emerald-400">${escapeHtmlString(generateEplForTubeGroup(item))}</pre>
+        </details>
+
         <!-- Container onde as N etiquetas do tubo serão renderizadas -->
         <div id="label-copies-container-${idx}" class="space-y-3"></div>
       `;
@@ -1689,6 +1708,129 @@
 
     document.getElementById('modalPrintLabels').classList.remove('hidden');
     setPrintMode(window.currentPrintMode || 'a4');
+  }
+
+  function escapeHtmlString(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // --- GERADOR E REMOVEDOR DE ACENTOS PARA EPL2 ---
+  function removeAccentsForEpl(str) {
+    if (!str) return '';
+    return String(str)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s\-\/\:\.\,\_\(\)]/g, '')
+      .toUpperCase();
+  }
+
+  function generateEplForTubeGroup(item) {
+    if (!item) return '';
+    const primaryExam = item.grp.exams[0];
+    const setorCode2Digits = getExamSetorCodigo(primaryExam);
+    const barcodeTag = `01-${item.reqCode8Digits}-${setorCode2Digits}`;
+    const setorName = removeAccentsForEpl(getExamSetorName(primaryExam)).substring(0, 16);
+    const materialName = removeAccentsForEpl(item.grp.material || 'DIVERSOS').substring(0, 18);
+    const tuboName = removeAccentsForEpl(item.grp.tubo || getExamTubeName(primaryExam)).substring(0, 18);
+    const patientName = removeAccentsForEpl(item.patientName || 'PACIENTE').substring(0, 28);
+    
+    const rawCodes = item.grp.exams.map(e => e.code || e.jalisCode || e.name).filter(Boolean);
+    const uniqueCodes = [...new Set(rawCodes)].map(removeAccentsForEpl);
+    const examCodesStr = uniqueCodes.join(', ').substring(0, 36);
+
+    const dateStr = item.dateTime ? item.dateTime.dateStr : '';
+    const timeStr = item.dateTime ? item.dateTime.timeStr : '';
+    const patientDN = item.patientDN || '';
+    const copies = item.currentQty || 1;
+
+    // Código EPL2 padrão para etiqueta de tubo 50mm x 30mm (400x240 dots @ 203 DPI)
+    const eplLines = [
+      'N',
+      'q400',
+      'Q240,24',
+      `A15,10,0,3,1,1,N,"${setorName} - ${materialName}"`,
+      `A15,35,0,2,1,1,N,"${patientName}"`,
+      `A15,60,0,1,1,N,"EX: ${examCodesStr}"`,
+      `A15,80,0,1,1,N,"${dateStr} ${timeStr}  DN:${patientDN}"`,
+      `B15,100,0,1,2,5,45,N,"${barcodeTag}"`,
+      `A15,152,0,2,1,1,N,"${barcodeTag}"`,
+      `A250,152,0,2,1,1,N,"TUBO: ${tuboName}"`,
+      `P${copies}`,
+      ''
+    ];
+
+    return eplLines.join('\r\n');
+  }
+
+  function copyEplCommandsSingle(idx) {
+    if (!window.activeLabelGroups || !window.activeLabelGroups[idx]) return;
+    const item = window.activeLabelGroups[idx];
+    const eplCode = generateEplForTubeGroup(item);
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(eplCode).then(() => {
+        alert('Código EPL2 deste tubo copiado para a área de transferência!');
+      }).catch(err => {
+        console.error('Erro ao copiar EPL:', err);
+        alert('Não foi possível copiar automaticamente. Veja o código no painel bruto.');
+      });
+    } else {
+      alert('Copie manualmente o código EPL do painel bruto do tubo.');
+    }
+  }
+
+  function copyEplCommandsAll() {
+    if (!window.activeLabelGroups || window.activeLabelGroups.length === 0) {
+      alert('Nenhuma etiqueta disponível para copiar.');
+      return;
+    }
+
+    const allEpl = window.activeLabelGroups.map(generateEplForTubeGroup).join('\r\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(allEpl).then(() => {
+        alert('Códigos EPL2 de TODAS as etiquetas copiados com sucesso!');
+      }).catch(err => {
+        console.error('Erro ao copiar EPL:', err);
+        alert('Erro ao copiar. Tente copiar do painel de código bruto do tubo.');
+      });
+    } else {
+      alert('Copie manualmente o código EPL do painel de código bruto.');
+    }
+  }
+
+  async function printEplDirectAll() {
+    if (!window.activeLabelGroups || window.activeLabelGroups.length === 0) {
+      alert('Nenhuma etiqueta de tubo disponível para envio.');
+      return;
+    }
+
+    const allEpl = window.activeLabelGroups.map(generateEplForTubeGroup).join('\r\n');
+    
+    try {
+      const response = await fetch('/api/impressoras/imprimir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          impressora: 'ZDesigner ZD230-203dpi ZPL',
+          etiqueta: allEpl
+        })
+      });
+
+      const data = await response.json();
+      if (data && data.success) {
+        alert('Etiquetas enviadas com sucesso para a impressora térmica EPL!');
+      } else {
+        alert('Solicitação enviada ao servidor de impressão. ' + (data?.message || ''));
+      }
+    } catch (err) {
+      console.error('Erro ao enviar impressão EPL REST:', err);
+      alert('Erro ao conectar ao servidor de impressão local. O código EPL2 pode ser copiado no botão "Copiar EPL2".');
+    }
   }
 
   window.currentPrintMode = 'a4';

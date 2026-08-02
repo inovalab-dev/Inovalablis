@@ -2099,31 +2099,46 @@ Acima de 18 anos..: 13 a 60 U/L</div>
       const statusStr = (ex.status || ex.situacao || document.getElementById('f-status')?.value || 'CONFERIDO').toUpperCase();
       const isLiberado = statusStr === 'LIBERADO';
 
-      // Transformar a string de resultado em linhas estruturadas [ { part1, resultado, unidade } ]
+      // Transformar a string de resultado em linhas estruturadas [ { PARAMETRO, resultado, unidade } ]
       let linhas = [];
       if (Array.isArray(ex.linhas) && ex.linhas.length > 0) {
-        linhas = ex.linhas;
+        linhas = ex.linhas.map(l => {
+          const param = l.PARAMETRO || (l.part1 ? String(l.part1).replace(/:\s*$/, '') : 'RESULTADO');
+          const valRaw = l.resultado !== undefined ? l.resultado : l.value;
+          const strVal = String(valRaw !== undefined && valRaw !== null ? valRaw : '').trim();
+          const parsedFloat = parseFloat(strVal.replace(',', '.'));
+          const valNum = (typeof valRaw === 'number') ? valRaw : (!isNaN(parsedFloat) && isFinite(strVal.replace(',', '.')) ? parsedFloat : strVal);
+          return {
+            PARAMETRO: param,
+            resultado: valNum,
+            unidade: l.unidade || l.unit || ''
+          };
+        });
       } else {
-        const rawLines = String(rawRes).split('\n').filter(l => l.trim().length > 0);
+        const rawLines = String(rawRes).split(/[|\n]/).filter(l => l.trim().length > 0);
         linhas = rawLines.map(lineStr => {
           if (lineStr.includes(':')) {
             const parts = lineStr.split(':');
-            const p1 = parts[0].trim() + ' :';
+            const p1 = parts[0].trim();
             const rest = parts.slice(1).join(':').trim();
             const restTokens = rest.split(/\s+/);
-            const valNum = restTokens[0] || '';
+            const valStr = restTokens[0] || '';
             const unit = restTokens.slice(1).join(' ') || '';
+            const parsedFloat = parseFloat(valStr.replace(',', '.'));
+            const valNum = (!isNaN(parsedFloat) && isFinite(valStr.replace(',', '.'))) ? parsedFloat : valStr;
             return {
-              part1: p1,
+              PARAMETRO: p1,
               resultado: valNum,
               unidade: unit
             };
           } else {
             const tokens = lineStr.trim().split(/\s+/);
-            const valNum = tokens[0] || lineStr;
+            const valStr = tokens[0] || lineStr;
             const unit = tokens.slice(1).join(' ') || '';
+            const parsedFloat = parseFloat(valStr.replace(',', '.'));
+            const valNum = (!isNaN(parsedFloat) && isFinite(valStr.replace(',', '.'))) ? parsedFloat : valStr;
             return {
-              part1: 'RESULTADO:',
+              PARAMETRO: 'RESULTADO',
               resultado: valNum,
               unidade: unit
             };
@@ -2195,7 +2210,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
       if (!saved) saved = localStorage.getItem(`lis_layout_${examCode}`);
       
       let modelComponents = saved ? JSON.parse(saved) : getDefaultLisComponents(examCode);
-      const formattedResultFromLines = mainExam.linhas.map(l => `${l.part1} ${l.resultado}${l.unidade ? ' ' + l.unidade : ''}`).join('\n');
+      const formattedResultFromLines = mainExam.linhas.map(l => `${l.PARAMETRO ? (l.PARAMETRO + ':') : (l.part1 || 'RESULTADO:')} ${l.resultado}${l.unidade ? ' ' + l.unidade : ''}`).join('\n');
 
       examesHtml = `
         <div class="relative w-full min-h-[520px] bg-white border border-slate-200 rounded-md p-2 font-mono text-xs overflow-hidden">
@@ -2269,7 +2284,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
               <tbody>
                 ${ex.linhas.map((l, idx) => `
                   <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} border-b border-slate-200">
-                    <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${escapeLisHtml(l.part1 || 'RESULTADO:')}</td>
+                    <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</td>
                     <td class="p-2 border-r border-slate-300 text-right font-bold text-slate-950 text-xs">
                       ${escapeLisHtml(l.resultado)} <span class="font-normal text-[10px] text-slate-700">${escapeLisHtml(l.unidade || '')}</span>
                     </td>
@@ -2305,7 +2320,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
             <div class="space-y-1 bg-white p-2 rounded border border-slate-200">
               ${ex.linhas.map(l => `
                 <div class="flex items-baseline justify-between font-mono text-xs">
-                  <span class="font-bold text-slate-800">${escapeLisHtml(l.part1 || 'RESULTADO:')}</span>
+                  <span class="font-bold text-slate-800">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</span>
                   <span class="font-bold text-sm text-indigo-950">${escapeLisHtml(l.resultado)} <span class="text-xs font-normal text-slate-600">${escapeLisHtml(l.unidade || '')}</span></span>
                 </div>
               `).join('')}
@@ -2343,7 +2358,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
                 <div class="space-y-1.5 bg-slate-50/80 p-2 border border-slate-200 rounded-xs">
                   ${ex.linhas.map(l => `
                     <div class="flex items-baseline justify-between text-xs font-mono border-b border-dashed border-slate-200 pb-1 last:border-0 last:pb-0">
-                      <span class="font-bold text-slate-900">${escapeLisHtml(l.part1 || 'RESULTADO:')}</span>
+                      <span class="font-bold text-slate-900">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</span>
                       <span class="font-bold italic text-slate-950 text-sm tracking-wide bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs">
                         ${escapeLisHtml(l.resultado)} <span class="not-italic text-xs font-normal text-slate-700">${escapeLisHtml(l.unidade || '')}</span>
                       </span>

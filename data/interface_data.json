@@ -1,55 +1,20 @@
 {
   "naoEnviados": [
     {
-      "id": "INT-ORD-1785527655034-190",
-      "requisitionCode": "00001005",
-      "patientName": "Luciana Barbosa Santos",
-      "patientAge": "25 ano(s)",
+      "id": "INT-PRONTO-1785687835779-605",
+      "requisitionCode": "00033225",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
       "patientSex": "M",
       "convenio": "Particular",
-      "examCode": "HEMO01",
-      "examTitle": "Hemograma Completo",
-      "material": "Sangue Total",
-      "equipment": "Urit 8021A - Bioquímica",
-      "sampleBarcode": "01-00001005-01",
-      "dateRequested": "28/07/2026, 12:24:15",
-      "status": "Aguardando Execução",
-      "sector": "Geral",
-      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001005||Luciana^Barbosa^Santos|||M\nO|1|01-00001005-01||^^^HEMO01|R|20260731195415\nL|1|N"
-    },
-    {
-      "id": "INT-ORD-1785527655034-289",
-      "requisitionCode": "00001004",
-      "patientName": "Roberto Rodrigues de Oliveira",
-      "patientAge": "64 ano(s)",
-      "patientSex": "M",
-      "convenio": "Particular",
-      "examCode": "TSH04",
-      "examTitle": "TSH (Hormônio Tireoestimulante)",
-      "material": "Hormônios",
-      "equipment": "Urit 8021A - Bioquímica",
-      "sampleBarcode": "01-00001004-01",
-      "dateRequested": "28/07/2026, 11:07:58",
-      "status": "Aguardando Execução",
-      "sector": "Geral",
-      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^TSH04|R|20260731195415\nL|1|N"
-    },
-    {
-      "id": "INT-ORD-1785527655034-666",
-      "requisitionCode": "00001004",
-      "patientName": "Roberto Rodrigues de Oliveira",
-      "patientAge": "64 ano(s)",
-      "patientSex": "M",
-      "convenio": "Particular",
-      "examCode": "HEMO01",
-      "examTitle": "Hemograma Completo",
-      "material": "Sangue Total",
-      "equipment": "Urit 8021A - Bioquímica",
-      "sampleBarcode": "01-00001004-01",
-      "dateRequested": "28/07/2026, 11:07:58",
-      "status": "Aguardando Execução",
-      "sector": "Geral",
-      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^HEMO01|R|20260731195415\nL|1|N"
+      "examCode": "BILI",
+      "examTitle": "BILI",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00033225-01",
+      "unit": "",
+      "refRange": "",
+      "status": "Aguardando Execução"
     },
     {
       "id": "INT-ORD-1785527655034-782",
@@ -67,23 +32,68 @@
       "status": "Aguardando Execução",
       "sector": "Geral",
       "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001003||Luciana^Barbosa^Santos|||M\nO|1|01-00001003-01||^^^HEMO01|R|20260731195415\nL|1|N"
+    }
+  ],
+  "processando": [
+    {
+      "id": "INT-PRONTO-3001",
+      "requisitionCode": "00033223",
+      "patientName": "João Pedro Santos",
+      "patientAge": "38 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "TSH",
+      "examTitle": "HORMÔNIO TIREOESTIMULANTE (TSH)",
+      "material": "Soro",
+      "equipment": "Cobas c311 - Roche",
+      "sampleBarcode": "01-00033223-03",
+      "unit": "µIU/mL",
+      "refRange": "0,40 a 4,30 µIU/mL",
+      "status": "Processando",
+      "rawResult": {
+        "part1": "RESULTADO:",
+        "resultado": "1,85",
+        "unidade": "µIU/mL"
+      },
+      "startTime": "02/08/2026 19:49",
+      "progress": 50
     },
     {
-      "id": "INT-ORD-1004",
-      "requisitionCode": "00033227",
-      "patientName": "Carlos Eduardo Mendes",
-      "patientAge": "62 Anos",
+      "id": "INT-PRONTO-1785687833218-25",
+      "requisitionCode": "00001004",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
       "patientSex": "M",
-      "convenio": "Unimed Cambará",
-      "examCode": "UREIA",
-      "examTitle": "DOSAGEM DE UREIA",
+      "convenio": "Particular",
+      "examCode": "HEMOG",
+      "examTitle": "HEMOG",
       "material": "Soro",
-      "equipment": "Mindray BS-200",
-      "sampleBarcode": "01-00033227-01",
-      "dateRequested": "31/07/2026 10:05",
-      "status": "Aguardando Execução",
-      "sector": "Bioquímica",
-      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^URE|R|20260731100500\nL|1|N"
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001004-01",
+      "unit": "",
+      "refRange": "",
+      "status": "Processando",
+      "startTime": "02/08/2026 16:39",
+      "progress": 50
+    },
+    {
+      "id": "INT-ORD-1785527655034-190",
+      "requisitionCode": "00001005",
+      "patientName": "Luciana Barbosa Santos",
+      "patientAge": "25 ano(s)",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "HEMO01",
+      "examTitle": "Hemograma Completo",
+      "material": "Sangue Total",
+      "equipment": "Urit 8021A - Bioquímica",
+      "sampleBarcode": "01-00001005-01",
+      "dateRequested": "28/07/2026, 12:24:15",
+      "status": "Processando",
+      "sector": "Geral",
+      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001005||Luciana^Barbosa^Santos|||M\nO|1|01-00001005-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "startTime": "02/08/2026 16:30",
+      "progress": 31
     },
     {
       "id": "INT-ORD-1005",
@@ -98,12 +108,69 @@
       "equipment": "Mindray BS-200",
       "sampleBarcode": "01-00033227-01",
       "dateRequested": "31/07/2026 10:05",
-      "status": "Aguardando Execução",
+      "status": "Processando",
       "sector": "Bioquímica",
-      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^CREA|R|20260731100500\nL|1|N"
-    }
-  ],
-  "processando": [
+      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^CREA|R|20260731100500\nL|1|N",
+      "startTime": "02/08/2026 15:30",
+      "progress": 22
+    },
+    {
+      "id": "INT-ORD-1004",
+      "requisitionCode": "00033227",
+      "patientName": "Carlos Eduardo Mendes",
+      "patientAge": "62 Anos",
+      "patientSex": "M",
+      "convenio": "Unimed Cambará",
+      "examCode": "UREIA",
+      "examTitle": "DOSAGEM DE UREIA",
+      "material": "Soro",
+      "equipment": "Mindray BS-200",
+      "sampleBarcode": "01-00033227-01",
+      "dateRequested": "31/07/2026 10:05",
+      "status": "Processando",
+      "sector": "Bioquímica",
+      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^URE|R|20260731100500\nL|1|N",
+      "startTime": "02/08/2026 15:30",
+      "progress": 24
+    },
+    {
+      "id": "INT-ORD-1785527655034-666",
+      "requisitionCode": "00001004",
+      "patientName": "Roberto Rodrigues de Oliveira",
+      "patientAge": "64 ano(s)",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "HEMO01",
+      "examTitle": "Hemograma Completo",
+      "material": "Sangue Total",
+      "equipment": "Urit 8021A - Bioquímica",
+      "sampleBarcode": "01-00001004-01",
+      "dateRequested": "28/07/2026, 11:07:58",
+      "status": "Processando",
+      "sector": "Geral",
+      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "startTime": "01/08/2026 12:13",
+      "progress": 34
+    },
+    {
+      "id": "INT-ORD-1785527655034-289",
+      "requisitionCode": "00001004",
+      "patientName": "Roberto Rodrigues de Oliveira",
+      "patientAge": "64 ano(s)",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "TSH04",
+      "examTitle": "TSH (Hormônio Tireoestimulante)",
+      "material": "Hormônios",
+      "equipment": "Urit 8021A - Bioquímica",
+      "sampleBarcode": "01-00001004-01",
+      "dateRequested": "28/07/2026, 11:07:58",
+      "status": "Processando",
+      "sector": "Geral",
+      "astmFrame": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^TSH04|R|20260731195415\nL|1|N",
+      "startTime": "01/08/2026 12:13",
+      "progress": 28
+    },
     {
       "id": "INT-ORD-1003",
       "requisitionCode": "00033226",
@@ -196,27 +263,104 @@
   ],
   "prontos": [
     {
-      "id": "INT-PRONTO-3001",
-      "requisitionCode": "00033223",
-      "patientName": "João Pedro Santos",
-      "patientAge": "38 Anos",
+      "id": "INT-PRONTO-1785700617325-453",
+      "requisitionCode": "00001008",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
       "patientSex": "M",
       "convenio": "Particular",
-      "examCode": "TSH",
-      "examTitle": "HORMÔNIO TIREOESTIMULANTE (TSH)",
+      "examCode": "HEMO01",
+      "examTitle": "HEMO01",
       "material": "Soro",
-      "equipment": "Cobas c311 - Roche",
-      "sampleBarcode": "01-00033223-03",
-      "resultValue": "1,85",
-      "unit": "µIU/mL",
-      "refRange": "0,40 a 4,30 µIU/mL",
-      "completedTime": "31/07/2026 11:10",
-      "status": "Pronto",
-      "rawResult": {
-        "part1": "RESULTADO:",
-        "resultado": "1,85",
-        "unidade": "µIU/mL"
-      }
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001008-01",
+      "resultValue": "Normal",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "RESULTADO",
+          "value": "Normal"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "02/08/2026 19:56",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785700617320-285",
+      "requisitionCode": "00001008",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "HEMO01",
+      "examTitle": "HEMO01",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001008-01",
+      "resultValue": "Normal",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "RESULTADO",
+          "value": "Normal"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "02/08/2026 19:56",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785700617306-76",
+      "requisitionCode": "00001008",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "HEMO01",
+      "examTitle": "HEMO01",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001008-01",
+      "resultValue": "Normal",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "RESULTADO",
+          "value": "Normal"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "02/08/2026 19:56",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785700569985-71",
+      "requisitionCode": "00001008",
+      "patientName": "Roberto Rodrigues de Oliveira",
+      "patientAge": "64 ano(s)",
+      "patientSex": "M",
+      "convenio": "Bradesco Saúde",
+      "examCode": "HEMO01",
+      "examTitle": "Hemograma Completo",
+      "material": "Sangue",
+      "equipment": "Urit 8021A - Bioquímica",
+      "sampleBarcode": "01-00001008-01",
+      "resultValue": "Normal",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "RESULTADO",
+          "value": "Normal"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "02/08/2026 19:56",
+      "status": "Pronto"
     },
     {
       "id": "INT-PRONTO-3002",
@@ -243,6 +387,226 @@
     }
   ],
   "mensagens": [
+    {
+      "id": "MSG-1785700617325",
+      "timestamp": "02/08/2026 19:56",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001008-01\",\n  \"exame\": \"HEMO01\",\n  \"valores\": \"Normal\"\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785700617320",
+      "timestamp": "02/08/2026 19:56",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001008-01\",\n  \"exame\": \"HEMO01\",\n  \"valores\": \"Normal\"\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785700617306",
+      "timestamp": "02/08/2026 19:56",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001008-01\",\n  \"exame\": \"HEMO01\",\n  \"valores\": \"Normal\"\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785700569985",
+      "timestamp": "02/08/2026 19:56",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001008-01\",\n  \"exame\": \"HEMO01\",\n  \"valores\": \"Normal\"\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785700348984-40",
+      "timestamp": "02/08/2026 19:52",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260802195103\nP|1||00001008||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001008-01||^^^HEMO01|R|20260802195103\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785700154639-11",
+      "timestamp": "02/08/2026 19:49",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Cobas c311 - Roche",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Resultado 00033223 (TSH) retornado de Prontos para Processando",
+      "status": "Retornado para Processando"
+    },
+    {
+      "id": "MSG-1785700154624-3",
+      "timestamp": "02/08/2026 19:49",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Ordem 00033225 (BILI) retornou de Processando para Não Enviados",
+      "status": "Retornado para Não Enviados"
+    },
+    {
+      "id": "MSG-1785699879442-82",
+      "timestamp": "02/08/2026 19:44",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Resultado 00033225 (BILI) retornado de Prontos para Processando",
+      "status": "Retornado para Processando"
+    },
+    {
+      "id": "MSG-1785699879429-46",
+      "timestamp": "02/08/2026 19:44",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Ordem 00001003 (HEMO01) retornou de Processando para Não Enviados",
+      "status": "Retornado para Não Enviados"
+    },
+    {
+      "id": "MSG-1785699761794-24",
+      "timestamp": "02/08/2026 19:42",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001003||Luciana^Barbosa^Santos|||M\nO|1|01-00001003-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785699761774-59",
+      "timestamp": "02/08/2026 19:42",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Ordem 00001003 (HEMO01) retornou de Processando para Não Enviados",
+      "status": "Retornado para Não Enviados"
+    },
+    {
+      "id": "MSG-1785699672692-47",
+      "timestamp": "02/08/2026 19:41",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001003||Luciana^Barbosa^Santos|||M\nO|1|01-00001003-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785688750505-44",
+      "timestamp": "02/08/2026 16:39",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Resultado 00001004 (HEMOG) retornado de Prontos para Processando",
+      "status": "Retornado para Processando"
+    },
+    {
+      "id": "MSG-1785688748068-16",
+      "timestamp": "02/08/2026 16:39",
+      "type": "SYSTEM",
+      "protocol": "LIS INTERACTION",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "Ação Manual: Ordem 00001003 (HEMO01) retornou de Processando para Não Enviados",
+      "status": "Retornado para Não Enviados"
+    },
+    {
+      "id": "MSG-1785688356616-56",
+      "timestamp": "02/08/2026 16:32",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001003||Luciana^Barbosa^Santos|||M\nO|1|01-00001003-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785688235944-59",
+      "timestamp": "02/08/2026 16:30",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001005||Luciana^Barbosa^Santos|||M\nO|1|01-00001005-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785687835779",
+      "timestamp": "02/08/2026 16:23",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00033225-01\",\n  \"exame\": \"BILI\",\n  \"valores\": [\n    {\n      \"DIRETA\": 68\n    },\n    {\n      \"INDIRETA\": 68\n    },\n    {\n      \"TOTAL\": 68\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785687833218",
+      "timestamp": "02/08/2026 16:23",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001004-01\",\n  \"exame\": \"HEMOG\",\n  \"valores\": [\n    {\n      \"RESULTADO\": 68\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785684647862-73",
+      "timestamp": "02/08/2026 15:30",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Mindray BS-200",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^CREA|R|20260731100500\nL|1|N",
+      "status": "Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785684647862-23",
+      "timestamp": "02/08/2026 15:30",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Mindray BS-200",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^URE|R|20260731100500\nL|1|N",
+      "status": "Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785586400930-54",
+      "timestamp": "01/08/2026 12:13",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^HEMO01|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
+    {
+      "id": "MSG-1785586400930-52",
+      "timestamp": "01/08/2026 12:13",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731195415\nP|1||00001004||Roberto^Rodrigues^de^Oliveira|||M\nO|1|01-00001004-01||^^^TSH04|R|20260731195415\nL|1|N",
+      "status": "Consulta API - Transicionada para Processando (Em Execução)"
+    },
     {
       "id": "MSG-1785584227347-86",
       "timestamp": "01/08/2026 11:37",

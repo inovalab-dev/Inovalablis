@@ -36,15 +36,19 @@ const pdf = require('pdf-parse');
 const app = express();
 const PORT = 3000;
 
-// Habilitar CORS para todas as origens e suportar requisições das aplicações móveis / web externas
-const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'token', 'X-Requested-With', 'Accept', 'Origin'],
-  credentials: true
-};
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// Habilitar CORS universal (suportando qualquer Origem, Credentials, Headers e requisições Preflight OPTIONS)
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, token, X-Requested-With, Accept, Origin, Access-Control-Allow-Headers');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 // Configuração do EJS como motor de visualização
 app.set('view engine', 'ejs');

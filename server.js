@@ -2913,7 +2913,7 @@ function validatePassword(patient, reqsFound, inputPassword) {
   return validPasswords.has(cleanInputPass);
 }
 
-// Auxiliar de formatação de data BR
+// Auxiliar de formatação de data BR (apenas data: DD/MM/YYYY)
 const formatDateToBR = (dateStr) => {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
@@ -2922,6 +2922,61 @@ const formatDateToBR = (dateStr) => {
   }
   return dateStr;
 };
+
+// Auxiliar de formatação de data e hora BR (formato: "DD/MM/YYYY HH:mm" sem vírgulas e sem segundos)
+const formatDateTimeToBR = (dateVal) => {
+  if (!dateVal) return '';
+  let str = String(dateVal).trim();
+  if (!str) return '';
+
+  // Se já estiver em formato BR "DD/MM/YYYY, HH:mm:ss" ou "DD/MM/YYYY HH:mm:ss" ou "DD/MM/YYYY HH:mm"
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) {
+    const cleanStr = str.replace(',', '').trim();
+    const parts = cleanStr.split(/\s+/);
+    const datePart = parts[0];
+    if (parts[1]) {
+      const timeParts = parts[1].split(':');
+      const hh = timeParts[0].padStart(2, '0');
+      const mm = (timeParts[1] || '00').padStart(2, '0');
+      return `${datePart} ${hh}:${mm}`;
+    }
+    return datePart;
+  }
+
+  // Se for ISO ou YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const [datePart, timePart] = str.split(/[T\s]+/);
+    const [y, m, d] = datePart.split('-');
+    const formattedDate = `${d}/${m}/${y}`;
+    if (timePart) {
+      const timeParts = timePart.split(':');
+      const hh = timeParts[0].padStart(2, '0');
+      const mm = (timeParts[1] || '00').padStart(2, '0');
+      return `${formattedDate} ${hh}:${mm}`;
+    }
+    return formattedDate;
+  }
+
+  return str.replace(',', '').trim();
+};
+
+// Auxiliar para formatar exames e requisições no padrão da API
+function formatRequisitionExams(reqsFound) {
+  return reqsFound.map(r => ({
+    codigoRequisicao: r.requisitionCode || r.id,
+    data: formatDateTimeToBR(r.createdAt || r.fatura || ''),
+    status: r.status || 'Coletado',
+    solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
+    listaExames: (r.exams || []).map(e => ({
+      codigo: e.code || '',
+      nome: e.name || e.exame || '',
+      material: e.material || 'Sangue',
+      status: e.status || r.status || 'A Coletar',
+      dataColeta: formatDateTimeToBR(e.dataColeta || e.coletaDate || r.createdAt || ''),
+      dataResultado: formatDateTimeToBR(e.dataResultado || e.resultDate || '')
+    }))
+  }));
+}
 
 // Auxiliar de formatação do perfil
 function formatPatientProfile(patient) {
@@ -3128,20 +3183,7 @@ app.all(['/api/paciente/exames', '/api/pacientes/exames'], async (req, res) => {
       return true;
     });
 
-    const examesFormatados = reqsFound.map(r => ({
-      codigoRequisicao: r.requisitionCode || r.id,
-      data: r.createdAt || r.fatura || '',
-      status: r.status || 'Coletado',
-      solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
-      listaExames: (r.exams || []).map(e => ({
-        codigo: e.code || '',
-        nome: e.name || e.exame || '',
-        material: e.material || 'Sangue',
-        status: e.status || r.status || 'A Coletar',
-        dataColeta: e.dataColeta || e.coletaDate || r.createdAt || '',
-        dataResultado: e.dataResultado || e.resultDate || ''
-      }))
-    }));
+    const examesFormatados = formatRequisitionExams(reqsFound);
 
     return res.json({
       success: true,
@@ -3212,20 +3254,7 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
       }
     }
 
-    const examesFormatados = reqsFound.map(r => ({
-      codigoRequisicao: r.requisitionCode || r.id,
-      data: r.createdAt || r.fatura || '',
-      status: r.status || 'Coletado',
-      solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
-      listaExames: (r.exams || []).map(e => ({
-        codigo: e.code || '',
-        nome: e.name || e.exame || '',
-        material: e.material || 'Sangue',
-        status: e.status || r.status || 'A Coletar',
-        dataColeta: e.dataColeta || e.coletaDate || r.createdAt || '',
-        dataResultado: e.dataResultado || e.resultDate || ''
-      }))
-    }));
+    const examesFormatados = formatRequisitionExams(reqsFound);
 
     const profileData = formatPatientProfile(patient);
 

@@ -1,0 +1,165 @@
+{
+	"info": {
+		"_postman_id": "a9f5c4b1-2e3d-4c5b-8a90-123456789abc",
+		"name": "InovaLab - API Paciente Mobile",
+		"description": "Coleção de requisições para integração da aplicação Mobile do Paciente (Autenticação JWT, Perfil e Filtro de Exames).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://ais-dev-oghqav2c3oafyvkoc6y7bg-26670228206.us-east1.run.app",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Login do Paciente (Autenticação)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.success && jsonData.token) {",
+							"    pm.collectionVariables.set('token', jsonData.token);",
+							"    console.log('Token armazenado com sucesso!');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cpf\": \"123.456.789-00\",\n  \"senha\": \"123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/paciente/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"paciente",
+						"login"
+					]
+				},
+				"description": "Autentica o paciente via CPF ou Código do Paciente + Senha. Retorna o Token Bearer com tempo de expiração de 24 horas."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Obter Perfil do Paciente (/perfil)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/paciente/perfil",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"paciente",
+						"perfil"
+					]
+				},
+				"description": "Retorna os dados cadastrais leves do paciente (Nome, CPF, Data de Nascimento, Contato, Endereço formatado, Convênio)."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Listar / Filtrar Exames (/exames)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/paciente/exames?status=Coletado",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"paciente",
+						"exames"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "Coletado",
+							"description": "Filtra por status (ex: Coletado, A Coletar, Liberado)",
+							"disabled": false
+						},
+						{
+							"key": "codigoRequisicao",
+							"value": "00001001",
+							"description": "Filtra por código de requisição específico",
+							"disabled": true
+						},
+						{
+							"key": "busca",
+							"value": "Hemograma",
+							"description": "Busca por nome do exame ou médico solicitante",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Lista os exames e requisições vinculados ao paciente autenticado com suporte a filtros de busca e status."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Consulta Completa (Legada sem Token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cpf\": \"123.456.789-00\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/paciente/consultar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"paciente",
+						"consultar"
+					]
+				},
+				"description": "Endpoint legadão que traz perfil e exames juntos."
+			},
+			"response": []
+		}
+	]
+}

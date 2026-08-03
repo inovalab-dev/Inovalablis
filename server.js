@@ -168,6 +168,8 @@ let setoresCache = [];
 let impressorasCache = [];
 let locaisColetaCache = [];
 let medicosCache = [];
+let patientsCache = null;
+let appointmentsCache = null;
 let escalaPlantaoCache = null;
 let cisnorpiCache = [];
 let temperaturasCache = [];
@@ -183,7 +185,7 @@ let db = null;
 let firebaseApp = null;
 let firebaseConfig = null;
 
-console.log("Integração com Cloud Firestore desativada conforme solicitação. Operando exclusivamente em modo local com arquivos JSON.");
+console.log("Integração com Cloud Firestore desativada. Utilizando MySQL / Persistência Local.");
 
 // Auxiliar para carregar JSON local como fallback/seeding
 function loadLocalJson(filePath) {
@@ -228,6 +230,8 @@ async function initializeFirebaseCaches() {
     priceTablesCache = await loadCollectionFromMysql('price_tables', PRICE_TABLES_FILE);
     recipientesCache = await loadCollectionFromMysql('recipientes', RECIPIENTES_FILE);
     setoresCache = await loadCollectionFromMysql('setores', SETORES_FILE);
+    patientsCache = await loadCollectionFromMysql('patients', PATIENTS_FILE);
+    appointmentsCache = await loadCollectionFromMysql('appointments', APPOINTMENTS_FILE);
 
     if (!priceTablesCache || priceTablesCache.length === 0) {
       priceTablesCache = [
@@ -3555,24 +3559,32 @@ app.post('/admin/cisnorpi/import', requireAdmin, (req, res) => {
 // ==========================================
 
 function loadPatients() {
-  return loadLocalJson(PATIENTS_FILE);
+  if (patientsCache) return patientsCache;
+  patientsCache = loadLocalJson(PATIENTS_FILE);
+  return patientsCache;
 }
 
 function savePatients(data) {
   try {
+    patientsCache = data;
     fs.writeFileSync(PATIENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('patients', data).catch(err => console.error("Erro ao salvar pacientes no MySQL:", err));
   } catch (err) {
     console.error("Erro ao salvar pacientes:", err);
   }
 }
 
 function loadAppointments() {
-  return loadLocalJson(APPOINTMENTS_FILE);
+  if (appointmentsCache) return appointmentsCache;
+  appointmentsCache = loadLocalJson(APPOINTMENTS_FILE);
+  return appointmentsCache;
 }
 
 function saveAppointments(data) {
   try {
+    appointmentsCache = data;
     fs.writeFileSync(APPOINTMENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('appointments', data).catch(err => console.error("Erro ao salvar agendamentos no MySQL:", err));
   } catch (err) {
     console.error("Erro ao salvar agendamentos:", err);
   }

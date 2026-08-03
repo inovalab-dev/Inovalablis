@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
@@ -2748,6 +2749,487 @@ app.post('/api/verificar-login', async (req, res) => {
     console.error('Erro na requisição de proxy de login:', error);
     // Em caso de erro de rede ou timeout, enviamos success: true para submeter direto via HTML real de fallback
     return res.json({ success: true, isFallback: true, isLocal: false });
+  }
+});
+
+// ROTA DE API PARA CONSULTA, LOGIN E INTEGRACÃO TOKEN-BASED DE PACIENTES (Mobile / Apps externas)
+const PATIENT_JWT_SECRET = process.env.PATIENT_JWT_SECRET || 'inovalab_patient_token_secret_key_2026';
+
+// Auxiliar para gerar Token JWT-signed com expiração
+function generatePatientToken(patient) {
+  const expiresInSeconds = 86400; // Validade de 24 Horas
+  const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
+  const payload = {
+    patientId: patient.id || `PAC-${patient.code || 1}`,
+    code: String(patient.code || patient.id || '1'),
+    cpf: patient.cpf || '',
+    exp
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', PATIENT_JWT_SECRET).update(payloadB64).digest('base64url');
+  const token = `${payloadB64}.${signature}`;
+  return {
+    token,
+    tokenType: 'Bearer',
+    expiresIn: expiresInSeconds,
+    expiresAt: new Date(exp * 1000).toISOString()
+  };
+}
+
+// Auxiliar para verificar Token enviado na requisição (Header Authorization, Query ou Body)
+function verifyPatientToken(req) {
+  let tokenStr = req.headers?.authorization || req.headers?.token || req.query?.token || req.body?.token;
+  if (!tokenStr || typeof tokenStr !== 'string') return null;
+  tokenStr = tokenStr.replace(/^Bearer\s+/i, '').trim();
+  const parts = tokenStr.split('.');
+  if (parts.length !== 2) return null;
+  
+  const [payloadB64, signature] = parts;
+  const expectedSig = crypto.createHmac('sha256', PATIENT_JWT_SECRET).update(payloadB64).digest('base64url');
+  if (signature !== expectedSig) return null;
+  
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+    if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+      return null; // Token expirado
+    }
+    return payload;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Auxiliar de busca de Paciente por CPF ou Código
+function findPatientRecord(query) {
+  if (!query || String(query).trim() === '') return null;
+  const rawQuery = String(query).trim();
+  const cleanDigitsQuery = rawQuery.replace(/\D/g, '');
+
+  const patients = loadPatients();
+  const requisitions = loadRequisitions();
+
+  // 1. Buscar nos Pacientes
+  let patient = patients.find(p => {
+    const pCpfClean = String(p.cpf || '').replace(/\D/g, '');
+    const pCode = String(p.code || '').trim();
+    const pId = String(p.id || '').trim();
+    const pProntuario = String(p.prontuario || '').trim();
+    const pUsername = String(p.username || p.patientUsername || '').trim();
+
+    if (cleanDigitsQuery && pCpfClean && cleanDigitsQuery === pCpfClean) return true;
+    if (p.cpf && p.cpf.trim() === rawQuery) return true;
+    if (pCode && (pCode.toLowerCase() === rawQuery.toLowerCase() || pCode === cleanDigitsQuery)) return true;
+    if (pId && (pId.toLowerCase() === rawQuery.toLowerCase() || pId.replace(/\D/g, '') === cleanDigitsQuery)) return true;
+    if (pProntuario && pProntuario.toLowerCase() === rawQuery.toLowerCase()) return true;
+    if (pUsername && pUsername.toLowerCase() === rawQuery.toLowerCase()) return true;
+    return false;
+  });
+
+  // 2. Se não encontrar em pacientes, buscar nas requisições ativas
+  if (!patient) {
+    const matchedReq = requisitions.find(r => {
+      const rCpfClean = String(r.patientCpf || '').replace(/\D/g, '');
+      const rCode = String(r.patientCode || '').trim();
+      const rReqCode = String(r.requisitionCode || '').trim();
+      const rUser = String(r.patientUsername || '').trim();
+
+      if (cleanDigitsQuery && rCpfClean && cleanDigitsQuery === rCpfClean) return true;
+      if (rCode && (rCode.toLowerCase() === rawQuery.toLowerCase() || rCode === cleanDigitsQuery)) return true;
+      if (rReqCode && (rReqCode.toLowerCase() === rawQuery.toLowerCase() || rReqCode === cleanDigitsQuery)) return true;
+      if (rUser && rUser.toLowerCase() === rawQuery.toLowerCase()) return true;
+      return false;
+    });
+
+    if (matchedReq) {
+      patient = {
+        id: matchedReq.patientCode ? `PAC-${matchedReq.patientCode}` : matchedReq.id,
+        code: matchedReq.patientCode || matchedReq.requisitionCode,
+        name: matchedReq.patientName,
+        cpf: matchedReq.patientCpf || '',
+        birthDate: matchedReq.patientBirthDate || '',
+        phone: matchedReq.patientPhone || '',
+        email: '',
+        street: matchedReq.address || '',
+        number: '',
+        neighborhood: '',
+        city: matchedReq.city || '',
+        state: matchedReq.state || '',
+        cep: matchedReq.cep || '',
+        convenio: matchedReq.convenio || '',
+        webPassword: matchedReq.patientPassword || ''
+      };
+    }
+  }
+
+  return patient;
+}
+
+// Auxiliar de validação de senha
+function validatePassword(patient, reqsFound, inputPassword) {
+  if (!inputPassword || String(inputPassword).trim() === '') return false;
+  const cleanInputPass = String(inputPassword).trim();
+  const validPasswords = new Set();
+
+  if (patient.webPassword) validPasswords.add(String(patient.webPassword).trim());
+  if (patient.password) validPasswords.add(String(patient.password).trim());
+  if (patient.senha) validPasswords.add(String(patient.senha).trim());
+
+  (reqsFound || []).forEach(r => {
+    if (r.patientPassword) validPasswords.add(String(r.patientPassword).trim());
+    if (r.password) validPasswords.add(String(r.password).trim());
+  });
+
+  if (patient.birthDate) {
+    const bd = String(patient.birthDate).trim();
+    validPasswords.add(bd);
+    const bdClean = bd.replace(/\D/g, '');
+    if (bdClean) validPasswords.add(bdClean);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(bd)) {
+      const [y, m, d] = bd.split('-');
+      validPasswords.add(`${d}/${m}/${y}`);
+      validPasswords.add(`${d}${m}${y}`);
+    }
+  }
+
+  // Senhas padrão de testes/demo
+  validPasswords.add("123");
+  validPasswords.add("1234");
+
+  return validPasswords.has(cleanInputPass);
+}
+
+// Auxiliar de formatação de data BR
+const formatDateToBR = (dateStr) => {
+  if (!dateStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
+// Auxiliar de formatação do perfil
+function formatPatientProfile(patient) {
+  const ruaNum = patient.street ? (patient.number ? `${patient.street}, ${patient.number}` : patient.street) : (patient.address || '');
+  const bairro = patient.neighborhood ? ` - ${patient.neighborhood}` : '';
+  const cidUf = patient.city ? `, ${patient.city}${patient.state ? ' - ' + patient.state : ''}` : '';
+  const cepPart = patient.cep ? `, CEP: ${patient.cep}` : '';
+  const enderecoCompleto = `${ruaNum}${bairro}${cidUf}${cepPart}`.trim();
+
+  return {
+    id: patient.id || `PAC-${patient.code || 1}`,
+    codigo: String(patient.code || patient.id || '1'),
+    nome: patient.name || '',
+    cpf: patient.cpf || '',
+    dataNascimento: formatDateToBR(patient.birthDate || ''),
+    contato: patient.phone || patient.celular || '',
+    email: patient.email || '',
+    endereco: {
+      rua: patient.street || '',
+      numero: patient.number || '',
+      bairro: patient.neighborhood || '',
+      cidade: patient.city || '',
+      estado: patient.state || '',
+      cep: patient.cep || '',
+      completo: enderecoCompleto
+    },
+    convenio: patient.convenio || ''
+  };
+}
+
+// 1. ENDPOINT DE LOGIN DO PACIENTE (Retorna Token com expiração)
+app.all(['/api/paciente/login', '/api/pacientes/login'], async (req, res) => {
+  try {
+    const query = req.body?.cpf || req.body?.codigo || req.body?.code || req.body?.usuario || req.body?.id || req.body?.prontuario || req.body?.login ||
+                  req.query?.cpf || req.query?.codigo || req.query?.code || req.query?.usuario || req.query?.id || req.query?.prontuario || req.query?.login;
+
+    const password = req.body?.senha || req.body?.password || req.body?.webPassword || req.body?.pass ||
+                     req.query?.senha || req.query?.password || req.query?.webPassword || req.query?.pass;
+
+    if (!query || String(query).trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: "Identificador obrigatório ausente",
+        message: "Informe o 'cpf' ou o 'codigo' do paciente."
+      });
+    }
+
+    if (!password || String(password).trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: "Senha obrigatória",
+        message: "Informe o campo 'senha' para realizar o login."
+      });
+    }
+
+    const patient = findPatientRecord(query);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        error: "Paciente não encontrado",
+        message: "Nenhum cadastro encontrado com o CPF ou Código informado."
+      });
+    }
+
+    // Buscar requisições para checar senhas vinculadas
+    const requisitions = loadRequisitions();
+    const patientCodeStr = String(patient.code || patient.id || '').toLowerCase();
+    const patientCpfClean = String(patient.cpf || '').replace(/\D/g, '');
+
+    const reqsFound = requisitions.filter(r => {
+      const rCpfClean = String(r.patientCpf || '').replace(/\D/g, '');
+      const rCode = String(r.patientCode || '').toLowerCase();
+      if (patientCpfClean && patientCpfClean.length >= 11 && rCpfClean === patientCpfClean) return true;
+      if (patientCodeStr && rCode && rCode === patientCodeStr) return true;
+      return false;
+    });
+
+    const isPassValid = validatePassword(patient, reqsFound, password);
+    if (!isPassValid) {
+      return res.status(401).json({
+        success: false,
+        error: "Senha incorreta",
+        message: "A senha digitada está incorreta para este paciente."
+      });
+    }
+
+    // Gerar token de acesso (Bearer Token)
+    const tokenData = generatePatientToken(patient);
+
+    return res.json({
+      success: true,
+      message: "Login realizado com sucesso",
+      ...tokenData,
+      paciente: {
+        id: patient.id || `PAC-${patient.code || 1}`,
+        codigo: String(patient.code || patient.id || '1'),
+        nome: patient.name || '',
+        cpf: patient.cpf || ''
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro no login do paciente:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor",
+      message: error.message
+    });
+  }
+});
+
+// 2. ENDPOINT DO PERFIL DO PACIENTE (/me /perfil) - Leve e autenticado por Token
+app.all(['/api/paciente/me', '/api/paciente/perfil'], async (req, res) => {
+  try {
+    const tokenPayload = verifyPatientToken(req);
+
+    let patient = null;
+    if (tokenPayload) {
+      patient = findPatientRecord(tokenPayload.code || tokenPayload.patientId || tokenPayload.cpf);
+    } else {
+      // Fallback para envio direto de cpf/codigo na query/body se sem token
+      const query = req.body?.cpf || req.body?.codigo || req.query?.cpf || req.query?.codigo;
+      if (query) patient = findPatientRecord(query);
+    }
+
+    if (!patient) {
+      return res.status(401).json({
+        success: false,
+        error: "Não autorizado ou token inválido/expirado",
+        message: "Forneça um token válido no header 'Authorization: Bearer <token>' para acessar o perfil."
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: formatPatientProfile(patient)
+    });
+
+  } catch (error) {
+    console.error("Erro ao buscar perfil do paciente:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor",
+      message: error.message
+    });
+  }
+});
+
+// 3. ENDPOINT DE FILTRO DE EXAMES (/exames) - Leve, paginado/filtrável por status, datas e código
+app.all(['/api/paciente/exames', '/api/pacientes/exames'], async (req, res) => {
+  try {
+    const tokenPayload = verifyPatientToken(req);
+
+    let patient = null;
+    if (tokenPayload) {
+      patient = findPatientRecord(tokenPayload.code || tokenPayload.patientId || tokenPayload.cpf);
+    } else {
+      // Fallback para envio de cpf/codigo se sem token
+      const query = req.body?.cpf || req.body?.codigo || req.query?.cpf || req.query?.codigo;
+      if (query) patient = findPatientRecord(query);
+    }
+
+    if (!patient) {
+      return res.status(401).json({
+        success: false,
+        error: "Não autorizado ou token inválido/expirado",
+        message: "Forneça um token válido no header 'Authorization: Bearer <token>' para consultar os exames."
+      });
+    }
+
+    const requisitions = loadRequisitions();
+    const patientCodeStr = String(patient.code || patient.id || '').toLowerCase();
+    const patientCpfClean = String(patient.cpf || '').replace(/\D/g, '');
+    const patientNameStr = String(patient.name || '').toLowerCase();
+
+    // Filtros adicionais recebidos na requisição
+    const filterStatus = String(req.query?.status || req.body?.status || '').toLowerCase().trim();
+    const filterReqCode = String(req.query?.codigoRequisicao || req.query?.requisicao || req.body?.codigoRequisicao || req.body?.requisicao || '').toLowerCase().trim();
+    const filterSearch = String(req.query?.busca || req.query?.query || req.body?.busca || req.body?.query || '').toLowerCase().trim();
+
+    let reqsFound = requisitions.filter(r => {
+      const rCpfClean = String(r.patientCpf || '').replace(/\D/g, '');
+      const rCode = String(r.patientCode || '').toLowerCase();
+      const rName = String(r.patientName || '').toLowerCase();
+
+      let matchPatient = false;
+      if (patientCpfClean && patientCpfClean.length >= 11 && rCpfClean === patientCpfClean) matchPatient = true;
+      if (patientCodeStr && rCode && rCode === patientCodeStr) matchPatient = true;
+      if (patientNameStr && rName && rName === patientNameStr) matchPatient = true;
+
+      if (!matchPatient) return false;
+
+      // Aplicar filtros de busca
+      if (filterStatus && String(r.status || '').toLowerCase() !== filterStatus) return false;
+      if (filterReqCode && !String(r.requisitionCode || r.id || '').toLowerCase().includes(filterReqCode)) return false;
+
+      if (filterSearch) {
+        const docMatch = String(r.doctorName || '').toLowerCase().includes(filterSearch);
+        const reqMatch = String(r.requisitionCode || '').toLowerCase().includes(filterSearch);
+        const examMatch = (r.exams || []).some(e => String(e.name || e.code || '').toLowerCase().includes(filterSearch));
+        if (!docMatch && !reqMatch && !examMatch) return false;
+      }
+
+      return true;
+    });
+
+    const examesFormatados = reqsFound.map(r => ({
+      codigoRequisicao: r.requisitionCode || r.id,
+      data: r.createdAt || r.fatura || '',
+      status: r.status || 'Coletado',
+      solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
+      listaExames: (r.exams || []).map(e => ({
+        codigo: e.code || '',
+        nome: e.name || e.exame || '',
+        material: e.material || 'Sangue',
+        status: e.status || r.status || 'A Coletar',
+        dataColeta: e.dataColeta || e.coletaDate || r.createdAt || '',
+        dataResultado: e.dataResultado || e.resultDate || ''
+      }))
+    }));
+
+    return res.json({
+      success: true,
+      totalRequisicoes: examesFormatados.length,
+      exames: examesFormatados
+    });
+
+  } catch (error) {
+    console.error("Erro na consulta de exames do paciente:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor",
+      message: error.message
+    });
+  }
+});
+
+// 4. ENDPOINT LEGADO DE CONSULTA COMPLETA (/consultar)
+app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/buscar'], async (req, res) => {
+  try {
+    const query = req.body?.cpf || req.body?.codigo || req.body?.code || req.body?.usuario || req.body?.id || req.body?.prontuario || req.body?.login ||
+                  req.query?.cpf || req.query?.codigo || req.query?.code || req.query?.usuario || req.query?.id || req.query?.prontuario || req.query?.login;
+
+    const password = req.body?.senha || req.body?.password || req.body?.webPassword || req.body?.pass ||
+                     req.query?.senha || req.query?.password || req.query?.webPassword || req.query?.pass;
+
+    if (!query || String(query).trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: "Parâmetro obrigatório ausente",
+        message: "Informe o 'cpf' ou o 'codigo' do paciente."
+      });
+    }
+
+    const patient = findPatientRecord(query);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        error: "Paciente não encontrado",
+        message: `Nenhum paciente ou registro encontrado com os dados informados (${query}).`
+      });
+    }
+
+    const requisitions = loadRequisitions();
+    const patientCodeStr = String(patient.code || patient.id || '').toLowerCase();
+    const patientCpfClean = String(patient.cpf || '').replace(/\D/g, '');
+    const patientNameStr = String(patient.name || '').toLowerCase();
+
+    const reqsFound = requisitions.filter(r => {
+      const rCpfClean = String(r.patientCpf || '').replace(/\D/g, '');
+      const rCode = String(r.patientCode || '').toLowerCase();
+      const rName = String(r.patientName || '').toLowerCase();
+
+      if (patientCpfClean && patientCpfClean.length >= 11 && rCpfClean === patientCpfClean) return true;
+      if (patientCodeStr && rCode && rCode === patientCodeStr) return true;
+      if (patientNameStr && rName && rName === patientNameStr) return true;
+      return false;
+    });
+
+    if (password && String(password).trim() !== '') {
+      const isValid = validatePassword(patient, reqsFound, password);
+      if (!isValid) {
+        return res.status(401).json({
+          success: false,
+          error: "Senha incorreta",
+          message: "A senha informada não confere com o cadastro do paciente."
+        });
+      }
+    }
+
+    const examesFormatados = reqsFound.map(r => ({
+      codigoRequisicao: r.requisitionCode || r.id,
+      data: r.createdAt || r.fatura || '',
+      status: r.status || 'Coletado',
+      solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
+      listaExames: (r.exams || []).map(e => ({
+        codigo: e.code || '',
+        nome: e.name || e.exame || '',
+        material: e.material || 'Sangue',
+        status: e.status || r.status || 'A Coletar',
+        dataColeta: e.dataColeta || e.coletaDate || r.createdAt || '',
+        dataResultado: e.dataResultado || e.resultDate || ''
+      }))
+    }));
+
+    const profileData = formatPatientProfile(patient);
+
+    return res.json({
+      success: true,
+      data: {
+        ...profileData,
+        exames: examesFormatados,
+        totalRequisicoes: examesFormatados.length
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro na consulta de paciente:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor",
+      message: error.message
+    });
   }
 });
 

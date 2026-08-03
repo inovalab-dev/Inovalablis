@@ -1420,31 +1420,70 @@
         </div>
 
         <!-- OPÇÕES ADICIONAIS DE FORMATO DE LAUDO E FORMULÁRIO -->
-        <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-2xs mt-4">
-          <h4 class="font-extrabold text-slate-800 uppercase font-mono text-xs flex items-center gap-1.5">
-            <span>📄</span> Parâmetros Adicionais de Impressão
-          </h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-4 shadow-2xs mt-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h4 class="font-extrabold text-slate-800 uppercase font-mono text-xs flex items-center gap-1.5">
+              <span>🏠</span> Predefinições do Laudo Interno & Modelo de Impressão
+            </h4>
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold font-mono rounded border border-emerald-200">
+              Valores Pré-definidos para Digitação
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Configure aqui o modelo visual de laudo e os valores pré-definidos (Título, Material, Método e Valores de Referência) para este exame. Quando for realizar a digitação do resultado, estes campos virão preenchidos automaticamente, mas poderão ser editados na hora da liberação.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Modelo de Laudo -->
             <div>
-              <label class="block font-bold text-gray-700 font-mono mb-1">Modelo de Laudo de Impressão Base:</label>
-              <select id="mod-modelo-laudo" class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg font-bold">
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Modelo de Laudo de Impressão Base:</label>
+              <select id="mod-modelo-laudo" name="modeloLaudo" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all">
                 <option value="Padrão LIS InovaLab">Padrão LIS InovaLab</option>
                 <option value="Modelo Hematologia em Colunas">Modelo Hematologia em Colunas</option>
                 <option value="Modelo Microbiologia & Antibiograma">Modelo Microbiologia & Antibiograma</option>
                 <option value="Modelo Texto Livre (Laudo Estruturado)">Modelo Texto Livre (Laudo Estruturado)</option>
               </select>
             </div>
+
+            <!-- Título do Exame no Laudo -->
             <div>
-              <label class="block font-bold text-gray-700 font-mono mb-1">Formulário de Coleta:</label>
-              <select id="mod-formulario-coleta" class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg font-bold">
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Título do Exame no Laudo (Cabeçalho Interno):</label>
+              <input type="text" id="mod-titulo-laudo" name="tituloLaudo" placeholder="Ex: HEMOGRAMA COMPLETO" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Material Biológico -->
+            <div>
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Material Biológico Padrão:</label>
+              <input type="text" id="mod-material-laudo" name="materialLaudo" placeholder="Ex: Sangue Total (EDTA)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Método de Análise -->
+            <div>
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Método de Análise Padrão:</label>
+              <input type="text" id="mod-metodo-laudo" name="metodoLaudo" placeholder="Ex: Automatizado / Impedância" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Valores de Referência -->
+            <div class="md:col-span-2">
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Valores de Referência Predefinidos:</label>
+              <textarea id="mod-valor-referencia-laudo" name="valorReferenciaLaudo" rows="3" placeholder="Ex: Homens: 13.5 a 17.5 g/dL&#10;Mulheres: 12.0 a 15.5 g/dL" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
+            </div>
+
+            <!-- Formulário de Coleta -->
+            <div>
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Formulário de Coleta:</label>
+              <select id="mod-formulario-coleta" name="formularioColeta" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all">
                 <option value="Ficha Padrão de Coleta">Ficha Padrão de Coleta</option>
                 <option value="Etiqueta com Código de Barras Duplo">Etiqueta com Código de Barras Duplo</option>
                 <option value="Guia Externa do Paciente">Guia Externa do Paciente</option>
               </select>
             </div>
+
+            <!-- Cabeçalho Personalizado -->
             <div class="md:col-span-2">
-              <label class="block font-bold text-gray-700 font-mono mb-1">Cabeçalho Personalizado do Laudo:</label>
-              <textarea id="mod-cabecalho" rows="2" placeholder="Observação no topo da folha do laudo..." class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg font-medium"></textarea>
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Cabeçalho Personalizado do Laudo:</label>
+              <textarea id="mod-cabecalho" name="cabecalho" rows="2" placeholder="Observação no topo da folha do laudo..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
             </div>
           </div>
         </div>
@@ -3235,6 +3274,15 @@
 
     document.getElementById('form-exam-historico').value = exam.historico || '';
 
+    // Tab 5 - Modelos e Predefinições do Laudo Interno
+    if (document.getElementById('mod-modelo-laudo')) document.getElementById('mod-modelo-laudo').value = exam.modeloLaudo || 'Padrão LIS InovaLab';
+    if (document.getElementById('mod-formulario-coleta')) document.getElementById('mod-formulario-coleta').value = exam.formularioColeta || 'Ficha Padrão de Coleta';
+    if (document.getElementById('mod-cabecalho')) document.getElementById('mod-cabecalho').value = exam.cabecalho || '';
+    if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = exam.tituloLaudo || exam.name || '';
+    if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = exam.materialLaudo || (Array.isArray(exam.materiaisColetados) && exam.materiaisColetados[0]?.material) || exam.category || '';
+    if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = exam.metodoLaudo || exam.metodo || '';
+    if (document.getElementById('mod-valor-referencia-laudo')) document.getElementById('mod-valor-referencia-laudo').value = exam.valorReferenciaLaudo || exam.valorReferencia || exam.referencia || '';
+
     // Materiais
     if (Array.isArray(exam.materiaisColetados) && exam.materiaisColetados.length > 0) {
       currentMateriaisList = exam.materiaisColetados;
@@ -3376,6 +3424,10 @@
       document.getElementById('mod-modelo-laudo').value = mat.modeloLaudo || 'Padrão LIS InovaLab';
       document.getElementById('mod-formulario-coleta').value = mat.formularioColeta || 'Ficha Padrão de Coleta';
       document.getElementById('mod-cabecalho').value = mat.cabecalho || '';
+      if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = mat.tituloLaudo || mat.nome || '';
+      if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = mat.materialLaudo || mat.nome || '';
+      if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = mat.metodoLaudo || mat.metodo || '';
+      if (document.getElementById('mod-valor-referencia-laudo')) document.getElementById('mod-valor-referencia-laudo').value = mat.valorReferenciaLaudo || mat.referencia || '';
 
       // Medicamento
       document.getElementById('med-interferentes').value = mat.medInterferentes || '';

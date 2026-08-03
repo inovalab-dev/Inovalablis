@@ -7,10 +7,10 @@
       <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
         <span>Resultados</span>
         <span>•</span>
-        <span class="text-brand-gold font-bold">Módulo de Digitação & Laudos</span>
+        <span class="text-brand-gold font-bold">Módulo de Liberação de Resultados</span>
       </div>
       <h1 class="text-2xl font-black text-[#284701] flex items-center gap-2">
-        <span>⌨️</span> Digitação de Resultados
+        <span>📋</span> Liberação de Resultados
       </h1>
       <p class="text-xs text-brand-neutral/70 mt-1">
         Lançamento de resultados, conferência técnica, impressão e liberação de laudos laboratoriais.
@@ -226,21 +226,21 @@
 <!-- ========================================================= -->
 <div
   id="typing-modal"
-  class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+  class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs hidden flex items-center justify-center p-1 sm:p-3 overflow-hidden"
 >
-  <div class="bg-white w-full max-w-7xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[95vh] overflow-hidden">
+  <div class="bg-white w-full max-w-7xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col h-[98vh] max-h-[960px] my-auto overflow-hidden">
     
-    <!-- HEADER DO LAUDO / REQUISIÇÃO (Inspirado na imagem, mantendo nosso Style CSS) -->
-    <div class="bg-slate-900 text-white p-4 sm:p-5 border-b border-slate-800 shrink-0">
-      <div class="flex items-start justify-between gap-4 mb-3">
+    <!-- HEADER DO LAUDO / REQUISIÇÃO -->
+    <div class="bg-slate-900 text-white p-3.5 sm:p-4 border-b border-slate-800 shrink-0">
+      <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <span class="p-2 bg-brand-gold/20 text-brand-gold rounded-xl font-bold text-lg">⌨️</span>
+          <span class="p-1.5 bg-brand-gold/20 text-brand-gold rounded-lg font-bold text-base">⌨️</span>
           <div>
-            <h2 class="text-lg font-black text-white flex items-center gap-2">
+            <h2 class="text-base font-black text-white flex items-center gap-2">
               Digitação de Resultado
             </h2>
-            <p class="text-xs text-slate-400">
-              Lançamento, conferência e liberação individual ou em lote
+            <p class="text-[11px] text-slate-400">
+              Lançamento, conferência e liberação de exames
             </p>
           </div>
         </div>
@@ -255,20 +255,10 @@
             onchange="handleXmlFileImport(event)"
           />
 
-          <!-- Botão Importar XML Direct File / Modal -->
-          <button
-            type="button"
-            onclick="openXmlModalOrTrigger()"
-            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 border border-emerald-400/30"
-            title="Importar XML do Laboratório de Apoio (AOL)"
-          >
-            <span>📥</span> Importar XML Resultado
-          </button>
-
           <button
             type="button"
             onclick="closeTypingModal()"
-            class="text-slate-400 hover:text-white p-1.5 hover:bg-white/10 rounded-xl transition-colors text-lg"
+            class="text-slate-400 hover:text-white p-1.5 hover:bg-white/10 rounded-xl transition-colors text-lg font-bold"
             title="Fechar Modal (Esc)"
           >
             ✕
@@ -276,30 +266,48 @@
         </div>
       </div>
 
-      <!-- Barra de Dados da Requisição / Paciente -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 bg-white/5 p-3 rounded-xl border border-white/10 text-xs">
-        <div>
-          <span class="text-[10px] uppercase font-mono font-bold text-slate-400 block">Requisição</span>
-          <span id="m-req-code" class="font-mono font-black text-brand-gold text-sm">#00000000</span>
+      <!-- Barra de Dados da Requisição / Paciente (Estilo LIS) -->
+      <div class="mt-2 bg-slate-800/90 p-2.5 rounded-xl border border-slate-700/80 text-xs font-mono text-slate-200 space-y-1.5">
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-12 gap-2 items-center">
+          <div class="md:col-span-2">
+            <span class="text-slate-400 font-bold">Requisição:</span>
+            <strong id="m-req-code" class="text-brand-gold font-mono font-black text-sm">#00000000</strong>
+          </div>
+          <div class="md:col-span-6 flex items-center gap-1.5 truncate">
+            <span class="text-slate-400 font-bold shrink-0">Paciente:</span>
+            <strong id="m-patient-name" class="text-white font-bold text-sm truncate">-</strong>
+          </div>
+          <div class="md:col-span-4 font-mono text-slate-300 truncate">
+            <span id="m-patient-details">Nasc: - | Idade: - | Sexo: -</span>
+          </div>
         </div>
-        <div class="col-span-2">
-          <span class="text-[10px] uppercase font-mono font-bold text-slate-400 block">Paciente</span>
-          <span id="m-patient-name" class="font-bold text-white text-sm block truncate">-</span>
-          <span id="m-patient-details" class="text-[10.5px] text-slate-300 font-mono block">
-            Nasc: - | Idade: - | Sexo: -
-          </span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2 items-center border-t border-slate-700/60 pt-1 text-[11px]">
+          <div class="md:col-span-6 truncate">
+            <span class="text-slate-400 font-bold">Médico:</span>
+            <span id="m-doctor" class="text-slate-200 font-medium">-</span>
+          </div>
+          <div class="md:col-span-6 truncate">
+            <span class="text-slate-400 font-bold">Convênio:</span>
+            <span id="m-convenio" class="text-slate-200 font-medium">-</span>
+          </div>
         </div>
-        <div>
-          <span class="text-[10px] uppercase font-mono font-bold text-slate-400 block">Médico</span>
-          <span id="m-doctor" class="font-medium text-slate-200 block truncate">-</span>
-        </div>
-        <div>
-          <span class="text-[10px] uppercase font-mono font-bold text-slate-400 block">Convênio</span>
-          <span id="m-convenio" class="font-medium text-slate-200 block truncate">-</span>
-        </div>
-        <div>
-          <span class="text-[10px] uppercase font-mono font-bold text-slate-400 block">Coleta / Status</span>
-          <span id="m-coleta-status" class="font-bold text-emerald-400 block">-</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-12 gap-2 items-center border-t border-slate-700/60 pt-1 text-[11px]">
+          <div class="md:col-span-5 truncate">
+            <span class="text-slate-400 font-bold">Exame:</span>
+            <strong id="m-active-title" class="text-white font-black text-xs">Selecione um exame</strong>
+          </div>
+          <div class="md:col-span-2">
+            <span class="text-slate-400 font-bold">Situação:</span>
+            <span id="m-active-status-badge" class="px-2 py-0.5 font-mono font-bold text-[10px] rounded bg-slate-700 text-slate-200">Sem resultado</span>
+          </div>
+          <div class="md:col-span-2 truncate">
+            <span class="text-slate-400 font-bold">Material:</span>
+            <span id="m-active-material-header" class="text-slate-200 font-mono">Sangue</span>
+          </div>
+          <div class="md:col-span-3 truncate">
+            <span class="text-slate-400 font-bold">Coleta:</span>
+            <span id="m-coleta-status" class="text-emerald-400 font-bold font-mono">-</span>
+          </div>
         </div>
       </div>
     </div>
@@ -322,389 +330,192 @@
           <!-- Renderizado via JS -->
         </div>
 
-        <div class="p-3 bg-slate-50 border-t border-slate-200 space-y-2">
+        <div class="p-3 bg-slate-50 border-t border-slate-200">
           <button
+            id="btn-preview-all"
             type="button"
-            onclick="bulkActionReq('conferir_todos')"
-            class="w-full py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-colors flex items-center justify-center gap-1.5"
+            onclick="previewAllExamsOfRequisition()"
+            disabled
+            class="w-full py-2 px-3 bg-slate-900 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm font-mono opacity-50 cursor-not-allowed"
+            title="Disponível apenas após pelo menos 1 exame ser digitado ou liberado"
           >
-            <span>🔍</span> Conferir Todos
-          </button>
-          <button
-            type="button"
-            onclick="bulkActionReq('liberar_todos')"
-            class="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
-          >
-            <span>✅</span> Liberar Todos
+            <span>👁️</span> Visualizar Todos
           </button>
         </div>
       </div>
 
       <!-- PAINEL DIREITO: LAUDO INTERATIVO EM TEMPO REAL (EDITÁVEL NA TELA) -->
-      <div class="flex-1 flex flex-col overflow-y-auto p-3 sm:p-5 space-y-3">
+      <div class="flex-1 flex flex-col min-h-0 overflow-hidden p-3 sm:p-4 space-y-2.5">
         
-        <!-- Banner de Título do Exame Ativo & Ações Rápidas -->
-        <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span id="m-active-code" class="px-2 py-0.5 bg-slate-900 text-brand-gold font-mono font-black text-xs rounded-md">
-                -
-              </span>
-              <span id="m-active-status-badge" class="px-2 py-0.5 bg-slate-100 text-slate-700 font-mono font-bold text-[10px] rounded-md border border-slate-200">
+        <!-- Banner de Título do Exame Ativo -->
+        <div class="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="m-active-code" class="px-2.5 py-1 bg-slate-900 text-brand-gold font-mono font-black text-xs rounded-lg">
+              -
+            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="m-active-title" class="text-base font-black text-slate-900">
+                Selecione um exame
+              </h3>
+              <span id="m-active-status-badge" class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
                 Pendente
               </span>
             </div>
-            <h3 id="m-active-title" class="text-base font-black text-slate-900">
-              Selecione um exame
-            </h3>
-          </div>
-
-          <!-- Modelos Rápidos de Preenchimento & Customizador de Modelo -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[10.5px] font-bold text-slate-400 font-mono uppercase">Preencher:</span>
-            <button
-              type="button"
-              onclick="fillQuickTemplate('Negativo')"
-              class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200"
-            >
-              Negativo
-            </button>
-            <button
-              type="button"
-              onclick="fillQuickTemplate('Positivo')"
-              class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200"
-            >
-              Positivo
-            </button>
-            <button
-              type="button"
-              onclick="fillQuickTemplate('Normal')"
-              class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors border border-slate-200"
-            >
-              Normal
-            </button>
-
-            <span class="text-slate-300">|</span>
-
-            <button
-              type="button"
-              onclick="toggleModelEditorToolbar()"
-              class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200 flex items-center gap-1"
-              title="Personalizar tamanhos de fonte, estilos, ordem e campos do modelo"
-            >
-              <span>🎨</span> Customizar Modelo
-            </button>
-
-            <button
-              type="button"
-              onclick="openLisLayoutModal()"
-              class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-lg transition-all shadow-sm flex items-center gap-1 font-mono border border-amber-400"
-              title="Abrir Editor WYSIWYG Estilo LIS (Arrastar componentes, réguas e grade de propriedades)"
-            >
-              <span>⚙️</span> Configuração de Layout
-            </button>
-
-            <button
-              type="button"
-              onclick="printLaudoDocument()"
-              class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
-            >
-              <span>🖨️</span> Imprimir
-            </button>
           </div>
         </div>
 
-        <!-- BARRA DE FERRAMENTAS DO CUSTOMIZADOR DE MODELO (EXPANDÍVEL) -->
-        <div id="model-editor-toolbar" class="bg-indigo-950 text-white rounded-xl p-3 border border-indigo-900 shadow-md space-y-3 hidden no-print">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/80 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-sm">🎨</span>
-              <h4 class="text-xs font-black uppercase tracking-wide text-indigo-200 font-mono">
-                Editor de Modelo de Laudo (<span id="editor-exam-code" class="text-brand-gold">LIPASE</span>)
-              </h4>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                onclick="saveExamModelTemplate()"
-                class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-1 font-mono"
-              >
-                <span>💾</span> Salvar Como Modelo do Exame
-              </button>
-              <button
-                type="button"
-                onclick="resetExamModelTemplate()"
-                class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-all font-mono"
-                title="Restaurar tamanho e layout originais"
-              >
-                🔄 Restaurar Padrão
-              </button>
-            </div>
-          </div>
+        <!-- Hidden inputs preserving model structure -->
+        <input type="hidden" id="f-modelo-laudo" value="Padrão LIS InovaLab" />
 
-          <!-- CONTROLES DE FONTE E ESTILOS -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-            <!-- Fonte Geral da Folha -->
-            <div class="space-y-1">
-              <label class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono block">Fonte Geral (Folha):</label>
-              <select id="cfg-font-size-body" onchange="applyModelFormatting()" class="w-full px-2 py-1 bg-indigo-900 border border-indigo-700 rounded text-xs text-white font-mono focus:outline-none">
-                <option value="10px">10px (Muito Pequena)</option>
-                <option value="11px">11px (Compacta)</option>
-                <option value="12px" selected>12px (Padrão)</option>
-                <option value="13px">13px (Média)</option>
-                <option value="14px">14px (Grande)</option>
-                <option value="16px">16px (Extra Grande)</option>
-              </select>
-            </div>
-
-            <!-- Fonte do Resultado -->
-            <div class="space-y-1">
-              <label class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono block">Fonte do Resultado:</label>
-              <select id="cfg-font-size-result" onchange="applyModelFormatting()" class="w-full px-2 py-1 bg-indigo-900 border border-indigo-700 rounded text-xs text-white font-mono focus:outline-none">
-                <option value="12px">12px (Compacto)</option>
-                <option value="14px">14px (Médio)</option>
-                <option value="16px" selected>16px (Padrão)</option>
-                <option value="18px">18px (Destaque)</option>
-                <option value="20px">20px (Grande)</option>
-                <option value="24px">24px (Muito Grande)</option>
-              </select>
-            </div>
-
-            <!-- Fonte de Val. Referência -->
-            <div class="space-y-1">
-              <label class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono block">Fonte Val. Referência:</label>
-              <select id="cfg-font-size-ref" onchange="applyModelFormatting()" class="w-full px-2 py-1 bg-indigo-900 border border-indigo-700 rounded text-xs text-white font-mono focus:outline-none">
-                <option value="9px">9px (Pequeníssima)</option>
-                <option value="10px">10px (Compacta)</option>
-                <option value="11px" selected>11px (Padrão)</option>
-                <option value="12px">12px (Média)</option>
-                <option value="13px">13px (Grande)</option>
-              </select>
-            </div>
-
-            <!-- Estilos dos Rótulos (Negrito / Caixa Alta) -->
-            <div class="space-y-1">
-              <label class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono block">Estilo dos Rótulos:</label>
-              <div class="flex items-center gap-2 pt-0.5">
-                <button
-                  type="button"
-                  id="btn-toggle-bold"
-                  onclick="toggleBoldFormatting()"
-                  class="px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 text-white font-black text-xs rounded border border-indigo-600 transition-colors"
-                >
-                  [B] Negrito
-                </button>
-                <button
-                  type="button"
-                  id="btn-toggle-uppercase"
-                  onclick="toggleUppercaseFormatting()"
-                  class="px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-xs rounded border border-indigo-600 transition-colors"
-                >
-                  [A-Z] Maiúsculas
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- ADICIONAR CAMPO PERSONALIZADO & REORDENAÇÃO SEÇÕES -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-900">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono">Adicionar Campos:</span>
-              <button
-                type="button"
-                onclick="addNewCustomFieldPrompt()"
-                class="px-2.5 py-1 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold rounded transition-colors flex items-center gap-1 font-mono"
-              >
-                <span>➕</span> Adicionar Campo Customizado
-              </button>
-            </div>
-
-            <!-- Movimentação / Reordenação de Blocos -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-[10.5px] font-bold text-indigo-300 uppercase font-mono">Reordenar Seções:</span>
-              <button
-                type="button"
-                onclick="moveSectionUp('laudo-block-result')"
-                class="px-2 py-1 bg-indigo-800 hover:bg-indigo-700 text-white text-xs font-bold rounded border border-indigo-600 font-mono"
-                title="Subir bloco de Resultado"
-              >
-                ⬆️ Resultado para Cima
-              </button>
-              <button
-                type="button"
-                onclick="moveSectionDown('laudo-block-result')"
-                class="px-2 py-1 bg-indigo-800 hover:bg-indigo-700 text-white text-xs font-bold rounded border border-indigo-600 font-mono"
-                title="Descer bloco de Resultado"
-              >
-                ⬇️ Resultado para Baixo
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- FOLHA DO LAUDO AO VIVO - EDITÁVEL NA PRÓPRIA TELA -->
-        <div class="bg-slate-200/70 rounded-xl p-3 sm:p-5 border border-slate-300 shadow-inner flex justify-center overflow-x-auto">
+        <!-- FOLHA DO LAUDO AO VIVO - EDITÁVEL E VISUALIZÁVEL -->
+        <div class="flex-1 min-h-0 overflow-y-auto bg-slate-200/70 rounded-xl p-3 sm:p-5 border border-slate-300 shadow-inner flex justify-center">
           
-          <div id="laudo-paper-container" class="bg-white text-slate-900 p-5 sm:p-7 shadow-md border border-slate-300 w-full max-w-2xl font-mono text-xs leading-snug space-y-3 rounded-lg">
+          <div id="laudo-editor-paper-container" class="bg-white text-slate-900 p-4 sm:p-6 shadow-md border border-slate-300 w-full max-w-2xl font-mono text-xs leading-snug space-y-3 rounded-lg">
             
-            <!-- BANNER HEADER DO EXAME -->
-            <div class="bg-slate-200 text-slate-900 py-1.5 px-3 text-center font-bold tracking-widest text-xs sm:text-sm border-y border-slate-400 uppercase font-mono" id="laudo-sheet-exam-title">
-              LIPASE
-            </div>
+            <!-- MODO EDIÇÃO (FOLHA DO LAUDO AO VIVO) -->
+            <div id="exam-edit-view" class="space-y-3.5 font-mono">
+              <!-- BANNER HEADER DO EXAME -->
+              <div class="bg-slate-200 border border-slate-400 py-1.5 px-3 text-center font-bold text-sm text-slate-950 uppercase tracking-wider rounded-xs font-mono" id="laudo-sheet-exam-title">
+                LIPASE
+              </div>
 
-            <!-- CONTAINER DE BLOCOS REORDENÁVEIS -->
-            <div id="laudo-blocks-wrapper" class="space-y-3">
-              
-              <!-- BLOCO 1: MATERIAL / MÉTODOS vs VALORES DE REFERÊNCIA -->
-              <div id="laudo-block-tech" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono transition-all">
-                <!-- ESQUERDA: DADOS TÉCNICOS -->
-                <div class="space-y-1.5 text-slate-800">
+              <!-- DADOS TÉCNICOS (MATERIAL, MÉTODO, EQUIPAMENTO) -->
+              <div id="laudo-block-tech" class="text-[10.5px] space-y-1 text-slate-800 border-b border-slate-200 pb-2 font-mono">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div class="flex items-center gap-1">
-                    <span class="w-24 text-slate-500 font-semibold shrink-0 text-[11px] laudo-label">Material:</span>
+                    <span class="text-slate-600 font-medium shrink-0 laudo-label">Material:</span>
                     <input
                       type="text"
                       id="f-material"
                       placeholder="Ex: Soro"
-                      class="w-full px-2 py-1 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
+                      class="w-full px-2 py-0.5 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
                     />
                   </div>
                   <div class="flex items-center gap-1">
-                    <span class="w-24 text-slate-500 font-semibold shrink-0 text-[11px] laudo-label">Método  :</span>
+                    <span class="text-slate-600 font-medium shrink-0 laudo-label">Método:</span>
                     <input
                       type="text"
                       id="f-method"
                       placeholder="Ex: Colorimétrico"
-                      class="w-full px-2 py-1 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
+                      class="w-full px-2 py-0.5 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
                     />
                   </div>
                   <div class="flex items-center gap-1">
-                    <span class="w-24 text-slate-500 font-semibold shrink-0 text-[11px] laudo-label">Equipamento:</span>
+                    <span class="text-slate-600 font-medium shrink-0 laudo-label">Equipamento:</span>
                     <input
                       type="text"
                       id="f-equipment"
-                      placeholder="Ex: Urit 8021A - Automatizado"
+                      placeholder="Ex: Urit 8021A"
                       value="Urit 8021A - Automatizado"
-                      class="w-full px-2 py-1 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
+                      class="w-full px-2 py-0.5 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
                     />
                   </div>
                 </div>
+              </div>
 
-                <!-- DIREITA: VALORES DE REFERÊNCIA -->
-                <div class="space-y-1 text-slate-800">
-                  <label for="f-ref-value" class="font-bold text-slate-900 block text-[11px] laudo-label">Valores de Referência:</label>
-                  <textarea
-                    id="f-ref-value"
-                    rows="4"
-                    placeholder="Até 1 ano.........: 0 a 29 U/L&#10;De 1 a 12 anos....: 10 a 37 U/L&#10;De 13 a 18 anos...: 11 a 46 U/L&#10;Acima de 18 anos..: 13 a 60 U/L"
-                    class="w-full p-1.5 text-[11px] font-mono leading-tight text-slate-800 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded"
-                  ></textarea>
+              <!-- 1. BLOCO DE RESULTADO DO EXAME COM CAMPO DE UNIDADE DE MEDIDA -->
+              <div id="laudo-block-result" class="space-y-2 bg-slate-50/90 p-3 border border-slate-200 rounded-xs font-mono">
+                <div class="text-[11px] font-bold text-slate-900 uppercase border-b border-slate-200 pb-1 laudo-label">
+                  Resultado do Exame:
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start">
+                  <div class="sm:col-span-8 space-y-1">
+                    <label for="f-result" class="text-[10.5px] font-bold text-slate-700 block laudo-label">Valor Obtido / Resultado:</label>
+                    <textarea
+                      id="f-result"
+                      rows="2"
+                      placeholder="Informe o resultado do exame (ex: 72, NORMAL, NEGATIVO)..."
+                      class="w-full p-2 text-sm font-black text-slate-950 bg-white border border-slate-300 focus:border-[#284701] rounded font-mono tracking-wide shadow-2xs leading-snug"
+                    ></textarea>
+                  </div>
+                  <div class="sm:col-span-4 space-y-1">
+                    <label for="f-unit" class="text-[10.5px] font-bold text-slate-700 block laudo-label">Unidade de Medida:</label>
+                    <input
+                      type="text"
+                      id="f-unit"
+                      placeholder="Ex: mg/dL, U/L, %"
+                      class="w-full p-2 text-xs font-bold text-slate-900 bg-white border border-slate-300 focus:border-[#284701] rounded font-mono shadow-2xs"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <!-- BLOCO 2: RESULTADO DO EXAME (DESTACADO NA FOLHA) -->
-              <div id="laudo-block-result" class="py-2.5 px-3 bg-slate-50 border-y-2 border-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono my-2 transition-all">
-                <div class="font-bold italic text-slate-900 text-xs sm:text-sm uppercase tracking-wide shrink-0 laudo-label">
-                  Resultado:
-                </div>
-                <div class="flex-1 w-full sm:w-auto">
-                  <textarea
-                    id="f-result"
-                    rows="2"
-                    placeholder="72 U/L"
-                    class="w-full p-2 text-sm sm:text-base font-black text-slate-900 bg-white border border-slate-300 focus:border-[#284701] rounded font-mono tracking-wide shadow-2xs leading-snug"
-                  ></textarea>
-                </div>
+              <!-- 2. VALORES DE REFERÊNCIA (POSICIONADO LOGO ABAIXO DO RESULTADO) -->
+              <div id="laudo-block-ref" class="p-3 bg-white border border-slate-200 rounded-xs font-mono">
+                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label">Valores de Referência:</div>
+                <textarea
+                  id="f-ref-value"
+                  rows="4"
+                  placeholder="Valores de referência predefinidos no modelo de exame..."
+                  class="w-full p-2 text-[10.5px] font-mono leading-relaxed text-slate-800 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded"
+                ></textarea>
               </div>
 
-              <!-- BLOCO 3: NOTAS TÉCNICAS E OBSERVAÇÕES -->
-              <div id="laudo-block-notes" class="space-y-2 pt-1 text-xs font-mono text-slate-800 transition-all">
-                <div>
-                  <label for="f-interpretation" class="font-semibold text-slate-600 text-[10.5px] block mb-0.5 laudo-label">Interpretação / Nota Técnica (Opcional):</label>
-                  <textarea
-                    id="f-interpretation"
-                    rows="1"
-                    placeholder="Interpretação clínica..."
-                    class="w-full p-1.5 text-[11px] font-mono text-slate-800 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded"
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label for="f-observations" class="font-bold text-slate-900 text-[11px] block mb-0.5 laudo-label">Observações:</label>
-                  <textarea
-                    id="f-observations"
-                    rows="2"
-                    placeholder="Amostra coletada e identificada pelo Hospital Municipal de Cambará."
-                    class="w-full p-1.5 text-[11px] font-mono text-slate-800 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded"
-                  ></textarea>
-                </div>
+              <!-- 3. INTERPRETAÇÃO / NOTA TÉCNICA (POSICIONADO ABAIXO DOS VALORES DE REFERÊNCIA) -->
+              <div id="laudo-block-interp" class="p-3 bg-slate-50 border border-slate-200 rounded-xs font-mono">
+                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label">Interpretação / Nota Técnica (Opcional):</div>
+                <textarea
+                  id="f-interpretation"
+                  rows="2"
+                  placeholder="Interpretação clínica ou observações técnicas..."
+                  class="w-full p-2 text-[10.5px] font-mono leading-relaxed text-slate-800 bg-white border border-slate-300 focus:border-[#284701] rounded"
+                ></textarea>
               </div>
 
-              <!-- BLOCO 4: CONTAINER DE CAMPOS CUSTOMIZADOS (ADICIONADOS PELO USUÁRIO) -->
-              <div id="laudo-block-custom-fields" class="space-y-2 text-xs font-mono text-slate-800 hidden transition-all">
-                <!-- Dinamicamente preenchido -->
+              <!-- 4. OBSERVAÇÕES (POSICIONADO ABAIXO DA INTERPRETAÇÃO) -->
+              <div id="laudo-block-obs" class="p-3 bg-slate-50 border border-slate-200 rounded-xs font-mono">
+                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label">Observações:</div>
+                <textarea
+                  id="f-observations"
+                  rows="2"
+                  placeholder="Amostra coletada e identificada pelo Hospital Municipal de Cambará."
+                  class="w-full p-2 text-[10.5px] font-mono text-slate-800 bg-white border border-slate-300 focus:border-[#284701] rounded"
+                ></textarea>
               </div>
 
-              <!-- BLOCO 5: INFORMAÇÕES DE LIBERAÇÃO E RASTREABILIDADE -->
-              <div id="laudo-block-footer" class="text-[10px] text-slate-600 border-t border-slate-200 pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 transition-all" id="laudo-coleta-info">
-                <div>Coleta: <strong id="laudo-data-coleta">31/07/26 12:37</strong></div>
-                <div>Exame liberado por: <strong id="laudo-liberado-por">Maria Gabriela</strong></div>
-                <div>Cód. Seg.: <span id="laudo-cod-seg" class="font-mono text-[9px]">30b0159888103142783ca35ff8ea92ad</span></div>
+              <!-- AVISO FINAL DA AMOSTRA -->
+              <div class="pt-2 text-center text-[10.5px] font-mono text-slate-500 border-t border-slate-200">
+                Amostra coletada e identificada pelo Hospital Municipal de Cambará.
               </div>
-
             </div>
 
           </div>
 
         </div>
 
-        <!-- RODAPÉ DE AÇÕES E STATUS -->
-        <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <label for="f-status" class="text-xs font-bold text-slate-600 uppercase font-mono shrink-0">Status:</label>
-            <select
-              id="f-status"
-              class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#284701]/20 bg-white"
-            >
-              <option value="Pendente">Pendente / Lote criado</option>
-              <option value="Digitado">Digitado</option>
-              <option value="Conferido">Conferido</option>
-              <option value="Liberado">Liberado</option>
-            </select>
+        <!-- Botões de Ação de Salvar e Conferência (Fixo no Rodapé do Painel) -->
+        <div id="exam-action-buttons-container" class="bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-3 shrink-0 flex-wrap">
+          <div class="text-[11px] font-mono text-slate-500 font-medium flex items-center gap-1.5">
+            <span>Status:</span> <span id="m-active-status-text" class="font-bold text-slate-800">-</span>
           </div>
-
-          <!-- Botões de Ação de Salvar -->
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <div class="flex items-center gap-2 flex-wrap">
             <button
               type="button"
+              id="btn-action-digitado"
               onclick="saveActiveExam('Digitado')"
-              class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+              class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <span>💾</span> Salvar
+              <span>💾</span> <span id="lbl-action-digitado">Salvar (Digitado)</span>
             </button>
 
             <button
               type="button"
+              id="btn-revert-digitado"
+              onclick="saveActiveExam('Pendente')"
+              class="hidden px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              title="Desmarcar status de digitado e voltar para Pendente"
+            >
+              <span>↩️</span> <span id="lbl-revert-digitado">Desmarcar Digitado</span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-action-conferir"
               onclick="saveActiveExam('Conferido')"
-              class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+              class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-md font-bold cursor-pointer"
+              title="Conferir Exame"
             >
-              <span>🔍</span> Conferir Exame
-            </button>
-
-            <button
-              type="button"
-              onclick="saveActiveExam('Liberado')"
-              class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs"
-            >
-              <span>✅</span> Liberar Laudo
-            </button>
-
-            <button
-              type="button"
-              onclick="printLaudoDocument()"
-              class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs border border-slate-700"
-              title="Imprimir Laudo"
-            >
-              <span>🖨️</span> Imprimir Laudo
+              <span>🔍</span> <span id="lbl-action-conferir">Conferir Exame</span>
             </button>
           </div>
         </div>
@@ -923,148 +734,76 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- MODAL DE VISUALIZAÇÃO / IMPRESSÃO DE LAUDO (MODELO EXAME) -->
+<!-- NOVO MODAL DE VISUALIZAÇÃO E IMPRESSÃO DE LAUDO (INOVALAB) -->
 <!-- ========================================================= -->
 <div
   id="laudo-preview-modal"
   class="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-6 overflow-y-auto"
 >
-  <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden max-h-[95vh]">
-    <!-- Modal Header -->
-    <div class="bg-slate-900 text-white p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 no-print">
+  <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden max-h-[96vh] h-[92vh] my-auto">
+    <!-- Header do Modal (no-print) -->
+    <div class="bg-slate-900 text-white px-5 py-3.5 border-b border-slate-800 flex items-center justify-between gap-3 no-print shrink-0">
       <div class="flex items-center gap-3">
-        <span class="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl font-bold text-xl">📄</span>
+        <span class="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl font-bold text-lg">📄</span>
         <div>
-          <h3 class="text-base font-black text-white flex items-center gap-2">
-            Laudo do Exame (Modelo Oficial InovaLab)
+          <h3 class="text-sm sm:text-base font-black text-white flex items-center gap-2">
+            Laudo Oficial de Exames
           </h3>
           <p class="text-xs text-slate-400">
-            Impressão formatada a partir da Estrutura Padronizada JSON
+            Laboratório InovaLab • Impressão e Visualização do Laudo do Paciente
           </p>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- SELETOR DE MODELOS UNIVERSAIS -->
-        <div class="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-700">
-          <span class="text-[10.5px] font-bold text-slate-300 font-mono">Modelo:</span>
-          <select
-            id="select-universal-model"
-            onchange="switchUniversalLaudoModel(this.value)"
-            class="bg-slate-900 text-indigo-300 font-mono text-xs font-bold rounded px-2 py-0.5 border border-slate-600 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="padrao">🎨 Modelo Padrão InovaLab</option>
-            <option value="tabela">📊 Modelo Tabela / Fracionado</option>
-            <option value="compacto">⚡ Modelo Compacto / Direto</option>
-            <option value="custom_wysiwyg">🛠️ Personalizado (WYSIWYG Editor)</option>
-          </select>
-        </div>
-
-        <button
-          type="button"
-          onclick="openJsonImportModal()"
-          class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1 font-mono"
-          title="Importar ou Colar JSON do Laudo"
-        >
-          <span>📥</span> Cole JSON
-        </button>
-
-        <button
-          type="button"
-          onclick="copyActiveLaudoJson()"
-          class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1 font-mono"
-          title="Copiar a estrutura JSON ativa para a área de transferência"
-        >
-          <span>📋</span> Copiar JSON
-        </button>
-
+      <div class="flex items-center gap-2">
         <button
           type="button"
           onclick="printLaudoDocument()"
-          class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 font-mono cursor-pointer"
         >
-          <span>🖨️</span> Imprimir
+          <span>🖨️</span> Imprimir Laudo
         </button>
         <button
           type="button"
           onclick="closeLaudoPreviewModal()"
-          class="text-slate-400 hover:text-white p-1 hover:bg-white/10 rounded-lg transition-colors text-lg ml-1"
+          class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors text-lg cursor-pointer"
+          title="Fechar"
         >
           ✕
         </button>
       </div>
     </div>
 
-    <!-- Modal Printable Body -->
-    <div class="p-4 sm:p-8 bg-slate-100 overflow-y-auto flex-1 flex justify-center">
-      <!-- PAPER CANVAS (A4 style look) -->
-      <div id="laudo-paper-container" class="bg-white text-slate-900 p-8 sm:p-12 shadow-lg border border-slate-300 w-full max-w-3xl font-mono text-sm leading-relaxed space-y-6">
-
-        <!-- HEADER BANNER DO EXAME -->
-        <div class="bg-slate-300 text-slate-900 py-2 px-4 text-center font-bold tracking-widest text-base sm:text-lg border-y border-slate-400 uppercase font-mono" id="laudo-exam-title">
-          LIPASE
-        </div>
-
-        <!-- MATERIAL / METODO / EQUIPAMENTO vs VALORES DE REFERÊNCIA -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm font-mono">
-          <!-- ESQUERDA: DADOS TÉCNICOS -->
-          <div class="space-y-1.5 text-slate-800">
-            <div><span class="inline-block w-28 text-slate-600">Material:</span> <span id="laudo-material" class="font-bold text-slate-900">Soro</span></div>
-            <div><span class="inline-block w-28 text-slate-600">Método  :</span> <span id="laudo-metodo" class="font-bold text-slate-900">Colorimétrico</span></div>
-            <div><span class="inline-block w-28 text-slate-600">Equipamento:</span> <span id="laudo-equipamento" class="font-bold text-slate-900">Urit 8021A - Automatizado</span></div>
-          </div>
-
-          <!-- DIREITA: VALORES DE REFERÊNCIA -->
-          <div class="space-y-1 text-slate-800">
-            <div class="font-bold text-slate-900 mb-1">Valores de Referência:</div>
-            <div id="laudo-val-ref" class="whitespace-pre-line text-xs font-mono leading-relaxed text-slate-800">Até 1 ano.........: 0 a 29 U/L
-De 1 a 12 anos....: 10 a 37 U/L
-De 13 a 18 anos...: 11 a 46 U/L
-Acima de 18 anos..: 13 a 60 U/L</div>
-          </div>
-        </div>
-
-        <!-- LINHA DE RESULTADO -->
-        <div class="py-5 border-y border-slate-300 flex items-center justify-between text-base sm:text-lg my-6 font-mono">
-          <div class="font-bold italic text-slate-900">Resultado:</div>
-          <div id="laudo-resultado-valor" class="font-black text-slate-900 text-xl sm:text-2xl pr-8">
-            72 U/L
-          </div>
-        </div>
-
-        <!-- OBSERVAÇÕES E COLETAS / LIBERAÇÃO -->
-        <div class="space-y-3 pt-4 text-xs font-mono text-slate-700">
-          <div>
-            <span class="font-bold text-slate-900">Observações:</span>
-            <span id="laudo-observacoes">Amostra coletada e identificada pelo Hospital Municipal de Cambará.</span>
-          </div>
-          <div class="text-[11px] text-slate-600 border-t border-slate-200 pt-3 flex flex-wrap gap-x-2 gap-y-1" id="laudo-coleta-info">
-            <span>Coleta: <strong id="laudo-data-coleta">31/07/26 12:37</strong></span>
-            <span>- Exame liberado eletronicamente por: <strong id="laudo-liberado-por">Maria Gabriela</strong></span>
-            <span>- Cód. Seg.: <span id="laudo-cod-seg" class="font-mono text-[10px]">30b0159888103142783ca35ff8ea92ad</span></span>
-          </div>
-        </div>
-
+    <!-- Modal Printable Body (A4 Paper Canvas) -->
+    <div class="p-4 sm:p-8 bg-slate-100 overflow-y-auto flex-1 min-h-0 flex justify-center">
+      <!-- PAPER CANVAS -->
+      <div id="laudo-paper-container" class="bg-white text-slate-900 p-6 sm:p-10 shadow-xl border border-slate-300 w-full max-w-3xl min-h-[850px] font-mono text-xs leading-normal relative rounded-lg select-none">
+        <!-- O conteúdo dinâmico do laudo é renderizado aqui via JavaScript -->
       </div>
     </div>
 
-    <!-- Modal Footer no-print -->
-    <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between no-print">
-      <button
-        type="button"
-        onclick="closeLaudoPreviewModal()"
-        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
-      >
-        Fechar
-      </button>
-
-      <button
-        type="button"
-        onclick="printLaudoDocument()"
-        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-1.5"
-      >
-        <span>🖨️</span> Imprimir Laudo
-      </button>
+    <!-- Footer do Modal (no-print) -->
+    <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between no-print shrink-0">
+      <div class="text-xs text-slate-500 font-mono flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Visualização Oficial do Laudo • Pronta para Impressão</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick="closeLaudoPreviewModal()"
+          class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors cursor-pointer"
+        >
+          Fechar
+        </button>
+        <button
+          type="button"
+          onclick="printLaudoDocument()"
+          class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 font-mono cursor-pointer"
+        >
+          <span>🖨️</span> Imprimir (A4)
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1092,6 +831,9 @@ Acima de 18 anos..: 13 a 60 U/L</div>
   .no-print {
     display: none !important;
   }
+  .no-print {
+    display: none !important;
+  }
   #laudo-paper-container {
     box-shadow: none !important;
     border: none !important;
@@ -1110,6 +852,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
 <script>
   window.TRIAGEM_REQUISITIONS = <%- JSON.stringify(requisitions || []) %>;
   window.TRIAGEM_EXAMS = <%- JSON.stringify(exams || []) %>;
+  window.EXAMS_CATALOG = window.TRIAGEM_EXAMS;
 
   let currentPage = 1;
   let itemsPerPage = 50;
@@ -1296,15 +1039,17 @@ Acima de 18 anos..: 13 a 60 U/L</div>
 
       // Badges de Exames
       const examBadgesHtml = reqExams.map(e => {
-        let stClass = 'bg-slate-100 text-slate-700 border-slate-200';
-        if (isExamInLote(e)) stClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
-        if (e.status === 'Digitado') stClass = 'bg-blue-100 text-blue-800 border-blue-300';
-        if (e.status === 'Conferido') stClass = 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold';
-        if (e.status === 'Liberado') stClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+        let stClass = 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
+        if (isExamInLote(e)) stClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold hover:bg-amber-200';
+        if (e.status === 'Digitado') stClass = 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200';
+        if (e.status === 'Conferido') stClass = 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold hover:bg-indigo-200';
+        if (e.status === 'Liberado') stClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold hover:bg-emerald-200';
 
-        return `<span class="px-2 py-0.5 text-[10px] rounded-md border font-mono ${stClass}" title="${e.name || e.code}">
-          ${e.code}: ${e.status || 'Pendente'}
-        </span>`;
+        const codeVal = e.code || e.codigo;
+        return `<button type="button" onclick="event.stopPropagation(); openTypingModal('${req.id || req.requisitionCode}', '${codeVal}')" class="px-2 py-0.5 text-[10px] rounded-md border font-mono ${stClass} transition-all cursor-pointer shadow-2xs hover:scale-105 inline-flex items-center gap-1" title="Clique para abrir e lançar resultado do exame ${e.name || codeVal}">
+          <span>${codeVal}: ${e.status || 'Pendente'}</span>
+          <span class="opacity-60">⌨️</span>
+        </button>`;
       }).join(' ');
 
       tr.innerHTML = `
@@ -1377,7 +1122,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
   // ==========================================
   // LÓGICA DO MODAL DE DIGITAÇÃO DE RESULTADOS
   // ==========================================
-  function openTypingModal(reqId) {
+  function openTypingModal(reqId, initialExamCode) {
     const allReqs = window.TRIAGEM_REQUISITIONS || [];
     const req = allReqs.find(r => (r.id || r.requisitionCode) === reqId || r.id === reqId);
     if (!req) return showToast('Requisição não encontrada.', 'error');
@@ -1395,54 +1140,369 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     // Renderizar Lista de Exames da Requisição
     const reqExams = req.exams || [];
     document.getElementById('m-exam-count-badge').textContent = `${reqExams.length} exames`;
+    updatePreviewAllButtonState(req);
+
     const examsList = document.getElementById('m-exams-list');
     examsList.innerHTML = '';
 
     if (reqExams.length === 0) {
       examsList.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">Nenhum exame cadastrado nesta requisição.</div>';
     } else {
-      reqExams.forEach((ex, idx) => {
-        const itemBtn = document.createElement('button');
-        itemBtn.type = 'button';
-        itemBtn.className = `w-full text-left p-3 rounded-xl transition-all border ${
-          idx === 0
-            ? 'bg-brand-gold/10 border-brand-gold/40 text-slate-900 font-bold'
-            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-        } exam-item-btn`;
-        itemBtn.dataset.code = ex.code || ex.codigo;
+      reqExams.forEach((ex) => {
+        const itemBtn = document.createElement('div');
+        const codeVal = ex.code || ex.codigo;
+        itemBtn.className = `w-full text-left p-3 rounded-xl transition-all border exam-item-btn bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer flex flex-col justify-between`;
+        itemBtn.dataset.code = codeVal;
 
-        let badgeClass = 'bg-slate-100 text-slate-600';
-        if (isExamInLote(ex)) badgeClass = 'bg-amber-100 text-amber-800 font-bold';
-        if (ex.status === 'Digitado') badgeClass = 'bg-blue-100 text-blue-800 font-bold';
-        if (ex.status === 'Conferido') badgeClass = 'bg-indigo-100 text-indigo-800 font-bold';
-        if (ex.status === 'Liberado') badgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
+        let badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+        if (isExamInLote(ex)) badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+        if (ex.status === 'Digitado') badgeClass = 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
+        if (ex.status === 'Conferido') badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold';
+        if (ex.status === 'Liberado') badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
 
         itemBtn.innerHTML = `
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-mono font-bold text-xs text-slate-900">${ex.code}</span>
+          <div class="flex items-center justify-between mb-1" onclick="selectExamInModal('${codeVal}')">
+            <span class="font-mono font-bold text-xs text-slate-900">${codeVal}</span>
             <span class="px-2 py-0.5 text-[9.5px] rounded border ${badgeClass}">
               ${ex.status || 'Pendente'}
             </span>
           </div>
-          <div class="text-xs font-semibold truncate text-slate-800">${ex.name || 'Exame'}</div>
-          <div class="text-[10px] text-slate-400 font-mono mt-0.5">${ex.material || 'Sangue'}</div>
+          <div class="text-xs font-semibold truncate text-slate-800 mb-1" onclick="selectExamInModal('${codeVal}')">${ex.name || 'Exame'}</div>
+          <div class="text-[10px] text-slate-400 font-mono pt-1 border-t border-slate-100 flex items-center justify-between">
+            <span class="truncate">${ex.material || 'Sangue'}</span>
+          </div>
         `;
 
-        itemBtn.onclick = () => selectExamInModal(ex.code || ex.codigo);
+        itemBtn.onclick = () => {
+          selectExamInModal(codeVal);
+        };
         examsList.appendChild(itemBtn);
       });
 
-      // Selecionar o primeiro exame por padrão
-      selectExamInModal(reqExams[0].code || reqExams[0].codigo);
+      // Selecionar o exame desejado ou o primeiro
+      let codeToSelect = initialExamCode;
+      if (!codeToSelect || !reqExams.some(e => (e.code || e.codigo) === codeToSelect)) {
+        codeToSelect = reqExams[0].code || reqExams[0].codigo;
+      }
+      selectExamInModal(codeToSelect);
     }
 
     document.getElementById('typing-modal').classList.remove('hidden');
+  }
+
+  // Helper para buscar modelo/cadastro do exame no catálogo
+  function findCatalogExam(code, name) {
+    const catalog = window.TRIAGEM_EXAMS || window.EXAMS_CATALOG || [];
+    if (!catalog || catalog.length === 0) return null;
+    const targetCode = String(code || '').trim().toUpperCase();
+    const targetName = String(name || '').trim().toUpperCase();
+
+    if (targetCode) {
+      const byCode = catalog.find(c => {
+        if (!c) return false;
+        const cCode = String(c.code || c.codigo || c.jalisCode || c.id || '').trim().toUpperCase();
+        return cCode === targetCode;
+      });
+      if (byCode) return byCode;
+    }
+
+    if (targetName) {
+      const byName = catalog.find(c => {
+        if (!c) return false;
+        const cName = String(c.name || c.tituloLaudo || c.desc || c.titulo || '').trim().toUpperCase();
+        return cName === targetName || (cName && targetName && (cName.includes(targetName) || targetName.includes(cName)));
+      });
+      if (byName) return byName;
+    }
+
+    return null;
+  }
+
+  // Helper para extrair unidade de medida de referências e resultados
+  function extractUnitFromText(text) {
+    if (!text) return '';
+    const str = String(text);
+    const regex = /(?:mg|µg|ug|ng|pg|g|U|IU|mUI|UI|mEq|mmol|umol|µmol|fL)\/(?:dL|mL|L|mm³|mm3|uL|µL|L)|mm³|mm3|%|uL|µL|U\/L|UI\/L|mUI\/mL|UI\/mL|U\/mL|mg\/dL|g\/dL|µg\/dL|ug\/dL|ng\/dL|pg\/mL|ng\/mL|mEq\/L|mmol\/L|10\^[0-9]\/[uµ]L/i;
+    const match = str.match(regex);
+    return match ? match[0].trim() : '';
+  }
+
+  // Helper para extrair valor de referência com fallback completo ao modelo cadastrado
+  function extractExamReferenceValue(ex, catEx, currentInputValue) {
+    let val = (typeof currentInputValue === 'string' && currentInputValue.trim()) ? currentInputValue.trim() : '';
+    if (!val && ex) {
+      val = (typeof ex.valorReferenciaLaudo === 'string' && ex.valorReferenciaLaudo.trim()) ? ex.valorReferenciaLaudo.trim() :
+            (typeof ex.valorReferencia === 'string' && ex.valorReferencia.trim()) ? ex.valorReferencia.trim() :
+            (typeof ex.referenceValue === 'string' && ex.referenceValue.trim()) ? ex.referenceValue.trim() :
+            (typeof ex.referencia === 'string' && ex.referencia.trim()) ? ex.referencia.trim() : '';
+    }
+    if (!val && catEx) {
+      val = (typeof catEx.valorReferenciaLaudo === 'string' && catEx.valorReferenciaLaudo.trim()) ? catEx.valorReferenciaLaudo.trim() :
+            (typeof catEx.valorReferencia === 'string' && catEx.valorReferencia.trim()) ? catEx.valorReferencia.trim() :
+            (typeof catEx.referenceValue === 'string' && catEx.referenceValue.trim()) ? catEx.referenceValue.trim() :
+            (typeof catEx.referencia === 'string' && catEx.referencia.trim()) ? catEx.referencia.trim() :
+            (typeof catEx.valRef === 'string' && catEx.valRef.trim()) ? catEx.valRef.trim() : '';
+    }
+    return val;
+  }
+
+  // Helper para verificar se o exame já foi editado/preenchido/digitado
+  function isExamEdited(ex, codeVal) {
+    if (!ex && !codeVal) return false;
+    const targetCode = codeVal || ex?.code || ex?.codigo;
+    const isCurrentActive = activeExamCode && String(targetCode).toUpperCase() === String(activeExamCode).toUpperCase();
+    
+    let res = '';
+    let status = 'Pendente';
+
+    if (isCurrentActive) {
+      res = (document.getElementById('f-result')?.value || ex?.result || ex?.resultado || '').trim();
+      status = document.getElementById('f-status')?.value || ex?.status || 'Pendente';
+    } else {
+      res = (ex?.result || ex?.resultado || '').trim();
+      status = ex?.status || 'Pendente';
+    }
+
+    const stUpper = String(status || '').trim().toUpperCase();
+    const validStatuses = ['DIGITADO', 'CONFERIDO', 'LIBERADO', 'EDITADO', 'PRONTO', 'CONCLUÍDO', 'CONCLUIDO'];
+
+    if (validStatuses.includes(stUpper)) {
+      return true;
+    }
+
+    if (res && res.length > 0 && res !== 'Sem resultado') {
+      return true;
+    }
+
+    if (ex && (ex.edited || ex.digitado || ex.conferido || ex.liberado)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function updatePreviewAllButtonState(req) {
+    const btn = document.getElementById('btn-preview-all');
+    if (!btn) return;
+    const reqExams = req?.exams || [];
+    const hasDigitado = reqExams.some(ex => isExamEdited(ex, ex.code || ex.codigo));
+
+    if (hasDigitado) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      btn.classList.add('hover:bg-slate-800', 'cursor-pointer');
+      btn.title = 'Visualizar laudo completo com todos os exames da requisição';
+    } else {
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.classList.remove('hover:bg-slate-800', 'cursor-pointer');
+      btn.title = 'Disponível apenas após pelo menos 1 exame ser digitado ou liberado';
+    }
+  }
+
+  function previewAllExamsOfRequisition() {
+    const allReqs = window.TRIAGEM_REQUISITIONS || [];
+    const req = allReqs.find(r => 
+      String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
+      String(r.id || '') === String(selectedReqId || '') || 
+      String(r.requisitionCode || '') === String(selectedReqId || '')
+    );
+
+    let reqExams = req?.exams || [];
+    if (reqExams.length === 0 && activeExamCode) {
+      reqExams = [{ code: activeExamCode, name: document.getElementById('m-active-title')?.textContent?.trim() || activeExamCode }];
+    }
+
+    let editedExams = reqExams.filter(ex => isExamEdited(ex, ex.code || ex.codigo));
+    if (editedExams.length === 0 && reqExams.length > 0) {
+      editedExams = reqExams;
+    }
+
+    if (editedExams.length === 0) {
+      showToast('Pelo menos 1 exame da requisição precisa estar digitado ou liberado para visualizar o laudo.', 'warning');
+      return;
+    }
+
+    const patientName = document.getElementById('m-patient-name')?.textContent || req?.patientName || 'Paciente';
+    const doctor = document.getElementById('m-doctor')?.textContent || req?.doctorName || 'Médico Não Informado';
+    const convenio = document.getElementById('m-convenio')?.textContent || req?.convenio || 'Particular';
+    const reqCode = document.getElementById('m-req-code')?.textContent || req?.requisitionCode || '#' + (selectedReqId || '00000');
+    const patientAge = req?.patientAge || document.getElementById('m-patient-age')?.textContent || 'N/I';
+    const dataColeta = req?.dataColeta || req?.createdAt || new Date().toLocaleDateString('pt-BR');
+
+    const formattedExams = editedExams.map(ex => {
+      const code = ex.code || ex.codigo;
+      const catEx = findCatalogExam(code, ex.name || ex.titulo || ex.desc);
+      const isCurrentActive = activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase();
+      const currentInputRef = isCurrentActive ? document.getElementById('f-ref-value')?.value : '';
+      const refVal = extractExamReferenceValue(ex, catEx, currentInputRef);
+
+      const resText = (isCurrentActive ? document.getElementById('f-result')?.value : (ex.result || ex.resultado || '')) || 'Sem resultado';
+      const unitVal = (isCurrentActive ? document.getElementById('f-unit')?.value : (ex.unidade || ex.unit)) || (catEx && (catEx.unidade || catEx.unit)) || '';
+      const metodo = (isCurrentActive ? document.getElementById('f-method')?.value : (ex.metodo || ex.method)) || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico';
+      const material = (isCurrentActive ? document.getElementById('f-material')?.value : ex.material) || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro';
+      const eq = (isCurrentActive ? document.getElementById('f-equipment')?.value : (ex.equipamento || ex.equipment)) || (catEx && (catEx.equipment || catEx.equipamento)) || '';
+      const obs = (isCurrentActive ? document.getElementById('f-observations')?.value : (ex.observacao || ex.observations)) || '';
+      const st = isCurrentActive ? document.getElementById('f-status')?.value : (ex.status || ex.situacao || 'Digitado');
+
+      return {
+        codigo: code,
+        titulo: ex.name || ex.titulo || (catEx && (catEx.tituloLaudo || catEx.name)) || document.getElementById('m-active-title')?.textContent || code,
+        resultadoText: String(resText).trim() || 'Sem resultado',
+        resultado: String(resText).trim() || 'Sem resultado',
+        unidade: unitVal,
+        unit: unitVal,
+        valorReferencia: refVal,
+        metodo: metodo,
+        material: material,
+        equipamento: eq,
+        observacao: obs,
+        situacao: st || 'Digitado'
+      };
+    });
+
+    populateAndOpenLaudoPreview({
+      paciente: {
+        nome: patientName,
+        idade: patientAge,
+        medico: doctor,
+        convenio: convenio,
+        requisicaoCode: reqCode,
+        dataRequisicao: dataColeta
+      },
+      isFullReport: true,
+      exames: formattedExams
+    });
   }
 
   function closeTypingModal() {
     document.getElementById('typing-modal').classList.add('hidden');
     selectedReqId = null;
     activeExamCode = null;
+  }
+
+  function toggleExamFormReadOnly(isReadOnly) {
+    const fieldIds = ['f-material', 'f-method', 'f-equipment', 'f-ref-value', 'f-result', 'f-unit', 'f-interpretation', 'f-observations', 'f-modelo-laudo'];
+    fieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.readOnly = isReadOnly;
+        if (el.tagName === 'SELECT') {
+          el.disabled = isReadOnly;
+        }
+        if (isReadOnly) {
+          el.classList.add('bg-slate-100', 'text-slate-600', 'cursor-not-allowed', 'select-none');
+          el.classList.remove('bg-white', 'bg-slate-50');
+        } else {
+          el.classList.remove('bg-slate-100', 'text-slate-600', 'cursor-not-allowed', 'select-none');
+          if (id === 'f-result' || id === 'f-unit') {
+            el.classList.add('bg-white');
+          } else {
+            el.classList.add('bg-slate-50');
+          }
+        }
+      }
+    });
+
+    const quickBtns = document.querySelectorAll('.quick-template-btn');
+    quickBtns.forEach(btn => {
+      btn.disabled = isReadOnly;
+      if (isReadOnly) {
+        btn.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        btn.classList.remove('opacity-40', 'pointer-events-none');
+      }
+    });
+  }
+
+  function updateExamActionButtonsAndStatus(status) {
+    const isConferido = (status === 'Conferido' || status === 'Liberado');
+    const isDigitado = (status === 'Digitado');
+
+    const statusTextEl = document.getElementById('m-active-status-text');
+    if (statusTextEl) statusTextEl.textContent = status || 'Pendente';
+
+    // 1. Alternar modo de apenas leitura / edição
+    toggleExamFormReadOnly(isConferido);
+
+    // 2. Atualizar Badge de Status no Banner do Exame
+    const badgeEl = document.getElementById('m-active-status-badge');
+    if (badgeEl) {
+      if (isConferido) {
+        badgeEl.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300 flex items-center gap-1';
+        badgeEl.innerHTML = '🔒 Conferido (Modo Visualização)';
+      } else if (isDigitado) {
+        badgeEl.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-100 text-blue-900 border border-blue-300 flex items-center gap-1';
+        badgeEl.innerHTML = '📝 Digitado (Modo Edição)';
+      } else {
+        badgeEl.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1';
+        badgeEl.innerHTML = '⏳ Pendente';
+      }
+    }
+
+    // 3. Atualizar botões de ação
+    const btnDigitado = document.getElementById('btn-action-digitado');
+    const lblDigitado = document.getElementById('lbl-action-digitado');
+    const btnRevertDigitado = document.getElementById('btn-revert-digitado');
+    const btnConferir = document.getElementById('btn-action-conferir');
+    const lblConferir = document.getElementById('lbl-action-conferir');
+    const iconConferir = btnConferir ? btnConferir.querySelector('span:first-child') : null;
+
+    if (isConferido) {
+      // Exame Conferido -> Modo Visualização
+      // Botão Digitado oculta, Botão "Desmarcar Digitado" fica visível para permitir reverter tudo
+      // Botão "Conferir Exame" vira "Desmarcar Conferido" (para voltar para Digitado e destravar edição)
+      if (btnDigitado) btnDigitado.classList.add('hidden');
+      if (btnRevertDigitado) {
+        btnRevertDigitado.classList.remove('hidden');
+        btnRevertDigitado.onclick = () => saveActiveExam('Pendente');
+        btnRevertDigitado.innerHTML = '<span>↩️</span> Desmarcar Digitado';
+      }
+
+      if (btnConferir) {
+        btnConferir.className = 'px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-md cursor-pointer';
+        btnConferir.onclick = () => saveActiveExam('Digitado');
+        btnConferir.title = "Desmarcar conferência do exame e liberar para edição";
+        if (lblConferir) lblConferir.textContent = 'Desmarcar Conferido';
+        if (iconConferir) iconConferir.textContent = '🔓';
+      }
+    } else if (isDigitado) {
+      // Exame Digitado -> Modo Edição
+      if (btnDigitado) {
+        btnDigitado.classList.remove('hidden');
+        btnDigitado.onclick = () => saveActiveExam('Digitado');
+        if (lblDigitado) lblDigitado.textContent = 'Salvar (Digitado)';
+      }
+      if (btnRevertDigitado) {
+        btnRevertDigitado.classList.remove('hidden');
+        btnRevertDigitado.onclick = () => saveActiveExam('Pendente');
+        btnRevertDigitado.innerHTML = '<span>↩️</span> Desmarcar Digitado';
+      }
+
+      if (btnConferir) {
+        btnConferir.className = 'px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-md font-bold cursor-pointer';
+        btnConferir.onclick = () => saveActiveExam('Conferido');
+        btnConferir.title = "Conferir Exame";
+        if (lblConferir) lblConferir.textContent = 'Conferir Exame';
+        if (iconConferir) iconConferir.textContent = '🔍';
+      }
+    } else {
+      // Exame Pendente -> Modo Edição
+      if (btnDigitado) {
+        btnDigitado.classList.remove('hidden');
+        btnDigitado.onclick = () => saveActiveExam('Digitado');
+        if (lblDigitado) lblDigitado.textContent = 'Salvar (Digitado)';
+      }
+      if (btnRevertDigitado) btnRevertDigitado.classList.add('hidden');
+
+      if (btnConferir) {
+        btnConferir.className = 'px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-md font-bold cursor-pointer';
+        btnConferir.onclick = () => saveActiveExam('Conferido');
+        btnConferir.title = "Conferir Exame";
+        if (lblConferir) lblConferir.textContent = 'Conferir Exame';
+        if (iconConferir) iconConferir.textContent = '🔍';
+      }
+    }
   }
 
   function selectExamInModal(examCode) {
@@ -1454,14 +1514,12 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     const ex = (req.exams || []).find(e => (e.code || e.codigo) === examCode);
     if (!ex) return;
 
-    // Atualizar classe ativa na sidebar
+    // Atualizar classe ativa na sidebar esquerda com destaque visual claro
     document.querySelectorAll('.exam-item-btn').forEach(btn => {
       if (btn.dataset.code === examCode) {
-        btn.classList.add('bg-brand-gold/10', 'border-brand-gold/40', 'font-bold');
-        btn.classList.remove('bg-white', 'border-slate-200');
+        btn.className = 'w-full text-left p-3 rounded-xl transition-all border-2 bg-emerald-50/90 border-[#284701] text-slate-900 font-bold shadow-xs border-l-4 border-l-[#284701] exam-item-btn';
       } else {
-        btn.classList.remove('bg-brand-gold/10', 'border-brand-gold/40', 'font-bold');
-        btn.classList.add('bg-white', 'border-slate-200');
+        btn.className = 'w-full text-left p-3 rounded-xl transition-all border bg-white border-slate-200 text-slate-700 hover:bg-slate-50 exam-item-btn';
       }
     });
 
@@ -1471,30 +1529,77 @@ Acima de 18 anos..: 13 a 60 U/L</div>
 
     setTxt('m-active-code', ex.code || 'EXAME');
     setTxt('m-active-title', (ex.code ? ex.code + ' - ' : '') + (ex.name || 'Nome do Exame'));
-    setTxt('m-active-status-badge', ex.status || 'Pendente');
+
+    const catEx = findCatalogExam(ex.code || ex.codigo || examCode, ex.name || ex.titulo || ex.desc);
 
     const sheetTitleEl = document.getElementById('laudo-sheet-exam-title');
     if (sheetTitleEl) {
-      sheetTitleEl.textContent = (ex.name || ex.code || 'EXAME').toUpperCase();
+      const customTitle = ex.tituloLaudo || (catEx && (catEx.tituloLaudo || catEx.name)) || ex.name || ex.code || 'EXAME';
+      sheetTitleEl.textContent = customTitle.toUpperCase();
     }
 
-    setVal('f-material', ex.material || 'Soro');
-    setVal('f-method', ex.method || ex.metodo || 'Colorimétrico');
+    const materialVal = ex.material || (catEx && (catEx.materialLaudo || catEx.material)) || ex.category || 'Soro';
+    setVal('f-material', materialVal);
+    setTxt('m-active-material-header', materialVal);
+
+    setVal('f-method', ex.method || ex.metodo || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico');
+    setVal('f-equipment', ex.equipment || ex.equipamento || (catEx && (catEx.equipment || catEx.equipamento)) || 'Urit 8021A - Automatizado');
     setVal('f-result', ex.result || ex.resultado || '');
-    setVal('f-ref-value', ex.referenceValue || ex.valorReferencia || 'Até 1 ano.........: 0 a 29 U/L\nDe 1 a 12 anos....: 10 a 37 U/L\nDe 13 a 18 anos...: 11 a 46 U/L\nAcima de 18 anos..: 13 a 60 U/L');
+
+    const refVal = extractExamReferenceValue(ex, catEx);
+    setVal('f-ref-value', refVal);
+
+    const extractedUnit = extractUnitFromText(refVal) || extractUnitFromText(ex.result || ex.resultado);
+    const unitVal = ex.unidade || ex.unit || (ex.linhas && ex.linhas[0] && ex.linhas[0].unidade) || (catEx && (catEx.unidade || catEx.unit)) || extractedUnit || '';
+    setVal('f-unit', unitVal);
+
     setVal('f-interpretation', ex.interpretation || ex.interpretacao || '');
     setVal('f-observations', ex.observations || ex.observacoes || 'Amostra coletada e identificada pelo Hospital Municipal de Cambará.');
-    setVal('f-status', ex.status || 'Digitado');
+    setVal('f-status', ex.status || 'Pendente');
 
-    // Carregar configurações de modelo personalizadas salvas para este exame
-    loadExamModelTemplate(ex.code || examCode);
+    const currentModelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
+    setVal('f-modelo-laudo', currentModelo);
+
+    // Aplicar Modo de Visualização e Botões de Ação conforme Status
+    updateExamActionButtonsAndStatus(ex.status || 'Pendente');
+
+    setTimeout(() => {
+      const resEl = document.getElementById('f-result');
+      if (resEl && !resEl.readOnly) resEl.focus();
+    }, 100);
+  }
+
+  function onModeloLaudoChange(val) {
+    if (!selectedReqId || !activeExamCode) return;
+    const allReqs = window.TRIAGEM_REQUISITIONS || [];
+    const req = allReqs.find(r => (r.id || r.requisitionCode) === selectedReqId || r.id === selectedReqId);
+    if (req) {
+      const ex = (req.exams || []).find(e => (e.code || e.codigo) === activeExamCode);
+      if (ex) {
+        ex.modeloLaudo = val;
+      }
+    }
+    const resInput = document.getElementById('f-result');
+    if (resInput && !resInput.value.trim()) {
+      if (val === 'Modelo Hematologia em Colunas') {
+        resInput.placeholder = 'Exemplo:\nHEMÁCIAS: 4.50 milhoes/mm3\nHEMOGLOBINA: 14.0 g/dL\nHEMATÓCRITO: 42.0 %';
+      } else if (val === 'Modelo Microbiologia & Antibiograma') {
+        resInput.placeholder = 'Exemplo:\nMICROORGANISMO ISOLADO: Escherichia coli (> 100.000 UFC/mL)\nANTIBIOGRAMA: Ampicilina (Sensível), Ciprofloxacino (Resistente)';
+      } else if (val === 'Modelo Texto Livre (Laudo Estruturado)') {
+        resInput.placeholder = 'Digite aqui o laudo estruturado ou texto descritivo...';
+      } else {
+        resInput.placeholder = '72 U/L';
+      }
+    }
+    showToast(`Modelo do laudo alterado para: ${val}`, 'info');
   }
 
   function fillQuickTemplate(type) {
     const resultInput = document.getElementById('f-result');
-    if (type === 'Negativo') resultInput.value = 'Resultado: NEGATIVO';
-    else if (type === 'Positivo') resultInput.value = 'Resultado: POSITIVO';
-    else if (type === 'Normal') resultInput.value = 'Resultado: NORMAL';
+    if (!resultInput) return;
+    if (type === 'Negativo') resultInput.value = 'NEGATIVO';
+    else if (type === 'Positivo') resultInput.value = 'POSITIVO';
+    else if (type === 'Normal') resultInput.value = 'NORMAL';
   }
 
   async function saveActiveExam(targetStatus) {
@@ -1502,15 +1607,22 @@ Acima de 18 anos..: 13 a 60 U/L</div>
       return showToast('Selecione uma requisição e um exame.', 'error');
     }
 
+    const unitInputVal = document.getElementById('f-unit')?.value || '';
+
     const payload = {
       requisitionId: selectedReqId,
       examCode: activeExamCode,
       result: document.getElementById('f-result')?.value || '',
+      unit: unitInputVal,
+      unidade: unitInputVal,
       referenceValue: document.getElementById('f-ref-value')?.value || '',
       method: document.getElementById('f-method')?.value || '',
       material: document.getElementById('f-material')?.value || '',
+      equipment: document.getElementById('f-equipment')?.value || '',
+      equipamento: document.getElementById('f-equipment')?.value || '',
       interpretation: document.getElementById('f-interpretation')?.value || '',
       observations: document.getElementById('f-observations')?.value || '',
+      modeloLaudo: document.getElementById('f-modelo-laudo')?.value || 'Padrão LIS InovaLab',
       status: targetStatus || document.getElementById('f-status')?.value || 'Digitado'
     };
 
@@ -1531,24 +1643,33 @@ Acima de 18 anos..: 13 a 60 U/L</div>
           const ex = req.exams.find(e => (e.code || e.codigo) === activeExamCode);
           if (ex) {
             ex.result = payload.result;
+            ex.resultado = payload.result;
+            ex.unit = payload.unit;
+            ex.unidade = payload.unidade;
             ex.referenceValue = payload.referenceValue;
             ex.method = payload.method;
             ex.material = payload.material;
+            ex.equipment = payload.equipment;
+            ex.equipamento = payload.equipamento;
             ex.interpretation = payload.interpretation;
             ex.observations = payload.observations;
+            ex.modeloLaudo = payload.modeloLaudo;
             ex.status = payload.status;
+            ex.linhas = [{
+              PARAMETRO: 'RESULTADO',
+              resultado: payload.result,
+              unidade: payload.unidade
+            }];
           }
           if (data.requisitionStatus) req.status = data.requisitionStatus;
         }
 
         // Reabrir modal para atualizar visuais
-        openTypingModal(selectedReqId);
+        openTypingModal(selectedReqId, activeExamCode);
         applyFiltersAndRender();
 
-        // Se a ação for de liberação, abrir automaticamente o laudo gerado utilizando o modelo criado
-        if (targetStatus === 'Liberado') {
-          openLaudoPreviewModal();
-        }
+        // Atualizar estado do botão Visualizar Todos
+        updatePreviewAllButtonState(req);
       } else {
         showToast(data.message || 'Erro ao salvar exame.', 'error');
       }
@@ -2066,43 +2187,113 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     if (d.paciente && Array.isArray(d.exames)) {
       return {
         paciente: {
-          nome: d.paciente.nome || 'Sandro Ortiz',
-          idade: d.paciente.idade || '51 Anos',
-          medico: d.paciente.medico || 'Luís Guilherme de Souza Costa',
-          convenio: d.paciente.convenio || 'Hospital Municipal de Cambará',
-          procedencia: d.paciente.procedencia || 'Coleta Hospit',
-          dataRequisicao: d.paciente.dataRequisicao || '31/07/2026',
-          dataEmissao: d.paciente.dataEmissao || '31/07/2026',
-          requisicaoCode: d.paciente.requisicaoCode || '00033225'
+          nome: d.paciente.nome || d.paciente.patientName || document.getElementById('m-patient-name')?.textContent || 'Paciente',
+          idade: d.paciente.idade || d.paciente.patientAge || 'N/I',
+          medico: d.paciente.medico || d.paciente.doctor || document.getElementById('m-doctor')?.textContent || 'Não Informado',
+          convenio: d.paciente.convenio || document.getElementById('m-convenio')?.textContent || 'Particular',
+          procedencia: d.paciente.procedencia || 'Coleta',
+          dataRequisicao: d.paciente.dataRequisicao || d.paciente.dataColeta || new Date().toLocaleDateString('pt-BR'),
+          dataEmissao: d.paciente.dataEmissao || new Date().toLocaleDateString('pt-BR'),
+          requisicaoCode: String(d.paciente.requisicaoCode || d.paciente.requisitionCode || d.paciente.reqCode || document.getElementById('m-req-code')?.textContent || '').replace('#', '') || String(selectedReqId || '00000')
         },
         exames: d.exames.map(ex => {
+          const code = ex.codigo || ex.code || 'EXAME';
+          const catEx = findCatalogExam(code, ex.titulo || ex.examTitle || ex.desc || ex.name);
+          const title = (ex.titulo || ex.examTitle || ex.desc || ex.name || (catEx && (catEx.tituloLaudo || catEx.name)) || code).toUpperCase();
+          let rawRes = ex.resultadoText !== undefined ? ex.resultadoText : (ex.result !== undefined ? ex.result : (ex.resultado !== undefined ? ex.resultado : ''));
+          if (!rawRes || !String(rawRes).trim()) rawRes = 'Sem resultado';
+
+          const isCurrentActive = (activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase()) || d.exames.length === 1;
+          const currentInputRef = isCurrentActive ? document.getElementById('f-ref-value')?.value : '';
+          const refVal = ex.valorReferencia || extractExamReferenceValue(ex, catEx, currentInputRef);
+
+          const manualUnit = isCurrentActive 
+            ? (document.getElementById('f-unit')?.value || ex.unidade || ex.unit || '') 
+            : (ex.unidade || ex.unit || document.getElementById('f-unit')?.value || '');
+          const unitFromRef = extractUnitFromText(refVal) || extractUnitFromText(rawRes);
+
+          const currentInputUnit = String(manualUnit).trim() 
+            || (ex.unidade && String(ex.unidade).trim())
+            || (ex.unit && String(ex.unit).trim())
+            || (ex.linhas && ex.linhas[0] && ex.linhas[0].unidade && String(ex.linhas[0].unidade).trim()) 
+            || (catEx && (catEx.unidade || catEx.unit)) 
+            || unitFromRef 
+            || '';
+
+          let linhas = [];
+          if (Array.isArray(ex.linhas) && ex.linhas.length > 0) {
+            linhas = ex.linhas.map(l => {
+              const param = l.PARAMETRO || (l.part1 ? String(l.part1).replace(/:\s*$/, '') : 'Resultado');
+              const valRaw = l.resultado !== undefined ? l.resultado : l.value;
+              const strVal = String(valRaw !== undefined && valRaw !== null ? valRaw : '').trim();
+              return {
+                PARAMETRO: param,
+                resultado: strVal,
+                unidade: l.unidade || l.unit || currentInputUnit
+              };
+            });
+          } else {
+            const rawLines = String(rawRes).split(/[|\n]/).filter(l => l.trim().length > 0);
+            linhas = rawLines.map(lineStr => {
+              if (lineStr.includes(':')) {
+                const parts = lineStr.split(':');
+                const p1 = parts[0].trim();
+                const rest = parts.slice(1).join(':').trim();
+                const restTokens = rest.split(/\s+/);
+                const valStr = restTokens[0] || '';
+                const unit = restTokens.slice(1).join(' ') || '';
+                return { PARAMETRO: p1, resultado: valStr || rest, unidade: unit || currentInputUnit };
+              } else {
+                const tokens = lineStr.trim().split(/\s+/);
+                const valStr = tokens[0] || lineStr;
+                const unit = tokens.slice(1).join(' ') || '';
+                return { PARAMETRO: 'Resultado', resultado: valStr, unidade: unit || currentInputUnit };
+              }
+            });
+          }
+
+          linhas.forEach(l => {
+            if (!l.unidade || !l.unidade.trim()) {
+              l.unidade = currentInputUnit;
+            }
+          });
+
           return {
-            codigo: ex.codigo || ex.code || 'GLI',
-            titulo: (ex.titulo || ex.examTitle || ex.desc || ex.name || 'EXAME').toUpperCase(),
-            situacao: (ex.situacao || ex.status || 'CONFERIDO').toUpperCase(),
-            liberado: Boolean(ex.liberado),
-            material: ex.material || 'Soro',
-            metodo: ex.metodo || 'Colorimétrico',
-            equipamento: ex.equipamento || 'Urit 8021A - Automatizado',
-            observacao: ex.observacao || '...',
-            valorReferencia: ex.valorReferencia || '...',
-            linhas: Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [
-              { part1: 'RESULTADO:', resultado: ex.resultado || '102', unidade: ex.unidade || 'mg/dL' }
-            ]
+            codigo: code,
+            titulo: title,
+            situacao: (ex.situacao || ex.status || 'DIGITADO').toUpperCase(),
+            liberado: Boolean(ex.liberado || (ex.situacao || ex.status) === 'LIBERADO'),
+            material: ex.material || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro',
+            metodo: ex.metodo || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico',
+            equipamento: ex.equipamento || (catEx && (catEx.equipment || catEx.equipamento)) || '',
+            interpretacao: ex.interpretacao || ex.interpretation || '',
+            observacao: ex.observacao || ex.observations || '',
+            valorReferencia: refVal,
+            unidade: currentInputUnit,
+            unit: currentInputUnit,
+            linhas: linhas
           };
         })
       };
     }
 
     const activeCodeEl = document.getElementById('m-active-code');
-    const defaultCode = d.examCode || d.code || (activeCodeEl && activeCodeEl.textContent.trim() !== '-' ? activeCodeEl.textContent.trim() : 'LIPASE');
+    const defaultCode = d.examCode || d.code || (activeCodeEl && activeCodeEl.textContent.trim() !== '-' ? activeCodeEl.textContent.trim() : 'EXAME');
     const defaultTitle = (d.examTitle || d.desc || d.code || defaultCode || 'EXAME').toUpperCase();
 
     // Dados do Paciente e Requerimento
-    const patientName = d.patientName || document.getElementById('m-patient-name')?.textContent || 'Sandro Ortiz';
-    const doctor = d.doctor || document.getElementById('m-doctor')?.textContent || 'Luís Guilherme de Souza Costa';
-    const convenio = d.convenio || document.getElementById('m-convenio')?.textContent || 'Hospital Municipal de Cambará';
-    const reqCode = d.reqCode || document.getElementById('m-req-code')?.textContent || '#00033225';
+    let patientName = d.patientName || document.getElementById('m-patient-name')?.textContent || 'Paciente';
+    if (!patientName.trim() || patientName === '-') patientName = 'Paciente';
+
+    let doctor = d.doctor || document.getElementById('m-doctor')?.textContent || 'Médico Não Informado';
+    if (!doctor.trim() || doctor === '-') doctor = 'Médico Não Informado';
+
+    let convenio = d.convenio || document.getElementById('m-convenio')?.textContent || 'Particular';
+    if (!convenio.trim() || convenio === '-') convenio = 'Particular';
+
+    let reqCode = d.reqCode || document.getElementById('m-req-code')?.textContent || '#' + (selectedReqId || '00000');
+    if (!reqCode.trim() || reqCode === '-') reqCode = '#' + (selectedReqId || '00000');
+
     const nowStr = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     const dataColeta = d.dataResultado || nowStr;
 
@@ -2110,25 +2301,48 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     const examesInput = Array.isArray(d.exames) && d.exames.length > 0 ? d.exames : [d];
 
     const examesFormatados = examesInput.map(ex => {
-      const code = ex.codigo || ex.code || defaultCode;
-      const title = (ex.titulo || ex.examTitle || ex.desc || ex.name || defaultTitle).toUpperCase();
-      const rawRes = ex.resultadoText || ex.result || ex.resultado || document.getElementById('f-result')?.value || '72 U/L';
-      const statusStr = (ex.status || ex.situacao || document.getElementById('f-status')?.value || 'CONFERIDO').toUpperCase();
+      const code = ex.codigo || ex.code || ex.examCode || defaultCode;
+      const catEx = findCatalogExam(code, ex.titulo || ex.examTitle || ex.desc || ex.name);
+      const title = (ex.titulo || ex.examTitle || ex.desc || ex.name || (catEx && (catEx.tituloLaudo || catEx.name)) || defaultTitle).toUpperCase();
+
+      let rawRes = ex.resultadoText !== undefined ? ex.resultadoText : (ex.result !== undefined ? ex.result : (ex.resultado !== undefined ? ex.resultado : ''));
+      if (!rawRes && activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase()) {
+        rawRes = document.getElementById('f-result')?.value || '';
+      }
+      if (!rawRes || !String(rawRes).trim()) rawRes = 'Sem resultado';
+
+      const statusStr = (ex.status || ex.situacao || (activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase() ? document.getElementById('f-status')?.value : 'Digitado') || 'DIGITADO').toUpperCase();
       const isLiberado = statusStr === 'LIBERADO';
+
+      const isCurrentActive = (activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase()) || examesInput.length === 1;
+      const currentInputRef = isCurrentActive ? document.getElementById('f-ref-value')?.value : '';
+      const refVal = extractExamReferenceValue(ex, catEx, currentInputRef);
+
+      // Extração inteligente de unidade de medida (se não preenchida manualmente)
+      const manualUnit = isCurrentActive 
+        ? (document.getElementById('f-unit')?.value || ex.unidade || ex.unit || '') 
+        : (ex.unidade || ex.unit || document.getElementById('f-unit')?.value || '');
+      const unitFromRef = extractUnitFromText(refVal) || extractUnitFromText(rawRes);
+
+      const currentInputUnit = String(manualUnit).trim() 
+        || (ex.unidade && String(ex.unidade).trim())
+        || (ex.unit && String(ex.unit).trim())
+        || (ex.linhas && ex.linhas[0] && ex.linhas[0].unidade && String(ex.linhas[0].unidade).trim()) 
+        || (catEx && (catEx.unidade || catEx.unit)) 
+        || unitFromRef 
+        || '';
 
       // Transformar a string de resultado em linhas estruturadas [ { PARAMETRO, resultado, unidade } ]
       let linhas = [];
       if (Array.isArray(ex.linhas) && ex.linhas.length > 0) {
         linhas = ex.linhas.map(l => {
-          const param = l.PARAMETRO || (l.part1 ? String(l.part1).replace(/:\s*$/, '') : 'RESULTADO');
+          const param = l.PARAMETRO || (l.part1 ? String(l.part1).replace(/:\s*$/, '') : 'Resultado');
           const valRaw = l.resultado !== undefined ? l.resultado : l.value;
           const strVal = String(valRaw !== undefined && valRaw !== null ? valRaw : '').trim();
-          const parsedFloat = parseFloat(strVal.replace(',', '.'));
-          const valNum = (typeof valRaw === 'number') ? valRaw : (!isNaN(parsedFloat) && isFinite(strVal.replace(',', '.')) ? parsedFloat : strVal);
           return {
             PARAMETRO: param,
-            resultado: valNum,
-            unidade: l.unidade || l.unit || ''
+            resultado: strVal,
+            unidade: l.unidade || l.unit || currentInputUnit
           };
         });
       } else {
@@ -2141,38 +2355,41 @@ Acima de 18 anos..: 13 a 60 U/L</div>
             const restTokens = rest.split(/\s+/);
             const valStr = restTokens[0] || '';
             const unit = restTokens.slice(1).join(' ') || '';
-            const parsedFloat = parseFloat(valStr.replace(',', '.'));
-            const valNum = (!isNaN(parsedFloat) && isFinite(valStr.replace(',', '.'))) ? parsedFloat : valStr;
             return {
               PARAMETRO: p1,
-              resultado: valNum,
-              unidade: unit
+              resultado: valStr,
+              unidade: unit || currentInputUnit
             };
           } else {
             const tokens = lineStr.trim().split(/\s+/);
             const valStr = tokens[0] || lineStr;
             const unit = tokens.slice(1).join(' ') || '';
-            const parsedFloat = parseFloat(valStr.replace(',', '.'));
-            const valNum = (!isNaN(parsedFloat) && isFinite(valStr.replace(',', '.'))) ? parsedFloat : valStr;
             return {
-              PARAMETRO: 'RESULTADO',
-              resultado: valNum,
-              unidade: unit
+              PARAMETRO: 'Resultado',
+              resultado: valStr,
+              unidade: unit || currentInputUnit
             };
           }
         });
       }
+
+      linhas.forEach(l => {
+        if (!l.unidade || !l.unidade.trim()) {
+          l.unidade = currentInputUnit;
+        }
+      });
 
       return {
         codigo: code,
         titulo: title,
         situacao: statusStr,
         liberado: isLiberado,
-        material: ex.material || document.getElementById('f-material')?.value || 'Soro',
-        metodo: ex.metodo || ex.method || document.getElementById('f-method')?.value || 'Colorimétrico',
-        equipamento: ex.equipamento || document.getElementById('f-equipment')?.value || 'Urit 8021A - Automatizado',
-        observacao: ex.observacao || ex.observations || document.getElementById('f-observations')?.value || 'Amostra coletada e identificada pelo Hospital Municipal de Cambará.',
-        valorReferencia: typeof ex.valorReferencia === 'string' && ex.valorReferencia.trim() ? ex.valorReferencia : (document.getElementById('f-ref-value')?.value || 'Até 1 ano.........: 0 a 29 U/L\nDe 1 a 12 anos....: 10 a 37 U/L\nDe 13 a 18 anos...: 11 a 46 U/L\nAcima de 18 anos..: 13 a 60 U/L'),
+        material: ex.material || (isCurrentActive ? document.getElementById('f-material')?.value : '') || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro',
+        metodo: ex.metodo || ex.method || (isCurrentActive ? document.getElementById('f-method')?.value : '') || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico',
+        equipamento: ex.equipamento || ex.equipment || (isCurrentActive ? document.getElementById('f-equipment')?.value : '') || (catEx && (catEx.equipment || catEx.equipamento)) || '',
+        interpretacao: ex.interpretacao || ex.interpretation || (isCurrentActive ? document.getElementById('f-interpretation')?.value : '') || '',
+        observacao: ex.observacao || ex.observations || (isCurrentActive ? document.getElementById('f-observations')?.value : '') || '',
+        valorReferencia: refVal,
         linhas: linhas
       };
     });
@@ -2180,264 +2397,124 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     return {
       paciente: {
         nome: patientName,
-        idade: d.idade || '51 Anos',
+        idade: d.idade || 'N/I',
         medico: doctor,
         convenio: convenio,
-        procedencia: d.procedencia || 'Coleta Hospit',
-        dataRequisicao: dataColeta.split(' ')[0] || '31/07/2026',
-        dataEmissao: dataColeta.split(' ')[0] || '31/07/2026',
-        requisicaoCode: reqCode.replace('#', '')
+        procedencia: d.procedencia || 'Coleta',
+        dataRequisicao: dataColeta.split(' ')[0] || new Date().toLocaleDateString('pt-BR'),
+        dataEmissao: dataColeta.split(' ')[0] || new Date().toLocaleDateString('pt-BR'),
+        requisicaoCode: String(reqCode || '').replace('#', '')
       },
       exames: examesFormatados
     };
   }
 
   // ==========================================
-  // MODELO DE IMPRESSÃO / VISUALIZAÇÃO DE LAUDO (UTILIZANDO O JSON E MODELO CRIADO)
+  // MODELO DE IMPRESSÃO / VISUALIZAÇÃO DE LAUDO (INOVALAB)
   // ==========================================
   function renderLaudoWithCreatedModel(containerEl, data) {
     if (!containerEl) return;
     
     // 1. Gerar a Estrutura Fixa JSON do Laudo
     const laudoJson = buildStandardLaudoJson(data);
-    window.activeLaudoJson = laudoJson; // Disponível globalmente para exportação/inspeção
+    window.activeLaudoJson = laudoJson;
 
-    const modelType = window.activeUniversalModel || 'padrao';
     const mainExam = laudoJson.exames[0] || {};
-    const examCode = mainExam.codigo || 'LIPASE';
-    const providerKey = activeLisProviderKey || 'interno';
-    const provNames = { interno: 'Interno', alvaro: 'Álvaro', pardini: 'Pardini' };
+    const examCode = mainExam.codigo || 'EXAME';
 
-    // Paciente
+    // Paciente & Recomendações
     const patientName = laudoJson.paciente.nome;
     const doctor = laudoJson.paciente.medico;
     const convenio = laudoJson.paciente.convenio;
     const reqCode = laudoJson.paciente.requisicaoCode;
     const dataColeta = laudoJson.paciente.dataRequisicao;
-    const liberadoPor = data?.liberadoPor || 'Maria Gabriela';
+    const liberadoPor = data?.liberadoPor || 'Dr. Alysson Silva (Resp. Técnico)';
     const hash = data?.hash || '30b0159888103142783ca35ff8ea92ad';
 
     containerEl.className = "bg-white text-slate-900 p-6 sm:p-10 shadow-xl border border-slate-300 w-full max-w-3xl min-h-[850px] font-mono text-xs leading-normal relative rounded-lg select-none";
 
-    let examesHtml = '';
+    let examesHtml = laudoJson.exames.map(ex => {
+      const hasInterpretation = Boolean(ex.interpretacao && String(ex.interpretacao).trim());
+      const hasObservacao = Boolean(ex.observacao && String(ex.observacao).trim());
 
-    if (modelType === 'custom_wysiwyg') {
-      let saved = localStorage.getItem(`lis_layout_${examCode}_${providerKey}`);
-      if (!saved && providerKey !== 'interno') saved = localStorage.getItem(`lis_layout_${examCode}_interno`);
-      if (!saved) saved = localStorage.getItem(`lis_layout_${examCode}`);
-      
-      let modelComponents = saved ? JSON.parse(saved) : getDefaultLisComponents(examCode);
-      const formattedResultFromLines = mainExam.linhas.map(l => `${l.PARAMETRO ? (l.PARAMETRO + ':') : (l.part1 || 'RESULTADO:')} ${l.resultado}${l.unidade ? ' ' + l.unidade : ''}`).join('\n');
+      return `
+        <div class="mb-6 font-mono">
+          <!-- TÍTULO DO EXAME EM FAIXA DESTAQUE -->
+          <div class="bg-slate-200 border border-slate-400 py-1.5 px-3 text-center font-bold text-sm text-slate-950 uppercase tracking-wider mb-3 rounded-xs">
+            ${escapeLisHtml(ex.titulo)}
+          </div>
 
-      examesHtml = `
-        <div class="relative w-full min-h-[520px] bg-white border border-slate-200 rounded-md p-2 font-mono text-xs overflow-hidden">
-          ${modelComponents.map((comp) => {
-            let text = comp.texto || '';
-            if (comp.componente === 'Resultado Simples' || comp.id === 'comp_result' || comp.nome === 'ResultadoExame') {
-              text = formattedResultFromLines;
-            } else if (comp.componente === 'Val. Referência' || comp.id === 'comp_ref' || comp.nome === 'ValoresReferencia') {
-              text = `Valores de Referência:\n${mainExam.valorReferencia}`;
-            } else if (comp.componente === 'Expressão' || comp.id === 'comp_tech' || comp.nome === 'DadosTecnicos') {
-              text = `Material: ${mainExam.material}\nMétodo  : ${mainExam.metodo}\nEquipamento: ${mainExam.equipamento}`;
-            } else if (comp.nome === 'Observacoes' || comp.id === 'comp_obs') {
-              text = `Observações:\n${mainExam.observacao}`;
-            } else if (comp.nome === 'TituloExame' || comp.id === 'comp_title') {
-              text = mainExam.titulo;
-            }
+          <!-- DADOS TÉCNICOS E CABEÇALHO DO EXAME -->
+          <div class="text-[10.5px] space-y-0.5 text-slate-800 border-b border-slate-200 pb-2 mb-3">
+            <div class="flex flex-wrap gap-x-6 gap-y-1">
+              <div><span class="text-slate-600 font-medium">Material:</span> <strong class="text-slate-900">${escapeLisHtml(ex.material)}</strong></div>
+              <div><span class="text-slate-600 font-medium">Método:</span> <strong class="text-slate-900">${escapeLisHtml(ex.metodo)}</strong></div>
+              ${ex.equipamento ? `<div><span class="text-slate-600 font-medium">Equipamento:</span> <strong class="text-slate-900">${escapeLisHtml(ex.equipamento)}</strong></div>` : ''}
+            </div>
+          </div>
 
-            text = String(text || '')
-              .replace(/\{\{resultado\}\}/gi, String(formattedResultFromLines || ''))
-              .replace(/\{\{material\}\}/gi, String(mainExam.material || ''))
-              .replace(/\{\{metodo\}\}/gi, String(mainExam.metodo || ''))
-              .replace(/\{\{equipamento\}\}/gi, String(mainExam.equipamento || ''))
-              .replace(/\{\{referencia\}\}/gi, String(mainExam.valorReferencia || ''))
-              .replace(/\{\{observacao\}\}/gi, String(mainExam.observacao || ''))
-              .replace(/\{\{paciente\}\}/gi, String(patientName || ''))
-              .replace(/\{\{requisicao\}\}/gi, String(reqCode || ''))
-              .replace(/\{\{medico\}\}/gi, String(doctor || ''))
-              .replace(/\{\{convenio\}\}/gi, String(convenio || ''));
+          <!-- 1. BLOCO DE RESULTADO(S) -->
+          <div class="space-y-2 bg-slate-50/90 p-3 border border-slate-200 rounded-xs mb-3">
+            ${ex.linhas.map(l => {
+              const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+              const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+              let paramDisplay = isGenericParam 
+                ? 'Resultado...:' 
+                : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
 
-            return `
-              <div
-                class="absolute p-2 flex items-center justify-${comp.alinhamento === 'center' ? 'center' : comp.alinhamento === 'right' ? 'end' : 'start'}"
-                style="
-                  left: ${comp.esquerda}px; top: ${comp.topo}px; width: ${comp.largura}px; height: ${comp.altura}px;
-                  font-family: '${comp.fonte}', monospace; font-size: ${comp.tamanho};
-                  font-weight: ${comp.negrito ? 'bold' : 'normal'};
-                  text-transform: ${comp.maiusculas ? 'uppercase' : 'none'};
-                  color: ${comp.corFonte}; background-color: ${comp.corFundo}; white-space: pre-wrap;
-                "
-              >
-                <span>${escapeLisHtml(text)}</span>
+              let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+              let unitStr = (l.unidade || ex.unidade || ex.unit || (document.getElementById('f-unit') ? document.getElementById('f-unit').value : '')).trim();
+              if (!unitStr) {
+                unitStr = extractUnitFromText(ex.valorReferencia || ex.resultadoText || ex.resultado || '') || '';
+              }
+              if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+                unitStr = '';
+              }
+
+              return `
+              <div class="flex items-baseline gap-2 text-xs font-mono border-b border-dashed border-slate-200 pb-1.5 last:border-0 last:pb-0">
+                <span class="font-bold text-slate-900 text-xs">${escapeLisHtml(paramDisplay)}</span>
+                <span class="font-extrabold text-slate-950 text-sm tracking-wide">
+                  ${escapeLisHtml(valStr)}${unitStr ? ` <span class="not-italic text-xs font-bold text-slate-800 ml-1">${escapeLisHtml(unitStr)}</span>` : ''}
+                </span>
               </div>
-            `;
-          }).join('')}
+              `;
+            }).join('')}
+          </div>
+
+          <!-- 2. VALORES DE REFERÊNCIA (ABAIXO DO RESULTADO, ACIMA DE INTERPRETAÇÃO / NOTA TÉCNICA) -->
+          <div class="mb-3 p-2.5 bg-white border border-slate-200 rounded-xs">
+            <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Valores de Referência:</div>
+            <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${escapeLisHtml(ex.valorReferencia || 'Verificar cadastro técnico.')}</div>
+          </div>
+
+          <!-- 3. INTERPRETAÇÃO / NOTA TÉCNICA (SE HOUVER) -->
+          ${hasInterpretation ? `
+            <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
+              <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Interpretação / Nota Técnica:</div>
+              <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${escapeLisHtml(ex.interpretacao)}</div>
+            </div>
+          ` : ''}
+
+          <!-- 4. OBSERVAÇÕES (SE HOUVER) -->
+          ${hasObservacao ? `
+            <div class="mt-2 pt-2 border-t border-slate-200 text-[10.5px] text-slate-700 italic">
+              <strong class="not-italic text-slate-900">Observações:</strong> ${escapeLisHtml(ex.observacao)}
+            </div>
+          ` : ''}
         </div>
       `;
-
-    } else if (modelType === 'tabela') {
-      examesHtml = laudoJson.exames.map(ex => {
-        return `
-          <div class="mb-6 border border-slate-400 rounded-sm overflow-hidden bg-white">
-            <div class="bg-slate-800 text-white py-1.5 px-3 font-bold text-xs uppercase tracking-wider flex items-center justify-between">
-              <span>${escapeLisHtml(ex.titulo)}</span>
-              <span class="text-[10px] opacity-75 font-mono">${escapeLisHtml(ex.codigo)}</span>
-            </div>
-            
-            <div class="p-2.5 bg-slate-50 border-b border-slate-300 text-[10.5px] font-mono grid grid-cols-3 gap-2 text-slate-700">
-              <div><strong>Material:</strong> ${escapeLisHtml(ex.material)}</div>
-              <div><strong>Método:</strong> ${escapeLisHtml(ex.metodo)}</div>
-              <div><strong>Equipamento:</strong> ${escapeLisHtml(ex.equipamento)}</div>
-            </div>
-
-            <table class="w-full text-[11px] font-mono border-collapse">
-              <thead>
-                <tr class="bg-slate-100 border-b border-slate-300 text-slate-800 text-left">
-                  <th class="p-2 border-r border-slate-300 w-5/12">PARÂMETRO</th>
-                  <th class="p-2 border-r border-slate-300 text-right w-3/12">RESULTADO</th>
-                  <th class="p-2 text-left w-4/12">VALORES DE REFERÊNCIA</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${ex.linhas.map((l, idx) => `
-                  <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} border-b border-slate-200">
-                    <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</td>
-                    <td class="p-2 border-r border-slate-300 text-right font-bold text-slate-950 text-xs">
-                      ${escapeLisHtml(l.resultado)} <span class="font-normal text-[10px] text-slate-700">${escapeLisHtml(l.unidade || '')}</span>
-                    </td>
-                    ${idx === 0 ? `<td rowspan="${ex.linhas.length}" class="p-2 align-top text-[10px] text-slate-700 whitespace-pre-line leading-tight bg-white">${escapeLisHtml(ex.valorReferencia)}</td>` : ''}
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            ${ex.observacao ? `
-              <div class="p-2 bg-slate-50 border-t border-slate-300 text-[10.5px] text-slate-700 font-mono italic">
-                <strong>Observação:</strong> ${escapeLisHtml(ex.observacao)}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-
-    } else if (modelType === 'compacto') {
-      examesHtml = laudoJson.exames.map(ex => {
-        return `
-          <div class="mb-5 p-3.5 bg-slate-50 border-l-4 border-indigo-600 border-y border-r border-slate-300 rounded-r-md space-y-2">
-            <div class="flex items-center justify-between font-bold text-xs uppercase text-slate-900 border-b border-slate-200 pb-1">
-              <span>${escapeLisHtml(ex.titulo)} (${escapeLisHtml(ex.codigo)})</span>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-mono">${escapeLisHtml(ex.situacao || 'CONFERIDO')}</span>
-            </div>
-
-            <div class="text-[10.5px] text-slate-600 font-mono flex gap-4">
-              <span>Material: <strong>${escapeLisHtml(ex.material)}</strong></span>
-              <span>Método: <strong>${escapeLisHtml(ex.metodo)}</strong></span>
-            </div>
-
-            <div class="space-y-1 bg-white p-2 rounded border border-slate-200">
-              ${ex.linhas.map(l => `
-                <div class="flex items-baseline justify-between font-mono text-xs">
-                  <span class="font-bold text-slate-800">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</span>
-                  <span class="font-bold text-sm text-indigo-950">${escapeLisHtml(l.resultado)} <span class="text-xs font-normal text-slate-600">${escapeLisHtml(l.unidade || '')}</span></span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="text-[10.5px] text-slate-700 font-mono">
-              <div class="font-bold text-slate-900">Referência:</div>
-              <div class="whitespace-pre-line text-[10px] text-slate-600">${escapeLisHtml(ex.valorReferencia)}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-    } else {
-      // Modelo Padrão InovaLab (padrao)
-      examesHtml = laudoJson.exames.map(ex => {
-        return `
-          <div class="mb-6 font-mono">
-            <!-- TITULO DO EXAME EM FAIXA DESTAQUE -->
-            <div class="bg-slate-200 border border-slate-400 py-1.5 px-3 text-center font-bold text-sm text-slate-950 uppercase tracking-wider mb-3 rounded-xs">
-              ${escapeLisHtml(ex.titulo)}
-            </div>
-
-            <!-- DADOS TÉCNICOS E VALORES DE REFERÊNCIA EM GRID -->
-            <div class="grid grid-cols-12 gap-4 text-xs">
-              <!-- ESQUERDA: MATERIAL/MÉTODO E RESULTADOS -->
-              <div class="col-span-7 space-y-3">
-                <div class="text-[10.5px] space-y-0.5 text-slate-800 border-b border-slate-200 pb-2">
-                  <div><span class="inline-block w-24 text-slate-600 font-medium">Material...:</span> <strong class="text-slate-900">${escapeLisHtml(ex.material)}</strong></div>
-                  <div><span class="inline-block w-24 text-slate-600 font-medium">Método.....:</span> <strong class="text-slate-900">${escapeLisHtml(ex.metodo)}</strong></div>
-                  <div><span class="inline-block w-24 text-slate-600 font-medium">Equipamento:</span> <strong class="text-slate-900">${escapeLisHtml(ex.equipamento)}</strong></div>
-                </div>
-
-                <!-- BLOCOS DE RESULTADO (PART1 + RESULTADO + UNIDADE) -->
-                <div class="space-y-1.5 bg-slate-50/80 p-2 border border-slate-200 rounded-xs">
-                  ${ex.linhas.map(l => `
-                    <div class="flex items-baseline justify-between text-xs font-mono border-b border-dashed border-slate-200 pb-1 last:border-0 last:pb-0">
-                      <span class="font-bold text-slate-900">${escapeLisHtml(l.PARAMETRO || l.part1 || 'RESULTADO:')}</span>
-                      <span class="font-bold italic text-slate-950 text-sm tracking-wide bg-white px-2 py-0.5 rounded border border-slate-300 shadow-2xs">
-                        ${escapeLisHtml(l.resultado)} <span class="not-italic text-xs font-normal text-slate-700">${escapeLisHtml(l.unidade || '')}</span>
-                      </span>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- DIREITA: VALORES DE REFERÊNCIA -->
-              <div class="col-span-5 border-l border-slate-300 pl-3">
-                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-300 pb-0.5">Valores de Referência:</div>
-                <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${escapeLisHtml(ex.valorReferencia)}</div>
-              </div>
-            </div>
-
-            ${ex.observacao ? `
-              <div class="mt-3 pt-2 border-t border-slate-200 text-[10.5px] text-slate-700 italic">
-                <strong class="not-italic text-slate-900">Observações:</strong> ${escapeLisHtml(ex.observacao)}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-    }
+    }).join('');
 
     containerEl.innerHTML = `
-      <!-- BANNER DE CONFIRMAÇÃO DO MODELO UTILIZADO (NO-PRINT) -->
-      <div class="no-print mb-4 p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-[11px] font-mono text-indigo-900">
-        <div class="flex items-center gap-2 font-bold">
-          <span>✨</span>
-          <span>Modelo Ativo: <strong class="uppercase text-indigo-950">${modelType === 'tabela' ? 'Tabela / Fracionado' : modelType === 'compacto' ? 'Compacto' : modelType === 'custom_wysiwyg' ? 'Personalizado (WYSIWYG)' : 'Padrão InovaLab'}</strong> - Exames: <strong class="text-indigo-950">${laudoJson.exames.length}</strong></span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="openJsonImportModal()" class="px-2 py-0.5 bg-indigo-700 hover:bg-indigo-800 text-white font-mono font-bold text-[10px] rounded-md transition shadow-2xs">📥 Alterar JSON</button>
-          <button onclick="copyActiveLaudoJson()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-900 text-white font-mono font-bold text-[10px] rounded-md transition shadow-2xs">🔍 Copiar JSON</button>
-        </div>
-      </div>
-
-      <!-- CABEÇALHO DO LAUDO IGUAL AO MODELO ENVIADO -->
-      <div class="border-b-2 border-slate-800 pb-2 mb-4 font-mono text-slate-900 leading-tight">
-        <!-- TOP LOGO E DADOS DA INSTITUIÇÃO -->
-        <div class="flex items-start justify-between mb-2">
-          <!-- LOGOTIPO INOVALAB -->
-          <div class="flex items-center gap-2">
-            <svg class="w-9 h-9 text-[#849a37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 15c6.667-6 13.333 0 20-6" />
-              <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" />
-              <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" />
-              <circle cx="17" cy="6" r="2" fill="currentColor" class="text-[#5b6b1b]" />
-              <circle cx="7" cy="18" r="2" fill="currentColor" class="text-[#849a37]" />
-            </svg>
-            <div>
-              <div class="text-xl sm:text-2xl font-light tracking-[0.25em] text-[#556926] uppercase font-sans flex items-center gap-1">
-                <span class="font-normal text-[#5b6b1b]">INOVA</span><span class="font-light text-[#86993a]">LAB</span>
-              </div>
-              <div class="text-[9px] tracking-[0.22em] text-[#707c45] font-sans font-medium uppercase -mt-0.5">
-                CUIDANDO DA SUA SAÚDE
-              </div>
-            </div>
+      <!-- CABEÇALHO OFICIAL DO LAUDO (INOVALAB) -->
+      <div class="border-b-2 border-slate-800 pb-3 mb-5 font-mono text-slate-900 leading-tight">
+        <!-- LOGO E DADOS DA INSTITUIÇÃO -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <img src="/logo-inovalab.svg" alt="Laboratório InovaLab" class="h-14 sm:h-16 w-auto object-contain shrink-0" />
           </div>
 
-          <!-- ENDEREÇO E CNES DO LABORATÓRIO -->
           <div class="text-right font-sans text-[11px] text-slate-900 leading-snug">
             <div class="font-bold text-xs uppercase tracking-tight text-slate-950">LABORATÓRIO INOVALAB</div>
             <div class="flex items-center justify-end gap-1 text-[10.5px]">
@@ -2450,7 +2527,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
           </div>
         </div>
 
-        <!-- QUADRO DE DADOS DO PACIENTE E CÓDIGO DE BARRAS DA REQUISIÇÃO -->
+        <!-- QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO -->
         <div class="border-2 border-slate-900 rounded-xs p-2.5 grid grid-cols-12 gap-2 text-[11px] font-mono bg-white">
           <div class="col-span-8 space-y-1">
             <div class="truncate">
@@ -2472,7 +2549,6 @@ Acima de 18 anos..: 13 a 60 U/L</div>
               <div><span>Data Emissão:</span> <span>${escapeLisHtml(laudoJson.paciente.dataEmissao)}</span></div>
             </div>
             <div class="flex flex-col items-end mt-1">
-              <!-- CÓDIGO DE BARRAS VISUAL -->
               <div class="font-mono text-[9px] font-bold tracking-[0.15em] bg-slate-900 text-white px-1 py-0.5 rounded-xs inline-block">
                 ||||||||||||||||||||||||||||||||
               </div>
@@ -2484,21 +2560,18 @@ Acima de 18 anos..: 13 a 60 U/L</div>
         </div>
       </div>
 
-      <!-- CORPO DOS EXAMES (RENDERIZADOS PELO MODELO SELECIONADO) -->
-      <div class="min-h-[480px]">
+      <!-- CORPO DOS EXAMES -->
+      <div class="min-h-[440px]">
         ${examesHtml}
       </div>
 
       <!-- RODAPÉ DE LIBERAÇÃO ELETRÔNICA E CHANCELA DIGITAL -->
-      <div class="mt-6 pt-3 border-t border-slate-300 text-[10.5px] font-mono text-slate-600 flex flex-wrap items-center justify-between gap-2">
-        <div>Coleta: <strong class="text-slate-800">${escapeLisHtml(dataColeta)}</strong></div>
-        <div>Laudo liberado eletronicamente por: <strong class="text-emerald-800">${escapeLisHtml(liberadoPor)}</strong></div>
-        <div>Cód. Segurança: <span class="font-mono text-[9px] text-slate-800">${escapeLisHtml(hash)}</span></div>
+      <div class="mt-8 pt-3 border-t-2 border-slate-800 text-[10.5px] font-mono text-slate-700 flex flex-wrap items-center justify-between gap-2">
+        <div>Coleta: <strong class="text-slate-900">${escapeLisHtml(dataColeta)}</strong></div>
+        <div>Liberado eletronicamente por: <strong class="text-emerald-900">${escapeLisHtml(liberadoPor)}</strong></div>
+        <div>Cód. Autenticidade: <span class="font-mono text-[9px] text-slate-800">${escapeLisHtml(hash)}</span></div>
       </div>
     `;
-
-    const selectModelEl = document.getElementById('select-universal-model');
-    if (selectModelEl) selectModelEl.value = modelType;
   }
 
   function populateAndOpenLaudoPreview(data) {
@@ -2513,26 +2586,35 @@ Acima de 18 anos..: 13 a 60 U/L</div>
   function openLaudoPreviewModal() {
     const activeCodeEl = document.getElementById('m-active-code');
     const activeTitleEl = document.getElementById('m-active-title');
-    const examCode = (activeCodeEl && activeCodeEl.textContent.trim() !== '-') ? activeCodeEl.textContent.trim() : 'LIPASE';
-    const examTitle = (activeTitleEl && activeTitleEl.textContent.trim() !== 'Selecione um exame') ? activeTitleEl.textContent.trim() : 'LIPASE';
-    const result = document.getElementById('f-result') ? document.getElementById('f-result').value : '72 U/L';
-    const valRef = document.getElementById('f-ref-value') ? document.getElementById('f-ref-value').value : '';
-    const metodo = document.getElementById('f-method') ? document.getElementById('f-method').value : 'Colorimétrico';
-    const material = document.getElementById('f-material') ? document.getElementById('f-material').value : 'Soro';
-    const obs = document.getElementById('f-observations') ? document.getElementById('f-observations').value : 'Amostra coletada e identificada pelo Hospital Municipal de Cambará.';
-    const eq = document.getElementById('f-equipment') ? document.getElementById('f-equipment').value : 'Urit 8021A - Automatizado';
+    const examCode = (activeCodeEl && activeCodeEl.textContent.trim() !== '-') ? activeCodeEl.textContent.trim() : 'EXAME';
+    const examTitle = (activeTitleEl && activeTitleEl.textContent.trim() !== 'Selecione um exame') ? activeTitleEl.textContent.trim() : 'EXAME';
+    const result = document.getElementById('f-result') ? document.getElementById('f-result').value : '';
+    const unit = document.getElementById('f-unit') ? document.getElementById('f-unit').value : '';
+    
+    const catEx = findCatalogExam(examCode, examTitle);
+    const valRefInput = document.getElementById('f-ref-value') ? document.getElementById('f-ref-value').value : '';
+    const valRef = extractExamReferenceValue(null, catEx, valRefInput);
+
+    const metodo = (document.getElementById('f-method') ? document.getElementById('f-method').value : '') || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico';
+    const material = (document.getElementById('f-material') ? document.getElementById('f-material').value : '') || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro';
+    const obs = document.getElementById('f-observations') ? document.getElementById('f-observations').value : '';
+    const eq = (document.getElementById('f-equipment') ? document.getElementById('f-equipment').value : '') || (catEx && (catEx.equipment || catEx.equipamento)) || '';
     const interp = document.getElementById('f-interpretation') ? document.getElementById('f-interpretation').value : '';
 
     populateAndOpenLaudoPreview({
       examCode: examCode,
+      code: examCode,
+      codigo: examCode,
       examTitle: examTitle,
-      resultadoText: result || '72 U/L',
+      resultadoText: (result || '').trim() || 'Sem resultado',
+      unit: (unit || '').trim(),
+      unidade: (unit || '').trim(),
       valorReferencia: valRef,
-      metodo: metodo || 'Colorimétrico',
-      material: material || 'Soro',
-      equipamento: eq || 'Urit 8021A - Automatizado',
-      observacao: obs || 'Amostra coletada e identificada pelo Hospital Municipal de Cambará.',
-      interpretation: interp
+      metodo: metodo,
+      material: material,
+      equipamento: eq,
+      observacao: obs,
+      interpretacao: interp
     });
   }
 
@@ -2569,7 +2651,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
     const resultSize = document.getElementById('cfg-font-size-result')?.value || '16px';
     const refSize = document.getElementById('cfg-font-size-ref')?.value || '11px';
 
-    const paperContainer = document.getElementById('laudo-paper-container');
+    const paperContainer = document.getElementById('laudo-editor-paper-container');
     if (paperContainer) {
       paperContainer.style.fontSize = bodySize;
     }
@@ -3096,7 +3178,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
         id: 'comp_ref',
         nome: 'ValoresReferencia',
         componente: 'Val. Referência',
-        texto: 'Valores de Referência:\nAté 1 ano.........: 0 a 29 U/L\nDe 1 a 12 anos....: 10 a 37 U/L\nDe 13 a 18 anos...: 11 a 46 U/L\nAcima de 18 anos..: 13 a 60 U/L',
+        texto: 'Valores de Referência:\n{{referencia}}',
         esquerda: 350,
         topo: 85,
         largura: 290,

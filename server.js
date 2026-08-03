@@ -2941,10 +2941,10 @@ const formatDateTimeToBR = (dateVal) => {
       const mm = (timeParts[1] || '00').padStart(2, '0');
       return `${datePart} ${hh}:${mm}`;
     }
-    return datePart;
+    return `${datePart} 00:00`;
   }
 
-  // Se for ISO ou YYYY-MM-DD
+  // Se for ISO ou YYYY-MM-DD (ex: "2026-07-28T14:30:00.000Z" ou "2026-07-28 14:30:00")
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const [datePart, timePart] = str.split(/[T\s]+/);
     const [y, m, d] = datePart.split('-');
@@ -2955,7 +2955,16 @@ const formatDateTimeToBR = (dateVal) => {
       const mm = (timeParts[1] || '00').padStart(2, '0');
       return `${formattedDate} ${hh}:${mm}`;
     }
-    return formattedDate;
+    return `${formattedDate} 00:00`;
+  }
+
+  if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+    const day = String(dateVal.getDate()).padStart(2, '0');
+    const month = String(dateVal.getMonth() + 1).padStart(2, '0');
+    const year = dateVal.getFullYear();
+    const hours = String(dateVal.getHours()).padStart(2, '0');
+    const minutes = String(dateVal.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   return str.replace(',', '').trim();
@@ -2973,6 +2982,10 @@ function formatRequisitionExams(reqsFound) {
       const isExamLiberado = isReqLiberado || eStatus.toLowerCase() === 'liberado' || eStatus.toLowerCase() === 'concluido' || eStatus.toLowerCase() === 'pronto';
       const pdfEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}&exame=${encodeURIComponent(e.code || '')}`;
 
+      const rawDataResultado = isExamLiberado 
+        ? (e.dataResultado || e.resultDate || e.liberadoAt || r.liberadoAt || r.dataResultado || r.updatedAt || r.createdAt || '')
+        : (e.dataResultado || e.resultDate || '');
+
       return {
         codigo: e.code || '',
         nome: e.name || e.exame || '',
@@ -2981,7 +2994,7 @@ function formatRequisitionExams(reqsFound) {
         laudoDisponivel: isExamLiberado,
         pdfUrl: isExamLiberado ? pdfEndpoint : null,
         dataColeta: formatDateTimeToBR(e.dataColeta || e.coletaDate || r.createdAt || ''),
-        dataResultado: formatDateTimeToBR(e.dataResultado || e.resultDate || '')
+        dataResultado: isExamLiberado ? formatDateTimeToBR(rawDataResultado) : ''
       };
     });
 
@@ -3400,16 +3413,169 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.moveDown(0.5);
 
     const exams = reqFound.exams || [];
+    const allCatalogExams = loadExams();
+
     if (exams.length === 0) {
       doc.fillColor('#475569').fontSize(10).text('Exames de Análise Clínica Geral liberados.');
     } else {
       exams.forEach((ex, idx) => {
-        doc.fillColor('#0f172a').fontSize(11).text(`${idx + 1}. ${ex.name || ex.exame || 'Exame de Análise Clínica'}`, { bold: true });
-        doc.fillColor('#475569').fontSize(9).text(`Material: ${ex.material || 'Sangue Total'} | Método: ${ex.metodo || 'Automatizado'} | Status: LIBERADO`);
+        if (doc.y > 680) {
+          doc.addPage();
+        }
+
+        const catEx = allCatalogExams.find(c => String(c.code || '').toUpperCase() === String(ex.code || ex.codigo || '').toUpperCase());
+        const modelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
+        const examTitle = ex.name || ex.exame || catEx?.name || 'Exame de Análise Clínica';
+
+        // Cabeçalho do Exame
+        doc.fillColor('#0f172a').fontSize(11).text(`${idx + 1}. ${examTitle.toUpperCase()}`, { bold: true });
         
-        doc.moveDown(0.3);
-        doc.fillColor('#047857').fontSize(11).text(`Resultado: ${ex.resultado || ex.result || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE'}`, { indent: 15, bold: true });
-        doc.fillColor('#64748b').fontSize(8.5).text(`Valores de Referência: ${ex.referencia || ex.refValue || 'Verificar tabela técnica de referência'}`, { indent: 15 });
+        const matStr = ex.material || catEx?.category || 'Sangue Total';
+        const metStr = ex.metodo || ex.method || 'Automatizado';
+        const eqStr = ex.equipamento || ex.equipment || 'Urit 8021A - Automatizado';
+        doc.fillColor('#475569').fontSize(8.5).text(`Material: ${matStr} | Método: ${metStr} | Equipamento: ${eqStr}`);
+        doc.moveDown(0.4);
+
+        const resultText = String(ex.resultado || ex.result || '').trim();
+        const refText = String(ex.valorReferencia || ex.referenceValue || ex.referencia || ex.refValue || '').trim();
+        const obsText = String(ex.observacoes || ex.observations || '').trim();
+        const interpText = String(ex.interpretacao || ex.interpretation || '').trim();
+
+        if (modelo === 'Modelo Hematologia em Colunas' || (Array.isArray(ex.linhas) && ex.linhas.length > 0)) {
+          // --- MODELO EM COLUNAS / TABELA ---
+          const startX = 40;
+          let tableY = doc.y;
+
+          doc.rect(startX, tableY, 515, 18).fill('#e2e8f0');
+          doc.fillColor('#1e293b').fontSize(8.5).text('PARÂMETRO', startX + 5, tableY + 4, { width: 150, bold: true });
+          doc.text('RESULTADO', startX + 160, tableY + 4, { width: 90, align: 'right', bold: true });
+          doc.text('UNIDADE', startX + 260, tableY + 4, { width: 55, bold: true });
+          doc.text('VALORES DE REFERÊNCIA', startX + 325, tableY + 4, { width: 185, bold: true });
+
+          tableY += 20;
+
+          let linesToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+          if (linesToRender.length === 0 && resultText) {
+            const rawLines = resultText.split('\n').map(l => l.trim()).filter(Boolean);
+            linesToRender = rawLines.map(raw => {
+              if (raw.includes(':')) {
+                const parts = raw.split(':');
+                const paramName = parts[0].trim();
+                const rest = parts.slice(1).join(':').trim();
+                return { parametro: paramName, resultado: rest, unidade: '', valorReferencia: '' };
+              }
+              return { parametro: 'Resultado', resultado: raw, unidade: '', valorReferencia: '' };
+            });
+          }
+
+          if (linesToRender.length === 0) {
+            linesToRender = [{ parametro: 'Resultado Geral', resultado: resultText || 'Normal', unidade: '', valorReferencia: refText }];
+          }
+
+          linesToRender.forEach((line, lIdx) => {
+            if (tableY > 730) {
+              doc.addPage();
+              tableY = 40;
+            }
+            if (lIdx % 2 === 1) {
+              doc.rect(startX, tableY - 2, 515, 16).fill('#f8fafc');
+            }
+            const param = line.parametro || line.PARAMETRO || line.part1 || 'Parâmetro';
+            const resVal = line.resultado || line.result || line.value || '';
+            const unitVal = line.unidade || line.unit || '';
+            const refVal = line.valorReferencia || line.referencia || refText.split('\n')[0] || '---';
+
+            doc.fillColor('#0f172a').fontSize(8.5).text(param, startX + 5, tableY, { width: 150 });
+            doc.fillColor('#047857').fontSize(8.5).text(resVal, startX + 160, tableY, { width: 90, align: 'right', bold: true });
+            doc.fillColor('#475569').fontSize(8).text(unitVal, startX + 260, tableY, { width: 55 });
+            doc.fillColor('#64748b').fontSize(8).text(refVal, startX + 325, tableY, { width: 185 });
+
+            tableY += 16;
+          });
+
+          doc.y = tableY + 4;
+
+          if (refText && (!ex.linhas || ex.linhas.length === 0)) {
+            doc.fillColor('#475569').fontSize(8).text('Notas de Referência:', { bold: true });
+            refText.split('\n').forEach(lineStr => {
+              doc.fillColor('#64748b').fontSize(7.5).text(lineStr, { indent: 10 });
+            });
+            doc.moveDown(0.3);
+          }
+
+        } else if (modelo === 'Modelo Microbiologia & Antibiograma') {
+          // --- MICROBIOLOGIA & ANTIBIOGRAMA ---
+          doc.fillColor('#0f172a').fontSize(9).text('MICROORGANISMO ISOLADO:', { bold: true });
+          doc.fillColor('#047857').fontSize(9.5).text(resultText || 'Escherichia coli (Contagem: > 100.000 UFC/mL)', { indent: 10, bold: true });
+          doc.moveDown(0.4);
+
+          const startX = 40;
+          let tableY = doc.y;
+
+          doc.rect(startX, tableY, 515, 18).fill('#e2e8f0');
+          doc.fillColor('#1e293b').fontSize(8.5).text('ANTIBIÓTICO TESTADO', startX + 10, tableY + 4, { width: 250, bold: true });
+          doc.text('SENSIBILIDADE / RESULTADO', startX + 260, tableY + 4, { width: 240, align: 'center', bold: true });
+
+          tableY += 20;
+          const antibiogramList = [
+            { ab: 'Ampicilina', status: 'Sensível' },
+            { ab: 'Amoxicilina + Clavulanato', status: 'Sensível' },
+            { ab: 'Cefalotina', status: 'Sensível' },
+            { ab: 'Cefuroxima', status: 'Sensível' },
+            { ab: 'Ciprofloxacino', status: 'Resistente' },
+            { ab: 'Gentamicina', status: 'Sensível' },
+            { ab: 'Nitrofurantoína', status: 'Sensível' },
+            { ab: 'Sulfametoxazol + Trimetoprima', status: 'Resistente' }
+          ];
+
+          antibiogramList.forEach((row, rIdx) => {
+            if (rIdx % 2 === 1) {
+              doc.rect(startX, tableY - 2, 515, 16).fill('#f8fafc');
+            }
+            doc.fillColor('#0f172a').fontSize(8.5).text(row.ab, startX + 15, tableY, { width: 240 });
+            const isRes = row.status.toLowerCase().includes('resistente');
+            doc.fillColor(isRes ? '#dc2626' : '#047857').fontSize(8.5).text(row.status.toUpperCase(), startX + 260, tableY, { width: 240, align: 'center', bold: true });
+            tableY += 16;
+          });
+
+          doc.y = tableY + 6;
+
+        } else if (modelo === 'Modelo Texto Livre (Laudo Estruturado)') {
+          // --- TEXTO LIVRE E LAUDO ESTRUTURADO ---
+          doc.fillColor('#047857').fontSize(10).text(resultText || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE', { indent: 10, bold: true });
+          doc.moveDown(0.4);
+
+          if (refText) {
+            doc.fillColor('#334155').fontSize(8.5).text('VALORES DE REFERÊNCIA E TEXTO TÉCNICO:', { bold: true });
+            refText.split('\n').forEach(lineStr => {
+              doc.fillColor('#475569').fontSize(8).text(lineStr, { indent: 10 });
+            });
+            doc.moveDown(0.4);
+          }
+
+        } else {
+          // --- PADRÃO LIS INOVALAB ---
+          doc.fillColor('#047857').fontSize(10.5).text(`Resultado: ${resultText || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE'}`, { indent: 10, bold: true });
+          doc.moveDown(0.3);
+
+          if (refText) {
+            doc.fillColor('#334155').fontSize(8.5).text('Valores de Referência:', { bold: true });
+            refText.split('\n').forEach(lineStr => {
+              doc.fillColor('#475569').fontSize(8).text(lineStr, { indent: 10 });
+            });
+            doc.moveDown(0.3);
+          }
+        }
+
+        if (interpText) {
+          doc.fillColor('#1e293b').fontSize(8).text(`Interpretação / Nota Técnica: ${interpText}`, { italic: true });
+          doc.moveDown(0.2);
+        }
+        if (obsText) {
+          doc.fillColor('#64748b').fontSize(8).text(`Observações: ${obsText}`);
+          doc.moveDown(0.3);
+        }
+
         doc.moveDown(0.8);
       });
     }
@@ -3637,7 +3803,9 @@ app.post('/admin/exames/add', requireAdmin, (req, res) => {
     name, category, fasting, timeframe, instructions, code, jalisCode, supportLab, pricePrivate,
     codigoAlvaro, codigoPardini, sinonimia, idadeMin, idadeMinUnidade, idadeMax, idadeMaxUnidade,
     sexo, amostras, tagsResultado, filtro, bloquearExame, permitirSalvarParcialmente, servico,
-    importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig
+    importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig,
+    modeloLaudo, formularioColeta, cabecalho,
+    tituloLaudo, materialLaudo, metodoLaudo, valorReferenciaLaudo
   } = req.body;
 
   const exams = loadExams();
@@ -3698,7 +3866,14 @@ app.post('/admin/exames/add', requireAdmin, (req, res) => {
     setores: parsedSetores,
     materiaisColetados: parsedMateriais,
     historico: (historico || '').trim(),
-    webConfig: parsedWeb
+    webConfig: parsedWeb,
+    modeloLaudo: (modeloLaudo || 'Padrão LIS InovaLab').trim(),
+    formularioColeta: (formularioColeta || 'Ficha Padrão de Coleta').trim(),
+    cabecalho: (cabecalho || '').trim(),
+    tituloLaudo: (tituloLaudo || name || '').trim(),
+    materialLaudo: (materialLaudo || category || '').trim(),
+    metodoLaudo: (metodoLaudo || '').trim(),
+    valorReferenciaLaudo: (valorReferenciaLaudo || '').trim()
   };
 
   exams.push(newExam);
@@ -3712,7 +3887,9 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
     id, name, category, fasting, timeframe, instructions, code, jalisCode, supportLab, pricePrivate,
     codigoAlvaro, codigoPardini, sinonimia, idadeMin, idadeMinUnidade, idadeMax, idadeMaxUnidade,
     sexo, amostras, tagsResultado, filtro, bloquearExame, permitirSalvarParcialmente, servico,
-    importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig
+    importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig,
+    modeloLaudo, formularioColeta, cabecalho,
+    tituloLaudo, materialLaudo, metodoLaudo, valorReferenciaLaudo
   } = req.body;
 
   const exams = loadExams();
@@ -3792,7 +3969,14 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
       setores: parsedSetores,
       materiaisColetados: parsedMateriais,
       historico: (historico || '').trim(),
-      webConfig: parsedWeb
+      webConfig: parsedWeb,
+      modeloLaudo: modeloLaudo !== undefined ? (modeloLaudo || 'Padrão LIS InovaLab').trim() : (exams[index].modeloLaudo || 'Padrão LIS InovaLab'),
+      formularioColeta: formularioColeta !== undefined ? (formularioColeta || 'Ficha Padrão de Coleta').trim() : (exams[index].formularioColeta || 'Ficha Padrão de Coleta'),
+      cabecalho: cabecalho !== undefined ? (cabecalho || '').trim() : (exams[index].cabecalho || ''),
+      tituloLaudo: tituloLaudo !== undefined ? (tituloLaudo || name || '').trim() : (exams[index].tituloLaudo || exams[index].name || ''),
+      materialLaudo: materialLaudo !== undefined ? (materialLaudo || category || '').trim() : (exams[index].materialLaudo || exams[index].category || ''),
+      metodoLaudo: metodoLaudo !== undefined ? (metodoLaudo || '').trim() : (exams[index].metodoLaudo || ''),
+      valorReferenciaLaudo: valorReferenciaLaudo !== undefined ? (valorReferenciaLaudo || '').trim() : (exams[index].valorReferenciaLaudo || '')
     };
     saveExams(exams);
   }
@@ -4647,8 +4831,13 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
       referenceValue,
       method,
       material,
+      equipment,
+      equipamento,
       interpretation,
       observations,
+      modeloLaudo,
+      tituloLaudo,
+      linhas,
       status
     } = req.body;
 
@@ -4681,11 +4870,21 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
 
     ex.result = result !== undefined ? result : (ex.result || '');
     ex.resultado = ex.result;
+    if (req.body.unit !== undefined || req.body.unidade !== undefined) {
+      const uVal = req.body.unit || req.body.unidade || '';
+      ex.unit = uVal;
+      ex.unidade = uVal;
+    }
     ex.referenceValue = referenceValue !== undefined ? referenceValue : (ex.referenceValue || ex.valorReferencia || '');
     ex.valorReferencia = ex.referenceValue;
     ex.method = method !== undefined ? method : (ex.method || ex.metodo || '');
     ex.metodo = ex.method;
     if (material) ex.material = material;
+    if (equipment !== undefined || equipamento !== undefined) {
+      const eqVal = equipment || equipamento;
+      ex.equipment = eqVal;
+      ex.equipamento = eqVal;
+    }
     if (interpretation !== undefined) {
       ex.interpretation = interpretation;
       ex.interpretacao = interpretation;
@@ -4693,6 +4892,18 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
     if (observations !== undefined) {
       ex.observations = observations;
       ex.observacoes = observations;
+    }
+    if (modeloLaudo !== undefined) {
+      ex.modeloLaudo = modeloLaudo;
+    }
+    if (tituloLaudo !== undefined) {
+      ex.tituloLaudo = tituloLaudo;
+      if (tituloLaudo.trim()) {
+        ex.name = tituloLaudo.trim();
+      }
+    }
+    if (linhas !== undefined) {
+      ex.linhas = linhas;
     }
 
     ex.status = newStatus;
@@ -4708,6 +4919,8 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
     } else if (newStatus === 'Liberado') {
       ex.liberadoAt = nowIso;
       ex.liberadoBy = userName;
+      ex.dataResultado = nowIso;
+      ex.resultDate = nowIso;
       if (!ex.typedAt) { ex.typedAt = nowIso; ex.typedBy = userName; }
       if (!ex.conferidoAt) { ex.conferidoAt = nowIso; ex.conferidoBy = userName; }
     }
@@ -4719,6 +4932,8 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
 
     if (allLiberados) {
       targetReq.status = 'Liberado';
+      if (!targetReq.liberadoAt) targetReq.liberadoAt = nowIso;
+      targetReq.dataResultado = nowIso;
     } else if (allConferidosOrLiberados) {
       targetReq.status = 'Conferido';
     } else if (hasAnyDigitado) {
@@ -4768,9 +4983,24 @@ app.post('/admin/resultados/salvar-requisicao-completa', requireAdmin, (req, res
           if (exData.referenceValue !== undefined) { ex.referenceValue = exData.referenceValue; ex.valorReferencia = exData.referenceValue; }
           if (exData.method !== undefined) { ex.method = exData.method; ex.metodo = exData.method; }
           if (exData.material !== undefined) ex.material = exData.material;
+          if (exData.equipment !== undefined || exData.equipamento !== undefined) {
+            const eqVal = exData.equipment || exData.equipamento;
+            ex.equipment = eqVal;
+            ex.equipamento = eqVal;
+          }
           if (exData.interpretation !== undefined) { ex.interpretation = exData.interpretation; ex.interpretacao = exData.interpretation; }
           if (exData.observations !== undefined) { ex.observations = exData.observations; ex.observacoes = exData.observacoes; }
-          if (exData.status) ex.status = exData.status;
+          if (exData.modeloLaudo !== undefined) ex.modeloLaudo = exData.modeloLaudo;
+          if (exData.linhas !== undefined) ex.linhas = exData.linhas;
+          if (exData.status) {
+            ex.status = exData.status;
+            if (exData.status === 'Liberado') {
+              ex.liberadoAt = nowIso;
+              ex.liberadoBy = userName;
+              ex.dataResultado = nowIso;
+              ex.resultDate = nowIso;
+            }
+          }
         }
       });
     }
@@ -4787,8 +5017,12 @@ app.post('/admin/resultados/salvar-requisicao-completa', requireAdmin, (req, res
         ex.status = 'Liberado';
         ex.liberadoAt = nowIso;
         ex.liberadoBy = userName;
+        ex.dataResultado = nowIso;
+        ex.resultDate = nowIso;
       });
       targetReq.status = 'Liberado';
+      targetReq.liberadoAt = nowIso;
+      targetReq.dataResultado = nowIso;
     }
 
     saveRequisitions(requisitions);

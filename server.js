@@ -5,6 +5,7 @@ import { createRequire } from 'module';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import crypto from 'crypto';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
@@ -34,6 +35,16 @@ const pdf = require('pdf-parse');
 
 const app = express();
 const PORT = 3000;
+
+// Habilitar CORS para todas as origens e suportar requisições das aplicações móveis / web externas
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'token', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Configuração do EJS como motor de visualização
 app.set('view engine', 'ejs');

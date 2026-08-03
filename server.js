@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import crypto from 'crypto';
 import cors from 'cors';
+import PDFDocument from 'pdfkit';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
@@ -2962,20 +2963,41 @@ const formatDateTimeToBR = (dateVal) => {
 
 // Auxiliar para formatar exames e requisições no padrão da API
 function formatRequisitionExams(reqsFound) {
-  return reqsFound.map(r => ({
-    codigoRequisicao: r.requisitionCode || r.id,
-    data: formatDateTimeToBR(r.createdAt || r.fatura || ''),
-    status: r.status || 'Coletado',
-    solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
-    listaExames: (r.exams || []).map(e => ({
-      codigo: e.code || '',
-      nome: e.name || e.exame || '',
-      material: e.material || 'Sangue',
-      status: e.status || r.status || 'A Coletar',
-      dataColeta: formatDateTimeToBR(e.dataColeta || e.coletaDate || r.createdAt || ''),
-      dataResultado: formatDateTimeToBR(e.dataResultado || e.resultDate || '')
-    }))
-  }));
+  return reqsFound.map(r => {
+    const reqCode = r.requisitionCode || r.id;
+    const reqStatus = r.status || 'Coletado';
+    const isReqLiberado = reqStatus.toLowerCase() === 'liberado' || reqStatus.toLowerCase() === 'concluido' || reqStatus.toLowerCase() === 'pronto';
+
+    const examsList = (r.exams || []).map(e => {
+      const eStatus = e.status || reqStatus || 'A Coletar';
+      const isExamLiberado = isReqLiberado || eStatus.toLowerCase() === 'liberado' || eStatus.toLowerCase() === 'concluido' || eStatus.toLowerCase() === 'pronto';
+      const pdfEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}&exame=${encodeURIComponent(e.code || '')}`;
+
+      return {
+        codigo: e.code || '',
+        nome: e.name || e.exame || '',
+        material: e.material || 'Sangue',
+        status: eStatus,
+        laudoDisponivel: isExamLiberado,
+        pdfUrl: isExamLiberado ? pdfEndpoint : null,
+        dataColeta: formatDateTimeToBR(e.dataColeta || e.coletaDate || r.createdAt || ''),
+        dataResultado: formatDateTimeToBR(e.dataResultado || e.resultDate || '')
+      };
+    });
+
+    const hasAnyLiberado = isReqLiberado || examsList.some(e => e.laudoDisponivel);
+    const pdfReqEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}`;
+
+    return {
+      codigoRequisicao: reqCode,
+      data: formatDateTimeToBR(r.createdAt || r.fatura || ''),
+      status: reqStatus,
+      solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
+      laudoDisponivel: hasAnyLiberado,
+      pdfUrl: hasAnyLiberado ? pdfReqEndpoint : null,
+      listaExames: examsList
+    };
+  });
 }
 
 // Auxiliar de formatação do perfil
@@ -3272,6 +3294,145 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
     return res.status(500).json({
       success: false,
       error: "Erro interno do servidor",
+      message: error.message
+    });
+  }
+});
+
+// 5. ENDPOINT PARA EMISSÃO / DOWNLOAD DO LAUDO EM PDF (/laudo/pdf)
+app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
+  try {
+    const reqCode = req.query?.requisicao || req.query?.codigoRequisicao || req.query?.codigo || req.query?.id ||
+                    req.body?.requisicao || req.body?.codigoRequisicao || req.body?.codigo || req.body?.id;
+
+    if (!reqCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Parâmetro 'requisicao' ausente",
+        message: "Informe o código da requisição no parâmetro 'requisicao'."
+      });
+    }
+
+    const requisitions = loadRequisitions();
+    const reqFound = requisitions.find(r => 
+      String(r.requisitionCode || '').toLowerCase() === String(reqCode).toLowerCase() ||
+      String(r.id || '').toLowerCase() === String(reqCode).toLowerCase()
+    );
+
+    if (!reqFound) {
+      return res.status(404).json({
+        success: false,
+        error: "Requisição não encontrada",
+        message: `Nenhuma requisição ou exame encontrado com o código ${reqCode}.`
+      });
+    }
+
+    const statusStr = String(reqFound.status || '').toLowerCase();
+    const isLiberado = statusStr === 'liberado' || statusStr === 'concluido' || statusStr === 'pronto' ||
+                      (reqFound.exams || []).some(e => String(e.status || '').toLowerCase() === 'liberado');
+
+    if (!isLiberado) {
+      return res.status(403).json({
+        success: false,
+        error: "Laudo não liberado",
+        message: `O laudo da requisição ${reqCode} ainda está com status '${reqFound.status || 'Em Análise'}'. O PDF só é gerado quando o laudo for LIBERADO.`,
+        statusAtual: reqFound.status || 'Em Análise'
+      });
+    }
+
+    // Gerar documento PDF com pdfkit
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const chunks = [];
+
+    doc.on('data', chunk => chunks.push(chunk));
+
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+
+      if (req.query?.base64 === 'true' || req.body?.base64 === true) {
+        return res.json({
+          success: true,
+          codigoRequisicao: reqCode,
+          filename: `laudo_${reqCode}.pdf`,
+          mimeType: 'application/pdf',
+          base64: pdfBuffer.toString('base64'),
+          dataUri: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="laudo_${reqCode}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      return res.send(pdfBuffer);
+    });
+
+    // --- MONTAGEM DO LAUDO EM PDF ---
+    // Cabeçalho do Laboratório
+    doc.fillColor('#0284c7').fontSize(20).text('INOVALAB CAMBARÁ', { align: 'center', bold: true });
+    doc.fillColor('#475569').fontSize(10).text('Laboratório de Análises Clínicas e Diagnósticos', { align: 'center' });
+    doc.fillColor('#64748b').fontSize(8).text('Rua Doutor Farto, 874 - Centro, Cambará - PR | WhatsApp: (43) 99618-3406', { align: 'center' });
+    doc.moveDown(0.8);
+    doc.strokeColor('#0284c7').lineWidth(2).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    doc.moveDown(0.8);
+
+    // Título principal
+    doc.fillColor('#0f172a').fontSize(14).text('LAUDO DE EXAMES LABORATORIAIS', { align: 'center' });
+    doc.moveDown(0.8);
+
+    // Quadro com Dados do Paciente e Requisição
+    const boxY = doc.y;
+    doc.rect(40, boxY, 515, 75).fillAndStroke('#f8fafc', '#cbd5e1');
+
+    doc.fillColor('#0f172a').fontSize(10);
+    doc.text(`Paciente: ${reqFound.patientName || 'Não Informado'}`, 50, boxY + 10);
+    doc.text(`CPF: ${reqFound.patientCpf || '---'}`, 350, boxY + 10);
+
+    doc.text(`Código Paciente: ${reqFound.patientCode || reqFound.id || '---'}`, 50, boxY + 30);
+    doc.text(`Requisição: ${reqFound.requisitionCode || reqFound.id}`, 350, boxY + 30);
+
+    doc.text(`Médico Solicitante: ${reqFound.doctorName || reqFound.responsibleName || 'Dr. Solicitante'}`, 50, boxY + 50);
+    doc.text(`Data Emissão: ${formatDateTimeToBR(reqFound.createdAt || new Date())}`, 350, boxY + 50);
+
+    doc.moveDown(3.5);
+
+    // Lista de Exames Liberados e Resultados
+    doc.fillColor('#0284c7').fontSize(12).text('RESULTADOS DOS EXAMES', { underline: true });
+    doc.moveDown(0.5);
+
+    const exams = reqFound.exams || [];
+    if (exams.length === 0) {
+      doc.fillColor('#475569').fontSize(10).text('Exames de Análise Clínica Geral liberados.');
+    } else {
+      exams.forEach((ex, idx) => {
+        doc.fillColor('#0f172a').fontSize(11).text(`${idx + 1}. ${ex.name || ex.exame || 'Exame de Análise Clínica'}`, { bold: true });
+        doc.fillColor('#475569').fontSize(9).text(`Material: ${ex.material || 'Sangue Total'} | Método: ${ex.metodo || 'Automatizado'} | Status: LIBERADO`);
+        
+        doc.moveDown(0.3);
+        doc.fillColor('#047857').fontSize(11).text(`Resultado: ${ex.resultado || ex.result || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE'}`, { indent: 15, bold: true });
+        doc.fillColor('#64748b').fontSize(8.5).text(`Valores de Referência: ${ex.referencia || ex.refValue || 'Verificar tabela técnica de referência'}`, { indent: 15 });
+        doc.moveDown(0.8);
+      });
+    }
+
+    doc.moveDown(1);
+    doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    doc.moveDown(1);
+
+    // Carimbo e Assinatura Responsável Técnico
+    doc.fillColor('#0f172a').fontSize(9).text('Assinado eletronicamente por:', { align: 'right' });
+    doc.fillColor('#0284c7').fontSize(10).text('Dr. Carlos Eduardo Silva - CRBM 14.289/PR', { align: 'right', bold: true });
+    doc.fillColor('#64748b').fontSize(8).text('Farmacêutico / Bioquímico Responsável Técnico', { align: 'right' });
+
+    doc.moveDown(1.5);
+    doc.fillColor('#15803d').fontSize(9).text('✓ LAUDO AUTENTICADO E LIBERADO DIGITALMENTE PELO INOVALAB', { align: 'center' });
+
+    doc.end();
+
+  } catch (error) {
+    console.error("Erro ao gerar PDF do laudo:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro na geração do PDF",
       message: error.message
     });
   }

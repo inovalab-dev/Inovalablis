@@ -214,7 +214,7 @@
     "isUrgent": false,
     "patientUsername": "lucianabar.1003",
     "patientPassword": "3116",
-    "status": "Coletado",
+    "status": "Liberado",
     "exams": [
       {
         "code": "HEMO01",
@@ -225,8 +225,10 @@
         "fasting": "Não obrigatório",
         "timeframe": "24 horas",
         "instructions": "Procedimento padrão do laboratório.",
-        "status": "Triado",
-        "situacao": "Pendente"
+        "status": "Liberado",
+        "resultado": "Hemácias: 4.8 M/uL, Hemoglobina: 14.2 g/dL, Leucócitos: 6.500 /uL, Plaquetas: 240.000 /uL",
+        "referencia": "Valores normais de referência para adultos",
+        "situacao": "Liberado"
       }
     ],
     "subtotal": 11,

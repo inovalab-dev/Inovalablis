@@ -160,6 +160,45 @@
 				"description": "Endpoint legadão que traz perfil e exames juntos."
 			},
 			"response": []
+		},
+		{
+			"name": "5. Download / Visualizar Laudo em PDF",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/paciente/laudo/pdf?requisicao=00001003",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"paciente",
+						"laudo",
+						"pdf"
+					],
+					"query": [
+						{
+							"key": "requisicao",
+							"value": "00001003",
+							"description": "Código da requisição liberada"
+						},
+						{
+							"key": "base64",
+							"value": "true",
+							"description": "Opcional: retorne em formato JSON com string base64 se desejar",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Retorna o laudo em PDF da requisição liberada. Suporta download direto (application/pdf) ou retorno em JSON Base64 adicionando ?base64=true."
+			},
+			"response": []
 		}
 	]
 }

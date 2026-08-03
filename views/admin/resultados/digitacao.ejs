@@ -143,7 +143,7 @@
 
         <!-- Flag Apenas Lote Criado -->
         <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-          <input type="checkbox" id="filter-lote-only" checked class="w-4 h-4 rounded text-[#284701] focus:ring-[#284701] border-slate-300">
+          <input type="checkbox" id="filter-lote-only" class="w-4 h-4 rounded text-[#284701] focus:ring-[#284701] border-slate-300">
           <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
             <span>📦</span> Com Exames em Lote Criado
           </span>
@@ -1119,7 +1119,24 @@ Acima de 18 anos..: 13 a 60 U/L</div>
 
   document.addEventListener('DOMContentLoaded', () => {
     initFilters();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqQuery = urlParams.get('req') || urlParams.get('codigo') || urlParams.get('search');
+    if (reqQuery) {
+      const searchInput = document.getElementById('filter-search');
+      if (searchInput) searchInput.value = reqQuery;
+    }
+
     applyFiltersAndRender();
+
+    if (reqQuery) {
+      const match = (window.TRIAGEM_REQUISITIONS || []).find(r => 
+        String(r.requisitionCode || r.id || '').toLowerCase() === reqQuery.toLowerCase()
+      );
+      if (match) {
+        openTypingModal(match.id || match.requisitionCode);
+      }
+    }
   });
 
   function initFilters() {
@@ -1142,7 +1159,7 @@ Acima de 18 anos..: 13 a 60 U/L</div>
       document.getElementById('filter-sort').value = 'mais_recentes';
       document.getElementById('filter-limit').value = '50';
       document.getElementById('filter-urgent').checked = false;
-      document.getElementById('filter-lote-only').checked = true;
+      document.getElementById('filter-lote-only').checked = false;
       currentPage = 1;
       itemsPerPage = 50;
       applyFiltersAndRender();
@@ -2228,17 +2245,17 @@ Acima de 18 anos..: 13 a 60 U/L</div>
               text = mainExam.titulo;
             }
 
-            text = text
-              .replace(/\{\{resultado\}\}/gi, formattedResultFromLines)
-              .replace(/\{\{material\}\}/gi, mainExam.material)
-              .replace(/\{\{metodo\}\}/gi, mainExam.metodo)
-              .replace(/\{\{equipamento\}\}/gi, mainExam.equipamento)
-              .replace(/\{\{referencia\}\}/gi, mainExam.valorReferencia)
-              .replace(/\{\{observacao\}\}/gi, mainExam.observacao)
-              .replace(/\{\{paciente\}\}/gi, patientName)
-              .replace(/\{\{requisicao\}\}/gi, reqCode)
-              .replace(/\{\{medico\}\}/gi, doctor)
-              .replace(/\{\{convenio\}\}/gi, convenio);
+            text = String(text || '')
+              .replace(/\{\{resultado\}\}/gi, String(formattedResultFromLines || ''))
+              .replace(/\{\{material\}\}/gi, String(mainExam.material || ''))
+              .replace(/\{\{metodo\}\}/gi, String(mainExam.metodo || ''))
+              .replace(/\{\{equipamento\}\}/gi, String(mainExam.equipamento || ''))
+              .replace(/\{\{referencia\}\}/gi, String(mainExam.valorReferencia || ''))
+              .replace(/\{\{observacao\}\}/gi, String(mainExam.observacao || ''))
+              .replace(/\{\{paciente\}\}/gi, String(patientName || ''))
+              .replace(/\{\{requisicao\}\}/gi, String(reqCode || ''))
+              .replace(/\{\{medico\}\}/gi, String(doctor || ''))
+              .replace(/\{\{convenio\}\}/gi, String(convenio || ''));
 
             return `
               <div
@@ -3253,8 +3270,8 @@ Acima de 18 anos..: 13 a 60 U/L</div>
   }
 
   function escapeLisHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function selectLisComponent(index) {

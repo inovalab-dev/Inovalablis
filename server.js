@@ -6690,197 +6690,10 @@ let interfaceCache = null;
 
 function getDefaultInterfaceData() {
   return {
-    naoEnviados: [
-      {
-        id: "INT-ORD-1001",
-        requisitionCode: "00033225",
-        patientName: "Sandro Ortiz",
-        patientAge: "51 Anos",
-        patientSex: "M",
-        convenio: "Hospital Municipal de Cambará",
-        examCode: "GLI",
-        examTitle: "GLICOSE DE JEJUM",
-        material: "Soro",
-        equipment: "Urit 8021A - Bioquímica",
-        sampleBarcode: "01-00033225-01",
-        dateRequested: "31/07/2026 09:15",
-        status: "Aguardando Execução",
-        sector: "Bioquímica",
-        astmFrame: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731091500\nP|1||00033225||Ortiz^Sandro||19750512|M\nO|1|01-00033225-01||^^^GLI|R|20260731091500\nL|1|N"
-      },
-      {
-        id: "INT-ORD-1002",
-        requisitionCode: "00033225",
-        patientName: "Sandro Ortiz",
-        patientAge: "51 Anos",
-        patientSex: "M",
-        convenio: "Hospital Municipal de Cambará",
-        examCode: "BTF",
-        examTitle: "BILIRRUBINAS TOTAL E FRAÇÕES",
-        material: "Soro",
-        equipment: "Urit 8021A - Bioquímica",
-        sampleBarcode: "01-00033225-01",
-        dateRequested: "31/07/2026 09:15",
-        status: "Aguardando Execução",
-        sector: "Bioquímica",
-        astmFrame: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731091500\nP|1||00033225||Ortiz^Sandro||19750512|M\nO|1|01-00033225-01||^^^BTF|R|20260731091500\nL|1|N"
-      },
-      {
-        id: "INT-ORD-1003",
-        requisitionCode: "00033226",
-        patientName: "Ana Clara Rossi",
-        patientAge: "29 Anos",
-        patientSex: "F",
-        convenio: "Particular",
-        examCode: "HEMO",
-        examTitle: "HEMOGRAMA COMPLETO",
-        material: "Sangue Total (EDTA)",
-        equipment: "Sysmex XN-550 - Hematologia",
-        sampleBarcode: "01-00033226-02",
-        dateRequested: "31/07/2026 09:40",
-        status: "Aguardando Execução",
-        sector: "Hematologia",
-        astmFrame: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731094000\nP|1||00033226||Rossi^Ana Clara||19970820|F\nO|1|01-00033226-02||^^^CBC|R|20260731094000\nL|1|N"
-      },
-      {
-        id: "INT-ORD-1004",
-        requisitionCode: "00033227",
-        patientName: "Carlos Eduardo Mendes",
-        patientAge: "62 Anos",
-        patientSex: "M",
-        convenio: "Unimed Cambará",
-        examCode: "UREIA",
-        examTitle: "DOSAGEM DE UREIA",
-        material: "Soro",
-        equipment: "Mindray BS-200",
-        sampleBarcode: "01-00033227-01",
-        dateRequested: "31/07/2026 10:05",
-        status: "Aguardando Execução",
-        sector: "Bioquímica",
-        astmFrame: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^URE|R|20260731100500\nL|1|N"
-      },
-      {
-        id: "INT-ORD-1005",
-        requisitionCode: "00033227",
-        patientName: "Carlos Eduardo Mendes",
-        patientAge: "62 Anos",
-        patientSex: "M",
-        convenio: "Unimed Cambará",
-        examCode: "CREAT",
-        examTitle: "DOSAGEM DE CREATININA",
-        material: "Soro",
-        equipment: "Mindray BS-200",
-        sampleBarcode: "01-00033227-01",
-        dateRequested: "31/07/2026 10:05",
-        status: "Aguardando Execução",
-        sector: "Bioquímica",
-        astmFrame: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731100500\nP|1||00033227||Mendes^Carlos||19640310|M\nO|1|01-00033227-01||^^^CREA|R|20260731100500\nL|1|N"
-      }
-    ],
-    processando: [
-      {
-        id: "INT-PROC-2001",
-        requisitionCode: "00033224",
-        patientName: "Maria das Graças Silva",
-        patientAge: "44 Anos",
-        patientSex: "F",
-        convenio: "Hospital Municipal",
-        examCode: "TGO",
-        examTitle: "TRANSAMINASE GLUTÂMICO OXALACÉTICA (TGO)",
-        material: "Soro",
-        equipment: "Urit 8021A - Bioquímica",
-        sampleBarcode: "01-00033224-01",
-        startTime: "31/07/2026 11:35",
-        progress: 75,
-        status: "Processando"
-      },
-      {
-        id: "INT-PROC-2002",
-        requisitionCode: "00033224",
-        patientName: "Maria das Graças Silva",
-        patientAge: "44 Anos",
-        patientSex: "F",
-        convenio: "Hospital Municipal",
-        examCode: "TGP",
-        examTitle: "TRANSAMINASE GLUTÂMICO PIRÚVICA (TGP)",
-        material: "Soro",
-        equipment: "Urit 8021A - Bioquímica",
-        sampleBarcode: "01-00033224-01",
-        startTime: "31/07/2026 11:35",
-        progress: 60,
-        status: "Processando"
-      }
-    ],
-    prontos: [
-      {
-        id: "INT-PRONTO-3001",
-        requisitionCode: "00033223",
-        patientName: "João Pedro Santos",
-        patientAge: "38 Anos",
-        patientSex: "M",
-        convenio: "Particular",
-        examCode: "TSH",
-        examTitle: "HORMÔNIO TIREOESTIMULANTE (TSH)",
-        material: "Soro",
-        equipment: "Cobas c311 - Roche",
-        sampleBarcode: "01-00033223-03",
-        resultValue: "1,85",
-        unit: "µIU/mL",
-        refRange: "0,40 a 4,30 µIU/mL",
-        completedTime: "31/07/2026 11:10",
-        status: "Pronto",
-        rawResult: {
-          part1: "RESULTADO:",
-          resultado: "1,85",
-          unidade: "µIU/mL"
-        }
-      },
-      {
-        id: "INT-PRONTO-3002",
-        requisitionCode: "00033223",
-        patientName: "João Pedro Santos",
-        patientAge: "38 Anos",
-        patientSex: "M",
-        convenio: "Particular",
-        examCode: "T4L",
-        examTitle: "TIROXINA LIVRE (T4 LIVRE)",
-        material: "Soro",
-        equipment: "Cobas c311 - Roche",
-        sampleBarcode: "01-00033223-03",
-        resultValue: "1,24",
-        unit: "ng/dL",
-        refRange: "0,70 a 1,80 ng/dL",
-        completedTime: "31/07/2026 11:12",
-        status: "Pronto",
-        rawResult: {
-          part1: "RESULTADO:",
-          resultado: "1,24",
-          unidade: "ng/dL"
-        }
-      }
-    ],
-    mensagens: [
-      {
-        id: "MSG-9001",
-        timestamp: "31/07/2026 11:35:12",
-        type: "OUTBOUND",
-        protocol: "ASTM E1394",
-        equipment: "Urit 8021A",
-        direction: "LIS ➔ EQUIPAMENTO",
-        payload: "H|\\^&|||LIS_INOVALAB|||||LIS|P|1|20260731113512\nP|1||00033224||Silva^Maria das Gracas||19820415|F\nO|1|01-00033224-01||^^^TGO\\^^^TGP|R|20260731113512\nL|1|N",
-        status: "ACK Recebido (Éxito)"
-      },
-      {
-        id: "MSG-9002",
-        timestamp: "31/07/2026 11:12:04",
-        type: "INBOUND",
-        protocol: "ASTM E1394",
-        equipment: "Cobas c311",
-        direction: "EQUIPAMENTO ➔ LIS",
-        payload: "H|\\^&|||Roche_Cobas|||||LIS|P|1|20260731111204\nP|1||00033223||Santos^Joao Pedro\nR|1|^^^T4L|1.24|ng/dL|0.70-1.80|N||F|||20260731111200\nL|1|N",
-        status: "Processado com Sucesso"
-      }
-    ]
+    naoEnviados: [],
+    processando: [],
+    prontos: [],
+    mensagens: []
   };
 }
 
@@ -8219,6 +8032,91 @@ app.post('/api/interfaceamento/clear-logs', requireAdmin, (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Erro ao limpar logs.' });
+  }
+});
+
+app.post('/api/interfaceamento/limpar-ficticias', requireAdmin, (req, res) => {
+  try {
+    const requisitions = loadRequisitions();
+    const knownDummyReqs = new Set(['00033223', '00033224', '00033225', '00033226', '00033227', '33223', '33224', '33225', '33226', '33227']);
+
+    let data = loadInterfaceData();
+    let removedCount = 0;
+
+    const normalizeText = (str) => String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    ['naoEnviados', 'processando', 'prontos'].forEach(listName => {
+      if (Array.isArray(data[listName])) {
+        const initialLen = data[listName].length;
+        data[listName] = data[listName].filter(item => {
+          if (!item) return false;
+          const reqCodeRaw = String(item.requisitionCode || '').trim().toLowerCase();
+          const patNameNorm = normalizeText(item.patientName);
+
+          // Filtra nomes conhecidos de amostras de demonstração/fictícias
+          if (patNameNorm.includes('sandro ortiz') || 
+              patNameNorm.includes('ana clara rossi') || 
+              patNameNorm.includes('carlos eduardo mendes') || 
+              patNameNorm.includes('maria das gracas') || 
+              patNameNorm.includes('joao pedro santos') || 
+              patNameNorm.includes('paciente interfaced') ||
+              patNameNorm.includes('paciente de teste')) {
+            return false;
+          }
+
+          // Filtra requisições de demonstração conhecidas
+          if (knownDummyReqs.has(reqCodeRaw)) {
+            return false;
+          }
+
+          // Verifica se a requisição existe no LIS
+          const matchingReq = requisitions.find(r => {
+            const rCodeRaw = String(r.requisitionCode || '').trim().toLowerCase();
+            const rCodeFmt = formatRequisitionCode(r.requisitionCode || '').toLowerCase();
+            const rId = String(r.id || '').trim().toLowerCase();
+            return (rCodeRaw && rCodeRaw === reqCodeRaw) || (rCodeFmt && rCodeFmt === reqCodeRaw) || (rId && rId === reqCodeRaw);
+          });
+
+          if (!matchingReq) {
+            return false; // Não existe requisição real no LIS
+          }
+
+          // Se existe requisição, verifica se o paciente bate
+          const reqPatNameNorm = normalizeText(matchingReq.patientName || matchingReq.pacienteName);
+          if (reqPatNameNorm && patNameNorm && !reqPatNameNorm.includes(patNameNorm) && !patNameNorm.includes(reqPatNameNorm)) {
+            return false; // Nome do paciente difere
+          }
+
+          return true;
+        });
+        removedCount += (initialLen - data[listName].length);
+      }
+    });
+
+    saveInterfaceData(data);
+    const updatedData = loadInterfaceData();
+
+    return res.json({ success: true, removedCount, data: updatedData });
+  } catch (err) {
+    console.error('Erro ao limpar amostras fictícias:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao limpar amostras fictícias.' });
+  }
+});
+
+app.post('/api/interfaceamento/limpar-tudo', requireAdmin, (req, res) => {
+  try {
+    let data = {
+      naoEnviados: [],
+      processando: [],
+      prontos: [],
+      mensagens: []
+    };
+    saveInterfaceData(data);
+    const updatedData = loadInterfaceData();
+    return res.json({ success: true, data: updatedData });
+  } catch (err) {
+    console.error('Erro ao reiniciar interfaceamento:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao reiniciar interfaceamento.' });
   }
 });
 

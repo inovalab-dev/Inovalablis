@@ -36,6 +36,22 @@
   ],
   "processando": [
     {
+      "id": "INT-ORD-1785866283390-209",
+      "requisitionCode": "00001002",
+      "patientName": "Luciana Barbosa Santos",
+      "patientAge": "25 ano(s)",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "HEMO01",
+      "examTitle": "Hemograma Completo",
+      "material": "Soro",
+      "equipment": "Urit 8021A - Bioquímica",
+      "sampleBarcode": "01-00001002-01",
+      "status": "Processando",
+      "startTime": "04/08/2026 17:58",
+      "progress": 20
+    },
+    {
       "id": "INT-PRONTO-3001",
       "requisitionCode": "00033223",
       "patientName": "João Pedro Santos",
@@ -387,6 +403,16 @@
     }
   ],
   "mensagens": [
+    {
+      "id": "MSG-1785866283390-50",
+      "timestamp": "04/08/2026 17:58",
+      "type": "OUTBOUND",
+      "protocol": "ASTM E1394 / REST",
+      "equipment": "Urit 8021A - Bioquímica",
+      "direction": "LIS ➔ EQUIPAMENTO",
+      "payload": "H|\\^&|||LIS_INOVALAB\nP|1||00001002||Luciana Barbosa Santos\nO|1|01-00001002-01||^^^HEMO01|R\nL|1|N",
+      "status": "Consulta API - Criada e Transicionada para Processando (Em Execução)"
+    },
     {
       "id": "MSG-1785700617325",
       "timestamp": "02/08/2026 19:56",

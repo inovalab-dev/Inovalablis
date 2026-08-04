@@ -7505,9 +7505,9 @@ function handleAmostraLookup(req, res) {
     const reqCodeFormatted = formatRequisitionCode(foundItem.requisitionCode);
     const reqObj = requisitions.find(r => formatRequisitionCode(r.requisitionCode) === reqCodeFormatted || r.id === foundItem.requisitionCode);
 
-    let idPaciente = "12345";
+    let idPaciente = "1";
     if (reqObj) {
-      idPaciente = String(reqObj.patientCode || reqObj.patientId || reqObj.pacienteId || reqObj.idPaciente || reqObj.patientCpf || foundItem.requisitionCode || "12345");
+      idPaciente = String(reqObj.patientCode || reqObj.patientId || reqObj.pacienteId || reqObj.idPaciente || reqObj.patientCpf || foundItem.requisitionCode || "1");
     } else if (foundItem.requisitionCode) {
       idPaciente = String(foundItem.requisitionCode);
     }
@@ -7559,6 +7559,62 @@ function handleAmostraLookup(req, res) {
       }
     }
 
+    // Coleta todos os exames associados a esta amostra/requisição
+    let examList = [];
+    let examCodesSet = new Set();
+
+    const sampleBcToMatch = String(foundItem.sampleBarcode || searchCode).toLowerCase().trim();
+    const reqCodeToMatch = String(foundItem.requisitionCode || '').toLowerCase().trim();
+
+    const allInterfaceItems = [
+      ...(Array.isArray(interfaceData.processando) ? interfaceData.processando : []),
+      ...(Array.isArray(interfaceData.naoEnviados) ? interfaceData.naoEnviados : []),
+      ...(Array.isArray(interfaceData.prontos) ? interfaceData.prontos : [])
+    ];
+
+    allInterfaceItems.forEach(item => {
+      if (!item) return;
+      const bc = String(item.sampleBarcode || '').toLowerCase().trim();
+      const bcClean = bc.replace(/[-_]/g, '');
+      const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
+
+      const isMatch = (sampleBcToMatch && bc === sampleBcToMatch) ||
+                      (sampleBcToMatch && bcClean === sampleBcToMatch.replace(/[-_]/g, '')) ||
+                      (reqCodeToMatch && reqCode === reqCodeToMatch) ||
+                      bc === searchNormalized ||
+                      bcClean === searchClean;
+
+      if (isMatch) {
+        const code = item.examCode || item.codigo || item.code || item.exam;
+        if (code && typeof code === 'string' && code.trim() !== '') {
+          const cleanCode = code.trim();
+          if (!examCodesSet.has(cleanCode)) {
+            examCodesSet.add(cleanCode);
+            examList.push({ codigo: cleanCode });
+          }
+        }
+      }
+    });
+
+    if (reqObj && Array.isArray(reqObj.exams)) {
+      reqObj.exams.forEach(ex => {
+        if (!ex) return;
+        const code = ex.code || ex.codigo || ex.jalisCode || ex.id || ex.examCode || ex.name;
+        if (code && typeof code === 'string' && code.trim() !== '') {
+          const cleanCode = code.trim();
+          if (!examCodesSet.has(cleanCode)) {
+            examCodesSet.add(cleanCode);
+            examList.push({ codigo: cleanCode });
+          }
+        }
+      });
+    }
+
+    if (examList.length === 0) {
+      const fallbackCode = foundItem.examCode || foundItem.codigo || foundItem.code || "GLICO";
+      examList.push({ codigo: String(fallbackCode).trim() });
+    }
+
     return res.json({
       idAmostra: foundItem.sampleBarcode || searchCode,
       idPaciente: idPaciente,
@@ -7566,7 +7622,8 @@ function handleAmostraLookup(req, res) {
       genero: genero,
       idade: idade,
       dataNascimento: dataNascimento || "",
-      status: foundItem.status || "Processando"
+      status: foundItem.status || "Processando",
+      exames: examList
     });
   } catch (err) {
     console.error("Erro no endpoint de consulta de amostra:", err);

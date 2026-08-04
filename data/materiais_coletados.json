@@ -1,0 +1,1472 @@
+[
+  {
+    "id": "MAT-1",
+    "codigo": "1",
+    "descricao": "Aspirado Medular",
+    "abreviatura": "ASP"
+  },
+  {
+    "id": "MAT-2",
+    "codigo": "2",
+    "descricao": "Diversos",
+    "abreviatura": "DIV"
+  },
+  {
+    "id": "MAT-3",
+    "codigo": "3",
+    "descricao": "Esperma",
+    "abreviatura": "ESP"
+  },
+  {
+    "id": "MAT-4",
+    "codigo": "4",
+    "descricao": "Esperma + Soro",
+    "abreviatura": "ESS"
+  },
+  {
+    "id": "MAT-5",
+    "codigo": "5",
+    "descricao": "Fezes",
+    "abreviatura": "FEZ"
+  },
+  {
+    "id": "MAT-6",
+    "codigo": "6",
+    "descricao": "I-123",
+    "abreviatura": "123"
+  },
+  {
+    "id": "MAT-7",
+    "codigo": "7",
+    "descricao": "I-131",
+    "abreviatura": "131"
+  },
+  {
+    "id": "MAT-8",
+    "codigo": "8",
+    "descricao": "Líquido Amniótico",
+    "abreviatura": "LAM"
+  },
+  {
+    "id": "MAT-9",
+    "codigo": "9",
+    "descricao": "Líquido Ascítico",
+    "abreviatura": "LAS"
+  },
+  {
+    "id": "MAT-10",
+    "codigo": "10",
+    "descricao": "Lavado Broncoalveolar",
+    "abreviatura": "LBA"
+  },
+  {
+    "id": "MAT-11",
+    "codigo": "11",
+    "descricao": "Líquido Pericárdico",
+    "abreviatura": "LPE"
+  },
+  {
+    "id": "MAT-12",
+    "codigo": "12",
+    "descricao": "Líquido Pleural",
+    "abreviatura": "LPL"
+  },
+  {
+    "id": "MAT-13",
+    "codigo": "13",
+    "descricao": "Líquido Sinovial",
+    "abreviatura": "LSI"
+  },
+  {
+    "id": "MAT-14",
+    "codigo": "14",
+    "descricao": "Líquor",
+    "abreviatura": "LIQ"
+  },
+  {
+    "id": "MAT-15",
+    "codigo": "15",
+    "descricao": "Reação Intradérmica",
+    "abreviatura": "RID"
+  },
+  {
+    "id": "MAT-16",
+    "codigo": "16",
+    "descricao": "Sangue",
+    "abreviatura": "SGE"
+  },
+  {
+    "id": "MAT-17",
+    "codigo": "17",
+    "descricao": "Sangue + Urina",
+    "abreviatura": "SUR"
+  },
+  {
+    "id": "MAT-18",
+    "codigo": "18",
+    "descricao": "Saliva",
+    "abreviatura": "SAL"
+  },
+  {
+    "id": "MAT-19",
+    "codigo": "19",
+    "descricao": "Suor",
+    "abreviatura": "SUO"
+  },
+  {
+    "id": "MAT-20",
+    "codigo": "20",
+    "descricao": "Urina",
+    "abreviatura": "URI"
+  },
+  {
+    "id": "MAT-21",
+    "codigo": "21",
+    "descricao": "Urina de 12 horas",
+    "abreviatura": "U12"
+  },
+  {
+    "id": "MAT-22",
+    "codigo": "22",
+    "descricao": "Urina de 02 horas",
+    "abreviatura": "U02"
+  },
+  {
+    "id": "MAT-23",
+    "codigo": "23",
+    "descricao": "Urina de 24 horas",
+    "abreviatura": "U24"
+  },
+  {
+    "id": "MAT-24",
+    "codigo": "24",
+    "descricao": "Urina de 48 horas",
+    "abreviatura": "U48"
+  },
+  {
+    "id": "MAT-25",
+    "codigo": "25",
+    "descricao": "Raspado Cervical",
+    "abreviatura": "RCE"
+  },
+  {
+    "id": "MAT-26",
+    "codigo": "26",
+    "descricao": "Secreção Vaginal",
+    "abreviatura": "SVA"
+  },
+  {
+    "id": "MAT-27",
+    "codigo": "27",
+    "descricao": "Secreção Uretral",
+    "abreviatura": "SUT"
+  },
+  {
+    "id": "MAT-28",
+    "codigo": "28",
+    "descricao": "Secreção Ocular",
+    "abreviatura": "SOC"
+  },
+  {
+    "id": "MAT-29",
+    "codigo": "29",
+    "descricao": "Secreção Abdominal",
+    "abreviatura": "SAB"
+  },
+  {
+    "id": "MAT-30",
+    "codigo": "30",
+    "descricao": "Secreção Amigdaliana",
+    "abreviatura": "SAM"
+  },
+  {
+    "id": "MAT-31",
+    "codigo": "31",
+    "descricao": "Secreção Auricular",
+    "abreviatura": "SAU"
+  },
+  {
+    "id": "MAT-32",
+    "codigo": "32",
+    "descricao": "Secreção Bucal",
+    "abreviatura": "SBU"
+  },
+  {
+    "id": "MAT-33",
+    "codigo": "33",
+    "descricao": "Secreção Cervical",
+    "abreviatura": "SCE"
+  },
+  {
+    "id": "MAT-34",
+    "codigo": "34",
+    "descricao": "Secreção Conjuntival",
+    "abreviatura": "SCO"
+  },
+  {
+    "id": "MAT-35",
+    "codigo": "35",
+    "descricao": "Secreção de Abcesso",
+    "abreviatura": "SBC"
+  },
+  {
+    "id": "MAT-36",
+    "codigo": "36",
+    "descricao": "Secreção de Ferida",
+    "abreviatura": "SFE"
+  },
+  {
+    "id": "MAT-37",
+    "codigo": "37",
+    "descricao": "Secreção de Furunco",
+    "abreviatura": "SFU"
+  },
+  {
+    "id": "MAT-38",
+    "codigo": "38",
+    "descricao": "Secreção de Orofaringe",
+    "abreviatura": "SOR"
+  },
+  {
+    "id": "MAT-39",
+    "codigo": "39",
+    "descricao": "Secreção de Ouvido",
+    "abreviatura": "SOU"
+  },
+  {
+    "id": "MAT-40",
+    "codigo": "40",
+    "descricao": "Secreção Endocervical",
+    "abreviatura": "SEN"
+  },
+  {
+    "id": "MAT-41",
+    "codigo": "41",
+    "descricao": "Secreção Fistular",
+    "abreviatura": "SFI"
+  },
+  {
+    "id": "MAT-42",
+    "codigo": "42",
+    "descricao": "Secreção Gengival",
+    "abreviatura": "SGN"
+  },
+  {
+    "id": "MAT-43",
+    "codigo": "43",
+    "descricao": "Secreção Geral",
+    "abreviatura": "SGR"
+  },
+  {
+    "id": "MAT-44",
+    "codigo": "44",
+    "descricao": "Secreção Interdigital",
+    "abreviatura": "SIT"
+  },
+  {
+    "id": "MAT-45",
+    "codigo": "45",
+    "descricao": "Secreção Lacrimal",
+    "abreviatura": "SLA"
+  },
+  {
+    "id": "MAT-46",
+    "codigo": "46",
+    "descricao": "Secreção Mamária",
+    "abreviatura": "SMR"
+  },
+  {
+    "id": "MAT-47",
+    "codigo": "47",
+    "descricao": "Secreção Nasal",
+    "abreviatura": "SNA"
+  },
+  {
+    "id": "MAT-48",
+    "codigo": "48",
+    "descricao": "Secreção de Nasofaringe",
+    "abreviatura": "SNF"
+  },
+  {
+    "id": "MAT-49",
+    "codigo": "49",
+    "descricao": "Secreção Operatória",
+    "abreviatura": "SOP"
+  },
+  {
+    "id": "MAT-50",
+    "codigo": "50",
+    "descricao": "Secreção de Lesão dos Pés",
+    "abreviatura": "SLP"
+  },
+  {
+    "id": "MAT-51",
+    "codigo": "51",
+    "descricao": "Secreção Perineal",
+    "abreviatura": "SNE"
+  },
+  {
+    "id": "MAT-52",
+    "codigo": "52",
+    "descricao": "Secreção Prepucial",
+    "abreviatura": "SPP"
+  },
+  {
+    "id": "MAT-53",
+    "codigo": "53",
+    "descricao": "Secreção Prostática",
+    "abreviatura": "SPR"
+  },
+  {
+    "id": "MAT-54",
+    "codigo": "54",
+    "descricao": "Secreção Pulmonar",
+    "abreviatura": "SPU"
+  },
+  {
+    "id": "MAT-55",
+    "codigo": "55",
+    "descricao": "Secreção Purulenta",
+    "abreviatura": "SLE"
+  },
+  {
+    "id": "MAT-56",
+    "codigo": "56",
+    "descricao": "Secreção Retal",
+    "abreviatura": "SRE"
+  },
+  {
+    "id": "MAT-57",
+    "codigo": "57",
+    "descricao": "Secreção Traqueal",
+    "abreviatura": "STR"
+  },
+  {
+    "id": "MAT-58",
+    "codigo": "58",
+    "descricao": "Raspado Cervical, Vaginal e Vulvar",
+    "abreviatura": "RVV"
+  },
+  {
+    "id": "MAT-59",
+    "codigo": "59",
+    "descricao": "Raspado Conjuntival",
+    "abreviatura": "RCO"
+  },
+  {
+    "id": "MAT-60",
+    "codigo": "60",
+    "descricao": "Raspado de Pele",
+    "abreviatura": "RPE"
+  },
+  {
+    "id": "MAT-61",
+    "codigo": "61",
+    "descricao": "Raspado de Córnea",
+    "abreviatura": "RCN"
+  },
+  {
+    "id": "MAT-62",
+    "codigo": "62",
+    "descricao": "Raspado de Lesão",
+    "abreviatura": "RLE"
+  },
+  {
+    "id": "MAT-63",
+    "codigo": "63",
+    "descricao": "Raspado de Lesão Endo - Cervical de Colo",
+    "abreviatura": "RCC"
+  },
+  {
+    "id": "MAT-64",
+    "codigo": "64",
+    "descricao": "Raspado Endocervical",
+    "abreviatura": "REN"
+  },
+  {
+    "id": "MAT-65",
+    "codigo": "65",
+    "descricao": "Raspado Inguinal",
+    "abreviatura": "RIN"
+  },
+  {
+    "id": "MAT-66",
+    "codigo": "66",
+    "descricao": "Raspado Peniano",
+    "abreviatura": "RPN"
+  },
+  {
+    "id": "MAT-67",
+    "codigo": "67",
+    "descricao": "Raspado Perianal",
+    "abreviatura": "RPA"
+  },
+  {
+    "id": "MAT-68",
+    "codigo": "68",
+    "descricao": "Raspado Plantar",
+    "abreviatura": "RPL"
+  },
+  {
+    "id": "MAT-69",
+    "codigo": "69",
+    "descricao": "Raspado Unha e Pés",
+    "abreviatura": "RUP"
+  },
+  {
+    "id": "MAT-70",
+    "codigo": "70",
+    "descricao": "Raspado Uretral",
+    "abreviatura": "RUT"
+  },
+  {
+    "id": "MAT-71",
+    "codigo": "71",
+    "descricao": "Raspado Uterino",
+    "abreviatura": "RUI"
+  },
+  {
+    "id": "MAT-72",
+    "codigo": "72",
+    "descricao": "Raspado Vulvar",
+    "abreviatura": "RVU"
+  },
+  {
+    "id": "MAT-73",
+    "codigo": "73",
+    "descricao": "Plasma Fluoretado",
+    "abreviatura": "PFL"
+  },
+  {
+    "id": "MAT-74",
+    "codigo": "74",
+    "descricao": "Líquido Cefaloraquidiano",
+    "abreviatura": "LCR"
+  },
+  {
+    "id": "MAT-75",
+    "codigo": "75",
+    "descricao": "Raspado de Pseudomembranas do Odofaringe",
+    "abreviatura": "RPO"
+  },
+  {
+    "id": "MAT-76",
+    "codigo": "76",
+    "descricao": "Urina final jornada de trabalho",
+    "abreviatura": "UFT"
+  },
+  {
+    "id": "MAT-77",
+    "codigo": "77",
+    "descricao": "Sangue Total",
+    "abreviatura": "SGT"
+  },
+  {
+    "id": "MAT-78",
+    "codigo": "78",
+    "descricao": "Cálculo Renal",
+    "abreviatura": "CRE"
+  },
+  {
+    "id": "MAT-79",
+    "codigo": "79",
+    "descricao": "Urina Recente",
+    "abreviatura": "URC"
+  },
+  {
+    "id": "MAT-80",
+    "codigo": "80",
+    "descricao": "Pele",
+    "abreviatura": "PEL"
+  },
+  {
+    "id": "MAT-81",
+    "codigo": "81",
+    "descricao": "Medula Óssea",
+    "abreviatura": "MED"
+  },
+  {
+    "id": "MAT-82",
+    "codigo": "82",
+    "descricao": "Raspado Cervico-Vaginal",
+    "abreviatura": "RCV"
+  },
+  {
+    "id": "MAT-83",
+    "codigo": "83",
+    "descricao": "Urina de 05 horas",
+    "abreviatura": "U05"
+  },
+  {
+    "id": "MAT-84",
+    "codigo": "84",
+    "descricao": "Raspado de Glande e Sulco da Glans Corona",
+    "abreviatura": "RGL"
+  },
+  {
+    "id": "MAT-85",
+    "codigo": "85",
+    "descricao": "Muco Cervical",
+    "abreviatura": "MCE"
+  },
+  {
+    "id": "MAT-86",
+    "codigo": "86",
+    "descricao": "Plasma Citratado",
+    "abreviatura": "PLC"
+  },
+  {
+    "id": "MAT-87",
+    "codigo": "87",
+    "descricao": "Não se Aplica",
+    "abreviatura": "NA"
+  },
+  {
+    "id": "MAT-88",
+    "codigo": "88",
+    "descricao": "Swab Anal",
+    "abreviatura": "SWN"
+  },
+  {
+    "id": "MAT-89",
+    "codigo": "89",
+    "descricao": "Cartão PKU",
+    "abreviatura": "PKU"
+  },
+  {
+    "id": "MAT-91",
+    "codigo": "91",
+    "descricao": "Urina de 24 horas, Segunda amostra",
+    "abreviatura": "u22"
+  },
+  {
+    "id": "MAT-92",
+    "codigo": "92",
+    "descricao": "Intradérmico Reação",
+    "abreviatura": "IRC"
+  },
+  {
+    "id": "MAT-93",
+    "codigo": "93",
+    "descricao": "Cálculo Biliar",
+    "abreviatura": "CBI"
+  },
+  {
+    "id": "MAT-94",
+    "codigo": "94",
+    "descricao": "Urina início jornada de trabalho",
+    "abreviatura": "UIT"
+  },
+  {
+    "id": "MAT-95",
+    "codigo": "95",
+    "descricao": "Soro",
+    "abreviatura": "SRO"
+  },
+  {
+    "id": "MAT-96",
+    "codigo": "96",
+    "descricao": "Plasma Congelado",
+    "abreviatura": "PCG"
+  },
+  {
+    "id": "MAT-97",
+    "codigo": "97",
+    "descricao": "Plasma Citratado Congelado",
+    "abreviatura": "PCC"
+  },
+  {
+    "id": "MAT-98",
+    "codigo": "98",
+    "descricao": "Plasma Fluretado ou Soro Pós-Pradial",
+    "abreviatura": "PF"
+  },
+  {
+    "id": "MAT-99",
+    "codigo": "99",
+    "descricao": "Sangue Capilar",
+    "abreviatura": "SC"
+  },
+  {
+    "id": "MAT-100",
+    "codigo": "100",
+    "descricao": "Sangue Total - Protegido da Luz",
+    "abreviatura": "SPL"
+  },
+  {
+    "id": "MAT-101",
+    "codigo": "101",
+    "descricao": "Sangue Total Ambiente",
+    "abreviatura": "STA"
+  },
+  {
+    "id": "MAT-102",
+    "codigo": "102",
+    "descricao": "Plasma de Citrato",
+    "abreviatura": "PCT"
+  },
+  {
+    "id": "MAT-103",
+    "codigo": "103",
+    "descricao": "Urina Amostra Isolada",
+    "abreviatura": "UAI"
+  },
+  {
+    "id": "MAT-104",
+    "codigo": "104",
+    "descricao": "Plasma Citratado Congelado",
+    "abreviatura": "PCC"
+  },
+  {
+    "id": "MAT-105",
+    "codigo": "105",
+    "descricao": "Sangue Total com Heparina",
+    "abreviatura": "STH"
+  },
+  {
+    "id": "MAT-106",
+    "codigo": "106",
+    "descricao": "Plasma de Citrato Congelado",
+    "abreviatura": "PCC"
+  },
+  {
+    "id": "MAT-107",
+    "codigo": "107",
+    "descricao": "Soro Congelado",
+    "abreviatura": "SCG"
+  },
+  {
+    "id": "MAT-108",
+    "codigo": "108",
+    "descricao": "Urina 24h Com Conservante HCL 25% Protegido da Luz",
+    "abreviatura": "UCP"
+  },
+  {
+    "id": "MAT-109",
+    "codigo": "109",
+    "descricao": "Plasma com EDTA",
+    "abreviatura": "PCE"
+  },
+  {
+    "id": "MAT-110",
+    "codigo": "110",
+    "descricao": "Plasma",
+    "abreviatura": "PLA"
+  },
+  {
+    "id": "MAT-111",
+    "codigo": "111",
+    "descricao": "Plasma Heparinizado EXT",
+    "abreviatura": "PHE"
+  },
+  {
+    "id": "MAT-112",
+    "codigo": "112",
+    "descricao": "Soro Congelado e Protegido da Luz",
+    "abreviatura": "SCP"
+  },
+  {
+    "id": "MAT-113",
+    "codigo": "113",
+    "descricao": "Urina 24 Horas Com Conservante HCL 25%",
+    "abreviatura": "UR2"
+  },
+  {
+    "id": "MAT-114",
+    "codigo": "114",
+    "descricao": "Urina Protegida da Luz",
+    "abreviatura": "UPL"
+  },
+  {
+    "id": "MAT-115",
+    "codigo": "115",
+    "descricao": "Soro e Sangue Total",
+    "abreviatura": "SST"
+  },
+  {
+    "id": "MAT-116",
+    "codigo": "116",
+    "descricao": "Sangue Total EDTA + Lâmina",
+    "abreviatura": "STL"
+  },
+  {
+    "id": "MAT-117",
+    "codigo": "117",
+    "descricao": "Soro Acidificado",
+    "abreviatura": "SOA"
+  },
+  {
+    "id": "MAT-118",
+    "codigo": "118",
+    "descricao": "Esperma Congelado",
+    "abreviatura": "ESC"
+  },
+  {
+    "id": "MAT-119",
+    "codigo": "119",
+    "descricao": "Urina 24 Horas Congelada",
+    "abreviatura": "24C"
+  },
+  {
+    "id": "MAT-120",
+    "codigo": "120",
+    "descricao": "Escarro",
+    "abreviatura": "ERR"
+  },
+  {
+    "id": "MAT-121",
+    "codigo": "121",
+    "descricao": "Urina 1º Jato",
+    "abreviatura": "U1J"
+  },
+  {
+    "id": "MAT-122",
+    "codigo": "122",
+    "descricao": "Urina Jato Médio",
+    "abreviatura": "UJM"
+  },
+  {
+    "id": "MAT-123",
+    "codigo": "123",
+    "descricao": "Tecido Tumoral",
+    "abreviatura": "TCT"
+  },
+  {
+    "id": "MAT-124",
+    "codigo": "124",
+    "descricao": "Urina Amostra Isolada Congelada",
+    "abreviatura": "UIC"
+  },
+  {
+    "id": "MAT-125",
+    "codigo": "125",
+    "descricao": "Fragmento de Tecido Pulmonar",
+    "abreviatura": "FTP"
+  },
+  {
+    "id": "MAT-126",
+    "codigo": "126",
+    "descricao": "Sangue Total Protegido Da Luz E Congelado",
+    "abreviatura": "SPC"
+  },
+  {
+    "id": "MAT-127",
+    "codigo": "127",
+    "descricao": "Soro Protegido da Luz",
+    "abreviatura": "SPG"
+  },
+  {
+    "id": "MAT-128",
+    "codigo": "128",
+    "descricao": "Primeira Urina da Manhã Congelada",
+    "abreviatura": "PUC"
+  },
+  {
+    "id": "MAT-129",
+    "codigo": "129",
+    "descricao": "Urina Amostra Isolada Congelada",
+    "abreviatura": "UAG"
+  },
+  {
+    "id": "MAT-130",
+    "codigo": "130",
+    "descricao": "Líquido Peritoneal",
+    "abreviatura": "LPN"
+  },
+  {
+    "id": "MAT-131",
+    "codigo": "131",
+    "descricao": "Sangue Periférico",
+    "abreviatura": "SGP"
+  },
+  {
+    "id": "MAT-132",
+    "codigo": "132",
+    "descricao": "Região Endocervical",
+    "abreviatura": "RE"
+  },
+  {
+    "id": "MAT-133",
+    "codigo": "133",
+    "descricao": "Região Anal",
+    "abreviatura": "RA"
+  },
+  {
+    "id": "MAT-134",
+    "codigo": "134",
+    "descricao": "Região Uretral",
+    "abreviatura": "RU"
+  },
+  {
+    "id": "MAT-135",
+    "codigo": "135",
+    "descricao": "Região Vaginal",
+    "abreviatura": "RV"
+  },
+  {
+    "id": "MAT-136",
+    "codigo": "136",
+    "descricao": "Região Vulvar",
+    "abreviatura": "RGV"
+  },
+  {
+    "id": "MAT-137",
+    "codigo": "137",
+    "descricao": "Diversos 2",
+    "abreviatura": "D2"
+  },
+  {
+    "id": "MAT-138",
+    "codigo": "138",
+    "descricao": "Diversos 3",
+    "abreviatura": "DI3"
+  },
+  {
+    "id": "MAT-139",
+    "codigo": "139",
+    "descricao": "Diversos 4",
+    "abreviatura": "DI4"
+  },
+  {
+    "id": "MAT-140",
+    "codigo": "140",
+    "descricao": "Diversos 5",
+    "abreviatura": "DI5"
+  },
+  {
+    "id": "MAT-141",
+    "codigo": "141",
+    "descricao": "Diversos 6",
+    "abreviatura": "DI6"
+  },
+  {
+    "id": "MAT-142",
+    "codigo": "142",
+    "descricao": "Urina Amostra Isolada Protegida da Luz",
+    "abreviatura": "UIP"
+  },
+  {
+    "id": "MAT-143",
+    "codigo": "143",
+    "descricao": "Soro Pós Diálise",
+    "abreviatura": "SAD"
+  },
+  {
+    "id": "MAT-144",
+    "codigo": "144",
+    "descricao": "Líquidos Biológicos",
+    "abreviatura": "LBO"
+  },
+  {
+    "id": "MAT-145",
+    "codigo": "145",
+    "descricao": "Biopsia Endometrial",
+    "abreviatura": "BIP"
+  },
+  {
+    "id": "MAT-146",
+    "codigo": "146",
+    "descricao": "Soro e Plasma",
+    "abreviatura": "SEP"
+  },
+  {
+    "id": "MAT-147",
+    "codigo": "147",
+    "descricao": "Líquor Congelado",
+    "abreviatura": "LCG"
+  },
+  {
+    "id": "MAT-148",
+    "codigo": "148",
+    "descricao": "Urina E Plasma Protegidos Da Luz E Congelados",
+    "abreviatura": "UEP"
+  },
+  {
+    "id": "MAT-149",
+    "codigo": "149",
+    "descricao": "Urina Amostra Isolada E Plasma",
+    "abreviatura": "UAP"
+  },
+  {
+    "id": "MAT-150",
+    "codigo": "150",
+    "descricao": "Sangue Total, Soro ou Plasma",
+    "abreviatura": "SSP"
+  },
+  {
+    "id": "MAT-151",
+    "codigo": "151",
+    "descricao": "Cabelo",
+    "abreviatura": "CAB"
+  },
+  {
+    "id": "MAT-152",
+    "codigo": "152",
+    "descricao": "Pelos",
+    "abreviatura": "PES"
+  },
+  {
+    "id": "MAT-153",
+    "codigo": "153",
+    "descricao": "Urina e Plasma Congelado",
+    "abreviatura": "UPC"
+  },
+  {
+    "id": "MAT-154",
+    "codigo": "154",
+    "descricao": "Biópsia",
+    "abreviatura": "BIO"
+  },
+  {
+    "id": "MAT-155",
+    "codigo": "155",
+    "descricao": "Biópsia De Linfonodo",
+    "abreviatura": "BDL"
+  },
+  {
+    "id": "MAT-156",
+    "codigo": "156",
+    "descricao": "Tecido Tumoral, Biópsia De Linfonodo",
+    "abreviatura": "TTL"
+  },
+  {
+    "id": "MAT-157",
+    "codigo": "157",
+    "descricao": "Sangue Total Materno e Restos Abortivos",
+    "abreviatura": "SMR"
+  },
+  {
+    "id": "MAT-158",
+    "codigo": "158",
+    "descricao": "Restos Abortivos",
+    "abreviatura": "RAS"
+  },
+  {
+    "id": "MAT-159",
+    "codigo": "159",
+    "descricao": "Soro e Secreção Nasal",
+    "abreviatura": "SSN"
+  },
+  {
+    "id": "MAT-160",
+    "codigo": "160",
+    "descricao": "Soro e Líquor",
+    "abreviatura": "SRL"
+  },
+  {
+    "id": "MAT-161",
+    "codigo": "161",
+    "descricao": "Fragmento de Tecido",
+    "abreviatura": "FDT"
+  },
+  {
+    "id": "MAT-162",
+    "codigo": "162",
+    "descricao": "Linfa",
+    "abreviatura": "LNF"
+  },
+  {
+    "id": "MAT-163",
+    "codigo": "163",
+    "descricao": "SWAB",
+    "abreviatura": "SWA"
+  },
+  {
+    "id": "MAT-164",
+    "codigo": "164",
+    "descricao": "Cepa Microbiana - Identificação e Antibiograma",
+    "abreviatura": "CPA"
+  },
+  {
+    "id": "MAT-165",
+    "codigo": "165",
+    "descricao": "Fezes Protegida da Luz",
+    "abreviatura": "FPL"
+  },
+  {
+    "id": "MAT-166",
+    "codigo": "166",
+    "descricao": "Urina 24h Protegida da Luz",
+    "abreviatura": "UHP"
+  },
+  {
+    "id": "MAT-167",
+    "codigo": "167",
+    "descricao": "Líquido Aminiótico e Sangue Total materno",
+    "abreviatura": "LSM"
+  },
+  {
+    "id": "MAT-168",
+    "codigo": "168",
+    "descricao": "Sangue Total Materno e Restos Abortivos",
+    "abreviatura": "STV"
+  },
+  {
+    "id": "MAT-169",
+    "codigo": "169",
+    "descricao": "Sangue Total Inicio de Jornada de Trabalho",
+    "abreviatura": "STT"
+  },
+  {
+    "id": "MAT-170",
+    "codigo": "170",
+    "descricao": "Raspado Vaginal",
+    "abreviatura": "RPV"
+  },
+  {
+    "id": "MAT-171",
+    "codigo": "171",
+    "descricao": "Swab Bucal",
+    "abreviatura": "SWB"
+  },
+  {
+    "id": "MAT-172",
+    "codigo": "172",
+    "descricao": "Saliva manhã",
+    "abreviatura": "SMA"
+  },
+  {
+    "id": "MAT-173",
+    "codigo": "173",
+    "descricao": "Saliva Noite",
+    "abreviatura": "SNO"
+  },
+  {
+    "id": "MAT-174",
+    "codigo": "174",
+    "descricao": "Saliva Tarde",
+    "abreviatura": "SDI"
+  },
+  {
+    "id": "MAT-175",
+    "codigo": "175",
+    "descricao": "Cepa Bacteriana De S. Aureus",
+    "abreviatura": "CBD"
+  },
+  {
+    "id": "MAT-176",
+    "codigo": "176",
+    "descricao": "Secreção",
+    "abreviatura": "SE"
+  },
+  {
+    "id": "MAT-177",
+    "codigo": "177",
+    "descricao": "Clearense",
+    "abreviatura": "CR"
+  },
+  {
+    "id": "MAT-178",
+    "codigo": "178",
+    "descricao": "Biópsia Cutânea Congelada",
+    "abreviatura": "BCC"
+  },
+  {
+    "id": "MAT-179",
+    "codigo": "179",
+    "descricao": "Urina Final De Jornada De Trabalho",
+    "abreviatura": "UFJ"
+  },
+  {
+    "id": "MAT-180",
+    "codigo": "180",
+    "descricao": "Urina Início Da Jornada De Trabalho",
+    "abreviatura": "UIJ"
+  },
+  {
+    "id": "MAT-181",
+    "codigo": "181",
+    "descricao": "SWAB",
+    "abreviatura": "SWA"
+  },
+  {
+    "id": "MAT-182",
+    "codigo": "182",
+    "descricao": "Soro Pós Dexametasona",
+    "abreviatura": "sps"
+  },
+  {
+    "id": "MAT-183",
+    "codigo": "183",
+    "descricao": "Sangue ou Saliva",
+    "abreviatura": "SS"
+  },
+  {
+    "id": "MAT-184",
+    "codigo": "184",
+    "descricao": "Urina Amostra Isolada ou Urina 24 Horas",
+    "abreviatura": "UIR"
+  },
+  {
+    "id": "MAT-185",
+    "codigo": "185",
+    "descricao": "Urina Amostra Isolada Congelada E Protegida Da Luz",
+    "abreviatura": "UAC"
+  },
+  {
+    "id": "MAT-186",
+    "codigo": "186",
+    "descricao": "Lavado Bronco Alveolar",
+    "abreviatura": "LBA"
+  },
+  {
+    "id": "MAT-187",
+    "codigo": "187",
+    "descricao": "Amostras Do Trato Respiratório Inferior",
+    "abreviatura": "ATP"
+  },
+  {
+    "id": "MAT-188",
+    "codigo": "188",
+    "descricao": "Trato Genital",
+    "abreviatura": "TG"
+  },
+  {
+    "id": "MAT-189",
+    "codigo": "189",
+    "descricao": "Ponta De Catéter",
+    "abreviatura": "PDC"
+  },
+  {
+    "id": "MAT-190",
+    "codigo": "190",
+    "descricao": "Secreção Anal E Vaginal",
+    "abreviatura": "SAV"
+  },
+  {
+    "id": "MAT-191",
+    "codigo": "191",
+    "descricao": "Aspirado Traqueal",
+    "abreviatura": "AT"
+  },
+  {
+    "id": "MAT-192",
+    "codigo": "192",
+    "descricao": "Secreção De Lesões",
+    "abreviatura": "SL"
+  },
+  {
+    "id": "MAT-193",
+    "codigo": "193",
+    "descricao": "Soro e Urina",
+    "abreviatura": "SU"
+  },
+  {
+    "id": "MAT-194",
+    "codigo": "194",
+    "descricao": "Tecido Pulmonar",
+    "abreviatura": "TP"
+  },
+  {
+    "id": "MAT-195",
+    "codigo": "195",
+    "descricao": "Tecido",
+    "abreviatura": "T"
+  },
+  {
+    "id": "MAT-196",
+    "codigo": "196",
+    "descricao": "Região Endocervical Ou Vaginal",
+    "abreviatura": "REV"
+  },
+  {
+    "id": "MAT-197",
+    "codigo": "197",
+    "descricao": "Produto De Punção Aspirativa Por Agulha Fina Paaf",
+    "abreviatura": "PPA"
+  },
+  {
+    "id": "MAT-198",
+    "codigo": "198",
+    "descricao": "Soro E Plasma Congelados",
+    "abreviatura": "SPG"
+  },
+  {
+    "id": "MAT-199",
+    "codigo": "199",
+    "descricao": "Fezes Congelada",
+    "abreviatura": "FC"
+  },
+  {
+    "id": "MAT-200",
+    "codigo": "200",
+    "descricao": "Líquidos",
+    "abreviatura": "LI"
+  },
+  {
+    "id": "MAT-201",
+    "codigo": "201",
+    "descricao": "Ampolas De Indicador Biológico",
+    "abreviatura": "AIB"
+  },
+  {
+    "id": "MAT-202",
+    "codigo": "202",
+    "descricao": "Cepa Bacteriana",
+    "abreviatura": "CB"
+  },
+  {
+    "id": "MAT-203",
+    "codigo": "203",
+    "descricao": "Fragmento de Tumor",
+    "abreviatura": "FT"
+  },
+  {
+    "id": "MAT-204",
+    "codigo": "204",
+    "descricao": "Pool De Soro (3 Amostras)",
+    "abreviatura": "PO3"
+  },
+  {
+    "id": "MAT-205",
+    "codigo": "205",
+    "descricao": "Escovado Cervical Ou De Trato Genital Inferior",
+    "abreviatura": "ECT"
+  },
+  {
+    "id": "MAT-206",
+    "codigo": "206",
+    "descricao": "Cálculo",
+    "abreviatura": "CAL"
+  },
+  {
+    "id": "MAT-207",
+    "codigo": "207",
+    "descricao": "Plasma Citratado Congelado",
+    "abreviatura": "PCC"
+  },
+  {
+    "id": "MAT-208",
+    "codigo": "208",
+    "descricao": "Hemocultura Positiva",
+    "abreviatura": "HOP"
+  },
+  {
+    "id": "MAT-209",
+    "codigo": "209",
+    "descricao": "Plasma Congelado E Protegido Da Luz",
+    "abreviatura": "PCP"
+  },
+  {
+    "id": "MAT-210",
+    "codigo": "210",
+    "descricao": "Urina 24 Horas Protegida Da Luz",
+    "abreviatura": "U2P"
+  },
+  {
+    "id": "MAT-211",
+    "codigo": "211",
+    "descricao": "Tecido Tumoral Em Bloco De Parafina",
+    "abreviatura": "TTB"
+  },
+  {
+    "id": "MAT-212",
+    "codigo": "212",
+    "descricao": "Linfócitos Congelado",
+    "abreviatura": "LFG"
+  },
+  {
+    "id": "MAT-213",
+    "codigo": "213",
+    "descricao": "Urina Congelada",
+    "abreviatura": "UC"
+  },
+  {
+    "id": "MAT-214",
+    "codigo": "214",
+    "descricao": "Secreção Genital",
+    "abreviatura": "SG"
+  },
+  {
+    "id": "MAT-215",
+    "codigo": "215",
+    "descricao": "Exsudato Das Lesões",
+    "abreviatura": "EXL"
+  },
+  {
+    "id": "MAT-216",
+    "codigo": "216",
+    "descricao": "Fragmento De Mama",
+    "abreviatura": "FDM"
+  },
+  {
+    "id": "MAT-217",
+    "codigo": "217",
+    "descricao": "Fragmento De Próstata",
+    "abreviatura": "FP"
+  },
+  {
+    "id": "MAT-218",
+    "codigo": "218",
+    "descricao": "Sangue Total Materno",
+    "abreviatura": "STM"
+  },
+  {
+    "id": "MAT-219",
+    "codigo": "219",
+    "descricao": "Urina 6 Horas Congelada",
+    "abreviatura": "U6"
+  },
+  {
+    "id": "MAT-220",
+    "codigo": "220",
+    "descricao": "Sangue Total E Plasma",
+    "abreviatura": "STP"
+  },
+  {
+    "id": "MAT-221",
+    "codigo": "221",
+    "descricao": "Soro Pós Prandial",
+    "abreviatura": "SP"
+  },
+  {
+    "id": "MAT-222",
+    "codigo": "222",
+    "descricao": "Sêmen",
+    "abreviatura": "S"
+  },
+  {
+    "id": "MAT-223",
+    "codigo": "223",
+    "descricao": "Sangue Total E Swab Oral",
+    "abreviatura": "STS"
+  },
+  {
+    "id": "MAT-224",
+    "codigo": "224",
+    "descricao": "Sangue Total Ou Medula Óssea",
+    "abreviatura": "STO"
+  },
+  {
+    "id": "MAT-225",
+    "codigo": "225",
+    "descricao": "Fragmento De Biópsia",
+    "abreviatura": "FB"
+  },
+  {
+    "id": "MAT-226",
+    "codigo": "226",
+    "descricao": "Biópsia Em Bloco De Parafina",
+    "abreviatura": "BBP"
+  },
+  {
+    "id": "MAT-227",
+    "codigo": "227",
+    "descricao": "Diversos Congelado",
+    "abreviatura": "DC"
+  },
+  {
+    "id": "MAT-228",
+    "codigo": "228",
+    "descricao": "Sangue Total E Lâmina",
+    "abreviatura": "SEL"
+  },
+  {
+    "id": "MAT-229",
+    "codigo": "229",
+    "descricao": "Colônia Isolada",
+    "abreviatura": "CI"
+  },
+  {
+    "id": "MAT-230",
+    "codigo": "230",
+    "descricao": "Soro Pós Dextrosol",
+    "abreviatura": "SPD"
+  },
+  {
+    "id": "MAT-231",
+    "codigo": "231",
+    "descricao": "Soro Pós Insulina",
+    "abreviatura": "SPI"
+  },
+  {
+    "id": "MAT-232",
+    "codigo": "232",
+    "descricao": "Lâmina De Colpocitologia (Papanicolaou)",
+    "abreviatura": "LCP"
+  },
+  {
+    "id": "MAT-233",
+    "codigo": "233",
+    "descricao": "Segunda Urina Da Manhã",
+    "abreviatura": "SUM"
+  },
+  {
+    "id": "MAT-234",
+    "codigo": "234",
+    "descricao": "Raspado De Colo De Útero (Ecto E Endocervical)",
+    "abreviatura": "RCU"
+  },
+  {
+    "id": "MAT-235",
+    "codigo": "235",
+    "descricao": "Urina 24 Horas e Soro",
+    "abreviatura": "U2S"
+  },
+  {
+    "id": "MAT-236",
+    "codigo": "236",
+    "descricao": "Secreção Inguinal",
+    "abreviatura": "SIN"
+  },
+  {
+    "id": "MAT-237",
+    "codigo": "237",
+    "descricao": "Secressão Axilar",
+    "abreviatura": "SAX"
+  },
+  {
+    "id": "MAT-238",
+    "codigo": "238",
+    "descricao": "Soro Alergia",
+    "abreviatura": "SOA"
+  },
+  {
+    "id": "MAT-239",
+    "codigo": "239",
+    "descricao": "Sangue EDTA",
+    "abreviatura": "STA"
+  },
+  {
+    "id": "MAT-240",
+    "codigo": "240",
+    "descricao": "Linfa(Joelho esquerdo)",
+    "abreviatura": "LJE"
+  },
+  {
+    "id": "MAT-241",
+    "codigo": "241",
+    "descricao": "Linfa(Joelho direito)",
+    "abreviatura": "JoD"
+  },
+  {
+    "id": "MAT-242",
+    "codigo": "242",
+    "descricao": "Seco",
+    "abreviatura": "SEC"
+  },
+  {
+    "id": "MAT-243",
+    "codigo": "243",
+    "descricao": "Ceco",
+    "abreviatura": "Cec"
+  },
+  {
+    "id": "MAT-244",
+    "codigo": "244",
+    "descricao": "Cólon Transverso",
+    "abreviatura": "Col"
+  },
+  {
+    "id": "MAT-245",
+    "codigo": "245",
+    "descricao": "Linfa(Orelha Direita)",
+    "abreviatura": "LOD"
+  },
+  {
+    "id": "MAT-246",
+    "codigo": "246",
+    "descricao": "Linfa(Orelha Esquerda)",
+    "abreviatura": "LOE"
+  }
+]

@@ -819,14 +819,22 @@
           <div class="md:col-span-4">
             <label class="block font-bold text-gray-700 font-mono mb-1">Material:</label>
             <select id="mat-input-nome" class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
-              <option value="Sangue Total">Sangue Total</option>
-              <option value="Plasma Citratado">Plasma Citratado</option>
-              <option value="Soro">Soro</option>
-              <option value="Urina Amostra Isolada">Urina Amostra Isolada</option>
-              <option value="Urina 24h">Urina 24h</option>
-              <option value="Fezes">Fezes</option>
-              <option value="Líquor">Líquor</option>
-              <option value="Secreção">Secreção</option>
+              <% if (locals.materiaisColetadosMaster && materiaisColetadosMaster.length > 0) { %>
+                <% materiaisColetadosMaster.forEach(m => { %>
+                  <option value="<%= m.descricao %>" data-abrev="<%= m.abreviatura %>" data-codigo="<%= m.codigo %>">
+                    [<%= m.codigo %>] <%= m.descricao %> <%= m.abreviatura ? ('(' + m.abreviatura + ')') : '' %>
+                  </option>
+                <% }) %>
+              <% } else { %>
+                <option value="Sangue Total">Sangue Total</option>
+                <option value="Plasma Citratado">Plasma Citratado</option>
+                <option value="Soro">Soro</option>
+                <option value="Urina Amostra Isolada">Urina Amostra Isolada</option>
+                <option value="Urina 24h">Urina 24h</option>
+                <option value="Fezes">Fezes</option>
+                <option value="Líquor">Líquor</option>
+                <option value="Secreção">Secreção</option>
+              <% } %>
             </select>
           </div>
 
@@ -2826,6 +2834,71 @@
   }
 
   window.globalRecipientesList = <%- JSON.stringify(locals.recipientes || []) %>;
+  window.globalMateriaisColetadosMasterList = <%- JSON.stringify(locals.materiaisColetadosMaster || []) %>;
+
+  function populateMateriaisColetadosSelect(selectedVal) {
+    const sel = document.getElementById('mat-input-nome');
+    if (!sel) return;
+
+    const list = window.globalMateriaisColetadosMasterList || [];
+    const currentValue = selectedVal !== undefined ? selectedVal : sel.value;
+    sel.innerHTML = '';
+
+    if (list.length === 0) {
+      const defaultOptions = ['Sangue Total', 'Plasma Citratado', 'Soro', 'Urina Amostra Isolada', 'Urina 24h', 'Fezes', 'Líquor', 'Secreção'];
+      defaultOptions.forEach(op => {
+        const o = document.createElement('option');
+        o.value = op;
+        o.textContent = op;
+        sel.appendChild(o);
+      });
+    } else {
+      list.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.descricao;
+        opt.setAttribute('data-abrev', m.abreviatura || '');
+        opt.setAttribute('data-codigo', m.codigo || '');
+        const abrevStr = m.abreviatura ? ` (${m.abreviatura})` : '';
+        opt.textContent = `[${m.codigo}] ${m.descricao}${abrevStr}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    if (currentValue) {
+      const curStr = String(currentValue).trim().toUpperCase();
+      let matched = Array.from(sel.options).find(opt => opt.value.trim().toUpperCase() === curStr);
+      if (matched) {
+        sel.value = matched.value;
+      } else {
+        let matchByCodeOrAbrev = list.find(m => String(m.codigo).trim() === String(currentValue).trim() || (m.abreviatura && m.abreviatura.trim().toUpperCase() === curStr));
+        if (matchByCodeOrAbrev) {
+          sel.value = matchByCodeOrAbrev.descricao;
+        } else {
+          const customOpt = document.createElement('option');
+          customOpt.value = currentValue;
+          customOpt.textContent = currentValue;
+          sel.appendChild(customOpt);
+          sel.value = currentValue;
+        }
+      }
+    }
+  }
+
+  async function fetchAndUpdateMateriaisColetadosDropdowns(selectedVal) {
+    try {
+      const res = await fetch('/api/materiais-coletados');
+      if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          window.globalMateriaisColetadosMasterList = list;
+          populateMateriaisColetadosSelect(selectedVal);
+        }
+      }
+    } catch (e) {
+      console.warn("Não foi possível atualizar a lista de materiais coletados:", e);
+      populateMateriaisColetadosSelect(selectedVal);
+    }
+  }
 
   async function fetchAndUpdateRecipientesDropdowns() {
     try {
@@ -3374,6 +3447,9 @@
     switchMaterialMainTab('mat-coletado');
     switchMaterialTab('coleta');
 
+    const targetVal = (idx >= 0 && currentMateriaisList[idx]) ? (currentMateriaisList[idx].nome || 'Sangue Total') : 'Sangue Total';
+    populateMateriaisColetadosSelect(targetVal);
+
     if (idx >= 0 && currentMateriaisList[idx]) {
       const mat = currentMateriaisList[idx];
       document.getElementById('materialSubModalTitle').innerText = 'Editar Material: ' + (mat.nome || 'Material Coletado');
@@ -3726,6 +3802,21 @@
 
   function saveMaterialToExamList() {
     const nome = document.getElementById('mat-input-nome').value;
+    const selElem = document.getElementById('mat-input-nome');
+    const selectedOpt = selElem ? selElem.options[selElem.selectedIndex] : null;
+    let abrev = '';
+    if (selectedOpt && selectedOpt.getAttribute('data-abrev')) {
+      abrev = selectedOpt.getAttribute('data-abrev');
+    }
+    if (!abrev) {
+      const masterList = window.globalMateriaisColetadosMasterList || [];
+      const foundMaster = masterList.find(m => (m.descricao || '').trim().toUpperCase() === nome.trim().toUpperCase());
+      if (foundMaster && foundMaster.abreviatura) {
+        abrev = foundMaster.abreviatura;
+      } else {
+        abrev = nome.slice(0, 3).toUpperCase();
+      }
+    }
     const prazo = document.getElementById('mat-input-prazo').value;
     const metodo = document.getElementById('mat-input-metodo').value;
     const amb = document.getElementById('mat-input-amb').value;
@@ -3752,7 +3843,7 @@
     const newMat = {
       id: editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex] ? currentMateriaisList[editingMaterialIndex].id : Date.now(),
       nome,
-      abrev: nome.slice(0, 3).toUpperCase(),
+      abrev,
       prazo,
       metodo,
       amb,
@@ -4040,6 +4131,42 @@
   // Global states for sheet import
   window.rawExamSheetRows = [];
   window.rawDeparaSheetRows = [];
+  window.examHeaderRowIdx = 0;
+
+  function safeStr(val) {
+    if (val === undefined || val === null) return '';
+    return String(val).trim();
+  }
+
+  function parsePriceValueClient(val) {
+    if (val === undefined || val === null) return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    
+    let str = String(val).replace(/R\$/i, '').replace(/\s/g, '').trim();
+    if (!str) return 0;
+
+    if (str.includes(',') && str.includes('.')) {
+      const lastComma = str.lastIndexOf(',');
+      const lastDot = str.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        str = str.replace(/\./g, '').replace(',', '.');
+      } else {
+        str = str.replace(/,/g, '');
+      }
+    } else if (str.includes(',')) {
+      str = str.replace(',', '.');
+    } else if (str.includes('.')) {
+      const parts = str.split('.');
+      if (parts.length > 2) {
+        str = str.replace(/\./g, '');
+      } else if (parts.length === 2 && parts[1].length === 3) {
+        str = parts.join('');
+      }
+    }
+
+    const num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
+  }
 
   function parseSpreadsheetRows(rawDataArray) {
     if (!Array.isArray(rawDataArray) || rawDataArray.length === 0) return [];
@@ -4058,10 +4185,10 @@
 
       return rawDataArray.map(row => {
         if (Array.isArray(row) && row.length === 1 && typeof row[0] === 'string') {
-          return row[0].split(delimiter).map(cell => String(cell || '').trim().replace(/^["']|["']$/g, ''));
+          return row[0].split(delimiter).map(cell => safeStr(cell).replace(/^["']|["']$/g, ''));
         }
         if (Array.isArray(row)) {
-          return row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim());
+          return row.map(cell => safeStr(cell));
         }
         return [];
       });
@@ -4069,7 +4196,7 @@
 
     return rawDataArray.map(row => {
       if (Array.isArray(row)) {
-        return row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim());
+        return row.map(cell => safeStr(cell));
       }
       return [];
     });
@@ -4079,6 +4206,44 @@
   function handleExamSpreadsheet(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Se for PDF ou se falhar cliente, tenta servidor
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+
+    if (isPdf) {
+      const formData = new FormData();
+      formData.append('file', file);
+      fetch('/admin/exames/parse', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert('Erro ao analisar arquivo PDF: ' + (data.message || 'Erro no servidor'));
+            return;
+          }
+          let rows = [];
+          if (data.rows && data.rows.length > 0) {
+            rows = parseSpreadsheetRows(data.rows);
+          } else if (data.exams && data.exams.length > 0) {
+            rows = [
+              ['Código', 'Nome do Exame', 'Particular'],
+              ...data.exams.map(ex => [ex.code || ex.jalisCode || '', ex.name || '', ex.pricePrivate || 0])
+            ];
+          }
+          if (rows.length < 2) {
+            alert('Nenhum exame pôde ser extraído do arquivo enviado.');
+            return;
+          }
+          window.rawExamSheetRows = rows;
+          populateExamColumnSelects(rows);
+          onMappingChanged();
+          document.getElementById('import-preview-box').classList.remove('hidden');
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Erro ao enviar PDF para análise no servidor.');
+        });
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -4090,7 +4255,24 @@
         rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
       } catch (err) {
         console.error(err);
-        alert('Erro ao ler a planilha. Verifique o formato do arquivo.');
+        alert('Erro ao ler a planilha no navegador. Tentando pelo servidor...');
+        
+        // Fallback para servidor
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/admin/exames/parse', { method: 'POST', body: formData })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.rows && data.rows.length > 1) {
+              const rows = parseSpreadsheetRows(data.rows);
+              window.rawExamSheetRows = rows;
+              populateExamColumnSelects(rows);
+              onMappingChanged();
+              document.getElementById('import-preview-box').classList.remove('hidden');
+            } else {
+              alert('Não foi possível ler os dados do arquivo.');
+            }
+          });
         return;
       }
 
@@ -4109,7 +4291,24 @@
   }
 
   function populateExamColumnSelects(rows) {
-    const headers = rows[0] || [];
+    if (!rows || rows.length === 0) return;
+
+    // Detectar linha de cabeçalho (máximo de colunas preenchidas nas primeiras 5 linhas)
+    let headerRowIdx = 0;
+    let maxNonEmpty = 0;
+    for (let r = 0; r < Math.min(rows.length, 5); r++) {
+      const row = rows[r];
+      if (Array.isArray(row)) {
+        const nonEmptyCount = row.filter(cell => safeStr(cell).length > 0).length;
+        if (nonEmptyCount > maxNonEmpty) {
+          maxNonEmpty = nonEmptyCount;
+          headerRowIdx = r;
+        }
+      }
+    }
+
+    window.examHeaderRowIdx = headerRowIdx;
+    const headers = rows[headerRowIdx] || [];
     const selects = ['select-col-jalis', 'select-col-name', 'select-col-price', 'select-col-cat', 'select-col-code'];
 
     selects.forEach(selId => {
@@ -4119,40 +4318,111 @@
       headers.forEach((h, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
-        opt.textContent = `Col ${idx + 1}: ${h || '(Sem título)'}`;
+        const hStr = safeStr(h);
+        opt.textContent = `Col ${idx + 1}: ${hStr || '(Sem título)'}`;
         sel.appendChild(opt);
       });
+      sel.value = '-1';
     });
 
-    // Auto-detect best column matches
+    // 1. Mapeamento por NOME de cabeçalho
     headers.forEach((h, idx) => {
-      const text = String(h || '').toLowerCase().trim();
-      if (/c[oó]digo|cod|jalis/i.test(text) && !/alvaro|pardini/i.test(text)) {
+      const text = safeStr(h).toLowerCase();
+      const normText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      if (/c[oó]digo|cod|jalis|cd_exame|id_exame/i.test(normText) && !/alvaro|pardini|ma|mat/i.test(normText)) {
         const sel = document.getElementById('select-col-jalis');
         if (sel && sel.value === '-1') sel.value = idx;
       }
-      if (/descri[cç][aã]o|nome|exame/i.test(text)) {
+      if (/descri[cç][aã]o|nome|exame|procedimento|desc/i.test(normText)) {
         const sel = document.getElementById('select-col-name');
         if (sel && sel.value === '-1') sel.value = idx;
       }
-      if (/valor|pre[cç]o|price|particular/i.test(text)) {
+      if (/valor|pre[cç]o|price|particular|vlr|custo/i.test(normText)) {
         const sel = document.getElementById('select-col-price');
         if (sel && sel.value === '-1') sel.value = idx;
       }
-      if (/categoria|setor|grupo|filtro/i.test(text)) {
+      if (/categoria|setor|grupo|filtro|material|especialidade/i.test(normText)) {
         const sel = document.getElementById('select-col-cat');
         if (sel && sel.value === '-1') sel.value = idx;
       }
-      if (/gest[aã]o|interno/i.test(text)) {
+      if (/gest[aã]o|interno|amb|tuss/i.test(normText)) {
         const sel = document.getElementById('select-col-code');
         if (sel && sel.value === '-1') sel.value = idx;
       }
     });
+
+    // 2. Mapeamento inteligente por CONTEÚDO das células se não encontrou por título
+    const dataRows = rows.slice(headerRowIdx + 1, headerRowIdx + 11);
+    if (dataRows.length > 0) {
+      const selName = document.getElementById('select-col-name');
+      const selJalis = document.getElementById('select-col-jalis');
+      const selPrice = document.getElementById('select-col-price');
+
+      if (selName && selName.value === '-1') {
+        let bestCol = -1;
+        let maxAvgLen = 0;
+        headers.forEach((_, cIdx) => {
+          let totalLen = 0;
+          let count = 0;
+          dataRows.forEach(r => {
+            const val = safeStr(r[cIdx]);
+            if (val && !/^\d+(\.\d+)?$/.test(val)) {
+              totalLen += val.length;
+              count++;
+            }
+          });
+          const avg = count > 0 ? totalLen / count : 0;
+          if (avg > maxAvgLen) {
+            maxAvgLen = avg;
+            bestCol = cIdx;
+          }
+        });
+        if (bestCol !== -1) selName.value = bestCol;
+      }
+
+      if (selJalis && selJalis.value === '-1') {
+        let bestCol = -1;
+        headers.forEach((_, cIdx) => {
+          if (cIdx === parseInt(selName?.value ?? -1)) return;
+          let isCodeLike = true;
+          let matchCount = 0;
+          dataRows.forEach(r => {
+            const val = safeStr(r[cIdx]);
+            if (val) {
+              matchCount++;
+              if (val.length > 20) isCodeLike = false;
+            }
+          });
+          if (isCodeLike && matchCount > 0 && bestCol === -1) {
+            bestCol = cIdx;
+          }
+        });
+        if (bestCol !== -1) selJalis.value = bestCol;
+      }
+
+      if (selPrice && selPrice.value === '-1') {
+        let bestCol = -1;
+        headers.forEach((_, cIdx) => {
+          if (cIdx === parseInt(selName?.value ?? -1) || cIdx === parseInt(selJalis?.value ?? -1)) return;
+          let priceMatches = 0;
+          dataRows.forEach(r => {
+            const p = parsePriceValueClient(r[cIdx]);
+            if (p > 0) priceMatches++;
+          });
+          if (priceMatches > 0 && bestCol === -1) {
+            bestCol = cIdx;
+          }
+        });
+        if (bestCol !== -1) selPrice.value = bestCol;
+      }
+    }
   }
 
   function onMappingChanged() {
     const rows = window.rawExamSheetRows || [];
-    if (rows.length < 2) return;
+    const headerRowIdx = window.examHeaderRowIdx || 0;
+    if (rows.length <= headerRowIdx) return;
 
     const colJalis = parseInt(document.getElementById('select-col-jalis')?.value ?? -1);
     const colName = parseInt(document.getElementById('select-col-name')?.value ?? -1);
@@ -4160,20 +4430,20 @@
     const colCat = parseInt(document.getElementById('select-col-cat')?.value ?? -1);
     const colCode = parseInt(document.getElementById('select-col-code')?.value ?? -1);
 
-    const dataRows = rows.slice(1);
+    const dataRows = rows.slice(headerRowIdx + 1);
     const tbody = document.getElementById('import-preview-tbody');
     tbody.innerHTML = '';
 
     let validCount = 0;
     dataRows.forEach((row, rIdx) => {
-      const jalis = colJalis >= 0 ? (row[colJalis] || '') : '';
-      const code = colCode >= 0 ? (row[colCode] || '') : jalis;
-      const name = colName >= 0 ? (row[colName] || '') : (row[1] || row[0] || '');
-      const cat = colCat >= 0 ? (row[colCat] || 'Geral') : 'Geral';
-      
-      let priceRaw = colPrice >= 0 ? (row[colPrice] || '0') : '0';
-      priceRaw = String(priceRaw).replace('R$', '').replace(/\s/g, '').replace(',', '.');
-      const price = parseFloat(priceRaw) || 0;
+      const jalis = colJalis >= 0 ? safeStr(row[colJalis]) : '';
+      const code = colCode >= 0 ? safeStr(row[colCode]) : jalis;
+      let name = colName >= 0 ? safeStr(row[colName]) : '';
+      if (!name) {
+        name = safeStr(row[1]) || safeStr(row[0]);
+      }
+      const cat = colCat >= 0 ? (safeStr(row[colCat]) || 'Geral') : 'Geral';
+      const price = colPrice >= 0 ? parsePriceValueClient(row[colPrice]) : 0;
 
       if (name || code || jalis) validCount++;
 
@@ -4196,7 +4466,8 @@
 
   function submitImportedExams() {
     const rows = window.rawExamSheetRows || [];
-    if (rows.length < 2) {
+    const headerRowIdx = window.examHeaderRowIdx || 0;
+    if (rows.length <= headerRowIdx) {
       alert('Nenhuma planilha carregada.');
       return;
     }
@@ -4207,18 +4478,18 @@
     const colCat = parseInt(document.getElementById('select-col-cat')?.value ?? -1);
     const colCode = parseInt(document.getElementById('select-col-code')?.value ?? -1);
 
-    const dataRows = rows.slice(1);
+    const dataRows = rows.slice(headerRowIdx + 1);
     const exams = [];
 
     dataRows.forEach(row => {
-      const jalis = colJalis >= 0 ? (row[colJalis] || '').trim() : '';
-      const code = colCode >= 0 ? (row[colCode] || '').trim() : jalis;
-      const name = colName >= 0 ? (row[colName] || '').trim() : '';
-      const category = colCat >= 0 ? (row[colCat] || 'Geral').trim() : 'Geral';
-      
-      let priceRaw = colPrice >= 0 ? (row[colPrice] || '0') : '0';
-      priceRaw = String(priceRaw).replace('R$', '').replace(/\s/g, '').replace(',', '.');
-      const pricePrivate = parseFloat(priceRaw) || 0;
+      const jalis = colJalis >= 0 ? safeStr(row[colJalis]) : '';
+      const code = colCode >= 0 ? safeStr(row[colCode]) : jalis;
+      let name = colName >= 0 ? safeStr(row[colName]) : '';
+      if (!name) {
+        name = safeStr(row[1]) || safeStr(row[0]);
+      }
+      const category = colCat >= 0 ? (safeStr(row[colCat]) || 'Geral') : 'Geral';
+      const pricePrivate = colPrice >= 0 ? parsePriceValueClient(row[colPrice]) : 0;
 
       if (name || code || jalis) {
         exams.push({

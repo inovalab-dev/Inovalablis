@@ -144,6 +144,7 @@ const SHORTCUTS_FILE = path.join(process.cwd(), 'data', 'shortcuts.json');
 const CONVENIOS_FILE = path.join(process.cwd(), 'data', 'convenios.json');
 const PRICE_TABLES_FILE = path.join(process.cwd(), 'data', 'price_tables.json');
 const RECIPIENTES_FILE = path.join(process.cwd(), 'data', 'recipientes.json');
+const MATERIAIS_COLETADOS_FILE = path.join(process.cwd(), 'data', 'materiais_coletados.json');
 const SETORES_FILE = path.join(process.cwd(), 'data', 'setores.json');
 const LOCAIS_COLETA_FILE = path.join(process.cwd(), 'data', 'locais_coleta.json');
 const MEDICOS_FILE = path.join(process.cwd(), 'data', 'medicos.json');
@@ -181,6 +182,7 @@ let accessProfilesCache = [];
 let conveniosCache = [];
 let priceTablesCache = [];
 let recipientesCache = [];
+let materiaisColetadosMasterCache = [];
 let setoresCache = [];
 let impressorasCache = [];
 let locaisColetaCache = [];
@@ -246,6 +248,7 @@ async function initializeFirebaseCaches() {
     conveniosCache = await loadCollectionFromMysql('convenios', CONVENIOS_FILE);
     priceTablesCache = await loadCollectionFromMysql('price_tables', PRICE_TABLES_FILE);
     recipientesCache = await loadCollectionFromMysql('recipientes', RECIPIENTES_FILE);
+    materiaisColetadosMasterCache = await loadCollectionFromMysql('materiais_coletados', MATERIAIS_COLETADOS_FILE);
     setoresCache = await loadCollectionFromMysql('setores', SETORES_FILE);
     patientsCache = await loadCollectionFromMysql('patients', PATIENTS_FILE);
     appointmentsCache = await loadCollectionFromMysql('appointments', APPOINTMENTS_FILE);
@@ -1665,6 +1668,24 @@ function saveRecipientes(recipientes) {
     syncToFirestore('recipientes', recipientes);
   } catch (error) {
     console.error("Erro ao salvar recipientes:", error);
+  }
+}
+
+function loadMateriaisColetados() {
+  if (!materiaisColetadosMasterCache || materiaisColetadosMasterCache.length === 0) {
+    materiaisColetadosMasterCache = loadLocalJson(MATERIAIS_COLETADOS_FILE);
+  }
+  return materiaisColetadosMasterCache || [];
+}
+
+function saveMateriaisColetados(materiais) {
+  try {
+    materiaisColetadosMasterCache = materiais;
+    fs.writeFileSync(MATERIAIS_COLETADOS_FILE, JSON.stringify(materiais, null, 2), 'utf-8');
+    saveCollectionToMysql('materiais_coletados', materiais).catch(err => console.error("Erro ao salvar materiais_coletados no MySQL:", err));
+    syncToFirestore('materiais_coletados', materiais);
+  } catch (error) {
+    console.error("Erro ao salvar materiais_coletados:", error);
   }
 }
 
@@ -3773,6 +3794,7 @@ app.get('/admin/exames', requireAdmin, (req, res) => {
   const labs = loadSupportLabs();
   const priceTables = loadPriceTables();
   const recipientes = loadRecipientes();
+  const materiaisColetadosMaster = loadMateriaisColetados();
   const setores = loadSetores();
   const examesAlvaro = loadLabExamesAlvaro();
   const examesPardini = loadLabExamesPardini();
@@ -3781,6 +3803,7 @@ app.get('/admin/exames', requireAdmin, (req, res) => {
     labs,
     priceTables,
     recipientes,
+    materiaisColetadosMaster,
     setores,
     examesAlvaro,
     examesPardini,
@@ -9617,8 +9640,8 @@ app.post('/admin/exames/import', requireAdmin, (req, res) => {
 
     importedExams.forEach(item => {
       let existingIndex = -1;
-      const itemJalis = (item.jalisCode || '').trim();
-      const itemName = (item.name || '').trim().toLowerCase();
+      const itemJalis = String(item.jalisCode !== undefined && item.jalisCode !== null ? item.jalisCode : '').trim();
+      const itemName = String(item.name !== undefined && item.name !== null ? item.name : '').trim().toLowerCase();
 
       // Se tiver ID de vínculo direto do frontend, use-o com prioridade
       if (item.matchExamId) {
@@ -9626,25 +9649,25 @@ app.post('/admin/exames/import', requireAdmin, (req, res) => {
       } else {
         // Caso contrário, buscar correspondência padrão por código Jalis ou nome para não duplicar
         if (itemJalis) {
-          existingIndex = currentExams.findIndex(e => (e.jalisCode || '').trim() === itemJalis);
+          existingIndex = currentExams.findIndex(e => String(e.jalisCode || '').trim() === itemJalis);
         } else if (itemName) {
-          existingIndex = currentExams.findIndex(e => e.name.toLowerCase() === itemName);
+          existingIndex = currentExams.findIndex(e => String(e.name || '').toLowerCase() === itemName);
         }
       }
 
       const examData = {
-        name: (item.name || 'Sem nome').trim(),
-        category: (item.category || 'Geral').trim(),
-        fasting: (item.fasting || 'Não obrigatório').trim(),
-        timeframe: (item.timeframe || '24 horas').trim(),
-        instructions: (item.instructions || 'Sem instruções de preparo cadastradas. Consulte o laboratório.').trim(),
-        code: (item.code || itemJalis || '').trim(),
+        name: String(item.name || 'Sem nome').trim(),
+        category: String(item.category || 'Geral').trim(),
+        fasting: String(item.fasting || 'Não obrigatório').trim(),
+        timeframe: String(item.timeframe || '24 horas').trim(),
+        instructions: String(item.instructions || 'Sem instruções de preparo cadastradas. Consulte o laboratório.').trim(),
+        code: String(item.code || itemJalis || '').trim(),
         jalisCode: itemJalis,
-        codigoAlvaro: (item.codigoAlvaro || '').trim(),
-        codigoPardini: (item.codigoPardini || '').trim(),
+        codigoAlvaro: String(item.codigoAlvaro || '').trim(),
+        codigoPardini: String(item.codigoPardini || '').trim(),
         priceAlvaro: item.priceAlvaro ? parseFloat(item.priceAlvaro) : 0,
         pricePardini: item.pricePardini ? parseFloat(item.pricePardini) : 0,
-        supportLab: (item.supportLab || 'Próprio').trim(),
+        supportLab: String(item.supportLab || 'Próprio').trim(),
         pricePrivate: item.pricePrivate !== undefined ? parseFloat(item.pricePrivate) : 0
       };
 
@@ -9653,18 +9676,18 @@ app.post('/admin/exames/import', requireAdmin, (req, res) => {
         const existingExam = currentExams[existingIndex];
         currentExams[existingIndex] = {
           ...existingExam,
-          name: (item.name || existingExam.name || 'Sem nome').trim(),
-          category: (item.category || existingExam.category || 'Geral').trim(),
-          code: (item.code || existingExam.code || itemJalis || '').trim(),
+          name: String(item.name || existingExam.name || 'Sem nome').trim(),
+          category: String(item.category || existingExam.category || 'Geral').trim(),
+          code: String(item.code || existingExam.code || itemJalis || '').trim(),
           jalisCode: itemJalis || existingExam.jalisCode || '',
-          codigoAlvaro: (item.codigoAlvaro || existingExam.codigoAlvaro || '').trim(),
-          codigoPardini: (item.codigoPardini || existingExam.codigoPardini || '').trim(),
+          codigoAlvaro: String(item.codigoAlvaro || existingExam.codigoAlvaro || '').trim(),
+          codigoPardini: String(item.codigoPardini || existingExam.codigoPardini || '').trim(),
           pricePrivate: item.pricePrivate !== undefined ? parseFloat(item.pricePrivate) : existingExam.pricePrivate,
           // Preserva instruções/jejum existentes e só usa os novos se os existentes forem vazios ou padrão
-          fasting: existingExam.fasting && existingExam.fasting !== 'Não obrigatório' ? existingExam.fasting : (item.fasting || 'Não obrigatório').trim(),
-          timeframe: existingExam.timeframe && existingExam.timeframe !== '24 horas' ? existingExam.timeframe : (item.timeframe || '24 horas').trim(),
-          instructions: existingExam.instructions && !existingExam.instructions.startsWith('Sem instruções de preparo') ? existingExam.instructions : (item.instructions || 'Sem instruções de preparo cadastradas. Consulte o laboratório.').trim(),
-          supportLab: item.supportLab || existingExam.supportLab || 'Próprio'
+          fasting: existingExam.fasting && existingExam.fasting !== 'Não obrigatório' ? existingExam.fasting : String(item.fasting || 'Não obrigatório').trim(),
+          timeframe: existingExam.timeframe && existingExam.timeframe !== '24 horas' ? existingExam.timeframe : String(item.timeframe || '24 horas').trim(),
+          instructions: existingExam.instructions && !existingExam.instructions.startsWith('Sem instruções de preparo') ? existingExam.instructions : String(item.instructions || 'Sem instruções de preparo cadastradas. Consulte o laboratório.').trim(),
+          supportLab: String(item.supportLab || existingExam.supportLab || 'Próprio').trim()
         };
       } else {
         // Adiciona um novo registro
@@ -10967,6 +10990,85 @@ app.get('/admin/recipientes/delete/:id', requireAdmin, (req, res) => {
 
 app.get('/api/recipientes', (req, res) => {
   res.json(loadRecipientes());
+});
+
+// --- SUB-MÓDULO: GERENCIAMENTO DE MATERIAIS COLETADOS (CRUD) ---
+app.get('/admin/materiais-coletados', requireAdmin, (req, res) => {
+  const materiais = loadMateriaisColetados();
+  res.render('admin/materiais-coletados', {
+    materiais,
+    page: 'admin-materiais-coletados'
+  });
+});
+
+app.post('/admin/materiais-coletados/save', requireAdmin, (req, res) => {
+  try {
+    let materiais = loadMateriaisColetados();
+    const { id, codigo, descricao, abreviatura } = req.body;
+
+    if (!descricao || !descricao.trim()) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(400).json({ success: false, message: 'A descrição do material é obrigatória.' });
+      }
+      return res.status(400).send('A descrição do material é obrigatória.');
+    }
+
+    let maxCod = 0;
+    materiais.forEach(m => {
+      const num = parseInt(m.codigo, 10);
+      if (!isNaN(num) && num > maxCod) maxCod = num;
+    });
+
+    let targetId = id ? id.trim() : '';
+    let existingIndex = targetId ? materiais.findIndex(m => String(m.id) === String(targetId)) : -1;
+
+    const materialData = {
+      id: targetId || ('MAT-' + String(Date.now())),
+      codigo: codigo && codigo.trim() ? codigo.trim() : String(maxCod + 1),
+      descricao: descricao.trim().toUpperCase(),
+      abreviatura: (abreviatura || '').trim().toUpperCase()
+    };
+
+    if (existingIndex >= 0) {
+      materiais[existingIndex] = { ...materiais[existingIndex], ...materialData };
+    } else {
+      materiais.push(materialData);
+    }
+
+    saveMateriaisColetados(materiais);
+
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: true, material: materialData, materiais });
+    }
+    res.redirect('/admin/materiais-coletados');
+  } catch (err) {
+    console.error("Erro ao salvar material coletado:", err);
+    res.status(500).send("Erro ao salvar material coletado");
+  }
+});
+
+app.post('/admin/materiais-coletados/delete/:id', requireAdmin, (req, res) => {
+  let materiais = loadMateriaisColetados();
+  materiais = materiais.filter(m => String(m.id) !== String(req.params.id));
+  saveMateriaisColetados(materiais);
+  if (req.xhr || req.headers.accept?.includes('json')) {
+    return res.json({ success: true });
+  }
+  res.redirect('/admin/materiais-coletados');
+});
+
+app.get('/admin/materiais-coletados/delete/:id', requireAdmin, (req, res) => {
+  let materiais = loadMateriaisColetados();
+  materiais = materiais.filter(m => String(m.id) !== String(req.params.id));
+  saveMateriaisColetados(materiais);
+  if (req.xhr || req.headers.accept?.includes('json')) {
+    return res.json({ success: true });
+  }
+  res.redirect('/admin/materiais-coletados');
+});
+
+app.get('/api/materiais-coletados', (req, res) => {
+  res.json(loadMateriaisColetados());
 });
 
 // --- SUB-MÓDULO: GERENCIAMENTO DE LOCAIS DE COLETA (CRUD) ---

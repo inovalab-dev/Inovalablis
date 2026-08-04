@@ -4037,91 +4037,414 @@
     document.getElementById('depara-file-input').click();
   }
 
-  // Processamento de planilha no cliente
+  // Global states for sheet import
+  window.rawExamSheetRows = [];
+  window.rawDeparaSheetRows = [];
+
+  function parseSpreadsheetRows(rawDataArray) {
+    if (!Array.isArray(rawDataArray) || rawDataArray.length === 0) return [];
+
+    // Check if rows are single string elements (e.g., semicolon-separated CSV)
+    const isSingleStringRows = rawDataArray.some(row => 
+      Array.isArray(row) && row.length === 1 && typeof row[0] === 'string' && (row[0].includes(';') || row[0].includes(',') || row[0].includes('\t'))
+    );
+
+    if (isSingleStringRows) {
+      let delimiter = ';';
+      const sampleLine = rawDataArray.find(r => r && r[0] && typeof r[0] === 'string')?.[0] || '';
+      if (sampleLine.includes(';')) delimiter = ';';
+      else if (sampleLine.includes('\t')) delimiter = '\t';
+      else if (sampleLine.includes(',')) delimiter = ',';
+
+      return rawDataArray.map(row => {
+        if (Array.isArray(row) && row.length === 1 && typeof row[0] === 'string') {
+          return row[0].split(delimiter).map(cell => String(cell || '').trim().replace(/^["']|["']$/g, ''));
+        }
+        if (Array.isArray(row)) {
+          return row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim());
+        }
+        return [];
+      });
+    }
+
+    return rawDataArray.map(row => {
+      if (Array.isArray(row)) {
+        return row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim());
+      }
+      return [];
+    });
+  }
+
+  // Processamento de planilha no cliente (Exames)
   function handleExamSpreadsheet(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(evt) {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-      if (jsonData.length < 2) {
-        alert('A planilha está vazia ou não possui dados suficientes.');
+      let rawData = [];
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao ler a planilha. Verifique o formato do arquivo.');
         return;
       }
 
+      const rows = parseSpreadsheetRows(rawData);
+      if (rows.length < 2) {
+        alert('A planilha está vazia ou não possui linhas de dados suficientes.');
+        return;
+      }
+
+      window.rawExamSheetRows = rows;
+      populateExamColumnSelects(rows);
+      onMappingChanged();
       document.getElementById('import-preview-box').classList.remove('hidden');
-      document.getElementById('preview-summary-badge').innerText = (jsonData.length - 1) + ' linhas encontradas';
-
-      const tbody = document.getElementById('import-preview-tbody');
-      tbody.innerHTML = '';
-
-      jsonData.slice(1, 15).forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="p-2 font-mono font-bold">${String(row[0] || '').slice(0, 6)}</td>
-          <td class="p-2 font-bold">${row[1] || ''}</td>
-          <td class="p-2">${row[2] || 'Geral'}</td>
-          <td class="p-2 font-mono text-emerald-700 font-bold">R$ ${parseFloat(row[3] || 0).toFixed(2)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
     };
     reader.readAsArrayBuffer(file);
   }
 
+  function populateExamColumnSelects(rows) {
+    const headers = rows[0] || [];
+    const selects = ['select-col-jalis', 'select-col-name', 'select-col-price', 'select-col-cat', 'select-col-code'];
+
+    selects.forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="-1">(Nenhum / Padrão)</option>';
+      headers.forEach((h, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `Col ${idx + 1}: ${h || '(Sem título)'}`;
+        sel.appendChild(opt);
+      });
+    });
+
+    // Auto-detect best column matches
+    headers.forEach((h, idx) => {
+      const text = String(h || '').toLowerCase().trim();
+      if (/c[oó]digo|cod|jalis/i.test(text) && !/alvaro|pardini/i.test(text)) {
+        const sel = document.getElementById('select-col-jalis');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/descri[cç][aã]o|nome|exame/i.test(text)) {
+        const sel = document.getElementById('select-col-name');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/valor|pre[cç]o|price|particular/i.test(text)) {
+        const sel = document.getElementById('select-col-price');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/categoria|setor|grupo|filtro/i.test(text)) {
+        const sel = document.getElementById('select-col-cat');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/gest[aã]o|interno/i.test(text)) {
+        const sel = document.getElementById('select-col-code');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+    });
+  }
+
+  function onMappingChanged() {
+    const rows = window.rawExamSheetRows || [];
+    if (rows.length < 2) return;
+
+    const colJalis = parseInt(document.getElementById('select-col-jalis')?.value ?? -1);
+    const colName = parseInt(document.getElementById('select-col-name')?.value ?? -1);
+    const colPrice = parseInt(document.getElementById('select-col-price')?.value ?? -1);
+    const colCat = parseInt(document.getElementById('select-col-cat')?.value ?? -1);
+    const colCode = parseInt(document.getElementById('select-col-code')?.value ?? -1);
+
+    const dataRows = rows.slice(1);
+    const tbody = document.getElementById('import-preview-tbody');
+    tbody.innerHTML = '';
+
+    let validCount = 0;
+    dataRows.forEach((row, rIdx) => {
+      const jalis = colJalis >= 0 ? (row[colJalis] || '') : '';
+      const code = colCode >= 0 ? (row[colCode] || '') : jalis;
+      const name = colName >= 0 ? (row[colName] || '') : (row[1] || row[0] || '');
+      const cat = colCat >= 0 ? (row[colCat] || 'Geral') : 'Geral';
+      
+      let priceRaw = colPrice >= 0 ? (row[colPrice] || '0') : '0';
+      priceRaw = String(priceRaw).replace('R$', '').replace(/\s/g, '').replace(',', '.');
+      const price = parseFloat(priceRaw) || 0;
+
+      if (name || code || jalis) validCount++;
+
+      if (rIdx < 20) {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="p-2 font-mono font-bold text-slate-800">${code || jalis || '—'}</td>
+          <td class="p-2 font-bold text-slate-900">${name || '<span class="text-rose-400">Sem descrição</span>'}</td>
+          <td class="p-2 text-slate-600">${cat || 'Geral'}</td>
+          <td class="p-2 font-mono text-emerald-700 font-bold">R$ ${price.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    });
+
+    const badge = document.getElementById('preview-summary-badge');
+    if (badge) badge.innerText = `${validCount} exames válidos para importar`;
+  }
+
+  function submitImportedExams() {
+    const rows = window.rawExamSheetRows || [];
+    if (rows.length < 2) {
+      alert('Nenhuma planilha carregada.');
+      return;
+    }
+
+    const colJalis = parseInt(document.getElementById('select-col-jalis')?.value ?? -1);
+    const colName = parseInt(document.getElementById('select-col-name')?.value ?? -1);
+    const colPrice = parseInt(document.getElementById('select-col-price')?.value ?? -1);
+    const colCat = parseInt(document.getElementById('select-col-cat')?.value ?? -1);
+    const colCode = parseInt(document.getElementById('select-col-code')?.value ?? -1);
+
+    const dataRows = rows.slice(1);
+    const exams = [];
+
+    dataRows.forEach(row => {
+      const jalis = colJalis >= 0 ? (row[colJalis] || '').trim() : '';
+      const code = colCode >= 0 ? (row[colCode] || '').trim() : jalis;
+      const name = colName >= 0 ? (row[colName] || '').trim() : '';
+      const category = colCat >= 0 ? (row[colCat] || 'Geral').trim() : 'Geral';
+      
+      let priceRaw = colPrice >= 0 ? (row[colPrice] || '0') : '0';
+      priceRaw = String(priceRaw).replace('R$', '').replace(/\s/g, '').replace(',', '.');
+      const pricePrivate = parseFloat(priceRaw) || 0;
+
+      if (name || code || jalis) {
+        exams.push({
+          code: code || jalis,
+          jalisCode: jalis || code,
+          name: name || (code || jalis),
+          category: category || 'Geral',
+          pricePrivate
+        });
+      }
+    });
+
+    if (exams.length === 0) {
+      alert('Nenhum exame válido foi encontrado para importação.');
+      return;
+    }
+
+    const confirmBtn = document.getElementById('confirm-import-btn');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = `
+        <svg class="animate-spin h-4 w-4 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Importando...
+      `;
+    }
+
+    fetch('/admin/exames/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exams, clearFirst: false })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(`✅ ${data.count} exames cadastrados / atualizados com sucesso!`);
+        window.location.reload();
+      } else {
+        alert('❌ Erro ao importar: ' + (data.message || 'Erro no servidor'));
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = 'Confirmar Importação';
+        }
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('❌ Erro de conexão com o servidor.');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Confirmar Importação';
+      }
+    });
+  }
+
+  // Processamento de planilha (De/Para)
   function handleDeparaSpreadsheet(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(evt) {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      let rawData = [];
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao ler a planilha de De/Para.');
+        return;
+      }
 
+      const rows = parseSpreadsheetRows(rawData);
+      if (rows.length < 2) {
+        alert('A planilha está vazia ou não possui linhas suficientes.');
+        return;
+      }
+
+      window.rawDeparaSheetRows = rows;
+      populateDeparaColumnSelects(rows);
+      onDeparaMappingChanged();
       document.getElementById('depara-preview-box').classList.remove('hidden');
-      const tbody = document.getElementById('depara-preview-tbody');
-      tbody.innerHTML = '';
-
-      jsonData.slice(1, 15).forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="p-2 font-mono font-bold">${String(row[0] || '').slice(0, 6)}</td>
-          <td class="p-2 font-mono text-blue-700 font-bold">${row[1] || '—'}</td>
-          <td class="p-2 font-mono text-purple-700 font-bold">${row[2] || '—'}</td>
-          <td class="p-2 text-emerald-700 font-bold">Correspondência Automática</td>
-        `;
-        tbody.appendChild(tr);
-      });
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  function populateDeparaColumnSelects(rows) {
+    const headers = rows[0] || [];
+    const selects = ['select-depara-jalis', 'select-depara-alvaro', 'select-depara-pardini'];
+
+    selects.forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="-1">(Nenhum)</option>';
+      headers.forEach((h, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `Col ${idx + 1}: ${h || '(Sem título)'}`;
+        sel.appendChild(opt);
+      });
+    });
+
+    headers.forEach((h, idx) => {
+      const text = String(h || '').toLowerCase().trim();
+      if (/jalis|local|interno|nosso/i.test(text)) {
+        const sel = document.getElementById('select-depara-jalis');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/alvaro|[áa]lvaro/i.test(text)) {
+        const sel = document.getElementById('select-depara-alvaro');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+      if (/pardini/i.test(text)) {
+        const sel = document.getElementById('select-depara-pardini');
+        if (sel && sel.value === '-1') sel.value = idx;
+      }
+    });
+  }
+
+  function onDeparaMappingChanged() {
+    const rows = window.rawDeparaSheetRows || [];
+    if (rows.length < 2) return;
+
+    const colJalis = parseInt(document.getElementById('select-depara-jalis')?.value ?? -1);
+    const colAlvaro = parseInt(document.getElementById('select-depara-alvaro')?.value ?? -1);
+    const colPardini = parseInt(document.getElementById('select-depara-pardini')?.value ?? -1);
+
+    const dataRows = rows.slice(1);
+    const tbody = document.getElementById('depara-preview-tbody');
+    tbody.innerHTML = '';
+
+    dataRows.slice(0, 15).forEach(row => {
+      const jalis = colJalis >= 0 ? (row[colJalis] || '') : (row[0] || '—');
+      const alvaro = colAlvaro >= 0 ? (row[colAlvaro] || '') : (row[1] || '—');
+      const pardini = colPardini >= 0 ? (row[colPardini] || '') : (row[2] || '—');
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2 font-mono font-bold text-slate-800">${jalis}</td>
+        <td class="p-2 font-mono text-blue-700 font-bold">${alvaro || '—'}</td>
+        <td class="p-2 font-mono text-purple-700 font-bold">${pardini || '—'}</td>
+        <td class="p-2 text-emerald-700 font-bold">Correspondência Pronta</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function submitDeparaMappings() {
+    const rows = window.rawDeparaSheetRows || [];
+    if (rows.length < 2) {
+      alert('Nenhuma planilha de De/Para carregada.');
+      return;
+    }
+
+    const colJalis = parseInt(document.getElementById('select-depara-jalis')?.value ?? -1);
+    const colAlvaro = parseInt(document.getElementById('select-depara-alvaro')?.value ?? -1);
+    const colPardini = parseInt(document.getElementById('select-depara-pardini')?.value ?? -1);
+
+    const dataRows = rows.slice(1);
+    const mappings = [];
+
+    dataRows.forEach(row => {
+      const jalisCode = colJalis >= 0 ? (row[colJalis] || '').trim() : '';
+      const codigoAlvaro = colAlvaro >= 0 ? (row[colAlvaro] || '').trim() : '';
+      const codigoPardini = colPardini >= 0 ? (row[colPardini] || '').trim() : '';
+
+      if (jalisCode) {
+        mappings.push({ jalisCode, codigoAlvaro, codigoPardini });
+      }
+    });
+
+    if (mappings.length === 0) {
+      alert('Nenhum mapeamento válido foi encontrado.');
+      return;
+    }
+
+    const confirmBtn = document.getElementById('confirm-depara-btn');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = 'Gravando De/Para...';
+    }
+
+    fetch('/admin/exames/import-depara', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mappings })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(`✅ ${data.count} vinculações de De/Para atualizadas com sucesso!`);
+        window.location.reload();
+      } else {
+        alert('❌ Erro ao importar De/Para: ' + (data.message || 'Erro no servidor'));
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = 'Confirmar De/Para';
+        }
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('❌ Erro de conexão com o servidor.');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Confirmar De/Para';
+      }
+    });
   }
 
   function resetImportForm() {
     document.getElementById('import-preview-box').classList.add('hidden');
     document.getElementById('exam-file-input').value = '';
+    window.rawExamSheetRows = [];
   }
 
   function resetDeparaForm() {
     document.getElementById('depara-preview-box').classList.add('hidden');
     document.getElementById('depara-file-input').value = '';
+    window.rawDeparaSheetRows = [];
   }
 
-  function submitImportedExams() {
-    alert('Importação concluída com sucesso!');
-    hideImportForm();
-  }
-
-  function submitDeparaMappings() {
-    alert('Mapeamento De/Para atualizado com sucesso!');
-    hideImportDeparaForm();
-  }
 
   // Tecla ESC fecha modal
   window.addEventListener('keydown', function(e) {

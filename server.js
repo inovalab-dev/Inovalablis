@@ -12082,8 +12082,8 @@ app.post('/api/admin/reset-database', requireAdmin, async (req, res) => {
     }
 
     if (targets.includes('interfaceamento')) {
-      interfaceDataCache = { logs: [], results: [], connectedDevices: [] };
-      saveInterfaceData(interfaceDataCache);
+      const cleanInterfaceData = { naoEnviados: [], processando: [], prontos: [], logs: [], results: [], connectedDevices: [] };
+      saveInterfaceData(cleanInterfaceData);
       await clearMysqlTable('interface_data');
       cleared.push('Interfaceamento LIS');
     }

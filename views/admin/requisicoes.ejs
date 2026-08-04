@@ -1347,18 +1347,61 @@
 </div>
 
 <!-- MODAL GENÉRICO PARA DEMAIS BUSCAS (CONVÊNIO, MÉDICO, COLETA, DESTINO, EMPRESA) -->
-<div id="modalGenericSearch" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-lg shadow-2xl overflow-hidden">
-    <div class="px-5 py-3.5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 border-b border-gray-200 flex items-center justify-between">
-      <h3 id="genericSearchTitle" class="text-xs font-black uppercase font-mono tracking-wider text-gray-900">Pesquisando Item</h3>
-      <button onclick="closeGenericSearchModal()" class="text-gray-400 hover:text-gray-700 font-bold text-sm cursor-pointer">✕</button>
+<div id="modalGenericSearch" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+  <div class="bg-white rounded-3xl border border-slate-200/90 w-full max-w-2xl shadow-2xl overflow-hidden font-sans flex flex-col max-h-[90vh] transform transition-all animate-scaleUp">
+    <!-- Header -->
+    <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div id="genericSearchIcon" class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center font-bold text-base shrink-0">
+          🔍
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="genericSearchTitle" class="text-xs font-black text-slate-800 uppercase tracking-wider">Pesquisando Item</h3>
+            <span id="genericSearchCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">0 itens</span>
+          </div>
+          <p id="genericSearchSubtitle" class="text-[11px] text-slate-500 font-medium mt-0.5">Selecione um item da lista ou filtre pelos campos abaixo</p>
+        </div>
+      </div>
+      <button onclick="closeGenericSearchModal()" type="button" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition-all cursor-pointer">
+        ✕
+      </button>
     </div>
-    <div class="p-4 space-y-3">
-      <input type="text" id="genericSearchInput" onkeyup="filterGenericList(this.value)" placeholder="Digite para filtrar..." class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500">
-      <div id="genericSearchList" class="max-h-60 overflow-y-auto divide-y divide-gray-100 border border-gray-100 rounded-xl"></div>
+
+    <!-- Barra de Filtros e Busca por Campo -->
+    <div class="p-4 bg-slate-50/70 border-b border-slate-100 space-y-3 shrink-0">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+        <!-- Input de Busca -->
+        <div class="relative sm:col-span-7">
+          <svg class="w-4 h-4 absolute left-3.5 top-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="genericSearchInput" onkeyup="filterGenericList()" placeholder="Digite para filtrar em tempo real..." class="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800">
+          <button type="button" onclick="clearGenericSearchInput()" id="genericSearchClearBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+        </div>
+        
+        <!-- Dropdown / Filtro por Campo (Coluna) -->
+        <div class="sm:col-span-5 flex items-center gap-2">
+          <span class="text-[11px] font-bold text-slate-500 shrink-0">Filtrar por:</span>
+          <select id="genericSearchFieldSelect" onchange="filterGenericList()" class="w-full py-2 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+            <option value="all">Todos os Campos</option>
+            <option value="code">Código / ID</option>
+            <option value="name">Nome / Descrição</option>
+            <option value="details">Detalhes</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div class="p-3.5 bg-gray-50 border-t border-gray-200 flex justify-end">
-      <button onclick="closeGenericSearchModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs cursor-pointer transition-all">Fechar</button>
+
+    <!-- Corpo / Lista Resultante -->
+    <div class="p-4 overflow-y-auto flex-1 max-h-[50vh]">
+      <div id="genericSearchList" class="space-y-2"></div>
+    </div>
+
+    <!-- Rodapé Limpo -->
+    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+      <span id="genericSearchFooterInfo" class="text-[11px] text-slate-500 font-medium">Clique sobre o item para selecionar</span>
+      <button onclick="closeGenericSearchModal()" type="button" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs cursor-pointer transition-all">
+        Fechar
+      </button>
     </div>
   </div>
 </div>
@@ -1535,7 +1578,7 @@
     if (!convenio) {
       errors.push({ field: 'Convênio', msg: 'O campo Convênio é obrigatório. Por favor, selecione um convênio cadastrado.' });
       if (convSelect) {
-        convSelect.classList.add('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+        convSelect.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
       }
       if (!firstMissing) firstMissing = 'convenio';
     }
@@ -1543,7 +1586,7 @@
     if (!doctorName) {
       errors.push({ field: 'Médico Solicitante', msg: 'O preenchimento do Médico Solicitante é obrigatório.' });
       if (doctorInput) {
-        doctorInput.classList.add('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+        doctorInput.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
       }
       if (!firstMissing) firstMissing = 'doctor';
     }
@@ -3264,111 +3307,303 @@
     calcFinancials();
   }
 
-  const GENERIC_LISTS = {
-    convenio: conveniosListFromDb.map(c => `[Cód ${c.codigo || c.id}] ${c.fantasia || c.razaoSocial}`),
-    situacao: ['Normal', 'Urgente', 'Prioritário', 'Aguardando Coleta'],
-    coleta: ['Sede / Central', 'Posto Cambará', 'Posto Jacarezinho', 'Coleta Domiciliar', 'Hospital Municipal'],
-    destino: ['Laboratório Principal', 'Apoio Hermes Pardini', 'Apoio Fleury', 'Apoio DB Diagnósticos'],
-    medico: medicosListFromDb.length > 0
-      ? medicosListFromDb.map(m => `[${m.conselho || 'CRM'} ${m.numero || ''}/${m.uf || 'PR'}] ${m.nome}`)
-      : ['Dr. Carlos Eduardo (CRM 12345/PR)', 'Dra. Ana Paula (CRM 23456/PR)', 'Dr. Marcos Roberto (CRM 34567/PR)', 'Dra. Juliana Lima (CRM 45678/SP)'],
-    empresa: ['InovaLab Cambará', 'Prefeitura Municipal', 'Usina Jacarezinho', 'Empresa Teste LTDA'],
-    dum: ['Informado no formulário', 'Não informado', 'Menopausa', 'Gestante', 'Histerectomia']
-  };
+  let currentGenericItemsList = [];
+
+  function getGenericSearchItems(type) {
+    if (type === 'convenio') {
+      if (conveniosListFromDb && conveniosListFromDb.length > 0) {
+        return conveniosListFromDb.map(c => ({
+          code: c.codigo ? `Cód ${c.codigo}` : (c.id ? `ID ${c.id}` : 'CONV'),
+          name: c.fantasia || c.razaoSocial || 'Convênio sem nome',
+          details: [
+            c.razaoSocial && c.razaoSocial !== c.fantasia ? `Razão: ${c.razaoSocial}` : '',
+            c.registroAns ? `ANS: ${c.registroAns}` : '',
+            c.cnpj ? `CNPJ: ${c.cnpj}` : ''
+          ].filter(Boolean).join(' • ') || 'Convênio Cadastrado no Sistema',
+          raw: c
+        }));
+      }
+      return [];
+    }
+
+    if (type === 'medico') {
+      if (medicosListFromDb && medicosListFromDb.length > 0) {
+        return medicosListFromDb.map(m => ({
+          code: `${m.conselho || 'CRM'} ${m.numero || ''}/${m.uf || 'PR'}`,
+          name: m.nome,
+          details: [
+            m.especialidade ? `Espec: ${m.especialidade}` : '',
+            m.cpf ? `CPF: ${m.cpf}` : '',
+            (m.telefone || m.whatsapp) ? `Tel: ${m.telefone || m.whatsapp}` : ''
+          ].filter(Boolean).join(' • ') || 'Médico Cadastrado no Sistema',
+          raw: m
+        }));
+      } else {
+        const defaults = [
+          { name: 'Dr. Carlos Eduardo', code: 'CRM 12345/PR', details: 'Clínica Médica / Geral' },
+          { name: 'Dra. Ana Paula', code: 'CRM 23456/PR', details: 'Pediatria / Medicina da Família' },
+          { name: 'Dr. Marcos Roberto', code: 'CRM 34567/PR', details: 'Cardiologia' },
+          { name: 'Dra. Juliana Lima', code: 'CRM 45678/SP', details: 'Ginecologia e Obstetrícia' }
+        ];
+        return defaults.map(d => ({
+          code: d.code,
+          name: d.name,
+          details: d.details,
+          raw: null
+        }));
+      }
+    }
+
+    const staticLists = {
+      situacao: ['Normal', 'Urgente', 'Prioritário', 'Aguardando Coleta'],
+      coleta: ['Sede / Central', 'Posto Cambará', 'Posto Jacarezinho', 'Coleta Domiciliar', 'Hospital Municipal'],
+      destino: ['Laboratório Principal', 'Apoio Hermes Pardini', 'Apoio Fleury', 'Apoio DB Diagnósticos'],
+      empresa: ['InovaLab Cambará', 'Prefeitura Municipal', 'Usina Jacarezinho', 'Empresa Teste LTDA'],
+      dum: ['Informado no formulário', 'Não informado', 'Menopausa', 'Gestante', 'Histerectomia']
+    };
+
+    const arr = staticLists[type] || [];
+    return arr.map((item, idx) => ({
+      code: `OPÇÃO #${idx + 1}`,
+      name: item,
+      details: `Opção predefinida para ${type}`,
+      raw: item
+    }));
+  }
 
   function openSearchModal(type) {
     activeSearchType = type;
-    const list = GENERIC_LISTS[type] || [];
-    document.getElementById('genericSearchTitle').innerText = 'Pesquisando ' + type.toUpperCase();
-    document.getElementById('genericSearchInput').value = '';
-    renderGenericList(list);
+    currentGenericItemsList = getGenericSearchItems(type);
+
+    const titleMap = {
+      convenio: 'Selecionar Convênio Médico',
+      medico: 'Selecionar Médico Solicitante',
+      coleta: 'Selecionar Unidade/Posto de Coleta',
+      destino: 'Selecionar Destino/Laboratório de Apoio',
+      situacao: 'Selecionar Situação/Prioridade',
+      empresa: 'Selecionar Empresa Parceira',
+      dum: 'Selecionar Informação de D.U.M.'
+    };
+
+    const iconMap = {
+      convenio: '🏦',
+      medico: '🩺',
+      coleta: '📍',
+      destino: '🔬',
+      situacao: '⚡',
+      empresa: '🏢',
+      dum: '📅'
+    };
+
+    const titleEl = document.getElementById('genericSearchTitle');
+    if (titleEl) titleEl.innerText = titleMap[type] || ('Pesquisar ' + type.toUpperCase());
+
+    const iconEl = document.getElementById('genericSearchIcon');
+    if (iconEl) iconEl.innerText = iconMap[type] || '🔍';
+
+    const searchInput = document.getElementById('genericSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    const fieldSelect = document.getElementById('genericSearchFieldSelect');
+    if (fieldSelect) {
+      if (type === 'convenio') {
+        fieldSelect.innerHTML = `
+          <option value="all">Todos os Campos</option>
+          <option value="code">Código do Convênio</option>
+          <option value="name">Nome Fantasia / Razão</option>
+          <option value="details">ANS / CNPJ / Detalhes</option>
+        `;
+      } else if (type === 'medico') {
+        fieldSelect.innerHTML = `
+          <option value="all">Todos os Campos</option>
+          <option value="code">Conselho / CRM</option>
+          <option value="name">Nome do Médico</option>
+          <option value="details">Especialidade / Detalhes</option>
+        `;
+      } else {
+        fieldSelect.innerHTML = `
+          <option value="all">Todos os Campos</option>
+          <option value="name">Nome / Descrição</option>
+        `;
+      }
+      fieldSelect.value = 'all';
+    }
+
+    filterGenericList();
     document.getElementById('modalGenericSearch').classList.remove('hidden');
+    setTimeout(() => { if (searchInput) searchInput.focus(); }, 100);
   }
 
   function closeGenericSearchModal() {
     document.getElementById('modalGenericSearch').classList.add('hidden');
   }
 
-  function renderGenericList(items) {
-    const container = document.getElementById('genericSearchList');
-    container.innerHTML = '';
-    if (!items || items.length === 0) {
-      if (activeSearchType === 'convenio') {
-        container.innerHTML = `<p class="p-4 text-center text-rose-600 font-bold text-xs">Nenhum convênio cadastrado no sistema.<br><span class="text-gray-500 font-normal mt-1 block">Acesse Administrador &gt; Convênios para realizar o cadastro.</span></p>`;
-      } else {
-        container.innerHTML = `<p class="p-3 text-center text-gray-400 italic text-xs">Nenhum item encontrado.</p>`;
-      }
-      return;
-    }
-    items.forEach(item => {
-      const div = document.createElement('div');
-      div.className = "p-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-bold text-gray-800 transition-colors border-b border-slate-100 last:border-none";
-      div.onclick = () => selectGenericItem(item);
-      div.innerText = item;
-      container.appendChild(div);
-    });
-  }
+  function filterGenericList() {
+    const searchVal = (document.getElementById('genericSearchInput')?.value || '').toLowerCase().trim();
+    const fieldVal = document.getElementById('genericSearchFieldSelect')?.value || 'all';
+    const clearBtn = document.getElementById('genericSearchClearBtn');
 
-  function filterGenericList(val) {
-    const list = GENERIC_LISTS[activeSearchType] || [];
-    const filtered = list.filter(i => i.toLowerCase().includes(val.toLowerCase()));
+    if (clearBtn) {
+      if (searchVal) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+    }
+
+    let filtered = currentGenericItemsList;
+
+    if (searchVal) {
+      filtered = currentGenericItemsList.filter(item => {
+        const codeStr = (item.code || '').toLowerCase();
+        const nameStr = (item.name || '').toLowerCase();
+        const detailsStr = (item.details || '').toLowerCase();
+
+        if (fieldVal === 'code') {
+          return codeStr.includes(searchVal);
+        } else if (fieldVal === 'name') {
+          return nameStr.includes(searchVal);
+        } else if (fieldVal === 'details') {
+          return detailsStr.includes(searchVal);
+        } else {
+          return codeStr.includes(searchVal) || nameStr.includes(searchVal) || detailsStr.includes(searchVal);
+        }
+      });
+    }
+
     renderGenericList(filtered);
   }
 
-  function selectGenericItem(item) {
-    if (activeSearchType === 'convenio') {
-      const matchCode = item.match(/\[Cód\s+([^\]]+)\]/i);
-      const codeVal = matchCode && matchCode[1] ? matchCode[1].trim() : '';
-      const nameVal = item.replace(/\[Cód\s+[^\]]+\]\s*/i, '').trim();
+  function clearGenericSearchInput() {
+    const searchInput = document.getElementById('genericSearchInput');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    filterGenericList();
+  }
 
-      const foundConv = conveniosListFromDb.find(c =>
-        (codeVal && String(c.codigo) === codeVal) ||
-        (c.fantasia && c.fantasia.toLowerCase() === nameVal.toLowerCase()) ||
-        (c.razaoSocial && c.razaoSocial.toLowerCase() === nameVal.toLowerCase())
-      );
+  function renderGenericList(items) {
+    const container = document.getElementById('genericSearchList');
+    const countBadge = document.getElementById('genericSearchCountBadge');
+    const footerInfo = document.getElementById('genericSearchFooterInfo');
+
+    if (countBadge) countBadge.innerText = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
+    if (footerInfo) footerInfo.innerText = `Mostrando ${items.length} registro(s). Clique sobre a linha para selecionar.`;
+
+    container.innerHTML = '';
+    if (!items || items.length === 0) {
+      if (activeSearchType === 'convenio' && (!conveniosListFromDb || conveniosListFromDb.length === 0)) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl space-y-2">
+            <div class="text-3xl">🏦</div>
+            <h4 class="font-bold text-slate-800 text-xs">Nenhum Convênio Cadastrado no Banco de Dados</h4>
+            <p class="text-[11px] text-slate-500 max-w-sm mx-auto">
+              Acesse o menu <strong>Administrador &gt; Convênios</strong> para cadastrar seus convênios e tabelas de preços.
+            </p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl space-y-1">
+            <div class="text-2xl">🔍</div>
+            <p class="font-bold text-slate-700 text-xs">Nenhum resultado encontrado</p>
+            <p class="text-[11px] text-slate-400">Tente buscar por outros termos ou selecione 'Todos os Campos'.</p>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = "group p-3 bg-white hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 rounded-2xl cursor-pointer transition-all shadow-2xs hover:shadow-md flex items-center justify-between gap-3";
+      card.onclick = () => selectGenericItemObj(item);
+
+      card.innerHTML = `
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="px-2.5 py-1 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-900 font-mono font-bold text-[11px] border border-slate-200/80 group-hover:border-emerald-200/80 shrink-0">
+            ${item.code}
+          </div>
+          <div class="min-w-0">
+            <h4 class="text-xs font-bold text-slate-800 group-hover:text-emerald-950 truncate">${item.name}</h4>
+            <p class="text-[11px] text-slate-500 group-hover:text-emerald-800/90 font-medium truncate mt-0.5">${item.details}</p>
+          </div>
+        </div>
+        <button type="button" class="px-3 py-1.5 bg-slate-100 group-hover:bg-emerald-600 text-slate-600 group-hover:text-white font-bold text-xs rounded-xl transition-all shrink-0">
+          Selecionar →
+        </button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function selectGenericItemObj(item) {
+    if (activeSearchType === 'convenio') {
+      const raw = item.raw;
+      const convName = raw ? (raw.fantasia || raw.razaoSocial) : item.name;
+      const convCode = raw ? (raw.codigo || item.code.replace('Cód ', '')) : item.code;
+      const convId = raw ? raw.id : '';
 
       const convSelect = document.getElementById('req-convenio');
-      const finalName = foundConv ? (foundConv.fantasia || foundConv.razaoSocial) : nameVal;
-      const finalCode = foundConv ? (foundConv.codigo || codeVal) : codeVal;
-      const finalId = foundConv ? foundConv.id : '';
-
       if (convSelect) {
-        let optionExists = Array.from(convSelect.options).some(opt => opt.value === finalName);
-        if (!optionExists && finalName) {
+        let optionExists = Array.from(convSelect.options).some(opt => opt.value === convName);
+        if (!optionExists && convName) {
           const newOpt = document.createElement('option');
-          newOpt.value = finalName;
-          newOpt.setAttribute('data-code', finalCode);
-          newOpt.setAttribute('data-id', finalId);
-          newOpt.textContent = `[Cód ${finalCode}] ${finalName}`;
+          newOpt.value = convName;
+          newOpt.setAttribute('data-code', convCode);
+          newOpt.setAttribute('data-id', convId);
+          newOpt.textContent = `[Cód ${convCode}] ${convName}`;
           convSelect.appendChild(newOpt);
         }
-        convSelect.value = finalName;
+        convSelect.value = convName;
       }
-      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = finalCode;
-      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = finalId;
+      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = convCode;
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = convId;
 
       closeGenericSearchModal();
       recalculateRequisitionExamPrices();
     }
-    else if (activeSearchType === 'situacao') document.getElementById('req-situacao').value = item;
-    else if (activeSearchType === 'coleta') document.getElementById('req-coleta').value = item;
-    else if (activeSearchType === 'destino') document.getElementById('req-destino').value = item;
     else if (activeSearchType === 'medico') {
-      const matched = medicosListFromDb.find(m => {
-        const fullTag = `[${m.conselho || 'CRM'} ${m.numero || ''}/${m.uf || 'PR'}] ${m.nome}`;
-        return item === fullTag || item === m.nome || item.includes(m.nome) || (m.numero && item.includes(m.numero));
-      });
-      if (matched) {
-        if (document.getElementById('req-doctorName')) document.getElementById('req-doctorName').value = matched.nome || '';
-        if (document.getElementById('req-doctorCrmType')) document.getElementById('req-doctorCrmType').value = matched.conselho || 'CRM';
-        if (document.getElementById('req-doctorCrm')) document.getElementById('req-doctorCrm').value = matched.numero || '';
-        if (document.getElementById('req-doctorUf')) document.getElementById('req-doctorUf').value = matched.uf || 'PR';
+      const raw = item.raw;
+      if (raw) {
+        if (document.getElementById('req-doctorName')) document.getElementById('req-doctorName').value = raw.nome || '';
+        if (document.getElementById('req-doctorCrmType')) document.getElementById('req-doctorCrmType').value = raw.conselho || 'CRM';
+        if (document.getElementById('req-doctorCrm')) document.getElementById('req-doctorCrm').value = raw.numero || '';
+        if (document.getElementById('req-doctorUf')) document.getElementById('req-doctorUf').value = raw.uf || 'PR';
       } else {
-        document.getElementById('req-doctorName').value = item;
+        if (document.getElementById('req-doctorName')) document.getElementById('req-doctorName').value = item.name || '';
+        if (item.code && item.code.includes(' ')) {
+          const parts = item.code.split(' ');
+          if (parts[0]) document.getElementById('req-doctorCrmType').value = parts[0];
+          if (parts[1] && parts[1].includes('/')) {
+            const [num, uf] = parts[1].split('/');
+            document.getElementById('req-doctorCrm').value = num;
+            document.getElementById('req-doctorUf').value = uf;
+          }
+        }
       }
+      closeGenericSearchModal();
     }
-    else if (activeSearchType === 'empresa') document.getElementById('req-empresa').value = item;
-    closeGenericSearchModal();
+    else if (activeSearchType === 'situacao') {
+      document.getElementById('req-situacao').value = item.name;
+      closeGenericSearchModal();
+    }
+    else if (activeSearchType === 'coleta') {
+      document.getElementById('req-coleta').value = item.name;
+      closeGenericSearchModal();
+    }
+    else if (activeSearchType === 'destino') {
+      document.getElementById('req-destino').value = item.name;
+      closeGenericSearchModal();
+    }
+    else if (activeSearchType === 'empresa') {
+      document.getElementById('req-empresa').value = item.name;
+      closeGenericSearchModal();
+    }
+    else if (activeSearchType === 'dum') {
+      closeGenericSearchModal();
+    }
+    else {
+      closeGenericSearchModal();
+    }
   }
 
   // Preenchimento automático ao selecionar ou digitar médico

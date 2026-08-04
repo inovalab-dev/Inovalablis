@@ -428,6 +428,13 @@
       <input type="hidden" name="setores" id="form-exam-setores-json" value="[]">
       <input type="hidden" name="materiaisColetados" id="form-exam-materiais-json" value="[]">
       <input type="hidden" name="webConfig" id="form-exam-web-json" value="{}">
+      <input type="hidden" name="modeloLaudo" id="form-exam-modeloLaudo" value="Padrão LIS InovaLab">
+      <input type="hidden" name="formularioColeta" id="form-exam-formularioColeta" value="Ficha Padrão de Coleta">
+      <input type="hidden" name="cabecalho" id="form-exam-cabecalho" value="">
+      <input type="hidden" name="tituloLaudo" id="form-exam-tituloLaudo" value="">
+      <input type="hidden" name="materialLaudo" id="form-exam-materialLaudo" value="">
+      <input type="hidden" name="metodoLaudo" id="form-exam-metodoLaudo" value="">
+      <input type="hidden" name="valorReferenciaLaudo" id="form-exam-valorReferenciaLaudo" value="">
 
       <!-- ========================================================================= -->
       <!-- TAB 1: DADOS CADASTRAIS                                                  -->
@@ -3584,6 +3591,11 @@
       document.getElementById('mod-modelo-laudo').value = 'Padrão LIS InovaLab';
       document.getElementById('mod-formulario-coleta').value = 'Ficha Padrão de Coleta';
       document.getElementById('mod-cabecalho').value = '';
+      if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = '';
+      if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = '';
+      if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = '';
+      if (document.getElementById('mod-valor-referencia-laudo')) document.getElementById('mod-valor-referencia-laudo').value = '';
+      window.tempMaterialLisLayouts = {};
       document.getElementById('med-interferentes').value = '';
       document.getElementById('med-suspender').value = '';
       document.getElementById('adic-setor-bancada').value = 'Hematologia Automática';
@@ -3882,9 +3894,14 @@
       precoFilme: document.getElementById('preco-filme').value,
       priceTableValues: materialPriceTableValues,
       // Tab 5
-      modeloLaudo: document.getElementById('mod-modelo-laudo').value,
-      formularioColeta: document.getElementById('mod-formulario-coleta').value,
-      cabecalho: document.getElementById('mod-cabecalho').value,
+      modeloLaudo: document.getElementById('mod-modelo-laudo') ? document.getElementById('mod-modelo-laudo').value : 'Padrão LIS InovaLab',
+      formularioColeta: document.getElementById('mod-formulario-coleta') ? document.getElementById('mod-formulario-coleta').value : 'Ficha Padrão de Coleta',
+      cabecalho: document.getElementById('mod-cabecalho') ? document.getElementById('mod-cabecalho').value : '',
+      tituloLaudo: document.getElementById('mod-titulo-laudo') ? document.getElementById('mod-titulo-laudo').value : '',
+      materialLaudo: document.getElementById('mod-material-laudo') ? document.getElementById('mod-material-laudo').value : '',
+      metodoLaudo: document.getElementById('mod-metodo-laudo') ? document.getElementById('mod-metodo-laudo').value : '',
+      valorReferenciaLaudo: document.getElementById('mod-valor-referencia-laudo') ? document.getElementById('mod-valor-referencia-laudo').value : '',
+      lisLayouts: (editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex] && currentMateriaisList[editingMaterialIndex].lisLayouts) ? currentMateriaisList[editingMaterialIndex].lisLayouts : (window.tempMaterialLisLayouts || {}),
       // Tab 6
       medInterferentes: document.getElementById('med-interferentes').value,
       medSuspender: document.getElementById('med-suspender').value,
@@ -3910,8 +3927,8 @@
 
     // Sincronizar preços com a lista global de tabelas e persistir no servidor
     if (Array.isArray(materialPriceTableValues) && materialPriceTableValues.length > 0) {
-      const examCode = (document.getElementById('form-exam-mnemonico')?.value || document.getElementById('form-exam-codigo')?.value || 'EXAME').trim().toUpperCase();
-      const examName = (document.getElementById('form-exam-nome')?.value || 'Exame').trim();
+      const examCode = (document.getElementById('form-exam-jalisCode')?.value || document.getElementById('form-exam-code-hidden')?.value || 'EXAME').trim().toUpperCase();
+      const examName = (document.getElementById('form-exam-name')?.value || 'Exame').trim();
       const matName = (newMat.nome || newMat.material || newMat.abrev || 'SGE').trim();
       const matKey = matName.toUpperCase();
 
@@ -4756,6 +4773,22 @@
 
         const matElem = document.getElementById('form-exam-materiais-json');
         if (matElem) matElem.value = JSON.stringify(currentMateriaisList);
+
+        const modModelo = document.getElementById('mod-modelo-laudo')?.value || 'Padrão LIS InovaLab';
+        const modForm = document.getElementById('mod-formulario-coleta')?.value || 'Ficha Padrão de Coleta';
+        const modCab = document.getElementById('mod-cabecalho')?.value || '';
+        const modTit = document.getElementById('mod-titulo-laudo')?.value || '';
+        const modMat = document.getElementById('mod-material-laudo')?.value || '';
+        const modMet = document.getElementById('mod-metodo-laudo')?.value || '';
+        const modValRef = document.getElementById('mod-valor-referencia-laudo')?.value || '';
+
+        if (document.getElementById('form-exam-modeloLaudo')) document.getElementById('form-exam-modeloLaudo').value = modModelo;
+        if (document.getElementById('form-exam-formularioColeta')) document.getElementById('form-exam-formularioColeta').value = modForm;
+        if (document.getElementById('form-exam-cabecalho')) document.getElementById('form-exam-cabecalho').value = modCab;
+        if (document.getElementById('form-exam-tituloLaudo')) document.getElementById('form-exam-tituloLaudo').value = modTit;
+        if (document.getElementById('form-exam-materialLaudo')) document.getElementById('form-exam-materialLaudo').value = modMat;
+        if (document.getElementById('form-exam-metodoLaudo')) document.getElementById('form-exam-metodoLaudo').value = modMet;
+        if (document.getElementById('form-exam-valorReferenciaLaudo')) document.getElementById('form-exam-valorReferenciaLaudo').value = modValRef;
       });
     }
   });
@@ -4843,7 +4876,21 @@
   }
 
   function loadLisLayoutModelFromExames(examCode, providerKey = 'interno') {
-    let saved = localStorage.getItem(`lis_layout_${examCode}_${providerKey}`);
+    let saved = null;
+    if (editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex] && currentMateriaisList[editingMaterialIndex].lisLayouts) {
+      const matLayout = currentMateriaisList[editingMaterialIndex].lisLayouts[providerKey];
+      if (matLayout) {
+        saved = typeof matLayout === 'string' ? matLayout : JSON.stringify(matLayout);
+      }
+    }
+    if (!saved && window.tempMaterialLisLayouts && window.tempMaterialLisLayouts[providerKey]) {
+      saved = typeof window.tempMaterialLisLayouts[providerKey] === 'string'
+        ? window.tempMaterialLisLayouts[providerKey]
+        : JSON.stringify(window.tempMaterialLisLayouts[providerKey]);
+    }
+    if (!saved) {
+      saved = localStorage.getItem(`lis_layout_${examCode}_${providerKey}`);
+    }
     if (!saved && providerKey !== 'interno') {
       saved = localStorage.getItem(`lis_layout_${examCode}_interno`);
     }
@@ -4876,6 +4923,16 @@
       localStorage.setItem(`lis_layout_${examCode}`, JSON.stringify(lisComponentsExames));
     }
 
+    if (!window.tempMaterialLisLayouts) window.tempMaterialLisLayouts = {};
+    window.tempMaterialLisLayouts[providerKey] = lisComponentsExames;
+
+    if (editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex]) {
+      if (!currentMateriaisList[editingMaterialIndex].lisLayouts) {
+        currentMateriaisList[editingMaterialIndex].lisLayouts = {};
+      }
+      currentMateriaisList[editingMaterialIndex].lisLayouts[providerKey] = lisComponentsExames;
+    }
+
     updateExamesModelBadges();
     alert(`Modelo de laudo (${provNames[providerKey]}) salvo com sucesso para o exame ${examCode}!`);
   }
@@ -4888,6 +4945,11 @@
     localStorage.removeItem(`lis_layout_${examCode}_${providerKey}`);
     if (providerKey === 'interno') {
       localStorage.removeItem(`lis_layout_${examCode}`);
+    }
+
+    if (window.tempMaterialLisLayouts) delete window.tempMaterialLisLayouts[providerKey];
+    if (editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex] && currentMateriaisList[editingMaterialIndex].lisLayouts) {
+      delete currentMateriaisList[editingMaterialIndex].lisLayouts[providerKey];
     }
 
     if (activeLisProviderExames === providerKey) {

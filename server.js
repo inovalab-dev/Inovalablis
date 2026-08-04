@@ -1857,6 +1857,248 @@ function saveExams(exams) {
   }
 }
 
+function syncExamPricesToPriceTables(examCode, examName, parsedMateriais, pricePrivate) {
+  if (!examCode) return;
+  let priceTables = loadPriceTables();
+  if (!Array.isArray(priceTables) || priceTables.length === 0) return;
+
+  let hasChanges = false;
+  const cleanExamCode = String(examCode).trim().toUpperCase();
+  const cleanExamName = String(examName || '').trim();
+
+  const materials = Array.isArray(parsedMateriais) && parsedMateriais.length > 0
+    ? parsedMateriais
+    : [{ nome: 'Sangue Total', abrev: 'SGE' }];
+
+  for (const mat of materials) {
+    const matName = (mat.nome || mat.material || mat.mnemotecnico || 'Sangue Total').trim();
+
+    if (Array.isArray(mat.priceTableValues) && mat.priceTableValues.length > 0) {
+      for (const pv of mat.priceTableValues) {
+        if (!pv.tableId) continue;
+        const pt = priceTables.find(t => String(t.id) === String(pv.tableId));
+        if (pt) {
+          if (!Array.isArray(pt.precios)) pt.precios = [];
+
+          const pIndex = pt.precios.findIndex(p => {
+            const pCode = String(p.examCode || '').trim().toUpperCase();
+            const pMat = String(p.material || '').trim().toUpperCase();
+            return pCode === cleanExamCode && (pMat === matName.toUpperCase() || (mat.abrev && pMat === mat.abrev.toUpperCase()));
+          });
+
+          const priceVal = parsePriceValue(pv.valor);
+          const ambVal = (pv.amb !== undefined && pv.amb !== null) ? String(pv.amb).trim() : (mat.amb || '');
+          const proibirVal = pv.proibir === true || pv.proibir === 'true';
+
+          const newObj = {
+            examCode: cleanExamCode,
+            material: matName,
+            examName: cleanExamName,
+            amb: ambVal,
+            valor: priceVal,
+            proibir: proibirVal
+          };
+
+          if (pIndex !== -1) {
+            pt.precios[pIndex] = { ...pt.precios[pIndex], ...newObj };
+          } else {
+            pt.precios.push(newObj);
+          }
+          hasChanges = true;
+        }
+      }
+    }
+  }
+
+  if (pricePrivate !== undefined && pricePrivate !== null && !isNaN(parseFloat(pricePrivate)) && parseFloat(pricePrivate) >= 0) {
+    const pVal = parseFloat(pricePrivate);
+    priceTables.forEach(pt => {
+      const isParticular = String(pt.codigo) === '1' ||
+                           (pt.descricao && pt.descricao.toLowerCase().includes('particular')) ||
+                           (!pt.convenioId && !pt.convenioNome);
+      if (isParticular) {
+        if (!Array.isArray(pt.precios)) pt.precios = [];
+        materials.forEach(mat => {
+          const matName = (mat.nome || mat.material || mat.mnemotecnico || 'Sangue Total').trim();
+          const pIndex = pt.precios.findIndex(p => {
+            const pCode = String(p.examCode || '').trim().toUpperCase();
+            const pMat = String(p.material || '').trim().toUpperCase();
+            return pCode === cleanExamCode && pMat === matName.toUpperCase();
+          });
+
+          if (pIndex !== -1) {
+            if (!pt.precios[pIndex].valor || pt.precios[pIndex].valor === 0) {
+              pt.precios[pIndex].valor = pVal;
+              pt.precios[pIndex].examName = cleanExamName;
+              hasChanges = true;
+            }
+          } else {
+            pt.precios.push({
+              examCode: cleanExamCode,
+              material: matName,
+              examName: cleanExamName,
+              amb: mat.amb || '',
+              valor: pVal,
+              proibir: false
+            });
+            hasChanges = true;
+          }
+        });
+      }
+    });
+  }
+
+  if (hasChanges) {
+    savePriceTables(priceTables);
+  }
+}
+
+function syncPriceTableToExams(table) {
+  if (!table || !Array.isArray(table.precios)) return;
+  const exams = loadExams();
+  if (!Array.isArray(exams) || exams.length === 0) return;
+
+  let examsChanged = false;
+
+  table.precios.forEach(p => {
+    if (!p.examCode) return;
+    const examCode = String(p.examCode).trim().toUpperCase();
+    const exam = exams.find(e => String(e.code || e.jalisCode || e.codigo || e.id).trim().toUpperCase() === examCode);
+
+    if (exam) {
+      if (!Array.isArray(exam.materiaisColetados) || exam.materiaisColetados.length === 0) {
+        exam.materiaisColetados = [{ nome: p.material || 'Sangue Total', abrev: 'SGE' }];
+      }
+
+      const pMat = String(p.material || '').trim().toUpperCase();
+      let mat = exam.materiaisColetados.find(m => {
+        const mName = String(m.nome || m.material || m.mnemotecnico || '').trim().toUpperCase();
+        const mAbrev = String(m.abrev || '').trim().toUpperCase();
+        return mName === pMat || (mAbrev && mAbrev === pMat);
+      });
+
+      if (!mat) {
+        mat = exam.materiaisColetados[0];
+      }
+
+      if (mat) {
+        if (!Array.isArray(mat.priceTableValues)) {
+          mat.priceTableValues = [];
+        }
+        const pvIndex = mat.priceTableValues.findIndex(pv => String(pv.tableId) === String(table.id));
+        const pvData = {
+          tableId: String(table.id),
+          tableCode: table.codigo || String(table.id),
+          amb: p.amb || '',
+          valor: parsePriceValue(p.valor),
+          proibir: p.proibir === true || p.proibir === 'true'
+        };
+
+        if (pvIndex !== -1) {
+          mat.priceTableValues[pvIndex] = pvData;
+        } else {
+          mat.priceTableValues.push(pvData);
+        }
+        examsChanged = true;
+      }
+    }
+  });
+
+  if (examsChanged) {
+    saveExams(exams);
+  }
+}
+
+function cleanOrphanedPriceTableRows() {
+  const exams = loadExams() || [];
+  let priceTables = loadPriceTables() || [];
+  if (!Array.isArray(priceTables) || priceTables.length === 0) return;
+
+  const validExamsMap = new Map();
+
+  exams.forEach(exam => {
+    const codes = [exam.code, exam.jalisCode, exam.codigo, exam.id]
+      .filter(Boolean)
+      .map(c => String(c).trim().toUpperCase());
+
+    const materials = (Array.isArray(exam.materiaisColetados) && exam.materiaisColetados.length > 0)
+      ? exam.materiaisColetados
+      : [{ nome: 'Sangue Total', abrev: 'SGE' }];
+
+    const validMatSet = new Set();
+    materials.forEach(mat => {
+      if (typeof mat === 'string') {
+        if (mat.trim()) validMatSet.add(mat.trim().toUpperCase());
+      } else if (mat && typeof mat === 'object') {
+        const name = (mat.nome || mat.material || mat.mnemotecnico || '').trim().toUpperCase();
+        const abrev = (mat.abrev || '').trim().toUpperCase();
+        if (name) validMatSet.add(name);
+        if (abrev) validMatSet.add(abrev);
+      }
+    });
+
+    if (validMatSet.size === 0) {
+      validMatSet.add('SANGUE TOTAL');
+    }
+
+    codes.forEach(code => {
+      validExamsMap.set(code, validMatSet);
+    });
+  });
+
+  let hasChanges = false;
+
+  priceTables.forEach(pt => {
+    if (!Array.isArray(pt.precios)) return;
+
+    const initialCount = pt.precios.length;
+    pt.precios = pt.precios.filter(p => {
+      if (!p || !p.examCode) return false;
+      const pCode = String(p.examCode).trim().toUpperCase();
+
+      if (!validExamsMap.has(pCode)) {
+        return false;
+      }
+
+      const validMatSet = validExamsMap.get(pCode);
+      const pMat = String(p.material || '').trim().toUpperCase();
+
+      if (!pMat) return false;
+
+      if (validMatSet.has(pMat)) return true;
+
+      for (const validMat of validMatSet) {
+        if (validMat === pMat || pMat.includes(validMat) || validMat.includes(pMat)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    if (pt.precios.length !== initialCount) {
+      hasChanges = true;
+    }
+  });
+
+  if (hasChanges) {
+    savePriceTables(priceTables);
+  }
+}
+
+function syncAllExamsWithPriceTables() {
+  cleanOrphanedPriceTableRows();
+  const exams = loadExams();
+  if (!Array.isArray(exams) || exams.length === 0) return;
+
+  exams.forEach(exam => {
+    const examCode = exam.code || exam.jalisCode || exam.codigo || exam.id;
+    if (examCode) {
+      syncExamPricesToPriceTables(examCode, exam.name, exam.materiaisColetados, exam.pricePrivate);
+    }
+  });
+}
+
 function loadProfessionals() {
   const profs = professionalsCache || [];
   return profs.slice().sort((a, b) => {
@@ -3901,6 +4143,7 @@ app.post('/admin/exames/add', requireAdmin, (req, res) => {
 
   exams.push(newExam);
   saveExams(exams);
+  syncExamPricesToPriceTables(newExam.code, newExam.name, newExam.materiaisColetados, newExam.pricePrivate);
   res.redirect('/admin/exames');
 });
 
@@ -4002,6 +4245,7 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
       valorReferenciaLaudo: valorReferenciaLaudo !== undefined ? (valorReferenciaLaudo || '').trim() : (exams[index].valorReferenciaLaudo || '')
     };
     saveExams(exams);
+    syncExamPricesToPriceTables(exams[index].code, exams[index].name, exams[index].materiaisColetados, exams[index].pricePrivate);
   }
   res.redirect('/admin/exames');
 });
@@ -8050,6 +8294,7 @@ const saveRequisitionHandler = (req, res) => {
       clinicalNotes,
       convenio,
       convenioCode,
+      convenioId,
       situacao,
       situacaoCode,
       matricula,
@@ -8085,12 +8330,49 @@ const saveRequisitionHandler = (req, res) => {
       fastingHours
     } = req.body;
     
+    const requisitions = loadRequisitions();
+    
     if (!patientName || patientName.trim() === '') {
       if (req.xhr || (req.headers.accept && req.headers.accept.includes('json')) || req.path.includes('add-ajax')) {
         return res.status(400).json({ success: false, error: "Nome do paciente é obrigatório" });
       }
       return res.status(400).send("Nome do paciente é obrigatório");
     }
+
+    if (!convenio || String(convenio).trim() === '') {
+      if (req.xhr || (req.headers.accept && req.headers.accept.includes('json')) || req.path.includes('add-ajax')) {
+        return res.status(400).json({ success: false, error: "O campo Convênio é obrigatório." });
+      }
+      return res.status(400).send("O campo Convênio é obrigatório.");
+    }
+
+    if (!doctorName || String(doctorName).trim() === '') {
+      if (req.xhr || (req.headers.accept && req.headers.accept.includes('json')) || req.path.includes('add-ajax')) {
+        return res.status(400).json({ success: false, error: "O campo Médico Solicitante é obrigatório." });
+      }
+      return res.status(400).send("O campo Médico Solicitante é obrigatório.");
+    }
+
+    // Relacionamento com a tabela de Convênios
+    const conveniosList = loadConvenios();
+    let matchedConv = null;
+    if (convenioId) {
+      matchedConv = conveniosList.find(c => String(c.id) === String(convenioId));
+    }
+    if (!matchedConv && convenioCode) {
+      matchedConv = conveniosList.find(c => String(c.codigo) === String(convenioCode) || String(c.id) === String(convenioCode));
+    }
+    if (!matchedConv && convenio) {
+      const cTrim = String(convenio).trim().toLowerCase();
+      matchedConv = conveniosList.find(c =>
+        (c.fantasia && c.fantasia.trim().toLowerCase() === cTrim) ||
+        (c.razaoSocial && c.razaoSocial.trim().toLowerCase() === cTrim)
+      );
+    }
+
+    const savedConvenioName = matchedConv ? (matchedConv.fantasia || matchedConv.razaoSocial) : String(convenio).trim();
+    const savedConvenioCode = matchedConv ? (matchedConv.codigo || '') : String(convenioCode || '').trim();
+    const savedConvenioId = matchedConv ? matchedConv.id : String(convenioId || '').trim();
 
     let parsedExams = [];
     if (examsJson) {
@@ -8112,7 +8394,12 @@ const saveRequisitionHandler = (req, res) => {
       status: (ex && ex.status && String(ex.status).trim() !== '') ? String(ex.status).trim() : 'A Coletar'
     }));
     
-    const requisitions = loadRequisitions();
+    if (!parsedExams || parsedExams.length === 0) {
+      if (req.xhr || (req.headers.accept && req.headers.accept.includes('json')) || req.path.includes('add-ajax')) {
+        return res.status(400).json({ success: false, error: "A requisição deve conter ao menos 1 (um) exame adicionado." });
+      }
+      return res.status(400).send("A requisição deve conter ao menos 1 (um) exame adicionado.");
+    }
 
     let reqCode = (requisitionCode || '').trim();
     if (!reqCode) {
@@ -8155,8 +8442,9 @@ const saveRequisitionHandler = (req, res) => {
       cep: (cep || '').trim(),
       responsibleName: (responsibleName || '').trim(),
       clinicalNotes: (clinicalNotes || '').trim(),
-      convenio: (convenio || '').trim(),
-      convenioCode: (convenioCode || '').trim(),
+      convenio: savedConvenioName,
+      convenioCode: savedConvenioCode,
+      convenioId: savedConvenioId,
       situacao: (situacao || 'Normal').trim(),
       situacaoCode: (situacaoCode || '').trim(),
       matricula: (matricula || '').trim(),
@@ -9865,6 +10153,7 @@ app.post('/admin/exames/update-depara-code', requireAdmin, (req, res) => {
 app.post('/admin/exames/clear', requireAdmin, (req, res) => {
   try {
     saveExams([]);
+    syncAllExamsWithPriceTables();
     res.json({ success: true, message: 'Todos os exames foram excluídos com êxito.' });
   } catch (err) {
     console.error("Erro ao limpar exames:", err);
@@ -10214,6 +10503,7 @@ function handleExamDelete(req, res) {
 
   if (exams.length !== initialCount) {
     saveExams(exams);
+    syncAllExamsWithPriceTables();
   }
 
   if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
@@ -11502,6 +11792,7 @@ app.get('/api/setores', (req, res) => {
 
 // --- SUB-MÓDULO: GERENCIAMENTO DE TABELAS DE PREÇO (CRUD) ---
 app.get('/admin/tabela-precos', requireAdmin, (req, res) => {
+  syncAllExamsWithPriceTables();
   const priceTables = loadPriceTables();
   const convenios = loadConvenios();
   const exams = loadExams();
@@ -11572,6 +11863,7 @@ app.post('/admin/tabela-precos/save-prices/:id', requireAdmin, (req, res) => {
 
     tables[index].precios = Array.isArray(precios) ? precios : [];
     savePriceTables(tables);
+    syncPriceTableToExams(tables[index]);
 
     return res.json({ success: true, message: 'Preços atualizados com sucesso!', table: tables[index] });
   } catch (err) {

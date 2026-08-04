@@ -301,19 +301,19 @@
       </div>
 
       <!-- CARD 2: DADOS DO PACIENTE (Importados do Cadastro de Clientes - Somente Leitura em Texto) -->
-      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-emerald-900/60 shadow-lg space-y-3">
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
         
-        <div class="flex items-center justify-between pb-2.5 border-b border-emerald-800/50 flex-wrap gap-2">
+        <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 flex-wrap gap-2">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center font-black text-sm">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center font-black text-sm">
               👤
             </div>
             <div>
-              <h3 class="text-xs font-black text-white uppercase tracking-wider">Dados do Paciente</h3>
-              <p class="text-[10px] text-emerald-200/70 font-mono">Informações registradas no Cadastro de Clientes</p>
+              <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Dados do Paciente</h3>
+              <p class="text-[10px] text-slate-500 font-mono">Informações registradas no Cadastro de Clientes</p>
             </div>
           </div>
-          <button type="button" onclick="openPatientSearchModal()" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-black text-[11px] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
+          <button type="button" onclick="openPatientSearchModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[11px] shadow-xs shadow-emerald-600/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <span>Pesquisar / Selecionar Paciente</span>
           </button>
@@ -333,20 +333,20 @@
         <input type="hidden" name="responsibleName" id="req-responsibleName" value="">
 
         <!-- CARD INTERATIVO DE EXIBIÇÃO DE TEXTO DO PACIENTE -->
-        <div id="patientCardDisplay" class="bg-slate-800/90 rounded-2xl p-4 border border-emerald-700/60 shadow-inner text-white">
+        <div id="patientCardDisplay" class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/90 text-slate-800 transition-all">
           
           <!-- ESTADO 1: Nenhum paciente associado ainda -->
-          <div id="patientCardEmptyState" class="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left py-2">
+          <div id="patientCardEmptyState" class="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left py-1.5">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-lg shrink-0">
+              <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center justify-center font-bold text-lg shrink-0">
                 ⚠️
               </div>
               <div>
-                <h4 class="font-black text-white text-xs">Nenhum Paciente Selecionado</h4>
-                <p class="text-[11px] text-emerald-200/70">Selecione um paciente cadastrado para carregar os dados cadastrais nesta requisição.</p>
+                <h4 class="font-black text-slate-800 text-xs">Nenhum Paciente Selecionado</h4>
+                <p class="text-[11px] text-slate-500">Selecione um paciente cadastrado para carregar os dados cadastrais nesta requisição.</p>
               </div>
             </div>
-            <button type="button" onclick="openPatientSearchModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition-all cursor-pointer shadow-sm shrink-0">
+            <button type="button" onclick="openPatientSearchModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs transition-all cursor-pointer shadow-xs shrink-0">
               Localizar Paciente
             </button>
           </div>
@@ -355,31 +355,31 @@
           <div id="patientCardActiveState" class="hidden space-y-3">
             
             <!-- Linha Principal: Avatar, Nome, Cód Prontuário, Nascimento, Idade e Sexo -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-700/60">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80">
               <div class="flex items-center gap-3">
-                <div id="displayPatientAvatar" class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-xs uppercase tracking-wider">
+                <div id="displayPatientAvatar" class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs uppercase tracking-wider">
                   --
                 </div>
                 <div>
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h4 id="displayPatientName" class="font-black text-white text-sm tracking-tight">Nome do Paciente</h4>
-                    <span id="displayPatientCodeBadge" class="bg-emerald-900/80 text-emerald-200 border border-emerald-700/80 font-mono font-black text-[10px] px-2 py-0.5 rounded-lg">
+                    <h4 id="displayPatientName" class="font-black text-slate-900 text-sm tracking-tight">Nome do Paciente</h4>
+                    <span id="displayPatientCodeBadge" class="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-black text-[10px] px-2 py-0.5 rounded-lg">
                       Cód: --
                     </span>
                   </div>
-                  <div class="flex items-center gap-3 mt-0.5 text-[11px] text-emerald-200/80 font-medium flex-wrap">
-                    <span id="displayPatientCpf" class="font-mono text-emerald-200 font-semibold">CPF: --</span>
-                    <span>•</span>
-                    <span id="displayPatientSex" class="font-bold text-emerald-200">Sexo: --</span>
+                  <div class="flex items-center gap-3 mt-0.5 text-[11px] text-slate-600 font-medium flex-wrap">
+                    <span id="displayPatientCpf" class="font-mono text-slate-700 font-semibold">CPF: --</span>
+                    <span class="text-slate-300">•</span>
+                    <span id="displayPatientSex" class="font-bold text-slate-700">Sexo: --</span>
                   </div>
                 </div>
               </div>
 
               <div class="flex items-center gap-2 self-start sm:self-auto font-mono text-[11px]">
-                <span class="bg-emerald-900/60 text-emerald-200 border border-emerald-700/60 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
+                <span class="bg-white text-slate-700 border border-slate-200/90 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 shadow-2xs">
                   <span>🎂 Nasc.:</span> <span id="displayPatientBirth">--</span>
                 </span>
-                <span class="bg-teal-900/60 text-teal-200 border border-teal-700/60 px-2.5 py-1 rounded-xl font-bold">
+                <span class="bg-emerald-50 text-emerald-900 border border-emerald-200 px-2.5 py-1 rounded-xl font-bold">
                   <span id="displayPatientAge">--</span>
                 </span>
               </div>
@@ -388,19 +388,19 @@
             <!-- Linha Secundária: Blocos Informativos de Endereço, Fone e Responsável -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
               
-              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
-                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">📍 Endereço Residencial</span>
-                <p id="displayPatientAddress" class="font-semibold text-white text-[11px] mt-0.5 truncate">--</p>
+              <div class="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                <span class="text-[10px] font-mono font-bold text-slate-500 uppercase block tracking-wider">📍 Endereço Residencial</span>
+                <p id="displayPatientAddress" class="font-semibold text-slate-800 text-[11px] mt-0.5 truncate">--</p>
               </div>
 
-              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
-                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">📱 Contato / WhatsApp</span>
-                <p id="displayPatientPhone" class="font-mono font-bold text-emerald-300 text-[11px] mt-0.5">--</p>
+              <div class="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                <span class="text-[10px] font-mono font-bold text-slate-500 uppercase block tracking-wider">📱 Contato / WhatsApp</span>
+                <p id="displayPatientPhone" class="font-mono font-bold text-emerald-700 text-[11px] mt-0.5">--</p>
               </div>
 
-              <div class="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60">
-                <span class="text-[10px] font-mono font-bold text-emerald-300/70 uppercase block tracking-wider">👥 Responsável / Mãe</span>
-                <p id="displayPatientResp" class="font-semibold text-white text-[11px] mt-0.5 truncate">--</p>
+              <div class="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs">
+                <span class="text-[10px] font-mono font-bold text-slate-500 uppercase block tracking-wider">👥 Responsável / Mãe</span>
+                <p id="displayPatientResp" class="font-semibold text-slate-800 text-[11px] mt-0.5 truncate">--</p>
               </div>
 
             </div>
@@ -440,12 +440,24 @@
                 <!-- Convênio e Situação -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Convênio:</label>
+                    <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Convênio <span class="text-rose-500">*</span>:</label>
                     <div class="flex items-center gap-1">
+                      <input type="hidden" name="convenioId" id="req-convenioId" value="">
                       <input type="text" name="convenioCode" id="req-convenioCode" placeholder="Cód" class="w-12 px-1 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-center outline-none">
                       <div class="relative flex-1 flex items-center">
-                        <input type="text" name="convenio" id="req-convenio" value="Particular" placeholder="Nome do convênio" class="w-full pl-2 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
-                        <button type="button" onclick="openSearchModal('convenio')" class="absolute right-1 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer">🔍</button>
+                        <select name="convenio" id="req-convenio" required class="w-full pl-2 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 text-slate-800">
+                          <option value="">-- Selecione o Convênio * --</option>
+                          <% if (locals.convenios && locals.convenios.length > 0) { %>
+                            <% locals.convenios.forEach(function(conv) { %>
+                              <option value="<%= conv.fantasia || conv.razaoSocial %>" data-code="<%= conv.codigo || '' %>" data-id="<%= conv.id || '' %>">
+                                [Cód <%= conv.codigo || conv.id %>] <%= conv.fantasia || conv.razaoSocial %>
+                              </option>
+                            <% }); %>
+                          <% } else { %>
+                            <option value="" disabled>(Nenhum convênio cadastrado)</option>
+                          <% } %>
+                        </select>
+                        <button type="button" onclick="openSearchModal('convenio')" class="absolute right-1 text-slate-400 hover:text-emerald-700 p-0.5 cursor-pointer" title="Pesquisar Convênio">🔍</button>
                       </div>
                     </div>
                   </div>
@@ -571,7 +583,7 @@
               <div class="space-y-2.5">
                 <!-- Médico Solicitante completo -->
                 <div>
-                  <label class="block font-bold text-[11px] text-slate-600 mb-0.5">Médico Solicitante:</label>
+                  <label class="block font-bold text-[11px] text-slate-700 mb-0.5">Médico Solicitante <span class="text-rose-600 font-extrabold">*</span>:</label>
                   <div class="flex items-center gap-1">
                     <select name="doctorCrmType" id="req-doctorCrmType" class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
                       <% 
@@ -599,7 +611,7 @@
                       <% }) %>
                     </select>
                     <div class="relative flex-1 flex items-center">
-                      <input type="text" name="doctorName" id="req-doctorName" list="medicosDatalist" placeholder="Nome do Médico Solicitante" class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" name="doctorName" id="req-doctorName" list="medicosDatalist" placeholder="Nome do Médico Solicitante *" required class="w-full pl-2.5 pr-7 py-1.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all">
                       <datalist id="medicosDatalist">
                         <% if (locals.medicos && locals.medicos.length > 0) { %>
                           <% locals.medicos.forEach(m => { %>
@@ -1037,6 +1049,47 @@
 </div>
 
 <!-- ========================================================= -->
+<!-- MODAL POPUP: AVISO DE CAMPOS OBRIGATÓRIOS PENDENTES       -->
+<!-- ========================================================= -->
+<div id="validationErrorModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+  <div class="bg-white rounded-3xl border border-slate-200/90 w-full max-w-md shadow-2xl overflow-hidden font-sans flex flex-col transform transition-all animate-scaleUp">
+    <!-- Cabeçalho Limpo e Suave -->
+    <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center justify-center font-bold text-base shrink-0">
+          ⚠️
+        </div>
+        <div>
+          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Atenção ao Preenchimento</h3>
+          <p class="text-[11px] text-slate-500 font-medium">Campos pendentes de preenchimento</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeValidationErrorModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-xl transition-all cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Conteúdo / Lista de Erros -->
+    <div class="p-5 sm:p-6 space-y-4">
+      <p class="text-xs text-slate-600 font-medium leading-relaxed">
+        Para prosseguir ou salvar a requisição, preencha as informações obrigatórias indicadas abaixo:
+      </p>
+
+      <ul id="validationErrorModalList" class="space-y-2.5">
+        <!-- Itens inseridos dinamicamente via JS -->
+      </ul>
+
+      <div class="pt-2">
+        <button type="button" onclick="closeValidationErrorModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2">
+          <span>Entendi, Preencher Agora</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
 <!-- MODAL 1: SELEÇÃO DE PACIENTES (ESTILO MODERNO LIS INOVALAB)-->
 <!-- ========================================================= -->
 <div id="modalPatientSearch" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md animate-fadeIn">
@@ -1446,8 +1499,147 @@
   let selectedPatientInModal = null;
   let activeSearchType = null;
 
+  let pendingValidationFocusAction = null;
+
+  // Validar campos obrigatórios da Etapa 1
+  function validateStep1() {
+    const patientName = document.getElementById('req-patientName')?.value?.trim() || '';
+    const convenio = document.getElementById('req-convenio')?.value?.trim() || '';
+    const doctorName = document.getElementById('req-doctorName')?.value?.trim() || '';
+    const errors = [];
+
+    const convSelect = document.getElementById('req-convenio');
+    const doctorInput = document.getElementById('req-doctorName');
+    const patientCard = document.getElementById('patientCardDisplay');
+
+    if (convSelect) {
+      convSelect.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+    }
+    if (doctorInput) {
+      doctorInput.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+    }
+    if (patientCard) {
+      patientCard.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+    }
+
+    let firstMissing = null;
+
+    if (!patientName) {
+      errors.push({ field: 'Paciente', msg: 'Nenhum paciente selecionado. É necessário selecionar um paciente cadastrado.' });
+      if (patientCard) {
+        patientCard.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+      }
+      if (!firstMissing) firstMissing = 'patient';
+    }
+
+    if (!convenio) {
+      errors.push({ field: 'Convênio', msg: 'O campo Convênio é obrigatório. Por favor, selecione um convênio cadastrado.' });
+      if (convSelect) {
+        convSelect.classList.add('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+      }
+      if (!firstMissing) firstMissing = 'convenio';
+    }
+
+    if (!doctorName) {
+      errors.push({ field: 'Médico Solicitante', msg: 'O preenchimento do Médico Solicitante é obrigatório.' });
+      if (doctorInput) {
+        doctorInput.classList.add('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+      }
+      if (!firstMissing) firstMissing = 'doctor';
+    }
+
+    return { isValid: errors.length === 0, errors, firstMissing };
+  }
+
+  // Validar requisição completa (Etapa 1 + Exames)
+  function validateFullRequisition() {
+    const step1Result = validateStep1();
+    const errors = [...step1Result.errors];
+    let firstMissing = step1Result.firstMissing;
+
+    if (!currentRequisitionExams || !Array.isArray(currentRequisitionExams) || currentRequisitionExams.length === 0) {
+      errors.push({ field: 'Exames da Requisição', msg: 'A requisição deve conter ao menos 1 (um) exame adicionado.' });
+      if (!firstMissing) firstMissing = 'exam';
+    }
+
+    return { isValid: errors.length === 0, errors, firstMissing };
+  }
+
+  function showStep1ValidationError(errors, firstMissing) {
+    pendingValidationFocusAction = firstMissing;
+    const modal = document.getElementById('validationErrorModal');
+    const alertList = document.getElementById('validationErrorModalList');
+
+    if (!modal || !alertList) return;
+
+    alertList.innerHTML = '';
+    errors.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-2.5 p-3 bg-slate-50 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-medium';
+      li.innerHTML = `<span class="text-amber-600 font-bold text-sm shrink-0">⚠️</span> <div><strong class="font-extrabold text-slate-800 uppercase text-[10px] block tracking-wider mb-0.5">${item.field}</strong><span class="text-slate-600">${item.msg}</span></div>`;
+      alertList.appendChild(li);
+    });
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeValidationErrorModal() {
+    const modal = document.getElementById('validationErrorModal');
+    if (modal) modal.classList.add('hidden');
+
+    const action = pendingValidationFocusAction;
+    pendingValidationFocusAction = null;
+
+    if (action === 'patient') {
+      switchRequisitionStep(1, true);
+      openPatientSearchModal();
+    } else if (action === 'convenio') {
+      switchRequisitionStep(1, true);
+      const convSelect = document.getElementById('req-convenio');
+      if (convSelect) convSelect.focus();
+    } else if (action === 'doctor') {
+      switchRequisitionStep(1, true);
+      const doctorInput = document.getElementById('req-doctorName');
+      if (doctorInput) doctorInput.focus();
+    } else if (action === 'exam') {
+      switchRequisitionStep(2, true);
+      const examInput = document.getElementById('req-examSearchInput');
+      if (examInput) examInput.focus();
+    }
+  }
+
+  function clearStep1ValidationError() {
+    const modal = document.getElementById('validationErrorModal');
+    if (modal) modal.classList.add('hidden');
+
+    const convSelect = document.getElementById('req-convenio');
+    const doctorInput = document.getElementById('req-doctorName');
+    const patientCard = document.getElementById('patientCardDisplay');
+    if (convSelect) {
+      convSelect.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+    }
+    if (doctorInput) {
+      doctorInput.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500', 'bg-rose-50');
+    }
+    if (patientCard) {
+      patientCard.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+    }
+  }
+
   // Alternar entre Etapa 1 e Etapa 2 no Modal
-  function switchRequisitionStep(step) {
+  function switchRequisitionStep(step, force = false) {
+    if (step === 2 && !force) {
+      const validation = validateStep1();
+      if (!validation.isValid) {
+        showStep1ValidationError(validation.errors, validation.firstMissing);
+        return false;
+      } else {
+        clearStep1ValidationError();
+      }
+    } else if (step === 1) {
+      clearStep1ValidationError();
+    }
+
     const step1 = document.getElementById('requisitionStep1');
     const step2 = document.getElementById('requisitionStep2');
     const btn1 = document.getElementById('stepTabBtn1');
@@ -2121,7 +2313,42 @@
     document.getElementById('req-patientPhone').value = p.whatsapp || p.phone || '';
     document.getElementById('req-responsibleName').value = p.responsibleName || p.motherName || '';
     document.getElementById('req-clinicalNotes').value = p.clinicalNotes || '';
-    document.getElementById('req-convenio').value = p.convenio || 'Particular';
+    
+    const convSelect = document.getElementById('req-convenio');
+    const isEditingExistingReq = !!document.getElementById('req-id').value;
+
+    if (isEditingExistingReq) {
+      const pConv = p.convenio || '';
+      const pConvCode = p.convenioCode || '';
+      const pConvId = p.convenioId || '';
+
+      if (convSelect) {
+        if (pConv) {
+          let optionExists = Array.from(convSelect.options).some(opt => opt.value === pConv);
+          if (!optionExists) {
+            const newOpt = document.createElement('option');
+            newOpt.value = pConv;
+            newOpt.setAttribute('data-code', pConvCode);
+            newOpt.setAttribute('data-id', pConvId);
+            newOpt.textContent = `[Cód ${pConvCode || '?'}] ${pConv}`;
+            convSelect.appendChild(newOpt);
+          }
+          convSelect.value = pConv;
+          document.getElementById('req-convenioCode').value = pConvCode;
+          if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = pConvId;
+        } else {
+          convSelect.value = '';
+          document.getElementById('req-convenioCode').value = '';
+          if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
+        }
+      }
+    } else {
+      // Nova requisição: sempre mantém o campo Convênio limpo/vazio para forçar a escolha manual
+      if (convSelect) convSelect.value = '';
+      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = '';
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
+    }
+
     if (p.weight) document.getElementById('req-weight').value = p.weight;
     if (p.height) document.getElementById('req-height').value = p.height;
 
@@ -2252,7 +2479,9 @@
     document.getElementById('req-requisitionCode').value = '';
 
     document.getElementById('req-city').value = 'Cambará';
-    document.getElementById('req-convenio').value = 'Particular';
+    if (document.getElementById('req-convenio')) document.getElementById('req-convenio').value = '';
+    if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = '';
+    if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
     document.getElementById('req-coleta').value = 'Sede / Central';
     document.getElementById('req-destino').value = 'Laboratório Principal';
     document.getElementById('req-fatura').value = new Date().toLocaleDateString('pt-BR');
@@ -2615,13 +2844,25 @@
   async function handleFormSubmit(e) {
     e.preventDefault();
     const form = document.getElementById('requisitionMainForm');
+    
+    // Atualizar campo oculto de exames com o estado atual
+    const hiddenExamsInput = document.getElementById('req-examsJson');
+    if (hiddenExamsInput) {
+      hiddenExamsInput.value = JSON.stringify(currentRequisitionExams || []);
+    }
+
     const formData = new FormData(form);
     const data = {};
     formData.forEach((val, key) => data[key] = val);
 
-    if (!data.patientName || data.patientName.trim() === '') {
-      alert('Por favor, selecione um paciente para a requisição.');
-      openPatientSearchModal();
+    const validation = validateFullRequisition();
+    if (!validation.isValid) {
+      if (validation.firstMissing === 'exam') {
+        switchRequisitionStep(2, true);
+      } else {
+        switchRequisitionStep(1, true);
+      }
+      showStep1ValidationError(validation.errors, validation.firstMissing);
       return;
     }
 
@@ -2636,11 +2877,11 @@
         closeRequisitionFormModal();
         showSuccessRequisitionModal(res.requisitionCode || res.id, data.patientName || '');
       } else {
-        alert('Erro ao salvar requisição: ' + (res.error || 'Verifique os dados.'));
+        showStep1ValidationError([{ field: 'Aviso do Sistema', msg: res.error || 'Verifique os dados da requisição.' }], null);
       }
     } catch (err) {
       console.error(err);
-      alert('Erro na comunicação ao salvar requisição.');
+      showStep1ValidationError([{ field: 'Erro', msg: 'Erro na comunicação ao salvar requisição.' }], null);
     }
   }
 
@@ -2687,8 +2928,31 @@
     document.getElementById('req-responsibleName').value = req.responsibleName || '';
     document.getElementById('req-clinicalNotes').value = req.clinicalNotes || '';
     
-    document.getElementById('req-convenioCode').value = req.convenioCode || '';
-    document.getElementById('req-convenio').value = req.convenio || 'Particular';
+    const convSelect = document.getElementById('req-convenio');
+    const rConv = req.convenio || '';
+    const rCode = req.convenioCode || '';
+    const rId = req.convenioId || '';
+
+    document.getElementById('req-convenioCode').value = rCode;
+    if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = rId;
+
+    if (convSelect) {
+      if (rConv) {
+        let optionExists = Array.from(convSelect.options).some(opt => opt.value === rConv);
+        if (!optionExists) {
+          const newOpt = document.createElement('option');
+          newOpt.value = rConv;
+          newOpt.setAttribute('data-code', rCode);
+          newOpt.setAttribute('data-id', rId);
+          newOpt.textContent = `[Cód ${rCode || '?'}] ${rConv}`;
+          convSelect.appendChild(newOpt);
+        }
+        convSelect.value = rConv;
+      } else {
+        convSelect.value = '';
+      }
+    }
+
     document.getElementById('req-situacaoCode').value = req.situacaoCode || '';
     if (req.situacao) document.getElementById('req-situacao').value = req.situacao;
 
@@ -3001,9 +3265,7 @@
   }
 
   const GENERIC_LISTS = {
-    convenio: conveniosListFromDb.length > 0 
-      ? conveniosListFromDb.map(c => `[Cód ${c.codigo}] ${c.fantasia || c.razaoSocial}`) 
-      : ['[Cód 1] Particular', '[Cód 2] Unimed Cambará', '[Cód 3] Bradesco Saúde', '[Cód 4] SulAmérica', '[Cód 5] Casssi'],
+    convenio: conveniosListFromDb.map(c => `[Cód ${c.codigo || c.id}] ${c.fantasia || c.razaoSocial}`),
     situacao: ['Normal', 'Urgente', 'Prioritário', 'Aguardando Coleta'],
     coleta: ['Sede / Central', 'Posto Cambará', 'Posto Jacarezinho', 'Coleta Domiciliar', 'Hospital Municipal'],
     destino: ['Laboratório Principal', 'Apoio Hermes Pardini', 'Apoio Fleury', 'Apoio DB Diagnósticos'],
@@ -3031,12 +3293,16 @@
     const container = document.getElementById('genericSearchList');
     container.innerHTML = '';
     if (!items || items.length === 0) {
-      container.innerHTML = `<p class="p-3 text-center text-gray-400 italic text-xs">Nenhum item encontrado.</p>`;
+      if (activeSearchType === 'convenio') {
+        container.innerHTML = `<p class="p-4 text-center text-rose-600 font-bold text-xs">Nenhum convênio cadastrado no sistema.<br><span class="text-gray-500 font-normal mt-1 block">Acesse Administrador &gt; Convênios para realizar o cadastro.</span></p>`;
+      } else {
+        container.innerHTML = `<p class="p-3 text-center text-gray-400 italic text-xs">Nenhum item encontrado.</p>`;
+      }
       return;
     }
     items.forEach(item => {
       const div = document.createElement('div');
-      div.className = "p-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-bold text-gray-800 transition-colors";
+      div.className = "p-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-bold text-gray-800 transition-colors border-b border-slate-100 last:border-none";
       div.onclick = () => selectGenericItem(item);
       div.innerText = item;
       container.appendChild(div);
@@ -3052,14 +3318,36 @@
   function selectGenericItem(item) {
     if (activeSearchType === 'convenio') {
       const matchCode = item.match(/\[Cód\s+([^\]]+)\]/i);
-      if (matchCode && matchCode[1]) {
-        const codeVal = matchCode[1].trim();
-        document.getElementById('req-convenioCode').value = codeVal;
-        const nameVal = item.replace(/\[Cód\s+[^\]]+\]\s*/i, '').trim();
-        document.getElementById('req-convenio').value = nameVal;
-      } else {
-        document.getElementById('req-convenio').value = item;
+      const codeVal = matchCode && matchCode[1] ? matchCode[1].trim() : '';
+      const nameVal = item.replace(/\[Cód\s+[^\]]+\]\s*/i, '').trim();
+
+      const foundConv = conveniosListFromDb.find(c =>
+        (codeVal && String(c.codigo) === codeVal) ||
+        (c.fantasia && c.fantasia.toLowerCase() === nameVal.toLowerCase()) ||
+        (c.razaoSocial && c.razaoSocial.toLowerCase() === nameVal.toLowerCase())
+      );
+
+      const convSelect = document.getElementById('req-convenio');
+      const finalName = foundConv ? (foundConv.fantasia || foundConv.razaoSocial) : nameVal;
+      const finalCode = foundConv ? (foundConv.codigo || codeVal) : codeVal;
+      const finalId = foundConv ? foundConv.id : '';
+
+      if (convSelect) {
+        let optionExists = Array.from(convSelect.options).some(opt => opt.value === finalName);
+        if (!optionExists && finalName) {
+          const newOpt = document.createElement('option');
+          newOpt.value = finalName;
+          newOpt.setAttribute('data-code', finalCode);
+          newOpt.setAttribute('data-id', finalId);
+          newOpt.textContent = `[Cód ${finalCode}] ${finalName}`;
+          convSelect.appendChild(newOpt);
+        }
+        convSelect.value = finalName;
       }
+      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = finalCode;
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = finalId;
+
+      closeGenericSearchModal();
       recalculateRequisitionExamPrices();
     }
     else if (activeSearchType === 'situacao') document.getElementById('req-situacao').value = item;
@@ -3109,15 +3397,45 @@
   // Preenchimento automático do nome do convênio ao digitar o código
   document.getElementById('req-convenioCode')?.addEventListener('input', function(e) {
     const codeVal = e.target.value.trim();
-    if (!codeVal) return;
+    const select = document.getElementById('req-convenio');
+    if (!codeVal) {
+      if (select) select.value = '';
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
+      recalculateRequisitionExamPrices();
+      return;
+    }
     const found = conveniosListFromDb.find(c => String(c.codigo) === codeVal || String(c.id) === codeVal);
-    if (found) {
-      document.getElementById('req-convenio').value = found.fantasia || found.razaoSocial;
+    if (found && select) {
+      const nameVal = found.fantasia || found.razaoSocial;
+      let optionExists = Array.from(select.options).some(opt => opt.value === nameVal);
+      if (!optionExists) {
+        const newOpt = document.createElement('option');
+        newOpt.value = nameVal;
+        newOpt.setAttribute('data-code', found.codigo || '');
+        newOpt.setAttribute('data-id', found.id || '');
+        newOpt.textContent = `[Cód ${found.codigo || found.id}] ${nameVal}`;
+        select.appendChild(newOpt);
+      }
+      select.value = nameVal;
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = found.id;
+    } else if (select) {
+      select.value = '';
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
     }
     recalculateRequisitionExamPrices();
   });
 
   document.getElementById('req-convenio')?.addEventListener('change', function(e) {
+    const selectedOpt = this.options[this.selectedIndex];
+    if (selectedOpt && selectedOpt.value) {
+      const codeVal = selectedOpt.getAttribute('data-code') || '';
+      const idVal = selectedOpt.getAttribute('data-id') || '';
+      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = codeVal;
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = idVal;
+    } else {
+      if (document.getElementById('req-convenioCode')) document.getElementById('req-convenioCode').value = '';
+      if (document.getElementById('req-convenioId')) document.getElementById('req-convenioId').value = '';
+    }
     recalculateRequisitionExamPrices();
   });
 
@@ -3128,11 +3446,16 @@
 
     // 1. ESC - Fechar modais / Cancelar
     if (e.key === 'Escape') {
+      const valModal = document.getElementById('validationErrorModal');
       const prepModal = document.getElementById('modalPrepInstructions');
       const pReg = document.getElementById('modalPatientRegister');
       const pSearch = document.getElementById('modalPatientSearch');
       const gSearch = document.getElementById('modalGenericSearch');
 
+      if (valModal && !valModal.classList.contains('hidden')) {
+        closeValidationErrorModal();
+        return;
+      }
       if (prepModal && !prepModal.classList.contains('hidden')) {
         closePrepInstructionsModal();
         return;

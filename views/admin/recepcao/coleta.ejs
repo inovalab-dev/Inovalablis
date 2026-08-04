@@ -46,6 +46,8 @@
       box-shadow: none !important;
       margin-bottom: 20px !important;
       width: 100% !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     /* MODO FOLHA A4 (VÁRIAS ETIQUETAS EM GRADE NA MESMA FOLHA A4) */
@@ -78,6 +80,8 @@
       box-shadow: none !important;
       margin: 0 !important;
       box-sizing: border-box !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   }
 </style>
@@ -1525,54 +1529,54 @@
 
     const examCodesHtml = uniqueCodes
       .map(c => `<span class="inline-block whitespace-nowrap">${c}</span>`)
-      .join('<span class="text-slate-400 font-normal">,</span> ');
+      .join('<span class="text-slate-500 font-normal"> , </span> ');
 
     for (let copyIdx = 0; copyIdx < item.currentQty; copyIdx++) {
       const svgId = `barcode-svg-label-${idx}-${copyIdx}`;
       const card = document.createElement('div');
-      card.className = 'zebra-label-card relative bg-white border-2 border-slate-300 rounded-xl p-3 sm:p-3.5 font-mono text-slate-900 shadow-sm min-h-[175px] flex flex-col justify-between overflow-hidden my-2';
+      card.className = 'zebra-label-card relative bg-white border border-slate-300 rounded-2xl p-3 sm:p-3.5 font-mono text-slate-900 shadow-xs min-h-[185px] flex flex-col justify-between overflow-hidden my-2 max-w-[420px] mx-auto';
       card.innerHTML = `
-        <!-- Topo: Setor (da aba Setores do exame) e Material à Esquerda | Data, Hora e DN à Direita -->
-        <div class="flex items-start justify-between pr-7">
-          <div class="flex flex-col items-start gap-0.5">
-            <span class="bg-black text-white font-black text-xs px-2 py-0.5 rounded tracking-wide uppercase inline-block">
+        <!-- Topo: Setor (Badge Preto) e Material à Esquerda | Data, Hora e DN à Direita -->
+        <div class="flex items-start justify-between pr-8">
+          <div class="flex flex-col items-start gap-1">
+            <span class="bg-black text-white font-black text-xs px-2.5 py-0.5 rounded-md tracking-wider uppercase inline-block">
               ${setorName}
             </span>
-            <span class="text-xs font-bold text-slate-900 pl-0.5 truncate max-w-[150px]">
-              ${item.grp.material || 'Diversos'}
+            <span class="text-xs font-semibold text-slate-800 pl-0.5 truncate max-w-[170px]">
+              ${item.grp.material || 'Sangue'}
             </span>
           </div>
 
-          <div class="text-right text-[11px] font-bold font-mono text-slate-900 leading-tight">
+          <div class="text-right text-[11px] font-bold font-mono text-slate-900 leading-snug">
             <div>${item.dateTime.dateStr}</div>
             <div>${item.dateTime.timeStr}</div>
             <div>DN: ${item.patientDN}</div>
           </div>
         </div>
 
-        <!-- Nome do Tubo na Margem Direita (Vertical) -->
-        <div class="absolute right-1 top-2 bottom-2 w-6 flex items-center justify-center font-bold text-slate-900 text-xs font-mono select-none" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+        <!-- Nome do Tubo na Margem Direita (Vertical Top-to-Bottom) -->
+        <div class="absolute right-2 top-3 bottom-3 w-5 flex items-center justify-center font-bold text-slate-900 text-xs font-mono select-none" style="writing-mode: vertical-rl;">
           ${tuboName}
         </div>
 
-        <!-- Nome do Paciente e Códigos de Exame (Multilinha com flex-wrap sem quebrar layout) -->
-        <div class="my-1 pr-7">
+        <!-- Nome do Paciente e Códigos de Exame -->
+        <div class="my-1 pr-8">
           <div class="text-sm font-black text-slate-900 leading-tight truncate">
             ${item.patientName}
           </div>
-          <div class="text-xs font-bold font-mono text-slate-900 uppercase mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug break-words max-w-full">
+          <div class="text-xs font-bold font-mono text-slate-900 uppercase mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 leading-snug break-words max-w-full">
             ${examCodesHtml}
           </div>
         </div>
 
         <!-- Código de Barras e Laboratório -->
-        <div class="flex flex-col items-center justify-center pt-1 border-t border-gray-200 pr-5">
-          <svg id="${svgId}" class="w-full max-w-[210px] h-10 my-0.5"></svg>
+        <div class="flex flex-col items-center justify-center pt-1.5 border-t border-slate-200/90 pr-6">
+          <svg id="${svgId}" class="w-full max-w-[220px] h-10 my-0.5"></svg>
           <div class="text-xs font-black font-mono text-black tracking-wider leading-none mt-0.5">
             ${barcodeTag}
           </div>
-          <div class="text-[10px] font-bold text-slate-800 tracking-wider uppercase mt-0.5">
-            Laboratorio
+          <div class="text-[10px] font-bold text-slate-700 tracking-widest uppercase mt-0.5">
+            LABORATORIO
           </div>
         </div>
       `;

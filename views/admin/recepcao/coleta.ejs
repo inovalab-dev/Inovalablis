@@ -36,7 +36,7 @@
       display: none !important;
     }
 
-    /* MODO TÉRMICA ZEBRA / CONTINUA (1 POR PÁGINA / ROLO) */
+    /* MODO TÉRMICA ZEBRA / CONTINUA (1 POR PÁGINA / ROLO 50x30mm) */
     #modalPrintLabels.print-type-zebra .zebra-label-card {
       page-break-after: always !important;
       break-after: page !important;
@@ -44,17 +44,22 @@
       break-inside: avoid !important;
       border: 1px solid #000 !important;
       box-shadow: none !important;
-      margin-bottom: 20px !important;
-      width: 100% !important;
+      margin-bottom: 5px !important;
+      width: 50mm !important;
+      height: 30mm !important;
+      max-width: 50mm !important;
+      max-height: 30mm !important;
+      padding: 1.5mm 2mm !important;
+      box-sizing: border-box !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
 
-    /* MODO FOLHA A4 (VÁRIAS ETIQUETAS EM GRADE NA MESMA FOLHA A4) */
+    /* MODO FOLHA A4 (VÁRIAS ETIQUETAS EM GRADE NA MESMA FOLHA A4 - 50x30mm) */
     #modalPrintLabels.print-type-a4 #labels-preview-container {
       display: flex !important;
       flex-wrap: wrap !important;
-      gap: 5mm !important;
+      gap: 3mm !important;
       padding: 0 !important;
       margin: 0 !important;
       width: 100% !important;
@@ -74,11 +79,15 @@
       break-inside: avoid !important;
       page-break-after: auto !important;
       break-after: auto !important;
-      width: 90mm !important;
-      min-height: 48mm !important;
+      width: 50mm !important;
+      height: 30mm !important;
+      min-height: 30mm !important;
+      max-width: 50mm !important;
+      max-height: 30mm !important;
       border: 1px solid #000 !important;
       box-shadow: none !important;
       margin: 0 !important;
+      padding: 1.5mm 2mm !important;
       box-sizing: border-box !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -1365,8 +1374,8 @@
       try {
         JsBarcode(svgElem, text, {
           format: "CODE128",
-          height: 38,
-          width: 1.6,
+          height: 22,
+          width: 1.1,
           displayValue: false,
           margin: 0
         });
@@ -1534,20 +1543,20 @@
     for (let copyIdx = 0; copyIdx < item.currentQty; copyIdx++) {
       const svgId = `barcode-svg-label-${idx}-${copyIdx}`;
       const card = document.createElement('div');
-      card.className = 'zebra-label-card relative bg-white border border-slate-300 rounded-2xl p-3 sm:p-3.5 font-mono text-slate-900 shadow-xs min-h-[185px] flex flex-col justify-between overflow-hidden my-2 max-w-[420px] mx-auto';
+      card.className = 'zebra-label-card relative bg-white border border-slate-300 rounded-xl p-1.5 font-mono text-slate-900 shadow-xs w-[50mm] min-w-[50mm] max-w-[50mm] h-[30mm] min-h-[30mm] max-h-[30mm] flex flex-col justify-between overflow-hidden my-1.5 mx-auto box-sizing-border-box text-[9px] leading-tight select-none';
       card.innerHTML = `
-        <!-- Topo: Setor (Badge Preto) e Material à Esquerda | Data, Hora e DN à Direita -->
-        <div class="flex items-start justify-between pr-8">
-          <div class="flex flex-col items-start gap-1">
-            <span class="bg-black text-white font-black text-xs px-2.5 py-0.5 rounded-md tracking-wider uppercase inline-block">
+        <!-- Topo: Setor (Badge Preto) e Material | Data, Hora e DN -->
+        <div class="flex items-start justify-between pr-5">
+          <div class="flex flex-col items-start gap-0.5 max-w-[120px]">
+            <span class="bg-black text-white font-black text-[8px] px-1.5 py-[1px] rounded tracking-tight uppercase inline-block leading-none">
               ${setorName}
             </span>
-            <span class="text-xs font-semibold text-slate-800 pl-0.5 truncate max-w-[170px]">
+            <span class="text-[8px] font-semibold text-slate-800 truncate max-w-[110px] leading-none">
               ${item.grp.material || 'Sangue'}
             </span>
           </div>
 
-          <div class="text-right text-[11px] font-bold font-mono text-slate-900 leading-snug">
+          <div class="text-right text-[8px] font-bold font-mono text-slate-900 leading-none space-y-[1px]">
             <div>${item.dateTime.dateStr}</div>
             <div>${item.dateTime.timeStr}</div>
             <div>DN: ${item.patientDN}</div>
@@ -1555,27 +1564,27 @@
         </div>
 
         <!-- Nome do Tubo na Margem Direita (Vertical Top-to-Bottom) -->
-        <div class="absolute right-2 top-3 bottom-3 w-5 flex items-center justify-center font-bold text-slate-900 text-xs font-mono select-none" style="writing-mode: vertical-rl;">
+        <div class="absolute right-1 top-1 bottom-1 w-3.5 flex items-center justify-center font-bold text-slate-900 text-[8px] font-mono select-none" style="writing-mode: vertical-rl;">
           ${tuboName}
         </div>
 
-        <!-- Nome do Paciente e Códigos de Exame -->
-        <div class="my-1 pr-8">
-          <div class="text-sm font-black text-slate-900 leading-tight truncate">
+        <!-- Nome do Paciente e Códigos de Exame (Suporta até 2 linhas) -->
+        <div class="my-0.5 pr-5">
+          <div class="text-[10px] font-black text-slate-900 leading-tight truncate">
             ${item.patientName}
           </div>
-          <div class="text-xs font-bold font-mono text-slate-900 uppercase mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 leading-snug break-words max-w-full">
+          <div class="text-[8px] font-bold font-mono text-slate-900 uppercase mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-[1px] leading-tight break-words max-w-full max-h-[20px] overflow-hidden">
             ${examCodesHtml}
           </div>
         </div>
 
         <!-- Código de Barras e Laboratório -->
-        <div class="flex flex-col items-center justify-center pt-1.5 border-t border-slate-200/90 pr-6">
-          <svg id="${svgId}" class="w-full max-w-[220px] h-10 my-0.5"></svg>
-          <div class="text-xs font-black font-mono text-black tracking-wider leading-none mt-0.5">
+        <div class="flex flex-col items-center justify-center pt-0.5 border-t border-slate-200 pr-4">
+          <svg id="${svgId}" class="w-full max-w-[140px] h-6 my-0"></svg>
+          <div class="text-[8px] font-black font-mono text-black tracking-wider leading-none">
             ${barcodeTag}
           </div>
-          <div class="text-[10px] font-bold text-slate-700 tracking-widest uppercase mt-0.5">
+          <div class="text-[7px] font-bold text-slate-700 tracking-widest uppercase mt-[1px]">
             LABORATORIO
           </div>
         </div>
@@ -1745,40 +1754,58 @@
     
     const rawCodes = item.grp.exams.map(e => e.code || e.jalisCode || e.name).filter(Boolean);
     const uniqueCodes = [...new Set(rawCodes)].map(removeAccentsForEpl);
-    const examCodesStr = uniqueCodes.join(' , ').substring(0, 36);
+    
+    // Suporte para até 2 linhas de exames
+    let examLine1 = '';
+    let examLine2 = '';
+    const fullExamStr = uniqueCodes.join(' , ');
+    if (fullExamStr.length <= 22) {
+      examLine1 = fullExamStr;
+    } else {
+      let splitIdx = fullExamStr.lastIndexOf(' , ', 22);
+      if (splitIdx <= 0) splitIdx = fullExamStr.lastIndexOf(' ', 22);
+      if (splitIdx <= 0) splitIdx = 22;
+      examLine1 = fullExamStr.substring(0, splitIdx);
+      examLine2 = fullExamStr.substring(splitIdx).replace(/^[\s,]+/, '');
+      if (examLine2.length > 24) examLine2 = examLine2.substring(0, 24);
+    }
 
     const dateStr = item.dateTime ? item.dateTime.dateStr : '';
     const timeStr = item.dateTime ? item.dateTime.timeStr : '';
     const patientDN = item.patientDN || '';
     const copies = item.currentQty || 1;
 
-    // Código EPL2 no layout exato de coleta (50mm x 30mm / 400x240 dots)
+    const hasLine2 = !!examLine2;
+
+    // Código EPL2 otimizado para etiqueta 50mm x 30mm (400x240 dots)
     const eplLines = [
       'N',
       'q400',
       'Q240,24',
-      // Topo Esquerda: Setor com destaque em fundo preto (Reverse mode)
-      `A15,10,0,3,1,1,R,"${setorName}"`,
-      // Material (logo abaixo do badge do Setor)
-      `A15,36,0,2,1,1,N,"${materialName}"`,
-      // Topo Direita: Data, Hora e Data de Nascimento (DN)
-      `A260,10,0,2,1,1,N,"${dateStr}"`,
-      `A300,26,0,2,1,1,N,"${timeStr}"`,
-      `A230,42,0,2,1,1,N,"DN: ${patientDN}"`,
-      // Meio Line 1: Nome do Paciente em destaque
-      `A15,62,0,3,1,1,N,"${patientName}"`,
-      // Meio Line 2: Lista de exames
-      `A15,86,0,2,1,1,N,"${examCodesStr}"`,
+      // Topo Esquerda: Setor com destaque (Reverse mode)
+      `A10,6,0,2,1,1,R,"${setorName}"`,
+      // Material (abaixo do setor)
+      `A10,22,0,1,1,1,N,"${materialName}"`,
+      // Topo Direita: Data, Hora e DN
+      `A250,6,0,1,1,1,N,"${dateStr}"`,
+      `A290,18,0,1,1,1,N,"${timeStr}"`,
+      `A230,30,0,1,1,1,N,"DN:${patientDN}"`,
+      // Meio: Nome do Paciente (fonte 2 para destaque)
+      `A10,42,0,2,1,1,N,"${patientName}"`,
+      // Exames Linha 1
+      `A10,58,0,1,1,1,N,"${examLine1}"`,
+      // Exames Linha 2 (se houver)
+      ...(hasLine2 ? [`A10,70,0,1,1,1,N,"${examLine2}"`] : []),
       // Linha horizontal divisória
-      `LO15,108,350,1`,
-      // Código de Barras (Code128)
-      `B80,115,0,1,2,2,42,N,"${barcodeTag}"`,
-      // Código da Amostra (01-00001001-02)
-      `A110,163,0,3,1,1,N,"${barcodeTag}"`,
+      hasLine2 ? `LO10,83,350,1` : `LO10,73,350,1`,
+      // Código de Barras (Code128) - Altura ~30-32 dots
+      hasLine2 ? `B60,87,0,1,2,2,30,N,"${barcodeTag}"` : `B60,77,0,1,2,2,32,N,"${barcodeTag}"`,
+      // Código numérico da amostra
+      hasLine2 ? `A100,121,0,2,1,1,N,"${barcodeTag}"` : `A100,113,0,2,1,1,N,"${barcodeTag}"`,
       // Texto "LABORATORIO"
-      `A135,185,0,2,1,1,N,"LABORATORIO"`,
+      hasLine2 ? `A125,137,0,1,1,1,N,"LABORATORIO"` : `A125,129,0,1,1,1,N,"LABORATORIO"`,
       // Margem Direita Vertical: Nome do Tubo
-      `A382,15,1,2,1,1,N,"${tuboName}"`,
+      `A380,8,1,2,1,1,N,"${tuboName}"`,
       `P${copies}`,
       ''
     ];

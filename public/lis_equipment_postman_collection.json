@@ -1,0 +1,193 @@
+{
+  "info": {
+    "_postman_id": "lis-middleware-equipment-api-v2",
+    "name": "LIS Middleware - Integração Equipamentos Laboratory",
+    "description": "Collection do Postman para testes de integração bi-direcional entre o Middleware LIS e Equipamentos de Análises Clínicas (Worklist Query & Resultados Simples/Multiparamétricos).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "idAmostra",
+      "value": "01-00001002-01",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Consulta de Trabalho (Worklist / Amostra)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/amostra/{{idAmostra}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "amostra",
+            "{{idAmostra}}"
+          ]
+        },
+        "description": "Retorna os dados do paciente, código da requisição, material biológico e lista de exames pendentes (com frame ASTM) para a amostra solicitada pelo equipamento."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Enviar Resultado - Simples (Ex: Glicose)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"idAmostra\": \"01-00001002-01\",\n    \"exame\": \"GLICO\",\n    \"valores\": [\n        {\n            \"key\": \"GLICO\",\n            \"value\": \"4.8\",\n            \"unidade\": \"mg/dL\"\n        }\n    ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/amostra/resultado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "amostra",
+            "resultado"
+          ]
+        },
+        "description": "Envia o resultado de um exame simples (ex: Glicose) do equipamento para o LIS Middleware."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Enviar Resultado - Vários Parâmetros / Multiparamétrico (Ex: Bilirrubinas)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"idAmostra\": \"01-00001002-01\",\n    \"exame\": \"BILI\",\n    \"valores\": [\n        {\n            \"key\": \"BILIRRUBINA_DIRETA\",\n            \"value\": \"4.8\",\n            \"unidade\": \"mg/dL\"\n        },\n        {\n            \"key\": \"BILIRRUBINA_INDIRETA\",\n            \"value\": \"14.2\",\n            \"unidade\": \"mg/dL\"\n        },\n        {\n            \"key\": \"BILIRRUBINA_TOTAL\",\n            \"value\": \"42.0\",\n            \"unidade\": \"mg/dL\"\n        }\n    ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/amostra/resultado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "amostra",
+            "resultado"
+          ]
+        },
+        "description": "Envia o resultado de um exame composto por múltiplos parâmetros (ex: Bilirrubinas Total, Direta e Indireta) do equipamento para o LIS Middleware."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Enviar Resultado - Hemograma Completo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"idAmostra\": \"01-00001003-01\",\n    \"exame\": \"HEMO01\",\n    \"valores\": [\n        {\n            \"key\": \"HEMACIAS\",\n            \"value\": \"4.65\",\n            \"unidade\": \"teracells/L\"\n        },\n        {\n            \"key\": \"HEMOGLOBINA\",\n            \"value\": \"14.1\",\n            \"unidade\": \"g/dL\"\n        },\n        {\n            \"key\": \"HEMATOCRITO\",\n            \"value\": \"42.5\",\n            \"unidade\": \"%\"\n        },\n        {\n            \"key\": \"LEUCOCITOS\",\n            \"value\": \"6800\",\n            \"unidade\": \"/mm³\"\n        },\n        {\n            \"key\": \"PLAQUETAS\",\n            \"value\": \"245000\",\n            \"unidade\": \"/mm³\"\n        }\n    ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/amostra/resultado",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "amostra",
+            "resultado"
+          ]
+        },
+        "description": "Exemplo de envio de Hemograma completo com 5 séries hematológicas."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Obter Dados Gerais do Interfaceamento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/interfaceamento/data",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "interfaceamento",
+            "data"
+          ]
+        },
+        "description": "Retorna o estado completo das abas do middleware (Não Enviados, Processando, Prontos e Histórico de Mensagens)."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Limpar Amostras Fictícias",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/interfaceamento/limpar-ficticias",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "interfaceamento",
+            "limpar-ficticias"
+          ]
+        },
+        "description": "Filtra e remove amostras fictícias de teste que não possuem requisição cadastrada."
+      },
+      "response": []
+    }
+  ]
+}

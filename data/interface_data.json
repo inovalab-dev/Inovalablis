@@ -95,6 +95,278 @@
   ],
   "prontos": [
     {
+      "id": "INT-PRONTO-1785878367940-370",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "BILI",
+      "examTitle": "BILI",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "BILIRRUBINA_DIRETA: 4.8 mg/dL | BILIRRUBINA_INDIRETA: 14.2 mg/dL | BILIRRUBINA_TOTAL: 42.0 mg/dL",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "BILIRRUBINA_DIRETA",
+          "value": "4.8",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_DIRETA"
+        },
+        {
+          "key": "BILIRRUBINA_INDIRETA",
+          "value": "14.2",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_INDIRETA"
+        },
+        {
+          "key": "BILIRRUBINA_TOTAL",
+          "value": "42.0",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_TOTAL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 21:19",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785878364954-917",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "GLICO",
+      "examTitle": "GLICO",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "4.8 mg/dL",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "GLICO",
+          "value": "4.8",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "GLICO"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 21:19",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873842603-86",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "GLICO",
+      "examTitle": "GLICO",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "4.8 mg/dL",
+      "isComplex": false,
+      "parsedValores": [
+        {
+          "key": "GLICO",
+          "value": "4.8",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "GLICO"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:04",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873837392-28",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "BILI",
+      "examTitle": "BILI",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "BILIRRUBINA_DIRETA: 4.8 mg/dL | BILIRRUBINA_INDIRETA: 14.2 mg/dL | BILIRRUBINA_TOTAL: 42.0 mg/dL",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "BILIRRUBINA_DIRETA",
+          "value": "4.8",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_DIRETA"
+        },
+        {
+          "key": "BILIRRUBINA_INDIRETA",
+          "value": "14.2",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_INDIRETA"
+        },
+        {
+          "key": "BILIRRUBINA_TOTAL",
+          "value": "42.0",
+          "unidade": "mg/dL",
+          "unit": "mg/dL",
+          "parametro": "BILIRRUBINA_TOTAL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:03",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873828949-117",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "GLICO",
+      "examTitle": "GLICO",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "GLICO: 4.8",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "GLICO",
+          "parametro": "GLICO",
+          "value": "4.8",
+          "unit": "mg/dL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:03",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873824258-774",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "BILI",
+      "examTitle": "BILI",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "BILIRRUBINA_DIRETA: 4.8 | BILIRRUBINA_INDIRETA: 14.2 | BILIRRUBINA_TOTAL: 42.0",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "BILIRRUBINA_DIRETA",
+          "parametro": "BILIRRUBINA_DIRETA",
+          "value": "4.8",
+          "unit": "mg/dL"
+        },
+        {
+          "key": "BILIRRUBINA_INDIRETA",
+          "parametro": "BILIRRUBINA_INDIRETA",
+          "value": "14.2",
+          "unit": "mg/dL"
+        },
+        {
+          "key": "BILIRRUBINA_TOTAL",
+          "parametro": "BILIRRUBINA_TOTAL",
+          "value": "42.0",
+          "unit": "mg/dL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:03",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873785914-635",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "GLICO",
+      "examTitle": "GLICO",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "GLICO: 4.8",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "GLICO",
+          "parametro": "GLICO",
+          "value": "4.8",
+          "unit": "mg/dL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:03",
+      "status": "Pronto"
+    },
+    {
+      "id": "INT-PRONTO-1785873781650-222",
+      "requisitionCode": "00001002",
+      "patientName": "Paciente Interfaced",
+      "patientAge": "40 Anos",
+      "patientSex": "M",
+      "convenio": "Particular",
+      "examCode": "BILI",
+      "examTitle": "BILI",
+      "material": "Soro",
+      "equipment": "Equipamento API",
+      "sampleBarcode": "01-00001002-01",
+      "resultValue": "BILIRRUBINA_DIRETA: 4.8 | BILIRRUBINA_INDIRETA: 14.2 | BILIRRUBINA_TOTAL: 42.0",
+      "isComplex": true,
+      "parsedValores": [
+        {
+          "key": "BILIRRUBINA_DIRETA",
+          "parametro": "BILIRRUBINA_DIRETA",
+          "value": "4.8",
+          "unit": "mg/dL"
+        },
+        {
+          "key": "BILIRRUBINA_INDIRETA",
+          "parametro": "BILIRRUBINA_INDIRETA",
+          "value": "14.2",
+          "unit": "mg/dL"
+        },
+        {
+          "key": "BILIRRUBINA_TOTAL",
+          "parametro": "BILIRRUBINA_TOTAL",
+          "value": "42.0",
+          "unit": "mg/dL"
+        }
+      ],
+      "unit": "",
+      "refRange": "",
+      "completedTime": "04/08/2026 20:03",
+      "status": "Pronto"
+    },
+    {
       "id": "INT-PRONTO-1785700569985-71",
       "requisitionCode": "00001008",
       "patientName": "Roberto Rodrigues de Oliveira",
@@ -121,6 +393,86 @@
     }
   ],
   "mensagens": [
+    {
+      "id": "MSG-1785878367940",
+      "timestamp": "04/08/2026 21:19",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"BILI\",\n  \"valores\": [\n    {\n      \"key\": \"BILIRRUBINA_DIRETA\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_INDIRETA\",\n      \"value\": \"14.2\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_TOTAL\",\n      \"value\": \"42.0\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785878364954",
+      "timestamp": "04/08/2026 21:19",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"GLICO\",\n  \"valores\": [\n    {\n      \"key\": \"GLICO\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873842603",
+      "timestamp": "04/08/2026 20:04",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"GLICO\",\n  \"valores\": [\n    {\n      \"key\": \"GLICO\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873837392",
+      "timestamp": "04/08/2026 20:03",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"BILI\",\n  \"valores\": [\n    {\n      \"key\": \"BILIRRUBINA_DIRETA\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_INDIRETA\",\n      \"value\": \"14.2\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_TOTAL\",\n      \"value\": \"42.0\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873828949",
+      "timestamp": "04/08/2026 20:03",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"GLICO\",\n  \"valores\": [\n    {\n      \"key\": \"GLICO\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873824258",
+      "timestamp": "04/08/2026 20:03",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"BILI\",\n  \"valores\": [\n    {\n      \"key\": \"BILIRRUBINA_DIRETA\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_INDIRETA\",\n      \"value\": \"14.2\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_TOTAL\",\n      \"value\": \"42.0\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873785914",
+      "timestamp": "04/08/2026 20:03",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"GLICO\",\n  \"valores\": [\n    {\n      \"key\": \"GLICO\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
+    {
+      "id": "MSG-1785873781650",
+      "timestamp": "04/08/2026 20:03",
+      "type": "INBOUND",
+      "protocol": "REST/JSON API",
+      "equipment": "Equipamento API",
+      "direction": "EQUIPAMENTO ➔ LIS",
+      "payload": "{\n  \"idAmostra\": \"01-00001002-01\",\n  \"exame\": \"BILI\",\n  \"valores\": [\n    {\n      \"key\": \"BILIRRUBINA_DIRETA\",\n      \"value\": \"4.8\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_INDIRETA\",\n      \"value\": \"14.2\",\n      \"unidade\": \"mg/dL\"\n    },\n    {\n      \"key\": \"BILIRRUBINA_TOTAL\",\n      \"value\": \"42.0\",\n      \"unidade\": \"mg/dL\"\n    }\n  ]\n}",
+      "status": "Resultado gravado via API /api/amostra/resultado"
+    },
     {
       "id": "MSG-1785867232547-6",
       "timestamp": "04/08/2026 18:13",

@@ -6875,20 +6875,37 @@ function parseExameValores(valoresInput, rawResultVal) {
         const valStr = v.valor !== undefined ? v.valor : (v.value !== undefined ? v.value : (v.resultado !== undefined ? v.resultado : ''));
         const unitStr = v.unidade || v.unit || '';
 
-        items.push({
+        const itemObj = {
           key: String(displayKey),
-          label: labelVal ? String(labelVal) : undefined,
-          parametro: paramVal ? String(paramVal) : undefined,
-          value: String(valStr !== undefined && valStr !== null ? valStr : ''),
-          unit: String(unitStr)
-        });
+          value: String(valStr !== undefined && valStr !== null ? valStr : '')
+        };
+        if (unitStr) {
+          itemObj.unidade = String(unitStr);
+          itemObj.unit = String(unitStr);
+        }
+        if (labelVal) itemObj.label = String(labelVal);
+        if (paramVal) itemObj.parametro = String(paramVal);
+
+        items.push(itemObj);
       } else if (v !== undefined && v !== null) {
         items.push({ key: "RESULTADO", value: String(v) });
       }
     });
   } else if (valoresInput && typeof valoresInput === 'object') {
     Object.keys(valoresInput).forEach(k => {
-      items.push({ key: String(k), value: String(valoresInput[k]) });
+      const valObj = valoresInput[k];
+      if (valObj && typeof valObj === 'object') {
+        const valStr = valObj.valor !== undefined ? valObj.valor : (valObj.value !== undefined ? valObj.value : '');
+        const unitStr = valObj.unidade || valObj.unit || '';
+        const itemObj = { key: String(k), value: String(valStr) };
+        if (unitStr) {
+          itemObj.unidade = String(unitStr);
+          itemObj.unit = String(unitStr);
+        }
+        items.push(itemObj);
+      } else {
+        items.push({ key: String(k), value: String(valObj) });
+      }
     });
   } else if (valoresInput !== undefined && valoresInput !== null && String(valoresInput).trim() !== '') {
     items.push({ key: "RESULTADO", value: String(valoresInput) });
@@ -6921,15 +6938,7 @@ function parseExameValores(valoresInput, rawResultVal) {
 
   items = expandedItems;
 
-  let isComplex = false;
-  if (items.length > 1) {
-    isComplex = true;
-  } else if (items.length === 1) {
-    const kUpper = items[0].key.toUpperCase().trim();
-    if (kUpper !== 'RESULTADO' && kUpper !== 'VALOR' && kUpper !== 'RESULT' && kUpper !== 'VAL') {
-      isComplex = true;
-    }
-  }
+  let isComplex = items.length > 1;
 
   return { items, isComplex };
 }
@@ -7015,9 +7024,13 @@ function handleAmostraResultado(req, res) {
 
     let displayVal = '';
     if (!isComplex && items.length > 0) {
-      displayVal = items[0].value;
+      const u = items[0].unit || items[0].unidade;
+      displayVal = items[0].value + (u ? ' ' + u : '');
     } else {
-      displayVal = items.map(i => `${i.key}: ${i.value}`).join(' | ');
+      displayVal = items.map(i => {
+        const u = i.unit || i.unidade;
+        return `${i.key}: ${i.value}${u ? ' ' + u : ''}`;
+      }).join(' | ');
     }
 
     const prontoItem = {

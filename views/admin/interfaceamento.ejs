@@ -89,6 +89,17 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
+        <a 
+          href="/lis_equipment_postman_collection.json" 
+          download="LIS_Equipment_Postman_Collection.json"
+          title="Baixar arquivo JSON da Coleção do Postman atualizada"
+          class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+        >
+          <span>🚀</span>
+          <span class="hidden sm:inline">Postman Collection</span>
+          <span class="sm:hidden">Postman</span>
+        </a>
+
         <button 
           type="button" 
           onclick="clearFictitiousSamples()" 
@@ -444,7 +455,7 @@
                   </td>
                   <!-- 8. Resultado -->
                   <td class="py-3 px-4 whitespace-nowrap">
-                    <% if (item.isComplex || (item.parsedValores && item.parsedValores.length > 1) || (item.parsedValores && item.parsedValores.length === 1 && item.parsedValores[0].key !== 'RESULTADO' && item.parsedValores[0].key !== 'VALOR')) { %>
+                    <% if (item.isComplex || (item.parsedValores && item.parsedValores.length > 1)) { %>
                       <button 
                         type="button" 
                         onclick="openComplexModalByItem('<%= item.id %>')" 

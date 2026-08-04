@@ -11880,6 +11880,259 @@ app.post('/admin/controle-acesso/assign', requireAdmin, (req, res) => {
   }
 });
 
+// ================= SUB-MÓDULO: ZERAR BANCO DE DADOS (INÍCIO EM PRODUÇÃO) =================
+
+// Helper para truncar/limpar tabela MySQL se o MySQL estiver configurado
+async function clearMysqlTable(tableName) {
+  if (!process.env.DB_HOST) return;
+  try {
+    const pool = await getMysqlPool();
+    const connection = await pool.getConnection();
+    try {
+      await connection.query(`DELETE FROM \`tbl_${tableName}\``);
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    console.error(`Erro ao zerar tabela MySQL tbl_${tableName}:`, err);
+  }
+}
+
+// Tela Principal de Zerar Banco de Dados
+app.get('/admin/zerar-banco', requireAdmin, (req, res) => {
+  const counts = {
+    patients: (loadPatients() || []).length,
+    requisitions: (loadRequisitions() || []).length,
+    exams: (loadExams() || []).length,
+    labExamesAlvaro: (loadLabExamesAlvaro() || []).length,
+    labExamesPardini: (loadLabExamesPardini() || []).length,
+    priceTables: (loadPriceTables() || []).length,
+    materiaisAlvaro: (loadMateriaisAlvaro() || []).length,
+    recipientes: (loadRecipientes() || []).length,
+    setores: (loadSetores() || []).length,
+    budgets: (loadBudgets() || []).length,
+    transactions: (loadTransactions() || []).length,
+    cashClosures: (loadCashClosures() || []).length,
+    movements: (loadMovements() || []).length,
+    appointments: (loadAppointments() || []).length,
+    medicos: (loadMedicos() || []).length,
+    convenios: (loadConvenios() || []).length,
+    interfaceData: ((loadInterfaceData() || {}).logs || []).length + ((loadInterfaceData() || {}).results || []).length,
+    evaluations: (loadEvaluations() || []).length,
+    nonConformities: (loadNonConformities() || []).length,
+    temperaturas: (loadTemperaturas() || []).length,
+    cisnorpi: (loadCisnorpi() || []).length,
+  };
+
+  res.render('admin/zerar-banco', {
+    counts,
+    page: 'admin-zerar-banco',
+    success: req.query.success || null,
+    error: req.query.error || null
+  });
+});
+
+// Endpoint para Download do Backup Completo em JSON
+app.get('/admin/zerar-banco/backup-json', requireAdmin, (req, res) => {
+  try {
+    const backup = {
+      timestamp: new Date().toISOString(),
+      patients: loadPatients(),
+      requisitions: loadRequisitions(),
+      exams: loadExams(),
+      labExamesAlvaro: loadLabExamesAlvaro(),
+      labExamesPardini: loadLabExamesPardini(),
+      priceTables: loadPriceTables(),
+      materiaisAlvaro: loadMateriaisAlvaro(),
+      recipientes: loadRecipientes(),
+      setores: loadSetores(),
+      budgets: loadBudgets(),
+      transactions: loadTransactions(),
+      cashClosures: loadCashClosures(),
+      movements: loadMovements(),
+      appointments: loadAppointments(),
+      medicos: loadMedicos(),
+      convenios: loadConvenios(),
+      interfaceData: loadInterfaceData(),
+      evaluations: loadEvaluations(),
+      nonConformities: loadNonConformities(),
+      temperaturas: loadTemperaturas(),
+      cisnorpi: loadCisnorpi(),
+    };
+
+    const fileName = `backup_laboratorio_${new Date().toISOString().slice(0,10)}.json`;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(JSON.stringify(backup, null, 2));
+  } catch (err) {
+    console.error("Erro ao gerar backup JSON:", err);
+    res.status(500).send("Erro ao gerar arquivo de backup.");
+  }
+});
+
+// Endpoint POST API para zerar as tabelas selecionadas
+app.post('/api/admin/reset-database', requireAdmin, async (req, res) => {
+  try {
+    const { targets, confirmation } = req.body;
+
+    if (!confirmation || String(confirmation).toUpperCase().trim() !== 'ZERAR BANCO') {
+      return res.status(400).json({ success: false, message: 'Palavra de confirmação incorreta. Digite "ZERAR BANCO" para prosseguir.' });
+    }
+
+    if (!Array.isArray(targets) || targets.length === 0) {
+      return res.status(400).json({ success: false, message: 'Nenhuma tabela foi selecionada para zerar.' });
+    }
+
+    const cleared = [];
+
+    if (targets.includes('patients')) {
+      patientsCache = [];
+      savePatients([]);
+      await clearMysqlTable('patients');
+      cleared.push('Pacientes');
+    }
+
+    if (targets.includes('requisitions')) {
+      requisitionsCache = [];
+      saveRequisitions([]);
+      await clearMysqlTable('requisitions');
+      
+      try { fs.writeFileSync(path.join(process.cwd(), 'data', 'recebimento.json'), '[]', 'utf-8'); } catch(e){}
+      try { fs.writeFileSync(path.join(process.cwd(), 'data', 'coleta.json'), '[]', 'utf-8'); } catch(e){}
+      cleared.push('Requisições e Laudos');
+    }
+
+    if (targets.includes('exams')) {
+      examsCache = [];
+      saveExams([]);
+      await clearMysqlTable('exams');
+      cleared.push('Catálogo de Exames (Internos)');
+    }
+
+    if (targets.includes('lab_exames_alvaro')) {
+      saveLabExamesAlvaro([]);
+      await clearMysqlTable('lab_exames_alvaro');
+      cleared.push('Catálogo Exames Álvaro');
+    }
+
+    if (targets.includes('lab_exames_pardini')) {
+      saveLabExamesPardini([]);
+      await clearMysqlTable('lab_exames_pardini');
+      cleared.push('Catálogo Exames Pardini');
+    }
+
+    if (targets.includes('price_tables')) {
+      priceTablesCache = [];
+      savePriceTables([]);
+      await clearMysqlTable('price_tables');
+      cleared.push('Tabelas de Preços');
+    }
+
+    if (targets.includes('materials')) {
+      saveMateriaisAlvaro([]);
+      recipientesCache = [];
+      saveRecipientes([]);
+      setoresCache = [];
+      saveSetores([]);
+      await clearMysqlTable('materiais_alvaro');
+      await clearMysqlTable('recipientes');
+      await clearMysqlTable('setores');
+      cleared.push('Materiais, Recipientes e Setores');
+    }
+
+    if (targets.includes('budgets')) {
+      budgetsCache = [];
+      saveBudgets([]);
+      await clearMysqlTable('budgets');
+      cleared.push('Orçamentos');
+    }
+
+    if (targets.includes('financial')) {
+      transactionsCache = [];
+      saveTransactions([]);
+      cashClosuresCache = [];
+      saveCashClosures([]);
+      movementsCache = [];
+      saveMovements([]);
+      await clearMysqlTable('transactions');
+      await clearMysqlTable('cash_closures');
+      await clearMysqlTable('movements');
+      cleared.push('Financeiro e Caixas');
+    }
+
+    if (targets.includes('appointments')) {
+      appointmentsCache = [];
+      saveAppointments([]);
+      await clearMysqlTable('appointments');
+      cleared.push('Agendamentos');
+    }
+
+    if (targets.includes('medicos')) {
+      medicosCache = [];
+      saveMedicos([]);
+      await clearMysqlTable('medicos');
+      cleared.push('Médicos Solicitantes');
+    }
+
+    if (targets.includes('convenios')) {
+      conveniosCache = [];
+      saveConvenios([]);
+      await clearMysqlTable('convenios');
+      cleared.push('Convênios');
+    }
+
+    if (targets.includes('interfaceamento')) {
+      interfaceDataCache = { logs: [], results: [], connectedDevices: [] };
+      saveInterfaceData(interfaceDataCache);
+      await clearMysqlTable('interface_data');
+      cleared.push('Interfaceamento LIS');
+    }
+
+    if (targets.includes('evaluations')) {
+      evaluationsCache = [];
+      saveEvaluations([]);
+      evalAccessesCache = [];
+      saveEvalAccesses([]);
+      evalHashesCache = [];
+      saveEvalHashes([]);
+      await clearMysqlTable('evaluations');
+      await clearMysqlTable('eval_accesses');
+      await clearMysqlTable('eval_hashes');
+      cleared.push('Pesquisas e Avaliações');
+    }
+
+    if (targets.includes('non_conformities')) {
+      nonConformitiesCache = [];
+      saveNonConformities([]);
+      await clearMysqlTable('non_conformities');
+      cleared.push('Não Conformidades');
+    }
+
+    if (targets.includes('temperaturas')) {
+      temperaturasCache = [];
+      saveTemperaturas([]);
+      await clearMysqlTable('temperaturas');
+      cleared.push('Controle de Temperatura');
+    }
+
+    if (targets.includes('cisnorpi')) {
+      cisnorpiCache = [];
+      saveCisnorpi([]);
+      await clearMysqlTable('cisnorpi');
+      cleared.push('CISNORPI');
+    }
+
+    return res.json({
+      success: true,
+      message: `Tabelas zeradas com sucesso: ${cleared.join(', ')}.`,
+      cleared
+    });
+  } catch (err) {
+    console.error("Erro ao zerar banco de dados:", err);
+    return res.status(500).json({ success: false, message: 'Erro interno ao zerar banco de dados: ' + err.message });
+  }
+});
+
 // ================= SUB-MÓDULO: ATALHOS DE TECLADO =================
 
 // API para consultar atalhos em formato JSON

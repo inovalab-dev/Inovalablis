@@ -1,0 +1,512 @@
+<%- include('../partials/header') %>
+
+<div class="p-4 md:p-8 max-w-7xl mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- CABEÇALHO DA PÁGINA -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200 shadow-xs">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider font-mono">Administração de Sistema</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-extrabold border border-rose-200 font-mono">Modo Produção / Reset</span>
+        </div>
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-0.5">Zerar Banco de Dados</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Limpe dados operacionais ou cadastros simulados para iniciar o atendimento no laboratório em produção com tabelas limpas.</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <a href="/admin/zerar-banco/backup-json" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs font-mono uppercase tracking-wider transition-all border border-slate-300 cursor-pointer shadow-xs">
+        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Baixar Backup Completo (JSON)
+      </a>
+
+      <button type="button" onclick="openResetModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer">
+        <svg class="w-4 h-4 text-rose-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Zerar Tabelas Selecionadas
+      </button>
+    </div>
+  </div>
+
+  <!-- AVISO DE SEGURANÇA -->
+  <div class="p-5 bg-amber-50/80 border border-amber-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+    <div class="flex items-start gap-3.5">
+      <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0 font-bold text-lg">⚠️</div>
+      <div class="space-y-1">
+        <h4 class="font-extrabold text-amber-900 text-sm">Atenção antes de prosseguir!</h4>
+        <p class="text-amber-800 leading-relaxed">
+          Esta ação apagará permanentemente os registros das tabelas selecionadas. 
+          <strong>Usuários de acesso, perfis e configurações do sistema são mantidos preservados por padrão</strong> para garantir que você não perca seu acesso de administrador.
+        </p>
+      </div>
+    </div>
+    <div class="shrink-0 font-mono text-[11px] bg-amber-100/80 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-200 font-bold">
+      💡 Recomendação: Baixe um backup em JSON antes de zerar.
+    </div>
+  </div>
+
+  <!-- CONTROLES DE SELEÇÃO RÁPIDA -->
+  <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold text-slate-700 font-mono uppercase">Seleção Rápida:</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" onclick="selectAll()" class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold font-mono text-slate-700 cursor-pointer transition-all">
+        ✓ Selecionar Todos
+      </button>
+      <button type="button" onclick="selectOperationalOnly()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg text-xs font-bold font-mono text-amber-800 cursor-pointer transition-all">
+        ⚡ Apenas Atendimento / Operacional
+      </button>
+      <button type="button" onclick="selectCatalogsOnly()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg text-xs font-bold font-mono text-blue-800 cursor-pointer transition-all">
+        📋 Apenas Cadastros & Tabelas
+      </button>
+      <button type="button" onclick="unselectAll()" class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold font-mono text-slate-500 cursor-pointer transition-all">
+        ✗ Desmarcar Todos
+      </button>
+    </div>
+  </div>
+
+  <!-- SEÇÕES DE TABELAS -->
+  <form id="resetDatabaseForm" class="space-y-8">
+    
+    <!-- 1. DADOS OPERACIONAIS E ATENDIMENTO -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">1</div>
+          <div>
+            <h2 class="font-extrabold text-sm tracking-wide uppercase font-mono">Dados Operacionais e Atendimentos</h2>
+            <p class="text-[11px] text-slate-400">Registros de pacientes, ordens de serviço, laudos, caixa e agendamentos.</p>
+          </div>
+        </div>
+        <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-md border border-emerald-800/50">Fluxo Diário</span>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- PACIENTES -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="patients" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Pacientes</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.patients %> cad.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Cadastro de pacientes, históricos, documentos e prontuários.</p>
+          </div>
+        </label>
+
+        <!-- REQUIÇÕES E LAUDOS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="requisitions" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Requisições e Laudos</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.requisitions %> req.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Ordens de serviço, exames digitados, resultados e listas de trabalho.</p>
+          </div>
+        </label>
+
+        <!-- FINANCEIRO E CAIXA -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="financial" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Financeiro & Fechamentos</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.transactions + counts.cashClosures %> lanc.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Transações de caixa, contas a pagar/receber e fechamentos de caixa.</p>
+          </div>
+        </label>
+
+        <!-- ORÇAMENTOS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="budgets" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Orçamentos</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.budgets %> orç.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Simulações de valores enviadas aos pacientes.</p>
+          </div>
+        </label>
+
+        <!-- AGENDAMENTOS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="appointments" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Agendamentos</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.appointments %> agend.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Agenda de coleta domiciliar e exames agendados.</p>
+          </div>
+        </label>
+
+        <!-- INTERFACEAMENTO -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="interfaceamento" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Logs de Interfaceamento</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.interfaceData %> logs</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Registros de comunicação serial e resultados de equipamentos automáticos.</p>
+          </div>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- 2. CADASTROS, TABELAS DE PREÇO E CATÁLOGOS -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">2</div>
+          <div>
+            <h2 class="font-extrabold text-sm tracking-wide uppercase font-mono">Cadastros, Tabelas de Preços e Catálogos</h2>
+            <p class="text-[11px] text-slate-400">Exames cadastrados, preços, convênios, médicos solicitantes e insumos.</p>
+          </div>
+        </div>
+        <span class="text-xs font-mono font-bold text-blue-400 bg-blue-950 px-2.5 py-1 rounded-md border border-blue-800/50">Parametrização</span>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- EXAMES INTERNOS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="exams" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Catálogo de Exames (Internos)</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.exams %> ex.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Lista de exames internos com fórmulas, parâmetros e laudos padrão.</p>
+          </div>
+        </label>
+
+        <!-- TABELAS DE PREÇO -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="price_tables" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Tabelas de Preços</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.priceTables %> tab.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Valores dos exames por convênio (Particular, SUS, Unimed, etc.).</p>
+          </div>
+        </label>
+
+        <!-- CONVÊNIOS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="convenios" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Convênios e Planos</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.convenios %> conv.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Lista de operadoras de saúde e regras de cobrança.</p>
+          </div>
+        </label>
+
+        <!-- MÉDICOS SOLICITANTES -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="medicos" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Médicos Solicitantes</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.medicos %> méd.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Profissionais médicos com CRM e especialidades cadastradas.</p>
+          </div>
+        </label>
+
+        <!-- MATERIAIS & RECIPIENTES -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="materials" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Materiais, Recipientes e Setores</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.materiaisAlvaro + counts.recipientes %> it.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Tipos de amostras (Soro, EDTA), tubos de coleta e setores técnicos.</p>
+          </div>
+        </label>
+
+        <!-- EXAMES ÁLVARO (APOIO) -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="lab_exames_alvaro" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Catálogo Exames Álvaro (Apoio)</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.labExamesAlvaro %> ex.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Catálogo de apoio importado do laboratório Álvaro.</p>
+          </div>
+        </label>
+
+        <!-- EXAMES PARDINI (APOIO) -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="lab_exames_pardini" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Catálogo Exames Pardini (Apoio)</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.labExamesPardini %> ex.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Catálogo de apoio importado do Hermes Pardini.</p>
+          </div>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- 3. QUALIDADE E DADOS COMPLEMENTARES -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">3</div>
+          <div>
+            <h2 class="font-extrabold text-sm tracking-wide uppercase font-mono">Qualidade, Pesquisas e Registros Externos</h2>
+            <p class="text-[11px] text-slate-400">Avaliações NPS, não conformidades, temperaturas e guias CISNORPI.</p>
+          </div>
+        </div>
+        <span class="text-xs font-mono font-bold text-purple-400 bg-purple-950 px-2.5 py-1 rounded-md border border-purple-800/50">Qualidade</span>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- AVALIAÇÕES NPS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="evaluations" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Pesquisas de Satisfação (NPS)</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.evaluations %> av.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Respostas de clientes e hashes de acesso a pesquisas.</p>
+          </div>
+        </label>
+
+        <!-- NÃO CONFORMIDADES -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="non_conformities" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Não Conformidades</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.nonConformities %> oc.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Ocorrências de qualidade e planos de ação.</p>
+          </div>
+        </label>
+
+        <!-- TEMPERATURAS -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="temperaturas" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Controle Térmico</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.temperaturas %> med.</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Registros diários de temperatura de geladeiras e estufas.</p>
+          </div>
+        </label>
+
+        <!-- CISNORPI -->
+        <label class="relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200 hover:border-rose-400 bg-slate-50/50 hover:bg-rose-50/20 transition-all cursor-pointer group">
+          <input type="checkbox" name="targets" value="cisnorpi" class="table-checkbox mt-1 w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-900 group-hover:text-rose-700">Guias CISNORPI</span>
+              <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono font-extrabold"><%= counts.cisnorpi %> guias</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Faturamento de requisições do consórcio público.</p>
+          </div>
+        </label>
+
+      </div>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE SEGURANÇA -->
+<div id="resetModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden fade-in">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 border border-slate-200 shadow-2xl relative">
+    
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300 font-bold text-xl">
+        🗑️
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-slate-900">Confirmar Limpeza do Banco de Dados</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Esta ação irá expurgar permanentemente os dados das tabelas abaixo.</p>
+      </div>
+    </div>
+
+    <!-- LISTA DAS TABELAS SELECIONADAS -->
+    <div class="bg-rose-50/50 border border-rose-200 rounded-xl p-3.5 space-y-2 text-xs">
+      <span class="font-bold text-rose-900 block font-mono uppercase tracking-wider text-[11px]">Tabelas selecionadas para apagar:</span>
+      <ul id="selectedTablesList" class="list-disc list-inside text-rose-800 space-y-1 font-medium max-h-36 overflow-y-auto pr-1">
+        <!-- Preenchido via JS -->
+      </ul>
+    </div>
+
+    <!-- INPUT DE CONFIRMAÇÃO OBRIGATÓRIO -->
+    <div class="space-y-2">
+      <label for="confirmInput" class="block text-xs font-extrabold text-slate-800">
+        Para confirmar, digite a palavra <span class="font-mono text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded font-black">ZERAR BANCO</span> abaixo:
+      </label>
+      <input 
+        type="text" 
+        id="confirmInput" 
+        placeholder="Digite ZERAR BANCO aqui..." 
+        oninput="validateConfirmInput()" 
+        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-xs font-bold uppercase tracking-wider focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+      >
+    </div>
+
+    <!-- MENSAGEM DE ERRO DO MODAL -->
+    <div id="modalErrorMsg" class="hidden text-xs text-rose-600 font-bold bg-rose-100 p-2.5 rounded-lg border border-rose-200"></div>
+
+    <!-- BOTÕES DE AÇÃO DO MODAL -->
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+      <button 
+        type="button" 
+        onclick="closeResetModal()" 
+        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer font-mono uppercase"
+      >
+        Cancelar
+      </button>
+
+      <button 
+        type="button" 
+        id="btnConfirmReset" 
+        disabled 
+        onclick="executeReset()" 
+        class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer font-mono uppercase flex items-center gap-2"
+      >
+        <span>Confirmar Limpeza</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function getSelectedCheckboxes() {
+    return Array.from(document.querySelectorAll('input[name="targets"]:checked'));
+  }
+
+  function selectAll() {
+    document.querySelectorAll('.table-checkbox').forEach(cb => cb.checked = true);
+  }
+
+  function unselectAll() {
+    document.querySelectorAll('.table-checkbox').forEach(cb => cb.checked = false);
+  }
+
+  function selectOperationalOnly() {
+    unselectAll();
+    const ops = ['patients', 'requisitions', 'financial', 'budgets', 'appointments', 'interfaceamento'];
+    document.querySelectorAll('.table-checkbox').forEach(cb => {
+      if (ops.includes(cb.value)) cb.checked = true;
+    });
+  }
+
+  function selectCatalogsOnly() {
+    unselectAll();
+    const cats = ['exams', 'price_tables', 'convenios', 'medicos', 'materials', 'lab_exames_alvaro', 'lab_exames_pardini'];
+    document.querySelectorAll('.table-checkbox').forEach(cb => {
+      if (cats.includes(cb.value)) cb.checked = true;
+    });
+  }
+
+  function openResetModal() {
+    const selected = getSelectedCheckboxes();
+    if (selected.length === 0) {
+      alert('Por favor, selecione ao menos uma tabela para zerar.');
+      return;
+    }
+
+    const listContainer = document.getElementById('selectedTablesList');
+    listContainer.innerHTML = '';
+
+    selected.forEach(cb => {
+      const parentLabel = cb.closest('label');
+      const name = parentLabel.querySelector('.font-bold').textContent;
+      const li = document.createElement('li');
+      li.textContent = name;
+      listContainer.appendChild(li);
+    });
+
+    document.getElementById('confirmInput').value = '';
+    document.getElementById('btnConfirmReset').disabled = true;
+    document.getElementById('modalErrorMsg').classList.add('hidden');
+    document.getElementById('resetModal').classList.remove('hidden');
+  }
+
+  function closeResetModal() {
+    document.getElementById('resetModal').classList.add('hidden');
+  }
+
+  function validateConfirmInput() {
+    const val = document.getElementById('confirmInput').value.trim().toUpperCase();
+    const btn = document.getElementById('btnConfirmReset');
+    btn.disabled = (val !== 'ZERAR BANCO');
+  }
+
+  async function executeReset() {
+    const selected = getSelectedCheckboxes().map(cb => cb.value);
+    const confirmation = document.getElementById('confirmInput').value.trim();
+    const btn = document.getElementById('btnConfirmReset');
+    const errEl = document.getElementById('modalErrorMsg');
+
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Zerando...
+    `;
+
+    try {
+      const response = await fetch('/api/admin/reset-database', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targets: selected, confirmation })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('✅ ' + data.message);
+        window.location.reload();
+      } else {
+        errEl.textContent = data.message || 'Erro ao executar limpeza.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Confirmar Limpeza</span>';
+      }
+    } catch (err) {
+      console.error(err);
+      errEl.textContent = 'Erro de conexão com o servidor ao zerar o banco.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = '<span>Confirmar Limpeza</span>';
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

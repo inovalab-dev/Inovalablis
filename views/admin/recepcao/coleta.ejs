@@ -1375,7 +1375,7 @@
         JsBarcode(svgElem, text, {
           format: "CODE128",
           height: 22,
-          width: 1.1,
+          width: 0.95,
           displayValue: false,
           margin: 0
         });
@@ -1798,8 +1798,8 @@
       ...(hasLine2 ? [`A10,70,0,1,1,1,N,"${examLine2}"`] : []),
       // Linha horizontal divisória
       hasLine2 ? `LO10,83,350,1` : `LO10,73,350,1`,
-      // Código de Barras (Code128) - Altura ~30-32 dots
-      hasLine2 ? `B60,87,0,1,2,2,30,N,"${barcodeTag}"` : `B60,77,0,1,2,2,32,N,"${barcodeTag}"`,
+      // Código de Barras (Code128) - Compacto (p5=1 narrow bar width) para caber perfeitamente na etiqueta 50x30mm
+      hasLine2 ? `B75,87,0,1,1,2,30,N,"${barcodeTag}"` : `B75,77,0,1,1,2,32,N,"${barcodeTag}"`,
       // Código numérico da amostra
       hasLine2 ? `A100,121,0,2,1,1,N,"${barcodeTag}"` : `A100,113,0,2,1,1,N,"${barcodeTag}"`,
       // Texto "LABORATORIO"

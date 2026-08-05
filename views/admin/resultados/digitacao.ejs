@@ -1508,11 +1508,12 @@
       return;
     }
 
-    const patientName = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-name')?.textContent : null) || req?.patientName || 'Paciente';
-    const doctor = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-doctor')?.textContent : null) || req?.doctorName || req?.responsibleName || 'Médico Não Informado';
+    const patientName = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-name')?.textContent : null) || req?.patientName || req?.paciente || 'Paciente';
+    const doctor = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-doctor')?.textContent : null) || req?.doctorName || req?.responsibleName || req?.medico || 'Médico Não Informado';
     const convenio = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-convenio')?.textContent : null) || req?.convenio || 'Particular';
+    const procedencia = req?.procedencia || 'Coleta';
     const reqCode = req?.requisitionCode || req?.id || (reqIdToUse ? String(reqIdToUse) : '00000');
-    const patientAge = req?.patientAge || (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-age')?.textContent : null) || 'N/I';
+    const patientAge = req?.patientAge || req?.idade || (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-age')?.textContent : null) || 'N/I';
     const dataColeta = req?.dataColeta || req?.createdAt || new Date().toLocaleDateString('pt-BR');
 
     const formattedExams = editedExams.map(ex => {
@@ -1522,16 +1523,19 @@
       const currentInputRef = isCurrentActive ? document.getElementById('f-ref-value')?.value : '';
       const refVal = extractExamReferenceValue(ex, catEx, currentInputRef);
 
-      const resText = (isCurrentActive ? document.getElementById('f-result')?.value : (ex.result || ex.resultado || '')) || 'Sem resultado';
+      const resText = (isCurrentActive ? document.getElementById('f-result')?.value : (ex.result || ex.resultado || ex.resultadoText || '')) || 'Sem resultado';
       const unitVal = (isCurrentActive ? document.getElementById('f-unit')?.value : (ex.unidade || ex.unit)) || (catEx && (catEx.unidade || catEx.unit)) || '';
       const metodo = (catEx && (catEx.metodoLaudo || catEx.metodo)) || (isCurrentActive ? document.getElementById('f-method')?.value : (ex.metodo || ex.method)) || 'Colorimétrico';
       const material = (catEx && (catEx.materialLaudo || catEx.material)) || (isCurrentActive ? document.getElementById('f-material')?.value : ex.material) || 'Soro';
+      const equip = (isCurrentActive ? document.getElementById('f-equipment')?.value : (ex.equipamento || ex.equipment)) || (catEx && (catEx.equipment || catEx.equipamento)) || '';
       const obs = (isCurrentActive ? document.getElementById('f-observations')?.value : (ex.observacao || ex.observations)) || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '';
       const obsLaudo = (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || ex.observacoesLaudo || '';
+      const interp = (isCurrentActive ? document.getElementById('f-interpretation')?.value : (ex.interpretacao || ex.interpretation)) || '';
       const st = isCurrentActive ? document.getElementById('f-status')?.value : (ex.status || ex.situacao || 'Digitado');
 
       return {
         codigo: code,
+        code: code,
         titulo: (catEx && catEx.tituloLaudo) || ex.tituloLaudo || (catEx && catEx.name) || ex.name || ex.titulo || code,
         resultadoText: String(resText).trim() || 'Sem resultado',
         resultado: String(resText).trim() || 'Sem resultado',
@@ -1540,9 +1544,12 @@
         valorReferencia: refVal,
         metodo: metodo,
         material: material,
+        equipamento: equip,
+        interpretacao: interp,
         observacao: obs,
         observacoesLaudo: obsLaudo,
-        situacao: st || 'Digitado'
+        situacao: st || 'Digitado',
+        linhas: Array.isArray(ex.linhas) ? ex.linhas : []
       };
     });
 
@@ -1552,6 +1559,7 @@
         idade: patientAge,
         medico: doctor,
         convenio: convenio,
+        procedencia: procedencia,
         requisicaoCode: reqCode,
         dataRequisicao: dataColeta
       },
@@ -2770,6 +2778,10 @@
   }
 
   function openLaudoPreviewModal() {
+    if (selectedReqId) {
+      previewAllExamsOfRequisition(selectedReqId);
+      return;
+    }
     const activeCodeEl = document.getElementById('m-active-code');
     const activeTitleEl = document.getElementById('m-active-title');
     const examCode = (activeCodeEl && activeCodeEl.textContent.trim() !== '-') ? activeCodeEl.textContent.trim() : 'EXAME';
@@ -2783,6 +2795,7 @@
 
     const metodo = (catEx && (catEx.metodoLaudo || catEx.metodo)) || (document.getElementById('f-method') ? document.getElementById('f-method').value : '') || 'Colorimétrico';
     const material = (catEx && (catEx.materialLaudo || catEx.material)) || (document.getElementById('f-material') ? document.getElementById('f-material').value : '') || 'Soro';
+    const equip = (document.getElementById('f-equipment') ? document.getElementById('f-equipment').value : '') || (catEx && (catEx.equipment || catEx.equipamento)) || '';
     const obs = (document.getElementById('f-observations') ? document.getElementById('f-observations').value : '') || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '';
     const interp = document.getElementById('f-interpretation') ? document.getElementById('f-interpretation').value : '';
 
@@ -2797,6 +2810,7 @@
       valorReferencia: valRef,
       metodo: metodo,
       material: material,
+      equipamento: equip,
       observacao: obs,
       observacoesLaudo: (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '',
       interpretacao: interp

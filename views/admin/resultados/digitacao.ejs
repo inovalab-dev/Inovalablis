@@ -168,13 +168,16 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
-            <th class="py-3 px-4">Requisição / Data</th>
-            <th class="py-3 px-4">Paciente</th>
-            <th class="py-3 px-4">Médico / Convênio</th>
-            <th class="py-3 px-4">Prazo / Situação</th>
-            <th class="py-3 px-4">Exames & Status</th>
-            <th class="py-3 px-4 text-right">Ação</th>
+          <tr class="bg-slate-50/80 border-b border-slate-200 text-[10.5px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+            <th class="py-2.5 px-3">Requisição</th>
+            <th class="py-2.5 px-3">Data</th>
+            <th class="py-2.5 px-3">Paciente</th>
+            <th class="py-2.5 px-3">Idade</th>
+            <th class="py-2.5 px-3">Solicitante</th>
+            <th class="py-2.5 px-3">Convênio</th>
+            <th class="py-2.5 px-3">Prazo</th>
+            <th class="py-2.5 px-3">Status</th>
+            <th class="py-2.5 px-3 text-right">Ação</th>
           </tr>
         </thead>
         <tbody id="requisitions-tbody" class="divide-y divide-slate-100 text-xs">
@@ -808,6 +811,73 @@
   </div>
 </div>
 
+<!-- ========================================================= -->
+<!-- MODAL POPUP PARA VISUALIZAR LAUDO EM PDF (INOVALAB)       -->
+<!-- ========================================================= -->
+<div
+  id="pdf-view-modal"
+  class="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4"
+>
+  <div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden max-h-[96vh] h-[92vh] my-auto">
+    <!-- Header do Modal -->
+    <div class="bg-slate-900 text-white px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg text-base">📄</span>
+        <div>
+          <h3 id="pdf-modal-title" class="text-xs sm:text-sm font-black text-white flex items-center gap-2 font-mono">
+            Laudo em PDF - Requisição #00000000
+          </h3>
+          <p class="text-[11px] text-slate-400 font-mono">
+            Laboratório InovaLab • Visualização Oficial do Laudo do Paciente
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          id="pdf-modal-open-tab"
+          href="#"
+          target="_blank"
+          class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1 font-mono cursor-pointer"
+          title="Abrir PDF em nova aba"
+        >
+          <span>🔗</span> Nova Aba
+        </a>
+        <button
+          type="button"
+          onclick="closeRequisitionPdfModal()"
+          class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors text-base cursor-pointer"
+          title="Fechar"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Iframe com PDF -->
+    <div class="flex-1 min-h-0 bg-slate-800 relative">
+      <iframe
+        id="pdf-view-iframe"
+        src=""
+        class="w-full h-full border-0"
+        title="Visualização do PDF"
+      ></iframe>
+    </div>
+
+    <!-- Footer do Modal -->
+    <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+      <span class="text-xs text-slate-500 font-mono">Visualizador de PDF InovaLab</span>
+      <button
+        type="button"
+        onclick="closeRequisitionPdfModal()"
+        class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer font-mono"
+      >
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>
+
 <style>
 @media print {
   body * {
@@ -1032,64 +1102,138 @@
         if (!e.target.closest('button')) openTypingModal(req.id || req.requisitionCode);
       };
 
-      const reqExams = req.exams || [];
       const urgentBadge = (req.isUrgent || req.situacao === 'Urgente') 
-        ? '<span class="px-1.5 py-0.5 bg-red-100 text-red-800 text-[9.5px] font-bold rounded uppercase font-mono ml-1">Urgente</span>'
+        ? '<span class="px-1.5 py-0.5 bg-red-100 text-red-800 text-[9px] font-bold rounded uppercase font-mono ml-1">Urgente</span>'
         : '';
 
-      // Badges de Exames
-      const examBadgesHtml = reqExams.map(e => {
-        let stClass = 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
-        if (isExamInLote(e)) stClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold hover:bg-amber-200';
-        if (e.status === 'Digitado') stClass = 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200';
-        if (e.status === 'Conferido') stClass = 'bg-indigo-100 text-indigo-800 border-indigo-300 font-bold hover:bg-indigo-200';
-        if (e.status === 'Liberado') stClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold hover:bg-emerald-200';
+      let reqStatusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+      const stLower = String(req.status || '').toLowerCase();
+      if (stLower === 'conferido' || stLower === 'liberado' || stLower === 'pronto') {
+        reqStatusBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+      } else if (stLower === 'em digitação' || stLower === 'digitado') {
+        reqStatusBadgeClass = 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
+      } else if (stLower === 'coletado' || stLower === 'processando' || stLower === 'em execução') {
+        reqStatusBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+      }
 
-        const codeVal = e.code || e.codigo;
-        return `<button type="button" onclick="event.stopPropagation(); openTypingModal('${req.id || req.requisitionCode}', '${codeVal}')" class="px-2 py-0.5 text-[10px] rounded-md border font-mono ${stClass} transition-all cursor-pointer shadow-2xs hover:scale-105 inline-flex items-center gap-1" title="Clique para abrir e lançar resultado do exame ${e.name || codeVal}">
-          <span>${codeVal}: ${e.status || 'Pendente'}</span>
-          <span class="opacity-60">⌨️</span>
-        </button>`;
-      }).join(' ');
+      // Formatadores para exibição compacta
+      const formattedDate = (str) => {
+        if (!str) return 'N/I';
+        if (typeof str === 'string' && str.includes('/')) {
+          const parts = str.split(',');
+          if (parts.length === 2) {
+            const timeParts = parts[1].trim().split(':');
+            if (timeParts.length >= 2) return `${parts[0].trim()} ${timeParts[0]}:${timeParts[1]}`;
+          }
+          return str.trim();
+        }
+        try {
+          const d = new Date(str);
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${mins}`;
+          }
+        } catch(e) {}
+        return String(str);
+      };
+
+      const convenioFormatted = (req.convenioCode && String(req.convenioCode).trim() !== '') 
+        ? `${req.convenioCode} - ${req.convenio || 'Particular'}` 
+        : (req.convenio || 'Particular');
+
+      const prazoFormatted = `${req.deliveryDate || 'Hoje'}${req.deliveryTime ? ' ' + req.deliveryTime : ''}`;
+
+      // Regras de Habilitação dos Botões (Liberar & Visualizar)
+      // Liberar: Disponível quando o status da requisição for Coletado, Não Enviado ou Processando (ou Em Execução)
+      const reqStatusTrimmed = String(req.status || '').toLowerCase().trim();
+      const allowedLiberarStatuses = ['coletado', 'não enviado', 'nao enviado', 'processando', 'em execução'];
+      const isLiberarClickable = allowedLiberarStatuses.includes(reqStatusTrimmed);
+
+      // Visualizar: Disponível sempre que houver ao menos 1 exame digitado ou liberado/conferido
+      const reqExamsList = req.exams || [];
+      const hasTypedOrReleasedExam = reqExamsList.some(e => {
+        const eSt = String(e.status || '').toLowerCase().trim();
+        const hasResultVal = (e.result && String(e.result).trim() !== '') || (e.resultado && String(e.resultado).trim() !== '');
+        return ['digitado', 'conferido', 'liberado', 'pronto', 'concluído', 'laudado'].includes(eSt) || hasResultVal;
+      });
+      const isReqReleasedOrConferido = ['conferido', 'liberado', 'pronto', 'concluído', 'laudado'].includes(reqStatusTrimmed);
+      const isVisualizarClickable = isReqReleasedOrConferido || hasTypedOrReleasedExam;
 
       tr.innerHTML = `
-        <td class="py-3 px-4">
-          <div class="font-mono font-black text-[#284701] text-sm flex items-center">
-            #${req.requisitionCode || req.id} ${urgentBadge}
-          </div>
-          <div class="text-[10.5px] text-slate-400 font-mono mt-0.5">
-            ${req.createdAt || 'Data N/I'}
-          </div>
+        <td class="py-2 px-3 whitespace-nowrap font-mono font-black text-[#284701] text-xs">
+          #${req.requisitionCode || req.id} ${urgentBadge}
         </td>
-        <td class="py-3 px-4">
-          <div class="font-bold text-slate-800 text-xs">${req.patientName || 'Paciente Não Informado'}</div>
-          <div class="text-[10.5px] text-slate-500 font-mono">
-            ${req.patientAge || ''} • ${req.patientSex || 'N/I'} ${req.patientBirthDate ? '• ' + req.patientBirthDate : ''}
-          </div>
+        <td class="py-2 px-3 whitespace-nowrap font-mono text-slate-600 text-xs">
+          ${formattedDate(req.createdAt)}
         </td>
-        <td class="py-3 px-4">
-          <div class="font-medium text-slate-700 text-xs">${req.doctorName || 'Dr(a). Não Informado'}</div>
-          <div class="text-[10.5px] text-brand-gold font-semibold font-mono">${req.convenio || 'Particular'}</div>
+        <td class="py-2 px-3 font-bold text-slate-800 text-xs whitespace-nowrap">
+          ${req.patientName || 'Paciente Não Informado'}
         </td>
-        <td class="py-3 px-4">
-          <div class="font-mono text-slate-700 font-bold text-xs">${req.deliveryDate || 'Hoje'} ${req.deliveryTime || ''}</div>
-          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700 inline-block mt-0.5">
+        <td class="py-2 px-3 whitespace-nowrap font-mono text-slate-600 text-xs">
+          ${req.patientAge || 'N/I'}
+        </td>
+        <td class="py-2 px-3 text-slate-700 text-xs whitespace-nowrap">
+          ${req.doctorName || req.responsibleName || 'Dr(a). Não Informado'}
+        </td>
+        <td class="py-2 px-3 whitespace-nowrap text-brand-gold font-semibold font-mono text-xs">
+          ${convenioFormatted}
+        </td>
+        <td class="py-2 px-3 whitespace-nowrap font-mono text-slate-700 font-medium text-xs">
+          ${prazoFormatted}
+        </td>
+        <td class="py-2 px-3 whitespace-nowrap">
+          <span class="px-2 py-0.5 text-[10px] rounded-full border inline-block ${reqStatusBadgeClass}">
             ${req.status || 'Pendente'}
           </span>
         </td>
-        <td class="py-3 px-4 max-w-xs">
-          <div class="flex flex-wrap gap-1">
-            ${examBadgesHtml || '<span class="text-slate-400 italic">Nenhum exame</span>'}
+        <td class="py-2 px-3 text-right whitespace-nowrap">
+          <div class="flex items-center justify-end gap-1.5">
+            <!-- Botão Visualizar -->
+            ${isVisualizarClickable ? `
+              <button
+                type="button"
+                onclick="openRequisitionPdfModal('${req.requisitionCode || req.id}')"
+                class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-all shadow-2xs hover:shadow inline-flex items-center gap-1 cursor-pointer"
+                title="Visualizar laudo em PDF"
+              >
+                <span>👁️</span> Visualizar
+              </button>
+            ` : `
+              <button
+                type="button"
+                disabled
+                class="px-2.5 py-1 bg-slate-100 text-slate-400 text-xs font-bold rounded-lg border border-slate-200 opacity-60 cursor-not-allowed inline-flex items-center gap-1"
+                title="Visualização indisponível (nenhum exame digitado ou liberado)"
+              >
+                <span>👁️</span> Visualizar
+              </button>
+            `}
+
+            <!-- Botão Liberar -->
+            ${isLiberarClickable ? `
+              <button
+                type="button"
+                onclick="openTypingModal('${req.id || req.requisitionCode}')"
+                class="px-2.5 py-1 bg-[#284701] hover:bg-[#1f3701] text-white text-xs font-bold rounded-lg transition-all shadow-2xs hover:shadow inline-flex items-center gap-1 cursor-pointer"
+                title="Abrir para digitação e liberação"
+              >
+                <span>⌨️</span> Liberar
+              </button>
+            ` : `
+              <button
+                type="button"
+                disabled
+                class="px-2.5 py-1 bg-slate-100 text-slate-400 text-xs font-bold rounded-lg border border-slate-200 opacity-60 cursor-not-allowed inline-flex items-center gap-1"
+                title="Liberação indisponível para o status atual (${req.status || 'Pendente'})"
+              >
+                <span>🔒</span> Liberar
+              </button>
+            `}
           </div>
-        </td>
-        <td class="py-3 px-4 text-right">
-          <button
-            type="button"
-            onclick="openTypingModal('${req.id || req.requisitionCode}')"
-            class="px-3 py-1.5 bg-[#284701] hover:bg-[#1f3701] text-white text-xs font-bold rounded-xl transition-all shadow-2xs hover:shadow flex items-center gap-1 ml-auto"
-          >
-            <span>⌨️</span> Digitar
-          </button>
         </td>
       `;
 
@@ -2620,6 +2764,28 @@
 
   function closeLaudoPreviewModal() {
     document.getElementById('laudo-preview-modal').classList.add('hidden');
+  }
+
+  function openRequisitionPdfModal(reqCode) {
+    const modal = document.getElementById('pdf-view-modal');
+    const iframe = document.getElementById('pdf-view-iframe');
+    const titleEl = document.getElementById('pdf-modal-title');
+    const openTabBtn = document.getElementById('pdf-modal-open-tab');
+
+    const cleanCode = String(reqCode || '').trim();
+    const pdfUrl = `/api/paciente/laudo/pdf?requisicao=${encodeURIComponent(cleanCode)}`;
+
+    if (titleEl) titleEl.textContent = `Laudo em PDF - Requisição #${cleanCode}`;
+    if (openTabBtn) openTabBtn.href = pdfUrl;
+    if (iframe) iframe.src = pdfUrl;
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeRequisitionPdfModal() {
+    const modal = document.getElementById('pdf-view-modal');
+    const iframe = document.getElementById('pdf-view-iframe');
+    if (iframe) iframe.src = '';
+    if (modal) modal.classList.add('hidden');
   }
 
   function printLaudoDocument() {

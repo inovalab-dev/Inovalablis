@@ -243,6 +243,48 @@ async function initializeFirebaseCaches() {
       console.warn("Nenhuma configuração de DB_HOST encontrada. Usando modo de persistência local JSON.");
     }
     examsCache = await loadCollectionFromMysql('exams', EXAMS_FILE);
+
+    // Garante reconstituicao completa de materiaisColetados nos exames ao reiniciar o servidor
+    try {
+      const localExams = loadLocalJson(EXAMS_FILE);
+      const relationalMateriais = await loadCollectionFromMysql('exame_materiais_coletados', null);
+
+      if (Array.isArray(examsCache)) {
+        let changed = false;
+        examsCache.forEach(ex => {
+          if (!Array.isArray(ex.materiaisColetados) || ex.materiaisColetados.length === 0) {
+            const exId = String(ex.id || ex.code || '').trim();
+            const exCode = String(ex.code || ex.jalisCode || '').trim();
+
+            const matchedRel = (Array.isArray(relationalMateriais) ? relationalMateriais : []).filter(m => {
+              const mExId = String(m.examId || '').trim();
+              const mExCode = String(m.examCode || '').trim();
+              return (exId && mExId === exId) || (exCode && mExCode === exCode);
+            });
+
+            if (matchedRel.length > 0) {
+              ex.materiaisColetados = matchedRel;
+              changed = true;
+            } else {
+              const localMatch = (Array.isArray(localExams) ? localExams : []).find(l => 
+                String(l.id || l.code || '').trim() === exId || (exCode && String(l.code || '').trim() === exCode)
+              );
+              if (localMatch && Array.isArray(localMatch.materiaisColetados) && localMatch.materiaisColetados.length > 0) {
+                ex.materiaisColetados = localMatch.materiaisColetados;
+                changed = true;
+              }
+            }
+          }
+        });
+
+        if (changed) {
+          saveJsonFile(EXAMS_FILE, JSON.stringify(examsCache, null, 2), 'utf-8');
+          saveCollectionToMysql('exams', examsCache).catch(err => console.error("Erro ao atualizar exames com materiais no MySQL:", err));
+        }
+      }
+    } catch (matErr) {
+      console.error("Erro ao reconstituir materiais nos exames no startup:", matErr);
+    }
     budgetsCache = await loadCollectionFromMysql('budgets', BUDGETS_FILE);
     blogPostsCache = await loadCollectionFromMysql('blog_posts', BLOG_FILE);
     supportLabsCache = await loadCollectionFromMysql('support_labs', SUPPORT_LABS_FILE);

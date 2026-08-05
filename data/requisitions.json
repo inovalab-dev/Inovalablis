@@ -42,7 +42,7 @@
     "isUrgent": false,
     "patientUsername": "lucianabar.1001",
     "patientPassword": "8645",
-    "status": "Coletado",
+    "status": "Em Digitação",
     "exams": [
       {
         "code": "HEMO01",
@@ -53,7 +53,24 @@
         "fasting": "Não obrigatório",
         "timeframe": "24 horas",
         "instructions": "Procedimento padrão do laboratório.",
-        "status": "A Coletar"
+        "status": "Conferido",
+        "result": "",
+        "resultado": "",
+        "unit": "",
+        "unidade": "",
+        "referenceValue": "",
+        "valorReferencia": "",
+        "method": "Colorimétrico",
+        "metodo": "Colorimétrico",
+        "interpretation": "",
+        "interpretacao": "",
+        "observations": "",
+        "observacoes": "",
+        "modeloLaudo": "Padrão LIS InovaLab",
+        "conferidoAt": "2026-08-05T17:39:54.961Z",
+        "conferidoBy": "Bioquímica",
+        "typedAt": "2026-08-05T17:39:54.961Z",
+        "typedBy": "Bioquímica"
       },
       {
         "code": "HEMO01",

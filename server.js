@@ -4297,8 +4297,21 @@ const formatDateTimeToBR = (dateVal) => {
   return str.replace(',', '').trim();
 };
 
-// Auxiliar para formatar exames e requisições no padrão da API
+// Auxiliar para formatar exames e requisições no padrão da API e do laudo
 function formatRequisitionExams(reqsFound) {
+  const catalogExams = getEnrichedExams();
+
+  const findCatalogExam = (code, name) => {
+    if (!code && !name) return null;
+    const cleanCode = String(code || '').trim().toLowerCase();
+    const cleanName = String(name || '').trim().toLowerCase();
+    return catalogExams.find(cat => {
+      const cCode = String(cat.code || cat.codigo || '').trim().toLowerCase();
+      const cName = String(cat.name || cat.nome || cat.tituloLaudo || '').trim().toLowerCase();
+      return (cleanCode && cCode === cleanCode) || (cleanName && cName === cleanName);
+    }) || null;
+  };
+
   return reqsFound.map(r => {
     const reqCode = r.requisitionCode || r.id;
     const reqStatus = r.status || 'Coletado';
@@ -4306,24 +4319,91 @@ function formatRequisitionExams(reqsFound) {
     const isReqLiberado = ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(reqStatusLower);
 
     const examsList = (r.exams || []).map(e => {
+      const eCode = e.code || e.codigo || '';
+      const eName = e.name || e.exame || e.titulo || e.tituloLaudo || '';
+      const catEx = findCatalogExam(eCode, eName);
+
       const eStatus = e.status || reqStatus || 'A Coletar';
       const eStatusLower = String(eStatus).toLowerCase();
       const isExamLiberado = isReqLiberado || ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(eStatusLower);
-      const pdfEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}&exame=${encodeURIComponent(e.code || '')}`;
+      const pdfEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}&exame=${encodeURIComponent(eCode)}`;
 
       const rawDataResultado = isExamLiberado 
         ? (e.dataResultado || e.resultDate || e.conferidoAt || e.liberadoAt || r.conferidoAt || r.liberadoAt || r.dataResultado || r.updatedAt || r.createdAt || '')
         : (e.dataResultado || e.resultDate || '');
 
+      const titulo = e.tituloLaudo || e.titulo || (catEx && catEx.tituloLaudo) || e.name || e.exame || (catEx && catEx.name) || eCode || 'EXAME';
+      const material = e.material || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro';
+      const metodo = e.metodo || e.method || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico';
+      const equipamento = e.equipamento || e.equipment || (catEx && (catEx.equipment || catEx.equipamento)) || '';
+
+      const refVal = e.valorReferencia || e.referenceValue || (catEx && (catEx.valorReferenciaLaudo || catEx.valorReferencia || catEx.referencia || catEx.valRef)) || 'Verificar cadastro técnico.';
+      const interpVal = e.interpretacao || e.interpretation || (catEx && catEx.interpretacao) || '';
+      const obsVal = e.observacoesLaudo || e.observacao || e.observations || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '';
+      const modeloLaudo = e.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
+
+      let rawResult = isExamLiberado ? (e.resultado !== undefined ? e.resultado : (e.result !== undefined ? e.result : '')) : '';
+      let unitVal = e.unidade || e.unit || (catEx && (catEx.unidade || catEx.unit)) || '';
+
+      let linhas = [];
+      if (Array.isArray(e.linhas) && e.linhas.length > 0) {
+        linhas = e.linhas.map(l => ({
+          PARAMETRO: l.PARAMETRO || l.part1 || 'Resultado',
+          resultado: isExamLiberado ? (l.resultado !== undefined ? l.resultado : '') : '',
+          unidade: l.unidade || unitVal || '',
+          referencia: l.referencia || refVal || ''
+        }));
+      } else {
+        linhas = [{
+          PARAMETRO: 'Resultado',
+          resultado: rawResult,
+          unidade: unitVal,
+          referencia: refVal
+        }];
+      }
+
+      const resultsFormatted = linhas.map(l => {
+        let valStr = String(l.resultado || '').trim();
+        let uStr = String(l.unidade || '').trim();
+        if (uStr && valStr.toLowerCase().endsWith(uStr.toLowerCase())) {
+          uStr = '';
+        }
+        const combinedVal = `${valStr}${uStr ? ' ' + uStr : ''}`.trim();
+        return {
+          parameter: l.PARAMETRO || 'Resultado',
+          value: combinedVal,
+          resultadoRaw: valStr,
+          unidade: l.unidade || '',
+          reference: l.referencia || refVal,
+          status: 'Normal'
+        };
+      });
+
       return {
-        codigo: e.code || '',
-        nome: e.name || e.exame || '',
-        material: e.material || 'Sangue',
+        codigo: eCode,
+        nome: eName,
+        name: titulo,
+        titulo: titulo,
+        material: material,
+        metodo: metodo,
+        equipamento: equipamento,
         status: eStatus,
         laudoDisponivel: isExamLiberado,
         pdfUrl: isExamLiberado ? pdfEndpoint : null,
         dataColeta: formatDateTimeToBR(e.dataColeta || e.coletaDate || r.createdAt || ''),
-        dataResultado: isExamLiberado ? formatDateTimeToBR(rawDataResultado) : ''
+        dataResultado: isExamLiberado ? formatDateTimeToBR(rawDataResultado) : '',
+        resultado: rawResult,
+        unidade: unitVal,
+        valorReferencia: refVal,
+        referenceValue: refVal,
+        interpretacao: interpVal,
+        interpretation: interpVal,
+        observacao: obsVal,
+        observations: obsVal,
+        observacoesLaudo: obsVal,
+        modeloLaudo: modeloLaudo,
+        linhas: linhas,
+        results: resultsFormatted
       };
     });
 
@@ -4337,7 +4417,8 @@ function formatRequisitionExams(reqsFound) {
       solicitante: r.doctorName || r.responsibleName || 'Dr. Solicitante',
       laudoDisponivel: hasAnyLiberado,
       pdfUrl: hasAnyLiberado ? pdfReqEndpoint : null,
-      listaExames: examsList
+      listaExames: examsList,
+      exams: examsList
     };
   });
 }
@@ -16407,26 +16488,18 @@ app.post('/resultados', (req, res) => {
     );
 
     if (foundReq) {
+      const formattedReqs = formatRequisitionExams([foundReq]);
+      const reqFormatted = formattedReqs[0];
       const hash = getOrCreateHashForPatient(foundReq.requisitionCode, foundReq.patientName);
       patientData = {
         protocol: foundReq.requisitionCode,
         hash: hash,
         password: foundReq.patientPassword,
         patientName: foundReq.patientName,
-        date: foundReq.createdAt ? foundReq.createdAt.split(' ')[0] : new Date().toLocaleDateString('pt-BR'),
-        doctor: 'Dr. Alisson Silva',
+        date: reqFormatted.data || (foundReq.createdAt ? foundReq.createdAt.split(' ')[0] : new Date().toLocaleDateString('pt-BR')),
+        doctor: foundReq.doctorName || 'Dr. Solicitante',
         status: foundReq.status || 'Liberado',
-        exams: [
-          { name: 'Hemograma Completo', results: [
-            { parameter: 'Hemácias', value: '4.90 M/µL', reference: '4.30 a 5.90 M/µL', status: 'Normal' },
-            { parameter: 'Hemoglobina', value: '14.5 g/dL', reference: '13.5 a 17.5 g/dL', status: 'Normal' },
-            { parameter: 'Plaquetas', value: '260.000 /µL', reference: '150.000 a 450.000 /µL', status: 'Normal' },
-            { parameter: 'Leucócitos', value: '6.800 /µL', reference: '4.000 a 11.000 /µL', status: 'Normal' }
-          ]},
-          { name: 'Glicemia de Jejum', results: [
-            { parameter: 'Glicose plasmática', value: '85 mg/dL', reference: '70 a 99 mg/dL', status: 'Normal' }
-          ]}
-        ]
+        exams: reqFormatted.exams
       };
     }
   }

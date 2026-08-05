@@ -261,37 +261,115 @@
           </div>
 
           <!-- Listagem de Resultados dos Exames -->
-          <div class="py-8 space-y-10">
+          <div class="py-6 space-y-8">
             <% patient.exams.forEach(exam => { %>
-              <div class="space-y-4">
-                <!-- Título do Exame -->
-                <div class="bg-brand-softBg/55 px-4 py-2 rounded-xl border border-brand-light/10">
-                  <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wide"><%= exam.name %></h3>
+              <%
+                const examTitle = exam.titulo || exam.name || exam.codigo || 'EXAME';
+                const examMaterial = exam.material || 'Soro';
+                const examMetodo = exam.metodo || exam.method || 'Colorimétrico';
+                const examEquip = exam.equipamento || exam.equipment || '';
+                const refValue = exam.valorReferencia || exam.referenceValue || '';
+                const interpValue = exam.interpretacao || exam.interpretation || '';
+                const obsValue = exam.observacoesLaudo || exam.observacao || exam.observations || '';
+                const hasLinhas = Array.isArray(exam.linhas) && exam.linhas.length > 0;
+                const hasResults = Array.isArray(exam.results) && exam.results.length > 0;
+              %>
+              <div class="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-gray-200 shadow-xs">
+                <!-- Título do Exame e Detalhes Técnicos (Material, Método, Equipamento) -->
+                <div class="bg-brand-softBg/80 p-3 rounded-xl border border-brand-light/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 class="text-sm font-extrabold text-brand-dark uppercase tracking-wide"><%= examTitle %></h3>
+                  <div class="flex flex-wrap items-center gap-2 text-[10.5px] font-mono text-gray-700">
+                    <% if (examMaterial) { %>
+                      <span class="bg-white px-2 py-0.5 rounded border border-gray-200">Material: <strong class="text-gray-900"><%= examMaterial %></strong></span>
+                    <% } %>
+                    <% if (examMetodo) { %>
+                      <span class="bg-white px-2 py-0.5 rounded border border-gray-200">Método: <strong class="text-gray-900"><%= examMetodo %></strong></span>
+                    <% } %>
+                    <% if (examEquip) { %>
+                      <span class="bg-white px-2 py-0.5 rounded border border-gray-200">Eq: <strong class="text-gray-900"><%= examEquip %></strong></span>
+                    <% } %>
+                  </div>
                 </div>
 
-                <!-- Tabela de Parâmetros e Resultados -->
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left text-xs font-semibold">
-                    <thead>
-                      <tr class="border-b border-gray-200 text-gray-400 font-medium text-[11px] pb-2">
-                        <th class="py-2">Parâmetro Analisado</th>
-                        <th class="py-2 text-center">Resultado Obtido</th>
-                        <th class="py-2 text-right">Valores de Referência</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                      <% exam.results.forEach(res => { %>
-                        <tr class="hover:bg-brand-softBg/10">
-                          <td class="py-3 text-brand-dark"><%= res.parameter %></td>
-                          <td class="py-3 text-center font-mono font-bold <%= res.status !== 'Normal' ? 'text-amber-600 bg-amber-50 rounded-lg px-2' : 'text-brand-dark' %>">
-                            <%= res.value %>
-                          </td>
-                          <td class="py-3 text-right text-gray-500 font-mono"><%- formatLisHtmlText(res.reference) %></td>
+                <!-- Tabela / Lista de Parâmetros e Resultados -->
+                <% if (hasLinhas) { %>
+                  <div class="bg-white p-3 rounded-xl border border-gray-200 space-y-2">
+                    <% exam.linhas.forEach(l => {
+                      const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+                      const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+                      let paramDisplay = isGenericParam 
+                        ? 'Resultado...:' 
+                        : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+                      let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+                      let unitStr = String(l.unidade || exam.unidade || exam.unit || '').trim();
+                      if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+                        unitStr = '';
+                      }
+                    %>
+                      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 text-xs font-mono border-b border-dashed border-gray-200 pb-2 last:border-0 last:pb-0">
+                        <span class="font-bold text-gray-900"><%= paramDisplay %></span>
+                        <div class="flex items-baseline space-x-1">
+                          <span class="font-extrabold text-gray-950 text-sm tracking-wide"><%= valStr %></span>
+                          <% if (unitStr) { %>
+                            <span class="text-xs font-bold text-gray-700"><%= unitStr %></span>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } else if (hasResults) { %>
+                  <div class="bg-white p-3 rounded-xl border border-gray-200 overflow-x-auto">
+                    <table class="w-full text-left text-xs font-semibold">
+                      <thead>
+                        <tr class="border-b border-gray-200 text-gray-400 font-medium text-[11px] pb-2">
+                          <th class="py-1.5">Parâmetro Analisado</th>
+                          <th class="py-1.5 text-center">Resultado Obtido</th>
+                          <th class="py-1.5 text-right">Valores de Referência</th>
                         </tr>
-                      <% }) %>
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100">
+                        <% exam.results.forEach(res => { %>
+                          <tr class="hover:bg-brand-softBg/10">
+                            <td class="py-2.5 text-brand-dark"><%= res.parameter %></td>
+                            <td class="py-2.5 text-center font-mono font-bold <%= res.status !== 'Normal' ? 'text-amber-600 bg-amber-50 rounded-lg px-2' : 'text-brand-dark' %>">
+                              <%= res.value %>
+                            </td>
+                            <td class="py-2.5 text-right text-gray-500 font-mono"><%- formatLisHtmlText(res.reference) %></td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } else if (exam.resultado || exam.result) { %>
+                  <div class="bg-white p-3 rounded-xl border border-gray-200 flex items-baseline justify-between text-xs font-mono">
+                    <span class="font-bold text-gray-900">Resultado...:</span>
+                    <span class="font-extrabold text-gray-950 text-sm tracking-wide"><%= exam.resultado || exam.result %> <%= exam.unidade || exam.unit || '' %></span>
+                  </div>
+                <% } %>
+
+                <!-- Bloco de Valores de Referência -->
+                <% if (refValue && refValue.trim()) { %>
+                  <div class="p-3 bg-white border border-gray-200 rounded-xl">
+                    <div class="font-bold text-[11px] text-gray-900 mb-1 border-b border-gray-100 pb-0.5 font-mono">Valores de Referência:</div>
+                    <div class="text-[11px] text-gray-700 whitespace-pre-line leading-relaxed font-mono"><%- formatLisHtmlText(refValue) %></div>
+                  </div>
+                <% } %>
+
+                <!-- Bloco de Interpretação / Nota Técnica (se houver) -->
+                <% if (interpValue && interpValue.trim()) { %>
+                  <div class="p-3 bg-slate-50 border border-gray-200 rounded-xl">
+                    <div class="font-bold text-[11px] text-gray-900 mb-1 border-b border-gray-100 pb-0.5 font-mono">Interpretação / Nota Técnica:</div>
+                    <div class="text-[11px] text-gray-700 whitespace-pre-line leading-relaxed font-mono"><%- formatLisHtmlText(interpValue) %></div>
+                  </div>
+                <% } %>
+
+                <!-- Bloco de Observações -->
+                <% if (obsValue && obsValue.trim()) { %>
+                  <div class="p-3 bg-slate-50 border border-gray-200 rounded-xl">
+                    <div class="text-[11px] text-gray-700 whitespace-pre-line text-justify leading-relaxed font-mono"><%- formatLisHtmlText(obsValue) %></div>
+                  </div>
+                <% } %>
+
               </div>
             <% }) %>
           </div>

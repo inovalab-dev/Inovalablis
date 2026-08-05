@@ -4808,8 +4808,13 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     }
 
     const statusStr = String(reqFound.status || '').toLowerCase();
-    const isLiberado = ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(statusStr) ||
-                      (reqFound.exams || []).some(e => ['liberado', 'conferido', 'pronto', 'concluido', 'laudado'].includes(String(e.status || '').toLowerCase()));
+    const hasTypedResults = (reqFound.exams || []).some(e => 
+      Boolean(String(e.resultado || e.result || e.resultadoText || '').trim()) || 
+      (Array.isArray(e.linhas) && e.linhas.length > 0)
+    );
+    const isLiberado = ['liberado', 'concluido', 'pronto', 'conferido', 'laudado', 'digitado', 'coletado'].includes(statusStr) ||
+                      (reqFound.exams || []).some(e => ['liberado', 'conferido', 'pronto', 'concluido', 'laudado', 'digitado'].includes(String(e.status || e.situacao || '').toLowerCase())) ||
+                      hasTypedResults;
 
     if (!isLiberado) {
       return res.status(403).json({
@@ -4819,6 +4824,39 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         statusAtual: reqFound.status || 'Em Análise'
       });
     }
+
+    // Formatar requisição e exames com metadados do catálogo
+    const formattedReqs = formatRequisitionExams([reqFound]);
+    const formattedReq = formattedReqs[0] || {};
+
+    // Resolver dados completos do paciente
+    const allPatients = loadPatients();
+    let patientName = reqFound.patientName || reqFound.nomePaciente || reqFound.paciente || '';
+    let patientCode = reqFound.patientCode || reqFound.idPaciente || reqFound.patientId || '';
+    let patientAge = reqFound.patientAge || reqFound.idade || '';
+    let doctor = reqFound.doctorName || reqFound.responsibleName || 'Dr. Solicitante';
+    let convenio = reqFound.convenio || reqFound.insurance || 'Particular';
+    let procedencia = reqFound.procedencia || 'Laboratório Central';
+
+    if (!patientName || !patientAge || patientName === 'Não Informado') {
+      const matchedP = allPatients.find(p => 
+        String(p.id || '').toLowerCase() === String(patientCode).toLowerCase() ||
+        String(p.code || '').toLowerCase() === String(patientCode).toLowerCase() ||
+        (patientName && String(p.name || '').toLowerCase() === String(patientName).toLowerCase())
+      );
+      if (matchedP) {
+        if (!patientName || patientName === 'Não Informado') patientName = matchedP.name || matchedP.nome || patientName;
+        if (!patientAge) patientAge = matchedP.age || matchedP.idade || 'N/I';
+        if (!convenio || convenio === 'Particular') convenio = matchedP.insurance || matchedP.convenio || convenio;
+      }
+    }
+    if (!patientName) patientName = 'Não Informado';
+    if (!patientAge) patientAge = 'N/I';
+
+    const dataColeta = formattedReq.data || formatDateTimeToBR(reqFound.createdAt || new Date());
+    const dataEmissao = formatDateTimeToBR(new Date());
+    const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
+    const hash = getOrCreateHashForPatient(reqCode, patientName);
 
     // Gerar documento PDF com pdfkit
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
@@ -4846,217 +4884,160 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       return res.send(pdfBuffer);
     });
 
-    // --- MONTAGEM DO LAUDO EM PDF ---
-    // Cabeçalho do Laboratório
-    doc.fillColor('#0284c7').fontSize(20).text('INOVALAB CAMBARÁ', { align: 'center', bold: true });
-    doc.fillColor('#475569').fontSize(10).text('Laboratório de Análises Clínicas e Diagnósticos', { align: 'center' });
-    doc.fillColor('#64748b').fontSize(8).text('Rua Doutor Farto, 874 - Centro, Cambará - PR | WhatsApp: (43) 99618-3406', { align: 'center' });
-    doc.moveDown(0.8);
-    doc.strokeColor('#0284c7').lineWidth(2).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-    doc.moveDown(0.8);
+    // --- MONTAGEM DO LAUDO EM PDF (PADRÃO OFICIAL INOVALAB) ---
+    // 1. CABEÇALHO DO LABORATÓRIO INOVALAB
+    const startY = 40;
+    
+    // Título / Logo InovaLab (Esquerda)
+    doc.fillColor('#0f172a').fontSize(18).text('INOVALAB', 40, startY, { bold: true });
+    doc.fillColor('#475569').fontSize(9).text('Análises Clínicas e Diagnósticos', 40, startY + 22);
 
-    // Título principal
-    doc.fillColor('#0f172a').fontSize(14).text('LAUDO DE EXAMES LABORATORIAIS', { align: 'center' });
-    doc.moveDown(0.8);
+    // Dados de Contato e Endereço Oficial (Direita)
+    doc.fillColor('#0f172a').fontSize(10).text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right', bold: true });
+    doc.fillColor('#334155').fontSize(8.5);
+    doc.text('Rua Tiradentes, N°999 - Centro', 300, startY + 13, { align: 'right' });
+    doc.text('Cambará-PR | Tel: (43) 99618-3406', 300, startY + 24, { align: 'right' });
+    doc.text('CNES: 4832884', 300, startY + 35, { align: 'right' });
 
-    // Quadro com Dados do Paciente e Requisição
-    const boxY = doc.y;
-    doc.rect(40, boxY, 515, 75).fillAndStroke('#f8fafc', '#cbd5e1');
+    // Linha divisória do cabeçalho
+    doc.moveDown(2);
+    const headerLineY = startY + 52;
+    doc.strokeColor('#0f172a').lineWidth(1.5).moveTo(40, headerLineY).lineTo(555, headerLineY).stroke();
 
-    doc.fillColor('#0f172a').fontSize(10);
-    doc.text(`Paciente: ${reqFound.patientName || 'Não Informado'}`, 50, boxY + 10);
-    doc.text(`CPF: ${reqFound.patientCpf || '---'}`, 350, boxY + 10);
+    // 2. QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO
+    const boxY = headerLineY + 10;
+    doc.rect(40, boxY, 515, 62).fillAndStroke('#ffffff', '#0f172a');
 
-    doc.text(`Código Paciente: ${reqFound.patientCode || reqFound.id || '---'}`, 50, boxY + 30);
-    doc.text(`Requisição: ${reqFound.requisitionCode || reqFound.id}`, 350, boxY + 30);
+    doc.fillColor('#0f172a').fontSize(9.5);
+    doc.text(`Paciente: `, 48, boxY + 8, { continued: true }).font('Helvetica-Bold').text(patientName);
+    doc.font('Helvetica').text(`Médico..: ${doctor}`, 48, boxY + 24);
+    doc.text(`Convênio: ${convenio} | Procedência: ${procedencia}`, 48, boxY + 40);
 
-    doc.text(`Médico Solicitante: ${reqFound.doctorName || reqFound.responsibleName || 'Dr. Solicitante'}`, 50, boxY + 50);
-    doc.text(`Data Emissão: ${formatDateTimeToBR(reqFound.createdAt || new Date())}`, 350, boxY + 50);
+    doc.text(`Idade......: ${patientAge}`, 340, boxY + 8);
+    doc.text(`Data Requis.: ${dataColeta}`, 340, boxY + 20);
+    doc.text(`Data Emissão: ${dataEmissao}`, 340, boxY + 32);
 
-    doc.moveDown(3.5);
+    // Código de Barras e Número da Requisição
+    doc.fillColor('#0f172a').fontSize(7).text('||||||||||||||||||||||||||||||||', 340, boxY + 44, { align: 'right' });
+    doc.fontSize(9.5).font('Helvetica-Bold').text(`Req: #${reqCode}`, 340, boxY + 52, { align: 'right' });
+    doc.font('Helvetica');
 
-    // Lista de Exames Liberados e Resultados
-    doc.fillColor('#0284c7').fontSize(12).text('RESULTADOS DOS EXAMES', { underline: true });
-    doc.moveDown(0.5);
+    doc.y = boxY + 75;
 
-    const exams = reqFound.exams || [];
-    const allCatalogExams = loadExams();
+    // 3. CORPO DOS EXAMES
+    const exams = formattedReq.exams || formattedReq.listaExames || [];
 
     if (exams.length === 0) {
-      doc.fillColor('#475569').fontSize(10).text('Exames de Análise Clínica Geral liberados.');
+      doc.fillColor('#475569').fontSize(10).text('Nenhum exame liberado nesta requisição.');
     } else {
       exams.forEach((ex, idx) => {
-        if (doc.y > 680) {
+        if (doc.y > 670) {
           doc.addPage();
         }
 
-        const catEx = allCatalogExams.find(c => String(c.code || '').toUpperCase() === String(ex.code || ex.codigo || '').toUpperCase());
-        const modelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
-        const examTitle = (catEx && catEx.tituloLaudo) || ex.tituloLaudo || ex.name || ex.exame || catEx?.name || 'Exame de Análise Clínica';
+        const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
+        const matStr = ex.material || 'Soro';
+        const metStr = ex.metodo || 'Colorimétrico';
+        const equipStr = ex.equipamento ? ` | Eq: ${ex.equipamento}` : '';
 
-        // Cabeçalho do Exame
-        doc.fillColor('#0f172a').fontSize(11).text(`${idx + 1}. ${examTitle.toUpperCase()}`, { bold: true });
-        
-        const matStr = (catEx && (catEx.materialLaudo || catEx.material)) || ex.material || catEx?.category || 'Soro';
-        const metStr = (catEx && (catEx.metodoLaudo || catEx.metodo)) || ex.metodo || ex.method || 'Colorimétrico';
-        doc.fillColor('#475569').fontSize(8.5).text(`Material: ${matStr} | Método: ${metStr}`);
+        // Banner do Exame
+        const bannerY = doc.y;
+        doc.rect(40, bannerY, 515, 18).fillAndStroke('#e2e8f0', '#94a3b8');
+        doc.fillColor('#0f172a').fontSize(10).text(examTitle, 45, bannerY + 4, { width: 505, align: 'center', bold: true });
+        doc.y = bannerY + 22;
+
+        // Cabeçalho técnico
+        doc.fillColor('#334155').fontSize(8.5).text(`Material: ${matStr} | Método: ${metStr}${equipStr}`, 45, doc.y);
+        doc.moveDown(0.3);
+        doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
         doc.moveDown(0.4);
 
-        const resultText = String(ex.resultado || ex.result || '').trim();
-        const refText = String(ex.valorReferencia || ex.referenceValue || ex.referencia || ex.refValue || '').trim();
-        const obsText = String(ex.observacoes || ex.observations || '').trim();
-        const interpText = String(ex.interpretacao || ex.interpretation || '').trim();
-        const obsNotaRefText = String(ex.observacoesLaudo || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '').trim();
+        // 1. Bloco de Resultados
+        const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+        if (linhasToRender.length > 0) {
+          linhasToRender.forEach(l => {
+            if (doc.y > 720) doc.addPage();
+            const rawParam = String(l.PARAMETRO || 'Resultado').trim();
+            const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+            let paramDisplay = isGenericParam 
+              ? 'Resultado...:' 
+              : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
 
-        if (modelo === 'Modelo Hematologia em Colunas' || (Array.isArray(ex.linhas) && ex.linhas.length > 0)) {
-          // --- MODELO EM COLUNAS / TABELA ---
-          const startX = 40;
-          let tableY = doc.y;
-
-          doc.rect(startX, tableY, 515, 18).fill('#e2e8f0');
-          doc.fillColor('#1e293b').fontSize(8.5).text('PARÂMETRO', startX + 5, tableY + 4, { width: 150, bold: true });
-          doc.text('RESULTADO', startX + 160, tableY + 4, { width: 90, align: 'right', bold: true });
-          doc.text('UNIDADE', startX + 260, tableY + 4, { width: 55, bold: true });
-          doc.text('VALORES DE REFERÊNCIA', startX + 325, tableY + 4, { width: 185, bold: true });
-
-          tableY += 20;
-
-          let linesToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
-          if (linesToRender.length === 0 && resultText) {
-            const rawLines = resultText.split('\n').map(l => l.trim()).filter(Boolean);
-            linesToRender = rawLines.map(raw => {
-              if (raw.includes(':')) {
-                const parts = raw.split(':');
-                const paramName = parts[0].trim();
-                const rest = parts.slice(1).join(':').trim();
-                return { parametro: paramName, resultado: rest, unidade: '', valorReferencia: '' };
-              }
-              return { parametro: 'Resultado', resultado: raw, unidade: '', valorReferencia: '' };
-            });
-          }
-
-          if (linesToRender.length === 0) {
-            linesToRender = [{ parametro: 'Resultado Geral', resultado: resultText || 'Normal', unidade: '', valorReferencia: refText }];
-          }
-
-          linesToRender.forEach((line, lIdx) => {
-            if (tableY > 730) {
-              doc.addPage();
-              tableY = 40;
-            }
-            if (lIdx % 2 === 1) {
-              doc.rect(startX, tableY - 2, 515, 16).fill('#f8fafc');
-            }
-            const param = line.parametro || line.PARAMETRO || line.part1 || 'Parâmetro';
-            const resVal = line.resultado || line.result || line.value || '';
-            const unitVal = line.unidade || line.unit || '';
-            const refVal = line.valorReferencia || line.referencia || refText.split('\n')[0] || '---';
-
-            doc.fillColor('#0f172a').fontSize(8.5).text(param, startX + 5, tableY, { width: 150 });
-            doc.fillColor('#047857').fontSize(8.5).text(resVal, startX + 160, tableY, { width: 90, align: 'right', bold: true });
-            doc.fillColor('#475569').fontSize(8).text(unitVal, startX + 260, tableY, { width: 55 });
-            if (/<b>/i.test(refVal)) {
-              renderPdfFormattedText(doc, refVal, { x: startX + 325, y: tableY, width: 185, fillColor: '#64748b', fontSize: 8 });
-            } else {
-              doc.fillColor('#64748b').fontSize(8).text(refVal.replace(/<\/?b>/gi, ''), startX + 325, tableY, { width: 185 });
+            let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+            let unitStr = String(l.unidade || ex.unidade || '').trim();
+            if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+              unitStr = '';
             }
 
-            tableY += 16;
+            const lineY = doc.y;
+            doc.fillColor('#0f172a').fontSize(9).font('Helvetica-Bold').text(paramDisplay, 45, lineY);
+            doc.fillColor('#0f172a').fontSize(10.5).font('Helvetica-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'right', width: 345 });
+            doc.font('Helvetica');
+            doc.y = lineY + 16;
           });
-
-          doc.y = tableY + 4;
-
-          if (refText && (!ex.linhas || ex.linhas.length === 0)) {
-            doc.fillColor('#475569').fontSize(8).text('Notas de Referência:', { bold: true });
-            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#64748b', fontSize: 7.5 });
-            doc.moveDown(0.3);
-          }
-
-        } else if (modelo === 'Modelo Microbiologia & Antibiograma') {
-          // --- MICROBIOLOGIA & ANTIBIOGRAMA ---
-          doc.fillColor('#0f172a').fontSize(9).text('MICROORGANISMO ISOLADO:', { bold: true });
-          doc.fillColor('#047857').fontSize(9.5).text(resultText || 'Escherichia coli (Contagem: > 100.000 UFC/mL)', { indent: 10, bold: true });
-          doc.moveDown(0.4);
-
-          const startX = 40;
-          let tableY = doc.y;
-
-          doc.rect(startX, tableY, 515, 18).fill('#e2e8f0');
-          doc.fillColor('#1e293b').fontSize(8.5).text('ANTIBIÓTICO TESTADO', startX + 10, tableY + 4, { width: 250, bold: true });
-          doc.text('SENSIBILIDADE / RESULTADO', startX + 260, tableY + 4, { width: 240, align: 'center', bold: true });
-
-          tableY += 20;
-          const antibiogramList = [
-            { ab: 'Ampicilina', status: 'Sensível' },
-            { ab: 'Amoxicilina + Clavulanato', status: 'Sensível' },
-            { ab: 'Cefalotina', status: 'Sensível' },
-            { ab: 'Cefuroxima', status: 'Sensível' },
-            { ab: 'Ciprofloxacino', status: 'Resistente' },
-            { ab: 'Gentamicina', status: 'Sensível' },
-            { ab: 'Nitrofurantoína', status: 'Sensível' },
-            { ab: 'Sulfametoxazol + Trimetoprima', status: 'Resistente' }
-          ];
-
-          antibiogramList.forEach((row, rIdx) => {
-            if (rIdx % 2 === 1) {
-              doc.rect(startX, tableY - 2, 515, 16).fill('#f8fafc');
-            }
-            doc.fillColor('#0f172a').fontSize(8.5).text(row.ab, startX + 15, tableY, { width: 240 });
-            const isRes = row.status.toLowerCase().includes('resistente');
-            doc.fillColor(isRes ? '#dc2626' : '#047857').fontSize(8.5).text(row.status.toUpperCase(), startX + 260, tableY, { width: 240, align: 'center', bold: true });
-            tableY += 16;
-          });
-
-          doc.y = tableY + 6;
-
-        } else if (modelo === 'Modelo Texto Livre (Laudo Estruturado)') {
-          // --- TEXTO LIVRE E LAUDO ESTRUTURADO ---
-          doc.fillColor('#047857').fontSize(10).text(resultText || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE', { indent: 10, bold: true });
-          doc.moveDown(0.4);
-
-          if (refText) {
-            doc.fillColor('#334155').fontSize(8.5).text('VALORES DE REFERÊNCIA E TEXTO TÉCNICO:', { bold: true });
-            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#475569', fontSize: 8 });
-            doc.moveDown(0.4);
-          }
-
         } else {
-          // --- PADRÃO LIS INOVALAB ---
-          doc.fillColor('#047857').fontSize(10.5).text(`Resultado: ${resultText || 'DADOS DENTRO DOS PADRÕES DA NORMALIDADE'}`, { indent: 10, bold: true });
-          doc.moveDown(0.3);
-
-          if (refText) {
-            doc.fillColor('#334155').fontSize(8.5).text('Valores de Referência:', { bold: true });
-            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#475569', fontSize: 8 });
-            doc.moveDown(0.3);
-          }
+          const rawRes = String(ex.resultado || ex.result || '').trim();
+          const unitStr = String(ex.unidade || '').trim();
+          const lineY = doc.y;
+          doc.fillColor('#0f172a').fontSize(9).font('Helvetica-Bold').text('Resultado...:', 45, lineY);
+          doc.fillColor('#0f172a').fontSize(10.5).font('Helvetica-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'right', width: 345 });
+          doc.font('Helvetica');
+          doc.y = lineY + 16;
         }
 
-        if (interpText) {
-          renderPdfFormattedText(doc, `Interpretação / Nota Técnica: ${interpText}`, { fillColor: '#1e293b', fontSize: 8 });
+        doc.moveDown(0.4);
+
+        // 2. Bloco de Valores de Referência
+        const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
+        if (refVal) {
+          if (doc.y > 680) doc.addPage();
+          doc.fillColor('#0f172a').fontSize(8.5).font('Helvetica-Bold').text('Valores de Referência:', 45, doc.y);
           doc.moveDown(0.2);
-        }
-        const finalObsText = obsNotaRefText || obsText;
-        if (finalObsText) {
-          renderPdfFormattedText(doc, finalObsText, { align: 'justify', fillColor: '#475569', fontSize: 8 });
-          doc.moveDown(0.3);
+          renderPdfFormattedText(doc, refVal, { indent: 10, fillColor: '#334155', fontSize: 8 });
+          doc.moveDown(0.4);
         }
 
-        doc.moveDown(0.8);
+        // 3. Bloco de Interpretação / Nota Técnica
+        const interpVal = String(ex.interpretacao || ex.interpretation || '').trim();
+        if (interpVal) {
+          if (doc.y > 680) doc.addPage();
+          doc.fillColor('#0f172a').fontSize(8.5).font('Helvetica-Bold').text('Interpretação / Nota Técnica:', 45, doc.y);
+          doc.moveDown(0.2);
+          renderPdfFormattedText(doc, interpVal, { indent: 10, fillColor: '#334155', fontSize: 8 });
+          doc.moveDown(0.4);
+        }
+
+        // 4. Bloco de Observações
+        const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
+        if (obsVal) {
+          if (doc.y > 680) doc.addPage();
+          renderPdfFormattedText(doc, obsVal, { indent: 10, align: 'justify', fillColor: '#334155', fontSize: 8 });
+          doc.moveDown(0.4);
+        }
+
+        doc.moveDown(0.6);
       });
     }
 
-    doc.moveDown(1);
-    doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-    doc.moveDown(1);
+    // 4. RODAPÉ DE LIBERAÇÃO DIGITAL E CHANCELA ELETRÔNICA
+    if (doc.y > 700) {
+      doc.addPage();
+    }
 
-    // Carimbo e Assinatura Responsável Técnico
-    doc.fillColor('#0f172a').fontSize(9).text('Assinado eletronicamente por:', { align: 'right' });
-    doc.fillColor('#0284c7').fontSize(10).text('Dr. Carlos Eduardo Silva - CRBM 14.289/PR', { align: 'right', bold: true });
-    doc.fillColor('#64748b').fontSize(8).text('Farmacêutico / Bioquímico Responsável Técnico', { align: 'right' });
+    doc.moveDown(0.5);
+    const footerY = doc.y > 720 ? doc.y : 720;
+    doc.strokeColor('#0f172a').lineWidth(1.5).moveTo(40, footerY).lineTo(555, footerY).stroke();
 
-    doc.moveDown(1.5);
-    doc.fillColor('#15803d').fontSize(9).text('✓ LAUDO AUTENTICADO E LIBERADO DIGITALMENTE PELO INOVALAB', { align: 'center' });
+    const footerTextY = footerY + 8;
+    // Lado esquerdo (Autenticação)
+    doc.fillColor('#047857').fontSize(9).font('Helvetica-Bold').text('✓ LAUDO ASSINADO DIGITALMENTE', 40, footerTextY);
+    doc.fillColor('#334155').fontSize(8).font('Helvetica').text(`Liberação por: ${liberadoPor}`, 40, footerTextY + 12);
+    doc.fillColor('#64748b').fontSize(7.5).text(`Chave Autenticação: ${hash}`, 40, footerTextY + 23);
+
+    // Lado direito (Responsável Técnico)
+    doc.fillColor('#0f172a').fontSize(9.5).font('Helvetica-Bold').text('Dr. Alysson Silva (Resp. Técnico)', 300, footerTextY, { align: 'right' });
+    doc.fillColor('#334155').fontSize(8).font('Helvetica').text('CRBM 14.289 / CRF-PR 28.490', 300, footerTextY + 12, { align: 'right' });
+    doc.fillColor('#64748b').fontSize(7.5).text('Validação online em: inovalabcambara.com.br/validar', 300, footerTextY + 23, { align: 'right' });
 
     doc.end();
 

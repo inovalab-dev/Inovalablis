@@ -3,12 +3,195 @@
     "id": "1",
     "name": "Hemograma Completo",
     "category": "Sangue",
-    "fasting": "Recomendado 3h",
+    "fasting": "Não obrigatório",
     "timeframe": "24 horas",
-    "instructions": "Evitar o consumo de bebidas alcoólicas nas 72 horas que antecedem o exame. Evitar esforço físico intenso antes da coleta.",
+    "instructions": "",
     "code": "HEMO01",
     "pricePrivate": 35,
-    "supportLabCode": "Próprio"
+    "supportLabCode": "Próprio",
+    "materiaisColetados": [
+      {
+        "id": 1785961453588,
+        "materialCodigo": "16",
+        "material": "16",
+        "nome": "Sangue",
+        "abrev": "SGE",
+        "prazo": "24 horas",
+        "metodo": "Automatizado",
+        "amb": "",
+        "cbhpm": "",
+        "pagina": "1",
+        "ordem": "1",
+        "copias": "0",
+        "proibir": false,
+        "naoImprimir": false,
+        "proibidoApoio": false,
+        "paginaSeparada": false,
+        "coleta": "Evitar o consumo de bebidas alcoólicas nas 72 horas que antecedem o exame. Evitar esforço físico intenso antes da coleta.",
+        "preparo": "Recomendado 3h",
+        "amostra": "",
+        "inadequada": "",
+        "referencia": "",
+        "procedimento": "",
+        "conservacao": "",
+        "mensagem": "",
+        "planilha": "",
+        "sorotecaDias": "15",
+        "sorotecaUnidade": "dia(s)",
+        "sorotecaConservacao": "Congelado a -20°C",
+        "recipientesColeta": [
+          {
+            "nome": "Tubo Tampa Roxa (EDTA)",
+            "qtde": 1,
+            "volume": "0,100",
+            "uni": "mL"
+          }
+        ],
+        "recipientesTriagem": [
+          {
+            "nome": "Microtubo Eppendorf 1.5ml",
+            "qtde": 1,
+            "volume": "1,000",
+            "uni": "mL"
+          }
+        ],
+        "insumos": [
+          {
+            "nome": "Tubo EDTA 4ml",
+            "qtde": 1,
+            "utilizado": "Requisição"
+          }
+        ],
+        "taxas": [
+          {
+            "codigo": "TX-01",
+            "descricao": "Taxa de Coleta Domiciliar"
+          }
+        ],
+        "custoSimples": "0.0000",
+        "precoCusto": "0.00",
+        "precoBase": "0.00",
+        "precoFator": "1.00",
+        "precoCh": "0.00",
+        "precoFilme": "0.00",
+        "priceTableValues": [
+          {
+            "tableId": "TAB-1",
+            "tableCode": "1",
+            "tableName": "Particular",
+            "convenioNome": "Sem Convênio",
+            "amb": "",
+            "valor": 35,
+            "proibir": false
+          },
+          {
+            "tableId": "TAB-2",
+            "tableCode": "2",
+            "tableName": "Unimed TUSS 2026",
+            "convenioNome": "Sem Convênio",
+            "amb": "",
+            "valor": 0,
+            "proibir": false
+          }
+        ],
+        "modeloLaudo": "Padrão LIS InovaLab",
+        "observacoesLaudo": "<b>Referência bibliográfica:</b>\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
+        "tituloLaudo": "HEMOGRAMA",
+        "materialLaudo": "Soro",
+        "metodoLaudo": "Colorimétrico",
+        "valorReferenciaLaudo": "<b>Adultos.........:</b> 3,5 a 5,5 g/dL\n\n<b>Crianças e adolescentes</b>\n1 a 30 dias.....: 2,6 a 4,3 g/dL\n31 a 182 dias...: 2,8 a 4,6 g/dL\n183 a 365 dias..: 2,8 a 4,8 g/dL\n1 a 18 anos.....: 2,9 a 4,7 g/dL",
+        "lisLayouts": {},
+        "medInterferentes": "",
+        "medSuspender": "",
+        "conveniosRegras": [
+          {
+            "nome": "Unimed Regional",
+            "tuss": "40304361",
+            "cbhpm": "4.03.04.36-1"
+          }
+        ],
+        "setorBancada": "",
+        "loinc": "",
+        "unidadeMedida": "",
+        "validadeLaudo": "30",
+        "labApoio": "",
+        "codigoApoio": "",
+        "tempTransporte": "Refrigerado (2°C a 8°C)",
+        "recipienteTransporte": "",
+        "labExternoList": [
+          {
+            "codigo": 1,
+            "lab": "Alvaro",
+            "exame": "Hormônio Tireoestimulante (TSH)",
+            "prazo": "0",
+            "valor": "1,6000",
+            "metodo": "Alvaro",
+            "bloq": false,
+            "padrao": true
+          },
+          {
+            "codigo": 2,
+            "lab": "HPardini",
+            "exame": "TSH ULTRA SENSÍVEL",
+            "prazo": "0",
+            "valor": "1,5500",
+            "metodo": "Pardini",
+            "bloq": false
+          },
+          {
+            "codigo": 3,
+            "lab": "DB Diagnosticos",
+            "exame": "TSH - HORMÔNIO TIREOESTIMULANTE",
+            "prazo": "0",
+            "valor": "0,0000",
+            "metodo": "DB Diagnosticos",
+            "bloq": true
+          }
+        ],
+        "codigoHl7": "",
+        "equipamento": "",
+        "canal": "Bidirecional (ASTM/HL7)",
+        "pacs": false
+      }
+    ],
+    "jalisCode": "HEMO01",
+    "codigoAlvaro": "",
+    "codigoPardini": "",
+    "supportLabsData": {},
+    "sinonimia": "",
+    "idadeMin": "0",
+    "idadeMinUnidade": "Anos",
+    "idadeMax": "0",
+    "idadeMaxUnidade": "Anos",
+    "sexo": "Ambos",
+    "amostras": "0",
+    "tagsResultado": "",
+    "bloquearExame": false,
+    "permitirSalvarParcialmente": false,
+    "servico": false,
+    "importarPdf": true,
+    "tipoBPA": "Individualizado",
+    "setores": [
+      {
+        "id": 1,
+        "codigo": "1",
+        "descricao": "Sangue",
+        "sigla": "",
+        "mapa": true,
+        "etqCol": true,
+        "etqTri": true
+      }
+    ],
+    "historico": "",
+    "webConfig": {},
+    "modeloLaudo": "Padrão LIS InovaLab",
+    "formularioColeta": "Ficha Padrão de Coleta",
+    "cabecalho": "",
+    "observacoesLaudo": "<b>Referência bibliográfica:</b>\r\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
+    "tituloLaudo": "HEMOGRAMA",
+    "materialLaudo": "Soro",
+    "metodoLaudo": "Colorimétrico",
+    "valorReferenciaLaudo": "<b>Adultos.........:</b> 3,5 a 5,5 g/dL\r\n\r\n<b>Crianças e adolescentes</b>\r\n1 a 30 dias.....: 2,6 a 4,3 g/dL\r\n31 a 182 dias...: 2,8 a 4,6 g/dL\r\n183 a 365 dias..: 2,8 a 4,8 g/dL\r\n1 a 18 anos.....: 2,9 a 4,7 g/dL"
   },
   {
     "id": "2",

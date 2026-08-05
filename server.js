@@ -4722,66 +4722,64 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
   }
 });
 
-// Helper para renderizar texto no PDFKit com suporte a negrito através de <b>TEXTO</b>
-function renderPdfFormattedText(doc, textStr, options = {}) {
-  if (!textStr) return;
-  const str = String(textStr);
-  const { fillColor, fontSize, font, ...pdfOptions } = options;
-  if (fillColor) doc.fillColor(fillColor);
-  if (fontSize) doc.fontSize(fontSize);
+// Helper para renderizar textos com formatação (tags <b> e quebras \n) no PDFKit
+function renderPdfFormattedText(doc, text, options = {}) {
+  if (!text) return;
 
-  const baseFont = font || 'Courier';
-  const boldFont = baseFont.includes('Helvetica') ? 'Helvetica-Bold' : 'Courier-Bold';
+  const {
+    indent = 45,
+    fillColor = '#334155',
+    fontSize = 8.5,
+    align = 'left',
+    width = 515
+  } = options;
 
-  if (!/<b>/i.test(str)) {
-    doc.font(baseFont).text(str.replace(/<\/?b>/gi, ''), pdfOptions);
-    return;
-  }
+  // 1. Normaliza as quebras de linha literais (\n)
+  const cleanText = String(text).replace(/\\n/g, '\n');
 
-  const parseSegments = (rawText) => {
-    const segments = [];
-    const regex = /<b>([\s\S]*?)<\/b>/gi;
-    let lastIdx = 0;
-    let match;
-    while ((match = regex.exec(rawText)) !== null) {
-      if (match.index > lastIdx) {
-        segments.push({ text: rawText.substring(lastIdx, match.index), bold: false });
-      }
-      segments.push({ text: match[1], bold: true });
-      lastIdx = regex.lastIndex;
-    }
-    if (lastIdx < rawText.length) {
-      segments.push({ text: rawText.substring(lastIdx), bold: false });
-    }
-    return segments;
-  };
+  // 2. Divide por linhas preservando linhas vazias
+  const lines = cleanText.split('\n');
 
-  const lines = str.split('\n');
-  lines.forEach((line, lIdx) => {
-    const isLastLine = lIdx === lines.length - 1;
-    const segments = parseSegments(line);
-    if (segments.length === 0) {
-      doc.font(baseFont).text('', { ...pdfOptions, continued: !isLastLine });
+  lines.forEach((line) => {
+    // Se for linha em branco, aplica salto vertical no PDF
+    if (line.trim() === '') {
+      doc.moveDown(0.5);
       return;
     }
 
-    segments.forEach((seg, sIdx) => {
-      const isLastSeg = sIdx === segments.length - 1;
-      const opts = {
-        ...pdfOptions,
-        continued: !isLastSeg || !isLastLine
+    // 3. Separa o texto pelas tags <b> e </b>
+    const parts = line.split(/(<b>.*?<\/b>)/g);
+
+    parts.forEach((part, index) => {
+      const isLastPart = index === parts.length - 1;
+      const isFirstPart = index === 0;
+
+      const textOpts = {
+        continued: !isLastPart,
+        align: align,
+        width: width
       };
 
-      if (seg.bold) {
-        doc.font(boldFont).text(seg.text, opts);
-      } else {
-        doc.font(baseFont).text(seg.text, opts);
+      // Garante alinhamento com a margem esquerda na primeira palavra da linha
+      if (isFirstPart) {
+        textOpts.x = indent;
+      }
+
+      if (part.startsWith('<b>') && part.endsWith('</b>')) {
+        const boldContent = part.replace(/<\/?b>/g, '');
+        doc.fillColor(fillColor)
+           .fontSize(fontSize)
+           .font('Courier-Bold')
+           .text(boldContent, textOpts);
+      } else if (part) {
+        doc.fillColor(fillColor)
+           .fontSize(fontSize)
+           .font('Courier')
+           .text(part, textOpts);
       }
     });
   });
-  doc.font(baseFont);
 }
-
 // 5. ENDPOINT PARA EMISSÃO / DOWNLOAD DO LAUDO EM PDF (/laudo/pdf)
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -4887,21 +4885,20 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       return res.send(pdfBuffer);
     });
 
-    // --- MONTAGEM DO LAUDO EM PDF (PADRÃO EXACTO DO LAUDO VISUALIZADO INOVALAB) ---
+    // --- MONTAGEM DO LAUDO EM PDF ---
     const startY = 35;
     
-    // Logo Oficial InovaLab (se existir em /public/logo-inovalab.png ou SVG fallback com texto)
+    // Logo Oficial InovaLab
     const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, startY, { width: 140 });
     } else {
-      // Fallback elegante
       doc.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
       doc.fillColor('#1E3E17').text('LAB');
       doc.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
     }
 
-    // Dados da Instituição (Direita - Alinhado)
+    // Dados da Instituição
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
     doc.text('Rua Tiradentes,999 - Centro Cambará-PR', 300, startY + 12, { align: 'right' });
@@ -4909,7 +4906,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });
 
-    // 2. QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO (MOLDURA COM BORDA DUPLA / SOLIDA IGUAL À DA TELA)
+    // 2. QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO
     const boxY = startY + 58;
     doc.rect(40, boxY, 515, 55).fillAndStroke('#ffffff', '#0f172a');
     doc.lineWidth(1.2);
@@ -4920,17 +4917,11 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.text(`Convênio.....: ${convenio}`, 48, boxY + 32);
     doc.text(`Procedência...: ${procedencia}`, 48, boxY + 44, { continued: true });
 
-    // Coluna da Direita (Divisor vertical e Metadados)
-    //doc.moveTo(330, boxY).lineTo(330, boxY + 65).strokeColor('#cbd5e1').lineWidth(0.8).stroke();
-
     doc.fillColor('#0f172a').fontSize(8.5).font('Courier');
     doc.fontSize(10).font('Courier-Bold').text('Requisição..:'+ String(reqCode), 40, boxY + 8, { align: 'right' });
     doc.font('Courier').text(`Idade......: ${patientAge}`, 40, boxY + 20, { align: 'right' });
     doc.text(`Data Requis.: ${dataColeta}`, 100, boxY + 32, { align: 'right' });
     doc.text(`Data Emissão: ${dataEmissao}`, 30, boxY + 44, { align: 'right' });
-
-    // Código de Barras e Número da Requisição
-    // doc.fillColor('#0f172a').fontSize(7.5).font('Courier-Bold').text('||||||||||||||||||||||||||||||||', 338, boxY + 44, { align: 'right' });
 
     doc.y = boxY + 65;
 
@@ -4948,18 +4939,17 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
-        const equipStr = ex.equipamento ? ` | Equipamento: ${ex.equipamento}` : '';
 
-        // Banner do Exame (Caixa Cinza Destaque)
+        // Banner do Exame
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
         doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
         doc.y = bannerY + 30;
 
         // Cabeçalho técnico (Material e Método)
-        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material:`, 45, doc.y,{ continued: true });
-        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y,{ continued: true });
-        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método:`, 45, doc.y,{ continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material:`, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método:`, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
         doc.moveDown(0.3);
         doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
@@ -4967,7 +4957,6 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
         // 1. Bloco de Resultados
         const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
-        const resBoxY = doc.y;
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
@@ -5005,32 +4994,35 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         if (refVal) {
           if (doc.y > 670) doc.addPage();
           const refBoxY = doc.y;
-          doc.rect(40, refBoxY, 515, 0).strokeColor('#e2e8f0'); // reserva para borda
           doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', 45, refBoxY + 4);
           doc.moveDown(0.2);
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(45, doc.y).lineTo(550, doc.y).stroke();
           doc.moveDown(0.3);
-          renderPdfFormattedText(doc, refVal, { indent: 5, fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
+
+          renderPdfFormattedText(doc, refVal, {
+            indent: 45,
+            width: 515,
+            align: 'left',
+            fillColor: '#334155',
+            fontSize: 8.5
+          });
+
           doc.moveDown(0.5);
         }
 
-        // 3. Bloco de Interpretação / Nota Técnica
-        const interpVal = String(ex.interpretacao || ex.interpretation || '').trim();
-        if (interpVal) {
-          if (doc.y > 670) doc.addPage();
-          doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Interpretação / Nota Técnica:', 45, doc.y);
-          doc.moveDown(0.2);
-          doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(45, doc.y).lineTo(550, doc.y).stroke();
-          doc.moveDown(0.3);
-          renderPdfFormattedText(doc, interpVal, { indent: 5, fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
-          doc.moveDown(0.5);
-        }
-
-        // 4. Bloco de Observações
+        // 3. Bloco de Observações
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
           if (doc.y > 670) doc.addPage();
-          renderPdfFormattedText(doc, obsVal, { indent: 5, align: 'justify', fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
+
+          renderPdfFormattedText(doc, obsVal, {
+            indent: 45,
+            width: 515,
+            align: 'justify',
+            fillColor: '#334155',
+            fontSize: 8.5
+          });
+
           doc.moveDown(0.5);
         }
 
@@ -5038,7 +5030,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       });
     }
 
-    // 4. RODAPÉ DE LIBERAÇÃO DIGITAL E CHANCELA ELETRÔNICA (LINHA DE FECHAMENTO IGUAL À VISUALIZADA)
+    // 4. RODAPÉ DE LIBERAÇÃO DIGITAL
     if (doc.y > 720) {
       doc.addPage();
     }
@@ -5448,6 +5440,7 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
   }
   res.redirect('/admin/exames');
 });
+
 
 function parsePriceValue(val) {
   if (val === undefined || val === null) return 0;

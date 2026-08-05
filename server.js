@@ -4513,15 +4513,14 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
         const catEx = allCatalogExams.find(c => String(c.code || '').toUpperCase() === String(ex.code || ex.codigo || '').toUpperCase());
         const modelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
-        const examTitle = ex.name || ex.exame || catEx?.name || 'Exame de Análise Clínica';
+        const examTitle = (catEx && catEx.tituloLaudo) || ex.tituloLaudo || ex.name || ex.exame || catEx?.name || 'Exame de Análise Clínica';
 
         // Cabeçalho do Exame
         doc.fillColor('#0f172a').fontSize(11).text(`${idx + 1}. ${examTitle.toUpperCase()}`, { bold: true });
         
-        const matStr = ex.material || catEx?.category || 'Sangue Total';
-        const metStr = ex.metodo || ex.method || 'Automatizado';
-        const eqStr = ex.equipamento || ex.equipment || 'Urit 8021A - Automatizado';
-        doc.fillColor('#475569').fontSize(8.5).text(`Material: ${matStr} | Método: ${metStr} | Equipamento: ${eqStr}`);
+        const matStr = (catEx && (catEx.materialLaudo || catEx.material)) || ex.material || catEx?.category || 'Soro';
+        const metStr = (catEx && (catEx.metodoLaudo || catEx.metodo)) || ex.metodo || ex.method || 'Colorimétrico';
+        doc.fillColor('#475569').fontSize(8.5).text(`Material: ${matStr} | Método: ${metStr}`);
         doc.moveDown(0.4);
 
         const resultText = String(ex.resultado || ex.result || '').trim();
@@ -4660,13 +4659,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           doc.fillColor('#1e293b').fontSize(8).text(`Interpretação / Nota Técnica: ${interpText}`, { italic: true });
           doc.moveDown(0.2);
         }
-        if (obsText) {
-          doc.fillColor('#64748b').fontSize(8).text(`Observações: ${obsText}`);
-          doc.moveDown(0.3);
-        }
-        if (obsNotaRefText) {
-          doc.fillColor('#334155').fontSize(8.5).text('Observações/Nota/Referências:', { bold: true });
-          doc.fillColor('#475569').fontSize(8).text(obsNotaRefText, { align: 'justify' });
+        const finalObsText = obsNotaRefText || obsText;
+        if (finalObsText) {
+          doc.fillColor('#475569').fontSize(8).text(finalObsText, { align: 'justify' });
           doc.moveDown(0.3);
         }
 

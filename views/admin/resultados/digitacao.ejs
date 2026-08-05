@@ -382,9 +382,9 @@
                 LIPASE
               </div>
 
-              <!-- DADOS TÉCNICOS (MATERIAL, MÉTODO, EQUIPAMENTO) -->
+              <!-- DADOS TÉCNICOS (MATERIAL, MÉTODO) -->
               <div id="laudo-block-tech" class="text-[10.5px] space-y-1 text-slate-800 border-b border-slate-200 pb-2 font-mono">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div class="flex items-center gap-1">
                     <span class="text-slate-600 font-medium shrink-0 laudo-label">Material:</span>
                     <input
@@ -400,16 +400,6 @@
                       type="text"
                       id="f-method"
                       placeholder="Ex: Colorimétrico"
-                      class="w-full px-2 py-0.5 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
-                    />
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-slate-600 font-medium shrink-0 laudo-label">Equipamento:</span>
-                    <input
-                      type="text"
-                      id="f-equipment"
-                      placeholder="Ex: Urit 8021A"
-                      value="Urit 8021A - Automatizado"
                       class="w-full px-2 py-0.5 text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 focus:border-[#284701] focus:bg-white rounded font-mono"
                     />
                   </div>
@@ -1415,21 +1405,21 @@
     return match ? match[0].trim() : '';
   }
 
-  // Helper para extrair valor de referência com fallback completo ao modelo cadastrado
+  // Helper para extrair valor de referência com prioridade ao modelo cadastrado
   function extractExamReferenceValue(ex, catEx, currentInputValue) {
     let val = (typeof currentInputValue === 'string' && currentInputValue.trim()) ? currentInputValue.trim() : '';
-    if (!val && ex) {
-      val = (typeof ex.valorReferenciaLaudo === 'string' && ex.valorReferenciaLaudo.trim()) ? ex.valorReferenciaLaudo.trim() :
-            (typeof ex.valorReferencia === 'string' && ex.valorReferencia.trim()) ? ex.valorReferencia.trim() :
-            (typeof ex.referenceValue === 'string' && ex.referenceValue.trim()) ? ex.referenceValue.trim() :
-            (typeof ex.referencia === 'string' && ex.referencia.trim()) ? ex.referencia.trim() : '';
-    }
     if (!val && catEx) {
       val = (typeof catEx.valorReferenciaLaudo === 'string' && catEx.valorReferenciaLaudo.trim()) ? catEx.valorReferenciaLaudo.trim() :
             (typeof catEx.valorReferencia === 'string' && catEx.valorReferencia.trim()) ? catEx.valorReferencia.trim() :
             (typeof catEx.referenceValue === 'string' && catEx.referenceValue.trim()) ? catEx.referenceValue.trim() :
             (typeof catEx.referencia === 'string' && catEx.referencia.trim()) ? catEx.referencia.trim() :
             (typeof catEx.valRef === 'string' && catEx.valRef.trim()) ? catEx.valRef.trim() : '';
+    }
+    if (!val && ex) {
+      val = (typeof ex.valorReferenciaLaudo === 'string' && ex.valorReferenciaLaudo.trim()) ? ex.valorReferenciaLaudo.trim() :
+            (typeof ex.valorReferencia === 'string' && ex.valorReferencia.trim()) ? ex.valorReferencia.trim() :
+            (typeof ex.referenceValue === 'string' && ex.referenceValue.trim()) ? ex.referenceValue.trim() :
+            (typeof ex.referencia === 'string' && ex.referencia.trim()) ? ex.referencia.trim() : '';
     }
     return val;
   }
@@ -1528,15 +1518,15 @@
 
       const resText = (isCurrentActive ? document.getElementById('f-result')?.value : (ex.result || ex.resultado || '')) || 'Sem resultado';
       const unitVal = (isCurrentActive ? document.getElementById('f-unit')?.value : (ex.unidade || ex.unit)) || (catEx && (catEx.unidade || catEx.unit)) || '';
-      const metodo = (isCurrentActive ? document.getElementById('f-method')?.value : (ex.metodo || ex.method)) || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico';
-      const material = (isCurrentActive ? document.getElementById('f-material')?.value : ex.material) || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro';
-      const eq = (isCurrentActive ? document.getElementById('f-equipment')?.value : (ex.equipamento || ex.equipment)) || (catEx && (catEx.equipment || catEx.equipamento)) || '';
-      const obs = (isCurrentActive ? document.getElementById('f-observations')?.value : (ex.observacao || ex.observations)) || '';
+      const metodo = (catEx && (catEx.metodoLaudo || catEx.metodo)) || (isCurrentActive ? document.getElementById('f-method')?.value : (ex.metodo || ex.method)) || 'Colorimétrico';
+      const material = (catEx && (catEx.materialLaudo || catEx.material)) || (isCurrentActive ? document.getElementById('f-material')?.value : ex.material) || 'Soro';
+      const obs = (isCurrentActive ? document.getElementById('f-observations')?.value : (ex.observacao || ex.observations)) || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '';
+      const obsLaudo = (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || ex.observacoesLaudo || '';
       const st = isCurrentActive ? document.getElementById('f-status')?.value : (ex.status || ex.situacao || 'Digitado');
 
       return {
         codigo: code,
-        titulo: ex.name || ex.titulo || (catEx && (catEx.tituloLaudo || catEx.name)) || code,
+        titulo: (catEx && catEx.tituloLaudo) || ex.tituloLaudo || (catEx && catEx.name) || ex.name || ex.titulo || code,
         resultadoText: String(resText).trim() || 'Sem resultado',
         resultado: String(resText).trim() || 'Sem resultado',
         unidade: unitVal,
@@ -1544,8 +1534,8 @@
         valorReferencia: refVal,
         metodo: metodo,
         material: material,
-        equipamento: eq,
         observacao: obs,
+        observacoesLaudo: obsLaudo,
         situacao: st || 'Digitado'
       };
     });
@@ -1571,7 +1561,7 @@
   }
 
   function toggleExamFormReadOnly(isReadOnly) {
-    const fieldIds = ['f-material', 'f-method', 'f-equipment', 'f-ref-value', 'f-result', 'f-unit', 'f-interpretation', 'f-observations', 'f-modelo-laudo'];
+    const fieldIds = ['f-material', 'f-method', 'f-ref-value', 'f-result', 'f-unit', 'f-interpretation', 'f-observations', 'f-modelo-laudo'];
     fieldIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -1722,17 +1712,17 @@
     const catEx = findCatalogExam(ex.code || ex.codigo || examCode, ex.name || ex.titulo || ex.desc);
 
     const sheetTitleEl = document.getElementById('laudo-sheet-exam-title');
+    const customTitle = (catEx && catEx.tituloLaudo) || ex.tituloLaudo || (catEx && catEx.name) || ex.name || ex.code || 'EXAME';
     if (sheetTitleEl) {
-      const customTitle = ex.tituloLaudo || (catEx && (catEx.tituloLaudo || catEx.name)) || ex.name || ex.code || 'EXAME';
       sheetTitleEl.textContent = customTitle.toUpperCase();
     }
+    setTxt('m-active-title', (ex.code ? ex.code + ' - ' : '') + customTitle);
 
-    const materialVal = ex.material || (catEx && (catEx.materialLaudo || catEx.material)) || ex.category || 'Soro';
+    const materialVal = (catEx && (catEx.materialLaudo || catEx.material)) || ex.material || ex.category || 'Soro';
     setVal('f-material', materialVal);
     setTxt('m-active-material-header', materialVal);
 
-    setVal('f-method', ex.method || ex.metodo || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico');
-    setVal('f-equipment', ex.equipment || ex.equipamento || (catEx && (catEx.equipment || catEx.equipamento)) || 'Urit 8021A - Automatizado');
+    setVal('f-method', (catEx && (catEx.metodoLaudo || catEx.metodo)) || ex.method || ex.metodo || 'Colorimétrico');
     setVal('f-result', ex.result || ex.resultado || '');
 
     const refVal = extractExamReferenceValue(ex, catEx);
@@ -1743,7 +1733,8 @@
     setVal('f-unit', unitVal);
 
     setVal('f-interpretation', ex.interpretation || ex.interpretacao || '');
-    setVal('f-observations', ex.observations || ex.observacoes || 'Amostra coletada e identificada pelo Hospital Municipal de Cambará.');
+    const obsVal = (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || ex.observations || ex.observacoes || '';
+    setVal('f-observations', obsVal);
     setVal('f-status', ex.status || 'Pendente');
 
     const currentModelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
@@ -1807,8 +1798,6 @@
       referenceValue: document.getElementById('f-ref-value')?.value || '',
       method: document.getElementById('f-method')?.value || '',
       material: document.getElementById('f-material')?.value || '',
-      equipment: document.getElementById('f-equipment')?.value || '',
-      equipamento: document.getElementById('f-equipment')?.value || '',
       interpretation: document.getElementById('f-interpretation')?.value || '',
       observations: document.getElementById('f-observations')?.value || '',
       modeloLaudo: document.getElementById('f-modelo-laudo')?.value || 'Padrão LIS InovaLab',
@@ -2641,7 +2630,6 @@
             <div class="flex flex-wrap gap-x-6 gap-y-1">
               <div><span class="text-slate-600 font-medium">Material:</span> <strong class="text-slate-900">${escapeLisHtml(ex.material)}</strong></div>
               <div><span class="text-slate-600 font-medium">Método:</span> <strong class="text-slate-900">${escapeLisHtml(ex.metodo)}</strong></div>
-              ${ex.equipamento ? `<div><span class="text-slate-600 font-medium">Equipamento:</span> <strong class="text-slate-900">${escapeLisHtml(ex.equipamento)}</strong></div>` : ''}
             </div>
           </div>
 
@@ -2688,18 +2676,10 @@
             </div>
           ` : ''}
 
-          <!-- 4. OBSERVAÇÕES (SE HOUVER) -->
-          ${hasObservacao ? `
-            <div class="mt-2 pt-2 border-t border-slate-200 text-[10.5px] text-slate-700 italic">
-              <strong class="not-italic text-slate-900">Observações:</strong> ${escapeLisHtml(ex.observacao)}
-            </div>
-          ` : ''}
-
-          <!-- 5. OBSERVAÇÕES/NOTA/REFERÊNCIAS DO CADASTRO DO EXAME (SE HOUVER) -->
-          ${hasObservacoesLaudo ? `
+          <!-- 4. OBSERVAÇÕES E NOTAS DO LAUDO (TEXTO DIRETO SEM TÍTULO) -->
+          ${(hasObservacoesLaudo || hasObservacao) ? `
             <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
-              <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Observações/Nota/Referências:</div>
-              <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono">${escapeLisHtml(ex.observacoesLaudo)}</div>
+              <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono">${escapeLisHtml(ex.observacoesLaudo || ex.observacao)}</div>
             </div>
           ` : ''}
         </div>
@@ -2795,10 +2775,9 @@
     const valRefInput = document.getElementById('f-ref-value') ? document.getElementById('f-ref-value').value : '';
     const valRef = extractExamReferenceValue(null, catEx, valRefInput);
 
-    const metodo = (document.getElementById('f-method') ? document.getElementById('f-method').value : '') || (catEx && (catEx.metodoLaudo || catEx.metodo)) || 'Colorimétrico';
-    const material = (document.getElementById('f-material') ? document.getElementById('f-material').value : '') || (catEx && (catEx.materialLaudo || catEx.material)) || 'Soro';
-    const obs = document.getElementById('f-observations') ? document.getElementById('f-observations').value : '';
-    const eq = (document.getElementById('f-equipment') ? document.getElementById('f-equipment').value : '') || (catEx && (catEx.equipment || catEx.equipamento)) || '';
+    const metodo = (catEx && (catEx.metodoLaudo || catEx.metodo)) || (document.getElementById('f-method') ? document.getElementById('f-method').value : '') || 'Colorimétrico';
+    const material = (catEx && (catEx.materialLaudo || catEx.material)) || (document.getElementById('f-material') ? document.getElementById('f-material').value : '') || 'Soro';
+    const obs = (document.getElementById('f-observations') ? document.getElementById('f-observations').value : '') || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '';
     const interp = document.getElementById('f-interpretation') ? document.getElementById('f-interpretation').value : '';
 
     populateAndOpenLaudoPreview({
@@ -2812,8 +2791,8 @@
       valorReferencia: valRef,
       metodo: metodo,
       material: material,
-      equipamento: eq,
       observacao: obs,
+      observacoesLaudo: (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '',
       interpretacao: interp
     });
   }

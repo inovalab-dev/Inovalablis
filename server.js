@@ -34,6 +34,20 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 const pdf = require('pdf-parse');
 
+// Função helper para gravar arquivos JSON locais (ignorada quando o MySQL/DB_HOST está ativo)
+function saveJsonFile(filePath, content, options) {
+  if (process.env.DB_HOST) {
+    // Quando o MySQL está ativo, nada é salvo em arquivos JSON no disco
+    return;
+  }
+  try {
+    const dataToWrite = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+    fs.writeFileSync(filePath, dataToWrite, options || 'utf-8');
+  } catch (e) {
+    console.error(`Erro ao salvar arquivo JSON local (${filePath}):`, e.message);
+  }
+}
+
 const app = express();
 const PORT = 3000;
 
@@ -293,7 +307,7 @@ async function initializeFirebaseCaches() {
         }
       ];
       try {
-        fs.writeFileSync(PRICE_TABLES_FILE, JSON.stringify(priceTablesCache, null, 2), 'utf-8');
+        saveJsonFile(PRICE_TABLES_FILE, JSON.stringify(priceTablesCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao salvar tabelas de preco iniciais:", err);
       }
@@ -570,7 +584,7 @@ async function initializeFirebaseCaches() {
         }
       ];
       try {
-        fs.writeFileSync(TEMPERATURAS_FILE, JSON.stringify(temperaturasCache, null, 2), 'utf-8');
+        saveJsonFile(TEMPERATURAS_FILE, JSON.stringify(temperaturasCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao semear temperaturas:", err);
       }
@@ -643,7 +657,7 @@ async function initializeFirebaseCaches() {
         }
       ];
       try {
-        fs.writeFileSync(ACCESS_PROFILES_FILE, JSON.stringify(accessProfilesCache, null, 2), 'utf-8');
+        saveJsonFile(ACCESS_PROFILES_FILE, JSON.stringify(accessProfilesCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao salvar perfis de acesso padrão:", err);
       }
@@ -692,7 +706,7 @@ async function initializeFirebaseCaches() {
         ]
       };
       try {
-        fs.writeFileSync(ESCALA_PLANTAO_FILE, JSON.stringify(escalaPlantaoCache, null, 2), 'utf-8');
+        saveJsonFile(ESCALA_PLANTAO_FILE, JSON.stringify(escalaPlantaoCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao salvar escala plantao padrao:", err);
       }
@@ -764,7 +778,7 @@ async function initializeFirebaseCaches() {
 
     if (updatedSettings || !savedSettings || Array.isArray(savedSettings) || typeof savedSettings !== 'object' || Object.keys(savedSettings).length === 0) {
       try {
-        fs.writeFileSync(FINANCE_SETTINGS_FILE, JSON.stringify(financeSettingsCache, null, 2), 'utf-8');
+        saveJsonFile(FINANCE_SETTINGS_FILE, JSON.stringify(financeSettingsCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao salvar padrao de configuracoes financeiras:", err);
       }
@@ -860,7 +874,7 @@ async function initializeFirebaseCaches() {
         }
       ];
       try {
-        fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(transactionsCache, null, 2), 'utf-8');
+        saveJsonFile(TRANSACTIONS_FILE, JSON.stringify(transactionsCache, null, 2), 'utf-8');
       } catch (err) {
         console.error("Erro ao salvar semente de transacoes financeiras:", err);
       }
@@ -873,7 +887,7 @@ async function initializeFirebaseCaches() {
         console.log(`Migrando ${complexReqs.length} requisições antigas complexas para Orçamentos locais...`);
         budgetsCache = [...complexReqs];
         try {
-          fs.writeFileSync(BUDGETS_FILE, JSON.stringify(budgetsCache, null, 2), 'utf-8');
+          saveJsonFile(BUDGETS_FILE, JSON.stringify(budgetsCache, null, 2), 'utf-8');
         } catch (e) {
           console.error("Erro ao salvar migração inicial de orçamentos:", e);
         }
@@ -1021,7 +1035,7 @@ async function initializeFirebaseCaches() {
   });
   if (supportLabsModified) {
     supportLabsCache = cleanedLabs;
-    fs.writeFileSync(SUPPORT_LABS_FILE, JSON.stringify(supportLabsCache, null, 2), 'utf-8');
+    saveJsonFile(SUPPORT_LABS_FILE, JSON.stringify(supportLabsCache, null, 2), 'utf-8');
     saveCollectionToMysql('support_labs', supportLabsCache).catch(err => console.error("Erro ao salvar support_labs no MySQL:", err));
     if (db) {
       syncToFirestore('support_labs', supportLabsCache).catch(err => console.error("Erro ao sincronizar labs:", err));
@@ -1080,7 +1094,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(PATIENTS_FILE, JSON.stringify(patientsCache, null, 2), 'utf-8');
+      saveJsonFile(PATIENTS_FILE, JSON.stringify(patientsCache, null, 2), 'utf-8');
       await saveCollectionToMysql('patients', patientsCache);
     } catch (e) { console.error("Erro ao salvar limpeza de pacientes:", e.message); }
   }
@@ -1096,7 +1110,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(EXAMS_FILE, JSON.stringify(examsCache, null, 2), 'utf-8');
+      saveJsonFile(EXAMS_FILE, JSON.stringify(examsCache, null, 2), 'utf-8');
       await saveCollectionToMysql('exams', examsCache);
     } catch (e) { console.error("Erro ao salvar limpeza de exames:", e.message); }
   }
@@ -1112,7 +1126,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(PROFESSIONALS_FILE, JSON.stringify(professionalsCache, null, 2), 'utf-8');
+      saveJsonFile(PROFESSIONALS_FILE, JSON.stringify(professionalsCache, null, 2), 'utf-8');
       await saveCollectionToMysql('professionals', professionalsCache);
     } catch (e) { console.error("Erro ao salvar limpeza de profissionais:", e.message); }
   }
@@ -1125,7 +1139,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(PRICE_TABLES_FILE, JSON.stringify(priceTablesCache, null, 2), 'utf-8');
+      saveJsonFile(PRICE_TABLES_FILE, JSON.stringify(priceTablesCache, null, 2), 'utf-8');
       await saveCollectionToMysql('price_tables', priceTablesCache);
     } catch (e) { console.error("Erro ao salvar limpeza de tabelas de preco:", e.message); }
   }
@@ -1145,7 +1159,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(BUDGETS_FILE, JSON.stringify(budgetsCache, null, 2), 'utf-8');
+      saveJsonFile(BUDGETS_FILE, JSON.stringify(budgetsCache, null, 2), 'utf-8');
       await saveCollectionToMysql('budgets', budgetsCache);
     } catch (e) { console.error("Erro ao salvar limpeza de orçamentos:", e.message); }
   }
@@ -1165,7 +1179,7 @@ async function cleanObsoleteDatabaseFields() {
       }
     });
     try {
-      fs.writeFileSync(REQUISITIONS_FILE, JSON.stringify(requisitionsCache, null, 2), 'utf-8');
+      saveJsonFile(REQUISITIONS_FILE, JSON.stringify(requisitionsCache, null, 2), 'utf-8');
       await saveCollectionToMysql('requisitions', requisitionsCache);
     } catch (e) { console.error("Erro ao salvar limpeza de requisições:", e.message); }
   }
@@ -1283,7 +1297,7 @@ function loadRequisitions() {
 function saveRequisitions(requisitions) {
   try {
     requisitionsCache = requisitions;
-    fs.writeFileSync(REQUISITIONS_FILE, JSON.stringify(requisitions, null, 2), 'utf-8');
+    saveJsonFile(REQUISITIONS_FILE, JSON.stringify(requisitions, null, 2), 'utf-8');
     saveCollectionToMysql('requisitions', requisitions).catch(err => console.error("Erro ao salvar requisicoes no MySQL:", err));
     syncToFirestore('requisitions', requisitions);
   } catch (error) {
@@ -1298,7 +1312,7 @@ function loadCisnorpi() {
 function saveCisnorpi(data) {
   try {
     cisnorpiCache = data;
-    fs.writeFileSync(CISNORPI_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(CISNORPI_FILE, JSON.stringify(data, null, 2), 'utf-8');
     saveCollectionToMysql('cisnorpi', data).catch(err => console.error("Erro ao salvar cisnorpi no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar tabela Cisnorpi:", error);
@@ -1312,7 +1326,7 @@ function loadCashClosures() {
 function saveCashClosures(closures) {
   try {
     cashClosuresCache = closures;
-    fs.writeFileSync(CASH_CLOSURES_FILE, JSON.stringify(closures, null, 2), 'utf-8');
+    saveJsonFile(CASH_CLOSURES_FILE, JSON.stringify(closures, null, 2), 'utf-8');
     saveCollectionToMysql('cash_closures', closures).catch(err => console.error("Erro ao salvar cash_closures no MySQL:", err));
     syncToFirestore('cash_closures', closures);
   } catch (error) {
@@ -2055,7 +2069,7 @@ async function saveTemperaturas(data) {
   try {
     temperaturasCache = data;
     // Sempre salvar localmente em JSON para testes e backup robusto
-    fs.writeFileSync(TEMPERATURAS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(TEMPERATURAS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     
     if (process.env.DB_HOST) {
       try {
@@ -2119,7 +2133,7 @@ function loadBudgets() {
 function saveBudgets(budgets) {
   try {
     budgetsCache = budgets;
-    fs.writeFileSync(BUDGETS_FILE, JSON.stringify(budgets, null, 2), 'utf-8');
+    saveJsonFile(BUDGETS_FILE, JSON.stringify(budgets, null, 2), 'utf-8');
     saveCollectionToMysql('budgets', budgets).catch(err => console.error("Erro ao salvar budgets no MySQL:", err));
     syncToFirestore('budgets', budgets);
   } catch (error) {
@@ -2149,7 +2163,7 @@ function loadConvenios() {
 function saveConvenios(convenios) {
   try {
     conveniosCache = convenios;
-    fs.writeFileSync(CONVENIOS_FILE, JSON.stringify(convenios, null, 2), 'utf-8');
+    saveJsonFile(CONVENIOS_FILE, JSON.stringify(convenios, null, 2), 'utf-8');
     saveCollectionToMysql('convenios', convenios).catch(err => console.error("Erro ao salvar convenios no MySQL:", err));
     syncToFirestore('convenios', convenios);
   } catch (error) {
@@ -2167,7 +2181,7 @@ function loadLabExamesAlvaro() {
 function saveLabExamesAlvaro(data) {
   try {
     labExamesAlvaroCache = data;
-    fs.writeFileSync(LAB_EXAMES_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(LAB_EXAMES_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
     syncToFirestore('lab_exames_alvaro', data);
   } catch (err) {
     console.error('Erro ao salvar exames Álvaro:', err);
@@ -2184,7 +2198,7 @@ function loadMateriaisAlvaro() {
 function saveMateriaisAlvaro(data) {
   try {
     materiaisAlvaroCache = data;
-    fs.writeFileSync(MATERIAIS_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(MATERIAIS_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
     syncToFirestore('materiais_alvaro', data);
   } catch (err) {
     console.error('Erro ao salvar materiais Álvaro:', err);
@@ -2213,7 +2227,7 @@ function loadConfigApoioAlvaro() {
 function saveConfigApoioAlvaro(data) {
   try {
     configApoioAlvaroCache = data;
-    fs.writeFileSync(CONFIG_APOIO_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(CONFIG_APOIO_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Erro ao salvar config apoio Álvaro:', err);
   }
@@ -2230,7 +2244,7 @@ function loadConfigApoioPardini() {
 function saveConfigApoioPardini(data) {
   try {
     configApoioPardiniCache = data;
-    fs.writeFileSync(CONFIG_APOIO_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(CONFIG_APOIO_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Erro ao salvar config apoio Pardini:', err);
   }
@@ -2246,7 +2260,7 @@ function loadLabExamesPardini() {
 function saveLabExamesPardini(data) {
   try {
     labExamesPardiniCache = data;
-    fs.writeFileSync(LAB_EXAMES_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(LAB_EXAMES_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
     syncToFirestore('lab_exames_pardini', data);
   } catch (err) {
     console.error('Erro ao salvar exames Pardini:', err);
@@ -2263,7 +2277,7 @@ function loadRecipientes() {
 function saveRecipientes(recipientes) {
   try {
     recipientesCache = recipientes;
-    fs.writeFileSync(RECIPIENTES_FILE, JSON.stringify(recipientes, null, 2), 'utf-8');
+    saveJsonFile(RECIPIENTES_FILE, JSON.stringify(recipientes, null, 2), 'utf-8');
     saveCollectionToMysql('recipientes', recipientes).catch(err => console.error("Erro ao salvar recipientes no MySQL:", err));
     syncToFirestore('recipientes', recipientes);
   } catch (error) {
@@ -2281,7 +2295,7 @@ function loadMateriaisColetados() {
 function saveMateriaisColetados(materiais) {
   try {
     materiaisColetadosMasterCache = materiais;
-    fs.writeFileSync(MATERIAIS_COLETADOS_FILE, JSON.stringify(materiais, null, 2), 'utf-8');
+    saveJsonFile(MATERIAIS_COLETADOS_FILE, JSON.stringify(materiais, null, 2), 'utf-8');
     saveCollectionToMysql('materiais_coletados', materiais).catch(err => console.error("Erro ao salvar materiais_coletados no MySQL:", err));
     syncToFirestore('materiais_coletados', materiais);
   } catch (error) {
@@ -2299,7 +2313,7 @@ function loadSetores() {
 function saveSetores(setores) {
   try {
     setoresCache = setores;
-    fs.writeFileSync(SETORES_FILE, JSON.stringify(setores, null, 2), 'utf-8');
+    saveJsonFile(SETORES_FILE, JSON.stringify(setores, null, 2), 'utf-8');
     saveCollectionToMysql('setores', setores).catch(err => console.error("Erro ao salvar setores no MySQL:", err));
     syncToFirestore('setores', setores);
   } catch (error) {
@@ -2317,7 +2331,7 @@ function loadImpressoras() {
 function saveImpressoras(impressoras) {
   try {
     impressorasCache = impressoras;
-    fs.writeFileSync(IMPRESSORAS_FILE, JSON.stringify(impressoras, null, 2), 'utf-8');
+    saveJsonFile(IMPRESSORAS_FILE, JSON.stringify(impressoras, null, 2), 'utf-8');
     saveCollectionToMysql('impressoras', impressoras).catch(err => console.error("Erro ao salvar impressoras no MySQL:", err));
     syncToFirestore('impressoras', impressoras);
   } catch (error) {
@@ -2346,7 +2360,7 @@ function loadLocaisColeta() {
 function saveLocaisColeta(locais) {
   try {
     locaisColetaCache = locais;
-    fs.writeFileSync(LOCAIS_COLETA_FILE, JSON.stringify(locais, null, 2), 'utf-8');
+    saveJsonFile(LOCAIS_COLETA_FILE, JSON.stringify(locais, null, 2), 'utf-8');
     saveCollectionToMysql('locais_coleta', locais).catch(err => console.error("Erro ao salvar locais_coleta no MySQL:", err));
     syncToFirestore('locais_coleta', locais);
   } catch (error) {
@@ -2405,7 +2419,7 @@ function loadMedicos() {
 function saveMedicos(medicos) {
   try {
     medicosCache = medicos;
-    fs.writeFileSync(MEDICOS_FILE, JSON.stringify(medicos, null, 2), 'utf-8');
+    saveJsonFile(MEDICOS_FILE, JSON.stringify(medicos, null, 2), 'utf-8');
     saveCollectionToMysql('medicos', medicos).catch(err => console.error("Erro ao salvar medicos no MySQL:", err));
     syncToFirestore('medicos', medicos);
   } catch (error) {
@@ -2423,7 +2437,7 @@ function loadPriceTables() {
 function savePriceTables(tables) {
   try {
     priceTablesCache = tables;
-    fs.writeFileSync(PRICE_TABLES_FILE, JSON.stringify(tables, null, 2), 'utf-8');
+    saveJsonFile(PRICE_TABLES_FILE, JSON.stringify(tables, null, 2), 'utf-8');
     saveCollectionToMysql('price_tables', tables).catch(err => console.error("Erro ao salvar price_tables no MySQL:", err));
     syncToFirestore('price_tables', tables);
   } catch (error) {
@@ -2434,7 +2448,7 @@ function savePriceTables(tables) {
 function saveSupportLabs(labs) {
   try {
     supportLabsCache = labs;
-    fs.writeFileSync(SUPPORT_LABS_FILE, JSON.stringify(labs, null, 2), 'utf-8');
+    saveJsonFile(SUPPORT_LABS_FILE, JSON.stringify(labs, null, 2), 'utf-8');
     saveCollectionToMysql('support_labs', labs).catch(err => console.error("Erro ao salvar support_labs no MySQL:", err));
     syncToFirestore('support_labs', labs);
   } catch (error) {
@@ -2449,7 +2463,7 @@ function loadExams() {
 function saveExams(exams) {
   try {
     examsCache = exams;
-    fs.writeFileSync(EXAMS_FILE, JSON.stringify(exams, null, 2), 'utf-8');
+    saveJsonFile(EXAMS_FILE, JSON.stringify(exams, null, 2), 'utf-8');
     saveCollectionToMysql('exams', exams).catch(err => console.error("Erro ao salvar exams no MySQL:", err));
     syncToFirestore('exams', exams);
   } catch (error) {
@@ -2724,7 +2738,7 @@ function loadProfessionals() {
 function saveProfessionals(professionals) {
   try {
     professionalsCache = professionals;
-    fs.writeFileSync(PROFESSIONALS_FILE, JSON.stringify(professionals, null, 2), 'utf-8');
+    saveJsonFile(PROFESSIONALS_FILE, JSON.stringify(professionals, null, 2), 'utf-8');
     saveCollectionToMysql('professionals', professionals).catch(err => console.error("Erro ao salvar professionals no MySQL:", err));
     syncToFirestore('professionals', professionals);
   } catch (error) {
@@ -2739,7 +2753,7 @@ function loadEvaluations() {
 function saveEvaluations(evaluations) {
   try {
     evaluationsCache = evaluations;
-    fs.writeFileSync(EVALUATIONS_FILE, JSON.stringify(evaluations, null, 2), 'utf-8');
+    saveJsonFile(EVALUATIONS_FILE, JSON.stringify(evaluations, null, 2), 'utf-8');
     saveCollectionToMysql('evaluations', evaluations).catch(err => console.error("Erro ao salvar evaluations no MySQL:", err));
     syncToFirestore('evaluations', evaluations);
   } catch (error) {
@@ -2754,7 +2768,7 @@ function loadEvalAccesses() {
 function saveEvalAccesses(accesses) {
   try {
     evalAccessesCache = accesses;
-    fs.writeFileSync(EVAL_ACCESSES_FILE, JSON.stringify(accesses, null, 2), 'utf-8');
+    saveJsonFile(EVAL_ACCESSES_FILE, JSON.stringify(accesses, null, 2), 'utf-8');
     saveCollectionToMysql('eval_accesses', accesses).catch(err => console.error("Erro ao salvar eval_accesses no MySQL:", err));
     syncToFirestore('eval_accesses', accesses);
   } catch (error) {
@@ -2769,7 +2783,7 @@ function loadEvalHashes() {
 function saveEvalHashes(hashes) {
   try {
     evalHashesCache = hashes;
-    fs.writeFileSync(EVAL_HASHES_FILE, JSON.stringify(hashes, null, 2), 'utf-8');
+    saveJsonFile(EVAL_HASHES_FILE, JSON.stringify(hashes, null, 2), 'utf-8');
     saveCollectionToMysql('eval_hashes', hashes).catch(err => console.error("Erro ao salvar eval_hashes no MySQL:", err));
     syncToFirestore('eval_hashes', hashes);
   } catch (error) {
@@ -2784,7 +2798,7 @@ function loadNonConformities() {
 function saveNonConformities(list) {
   try {
     nonConformitiesCache = list;
-    fs.writeFileSync(NON_CONFORMITIES_FILE, JSON.stringify(list, null, 2), 'utf-8');
+    saveJsonFile(NON_CONFORMITIES_FILE, JSON.stringify(list, null, 2), 'utf-8');
     saveCollectionToMysql('non_conformities', list).catch(err => console.error("Erro ao salvar non_conformities no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar nao conformidades:", error);
@@ -2798,7 +2812,7 @@ function loadAccessProfiles() {
 function saveAccessProfiles(profiles) {
   try {
     accessProfilesCache = profiles;
-    fs.writeFileSync(ACCESS_PROFILES_FILE, JSON.stringify(profiles, null, 2), 'utf-8');
+    saveJsonFile(ACCESS_PROFILES_FILE, JSON.stringify(profiles, null, 2), 'utf-8');
     saveCollectionToMysql('access_profiles', profiles).catch(err => console.error("Erro ao salvar access_profiles no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar perfis de acesso:", error);
@@ -2824,7 +2838,7 @@ function loadMessageTemplates() {
 
 function saveMessageTemplates(templates) {
   try {
-    fs.writeFileSync(MESSAGE_TEMPLATES_FILE, JSON.stringify(templates, null, 2), 'utf-8');
+    saveJsonFile(MESSAGE_TEMPLATES_FILE, JSON.stringify(templates, null, 2), 'utf-8');
     saveCollectionToMysql('message_templates', templates).catch(err => console.error("Erro ao salvar message_templates no MySQL:", err));
     return true;
   } catch (error) {
@@ -2916,7 +2930,7 @@ function loadShortcuts() {
 
 function saveShortcuts(shortcuts) {
   try {
-    fs.writeFileSync(SHORTCUTS_FILE, JSON.stringify(shortcuts, null, 2), 'utf-8');
+    saveJsonFile(SHORTCUTS_FILE, JSON.stringify(shortcuts, null, 2), 'utf-8');
     saveCollectionToMysql('shortcuts', shortcuts).catch(err => console.error("Erro ao salvar shortcuts no MySQL:", err));
     return true;
   } catch (error) {
@@ -2932,7 +2946,7 @@ function loadTransactions() {
 function saveTransactions(transactions) {
   try {
     transactionsCache = transactions;
-    fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2), 'utf-8');
+    saveJsonFile(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2), 'utf-8');
     saveCollectionToMysql('transactions', transactions).catch(err => console.error("Erro ao salvar transactions no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar transacoes financeiras:", error);
@@ -2946,7 +2960,7 @@ function loadFinanceSettings() {
 function saveFinanceSettings(settings) {
   try {
     financeSettingsCache = settings;
-    fs.writeFileSync(FINANCE_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
+    saveJsonFile(FINANCE_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
     saveCollectionToMysql('finance_settings', settings).catch(err => console.error("Erro ao salvar finance_settings no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar configuracoes financeiras:", error);
@@ -2960,7 +2974,7 @@ function loadMovements() {
 function saveMovements(movements) {
   try {
     movementsCache = movements;
-    fs.writeFileSync(MOVEMENTS_FILE, JSON.stringify(movements, null, 2), 'utf-8');
+    saveJsonFile(MOVEMENTS_FILE, JSON.stringify(movements, null, 2), 'utf-8');
     saveCollectionToMysql('movements', movements).catch(err => console.error("Erro ao salvar movements no MySQL:", err));
   } catch (error) {
     console.error("Erro ao salvar movimentacoes financeiras:", error);
@@ -3062,7 +3076,7 @@ function loadBlogPosts() {
 function saveBlogPosts(posts) {
   try {
     blogPostsCache = posts;
-    fs.writeFileSync(BLOG_FILE, JSON.stringify(posts, null, 2), 'utf-8');
+    saveJsonFile(BLOG_FILE, JSON.stringify(posts, null, 2), 'utf-8');
     saveCollectionToMysql('blog_posts', posts).catch(err => console.error("Erro ao salvar blog_posts no MySQL:", err));
     syncToFirestore('blog_posts', posts);
   } catch (error) {
@@ -3077,7 +3091,7 @@ function loadPops() {
 function savePops(pops) {
   try {
     popsCache = pops;
-    fs.writeFileSync(POPS_FILE, JSON.stringify(pops, null, 2), 'utf-8');
+    saveJsonFile(POPS_FILE, JSON.stringify(pops, null, 2), 'utf-8');
     saveCollectionToMysql('pops', pops).catch(err => console.error("Erro ao salvar pops no MySQL:", err));
     syncToFirestore('pops', pops);
   } catch (error) {
@@ -3092,7 +3106,7 @@ function loadDocuments() {
 function saveDocuments(docs) {
   try {
     documentsCache = docs;
-    fs.writeFileSync(DOCUMENTS_FILE, JSON.stringify(docs, null, 2), 'utf-8');
+    saveJsonFile(DOCUMENTS_FILE, JSON.stringify(docs, null, 2), 'utf-8');
     saveCollectionToMysql('documents', docs).catch(err => console.error("Erro ao salvar documents no MySQL:", err));
     syncToFirestore('documents', docs);
   } catch (error) {
@@ -5307,7 +5321,7 @@ function loadPatients() {
 function savePatients(data) {
   try {
     patientsCache = data;
-    fs.writeFileSync(PATIENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(PATIENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     saveCollectionToMysql('patients', data).catch(err => console.error("Erro ao salvar pacientes no MySQL:", err));
   } catch (err) {
     console.error("Erro ao salvar pacientes:", err);
@@ -5323,7 +5337,7 @@ function loadAppointments() {
 function saveAppointments(data) {
   try {
     appointmentsCache = data;
-    fs.writeFileSync(APPOINTMENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(APPOINTMENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     saveCollectionToMysql('appointments', data).catch(err => console.error("Erro ao salvar agendamentos no MySQL:", err));
   } catch (err) {
     console.error("Erro ao salvar agendamentos:", err);
@@ -7437,7 +7451,7 @@ function loadInterfaceData() {
 function saveInterfaceData(data) {
   interfaceCache = data;
   try {
-    fs.writeFileSync(INTERFACE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveJsonFile(INTERFACE_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error("Erro ao salvar interface_data.json:", err);
   }
@@ -12961,8 +12975,8 @@ app.post('/api/admin/reset-database', requireAdmin, async (req, res) => {
       saveRequisitions([]);
       await clearMysqlTable('requisitions');
       
-      try { fs.writeFileSync(path.join(process.cwd(), 'data', 'recebimento.json'), '[]', 'utf-8'); } catch(e){}
-      try { fs.writeFileSync(path.join(process.cwd(), 'data', 'coleta.json'), '[]', 'utf-8'); } catch(e){}
+      try { saveJsonFile(path.join(process.cwd(), 'data', 'recebimento.json'), '[]', 'utf-8'); } catch(e){}
+      try { saveJsonFile(path.join(process.cwd(), 'data', 'coleta.json'), '[]', 'utf-8'); } catch(e){}
       cleared.push('Requisições e Laudos');
     }
 
@@ -13526,7 +13540,7 @@ app.post('/admin/financeiro/pessoas/save', requireAdmin, (req, res) => {
     }
 
     // Salvar no arquivo JSON
-    fs.writeFileSync(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
+    saveJsonFile(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
     saveCollectionToMysql('pessoas', pessoasCache).catch(err => console.error("Erro ao salvar pessoas no MySQL:", err));
 
     // Sincronizar nome na lista de fornecedores de finance_settings.json
@@ -13554,7 +13568,7 @@ app.post('/admin/financeiro/pessoas/delete', requireAdmin, (req, res) => {
     const idx = pessoasCache.findIndex(p => p.id === id);
     if (idx !== -1) {
       pessoasCache.splice(idx, 1);
-      fs.writeFileSync(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
+      saveJsonFile(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
       saveCollectionToMysql('pessoas', pessoasCache).catch(err => console.error("Erro ao salvar pessoas no MySQL:", err));
       res.redirect('/admin/financeiro/pessoas?success=deleted');
     } else {
@@ -13794,7 +13808,7 @@ app.post('/admin/financeiro/pessoas/import-csv', requireAdmin, upload.single('cs
     }
 
     // Salvar JSON e MySQL
-    fs.writeFileSync(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
+    saveJsonFile(PESSOAS_FILE, JSON.stringify(pessoasCache, null, 2), 'utf-8');
     saveCollectionToMysql('pessoas', pessoasCache).catch(err => console.error("Erro ao salvar pessoas no MySQL:", err));
 
     // Sincronizar nomes na lista de fornecedores
@@ -17293,7 +17307,7 @@ app.post('/admin/financeiro/escala-plantao/save', requireAdmin, (req, res) => {
       notices: Array.isArray(notices) ? notices : []
     };
     
-    fs.writeFileSync(ESCALA_PLANTAO_FILE, JSON.stringify(escalaPlantaoCache, null, 2), 'utf-8');
+    saveJsonFile(ESCALA_PLANTAO_FILE, JSON.stringify(escalaPlantaoCache, null, 2), 'utf-8');
     saveCollectionToMysql('escala_plantao', escalaPlantaoCache).catch(err => console.error("Erro ao salvar escala de plantão no MySQL:", err));
     
     res.json({ success: true, message: 'Escala de plantão salva com sucesso!' });

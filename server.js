@@ -255,7 +255,13 @@ async function initializeFirebaseCaches() {
     nonConformitiesCache = await loadCollectionFromMysql('non_conformities', NON_CONFORMITIES_FILE);
     documentsCache = await loadCollectionFromMysql('documents', DOCUMENTS_FILE);
     pessoasCache = await loadCollectionFromMysql('pessoas', PESSOAS_FILE);
-    accessProfilesCache = await loadCollectionFromMysql('access_profiles', ACCESS_PROFILES_FILE);
+    accessProfilesCache = (await loadCollectionFromMysql('access_profiles', ACCESS_PROFILES_FILE)).map(p => {
+      if (typeof p.permissions === 'string') {
+        try { p.permissions = JSON.parse(p.permissions); } catch(e) { p.permissions = {}; }
+      }
+      p.permissions = p.permissions || {};
+      return p;
+    });
     cisnorpiCache = await loadCollectionFromMysql('cisnorpi', CISNORPI_FILE);
     temperaturasCache = await loadTemperaturas();
     cashClosuresCache = await loadCollectionFromMysql('cash_closures', CASH_CLOSURES_FILE);
@@ -2852,7 +2858,14 @@ function saveNonConformities(list) {
 }
 
 function loadAccessProfiles() {
-  return accessProfilesCache || [];
+  if (!accessProfilesCache) accessProfilesCache = [];
+  return accessProfilesCache.map(p => {
+    if (typeof p.permissions === 'string') {
+      try { p.permissions = JSON.parse(p.permissions); } catch(e) { p.permissions = {}; }
+    }
+    p.permissions = p.permissions || {};
+    return p;
+  });
 }
 
 function saveAccessProfiles(profiles) {

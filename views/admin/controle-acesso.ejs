@@ -107,8 +107,15 @@
                     controle_acesso: 'Controle de Acessos'
                   };
                 %>
-                <% Object.keys(profile.permissions).forEach(key => { %>
-                  <% if (profile.permissions[key]) { %>
+                <% 
+                  let perms = profile.permissions;
+                  if (typeof perms === 'string') {
+                    try { perms = JSON.parse(perms); } catch(e) { perms = {}; }
+                  }
+                  perms = perms || {};
+                %>
+                <% Object.keys(perms).forEach(key => { %>
+                  <% if (perms[key]) { %>
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider bg-[#284701]/5 text-[#284701] border border-[#284701]/10">
                       <span class="w-1.5 h-1.5 rounded-full bg-[#284701]"></span>
                       <%= permLabels[key] || key %>
@@ -382,11 +389,15 @@
     checkboxes.forEach(cb => cb.checked = false);
     
     // Atribuir valores salvos
-    if (profile.permissions) {
-      Object.keys(profile.permissions).forEach(key => {
+    let perms = profile.permissions;
+    if (typeof perms === 'string') {
+      try { perms = JSON.parse(perms); } catch(e) { perms = {}; }
+    }
+    if (perms) {
+      Object.keys(perms).forEach(key => {
         const cb = document.getElementById('edit-perm-' + key);
         if (cb) {
-          cb.checked = !!profile.permissions[key];
+          cb.checked = !!perms[key];
         }
       });
     }

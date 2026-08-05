@@ -4692,29 +4692,53 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
       const isValid = validatePassword(patient, reqsFound, password);
       if (!isValid) {
         return res.status(401).json({
-     // Helper para renderizar texto no PDFKit com suporte a negrito (<b>...</b>) e quebras de linha (\n, <br>)
+          success: false,
+          error: "Senha incorreta",
+          message: "A senha informada não confere com o cadastro do paciente."
+        });
+      }
+    }
+
+    const examesFormatados = formatRequisitionExams(reqsFound);
+
+    const profileData = formatPatientProfile(patient);
+
+    return res.json({
+      success: true,
+      data: {
+        ...profileData,
+        exames: examesFormatados,
+        totalRequisicoes: examesFormatados.length
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro na consulta de paciente:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor",
+      message: error.message
+    });
+  }
+});
+
+// Helper para renderizar texto no PDFKit com suporte a negrito (<b>...</b>) e quebras de linha (\n, <br>)
 function renderPdfFormattedText(doc, textStr, options = {}) {
   if (!textStr) return;
   let str = String(textStr);
-  const { fillColor, fontSize, font, x, ...pdfOptions } = options;
+  const { fillColor, fontSize, font, ...pdfOptions } = options;
   if (fillColor) doc.fillColor(fillColor);
   if (fontSize) doc.fontSize(fontSize);
 
   const baseFont = font || 'Courier';
   const boldFont = baseFont.includes('Helvetica') ? 'Helvetica-Bold' : 'Courier-Bold';
 
-  // Normalizar quebras de linha HTML, entidades, e caracteres de retorno (\r, \n, \r\n, \n literal)
+  // Normalizar quebras de linha HTML e caracteres de retorno
   str = str
-    .replace(/&lt;br\s*\/?&gt;/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<p[^>]*>/gi, '')
-    .replace(/&#10;/gi, '\n')
-    .replace(/&#13;/gi, '')
-    .replace(/\\r\\n/g, '\n')
-    .replace(/\\n/g, '\n')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n');
+    .replace(/\r/g, '');
 
   const parseSegments = (rawText) => {
     const segments = [];
@@ -4736,39 +4760,9 @@ function renderPdfFormattedText(doc, textStr, options = {}) {
 
   const lines = str.split('\n');
   lines.forEach((line) => {
-    // Se a linha for vazia (linha em branco no texto)
-    if (line === '') {
-      doc.moveDown(0.3);
-      return;
-    }
-
-    const segments = parseSegments(line);
-    if (segments.length === 0) {
-      doc.moveDown(0.3);
-      return;
-    }
-
-    const startX = x || 45;
-
-    segments.forEach((seg, sIdx) => {
-      const isFirstSeg = sIdx === 0;
-      const isLastSeg = sIdx === segments.length - 1;
-      const opts = {
-        ...pdfOptions,
-        continued: !isLastSeg
-      };
-
-      const targetFont = seg.bold ? boldFont : baseFont;
-      doc.font(targetFont);
-
-      if (isFirstSeg) {
-        doc.text(seg.text, startX, undefined, opts);
-      } else {
-        doc.text(seg.text, opts);
-      }
-    });
-  });
-} vazia, adiciona uma linha em branco no PDF
+    const cleanLine = line.replace(/<\/?b>/gi, '').trim() === '' && !/<b>/.test(line) ? '' : line;
+    
+    // Se a linha for vazia, adiciona uma linha em branco no PDF
     if (!cleanLine) {
       doc.font(baseFont).text(' ', pdfOptions);
       return;

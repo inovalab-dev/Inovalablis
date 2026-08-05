@@ -197,6 +197,16 @@
       </div>
     <!-- Seção: Se ESTIVER logado / Exibe Laudo Clínico Formatado -->
     <% } else { %>
+      <%
+      function formatLisHtmlText(str) {
+        if (str === null || str === undefined) return '';
+        let text = String(str);
+        text = text.replace(/&amp;lt;b&amp;gt;/gi, '<b>').replace(/&amp;lt;\/b&amp;gt;/gi, '</b>');
+        text = text.replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>');
+        let safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return safe.replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/gi, '<strong class="font-bold text-gray-900">$1</strong>');
+      }
+      %>
       <div class="space-y-6 fade-in" id="printable-area">
         
         <!-- Botões de Controle Superior (Não-imprimíveis) -->
@@ -276,7 +286,7 @@
                           <td class="py-3 text-center font-mono font-bold <%= res.status !== 'Normal' ? 'text-amber-600 bg-amber-50 rounded-lg px-2' : 'text-brand-dark' %>">
                             <%= res.value %>
                           </td>
-                          <td class="py-3 text-right text-gray-500 font-mono"><%= res.reference %></td>
+                          <td class="py-3 text-right text-gray-500 font-mono"><%- formatLisHtmlText(res.reference) %></td>
                         </tr>
                       <% }) %>
                     </tbody>

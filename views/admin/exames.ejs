@@ -1480,14 +1480,20 @@
 
             <!-- Valores de Referência -->
             <div class="md:col-span-2">
-              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Valores de Referência Predefinidos:</label>
-              <textarea id="mod-valor-referencia-laudo" name="valorReferenciaLaudo" rows="3" placeholder="Ex: Homens: 13.5 a 17.5 g/dL&#10;Mulheres: 12.0 a 15.5 g/dL" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block font-bold text-slate-700 font-mono text-xs">Valores de Referência Predefinidos:</label>
+                <span class="text-[10px] font-sans text-slate-500">💡 Use &lt;b&gt;TEXTO&lt;/b&gt; para negrito</span>
+              </div>
+              <textarea id="mod-valor-referencia-laudo" name="valorReferenciaLaudo" rows="3" placeholder="Ex: Homens: <b>13.5 a 17.5 g/dL</b>&#10;Mulheres: <b>12.0 a 15.5 g/dL</b>" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
             </div>
 
             <!-- Observações/Nota/Referências -->
             <div class="md:col-span-2">
-              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Observações/Nota/Referências:</label>
-              <textarea id="mod-observacoes-laudo" name="observacoesLaudo" rows="3" placeholder="Escreva observações, notas técnicas ou referências bibliográficas para constar no laudo (exibido justificado)..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block font-bold text-slate-700 font-mono text-xs">Observações/Nota/Referências:</label>
+                <span class="text-[10px] font-sans text-slate-500">💡 Use &lt;b&gt;TEXTO&lt;/b&gt; para negrito</span>
+              </div>
+              <textarea id="mod-observacoes-laudo" name="observacoesLaudo" rows="3" placeholder="Escreva observações, notas técnicas (ex: <b>Amostra hemolisada</b>) para constar no laudo..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
             </div>
           </div>
         </div>

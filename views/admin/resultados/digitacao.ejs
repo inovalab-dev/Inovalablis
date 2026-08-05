@@ -435,7 +435,10 @@
 
               <!-- 2. VALORES DE REFERÊNCIA (POSICIONADO LOGO ABAIXO DO RESULTADO) -->
               <div id="laudo-block-ref" class="p-3 bg-white border border-slate-200 rounded-xs font-mono">
-                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label">Valores de Referência:</div>
+                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label flex justify-between items-center">
+                  <span>Valores de Referência:</span>
+                  <span class="text-[9.5px] font-sans font-normal text-slate-500">💡 Use &lt;b&gt;TEXTO&lt;/b&gt; para negrito</span>
+                </div>
                 <textarea
                   id="f-ref-value"
                   rows="4"
@@ -457,7 +460,10 @@
 
               <!-- 4. OBSERVAÇÕES (POSICIONADO ABAIXO DA INTERPRETAÇÃO) -->
               <div id="laudo-block-obs" class="p-3 bg-slate-50 border border-slate-200 rounded-xs font-mono">
-                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label">Observações:</div>
+                <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5 laudo-label flex justify-between items-center">
+                  <span>Observações:</span>
+                  <span class="text-[9.5px] font-sans font-normal text-slate-500">💡 Use &lt;b&gt;TEXTO&lt;/b&gt; para negrito</span>
+                </div>
                 <textarea
                   id="f-observations"
                   rows="2"
@@ -2665,21 +2671,21 @@
           <!-- 2. VALORES DE REFERÊNCIA (ABAIXO DO RESULTADO, ACIMA DE INTERPRETAÇÃO / NOTA TÉCNICA) -->
           <div class="mb-3 p-2.5 bg-white border border-slate-200 rounded-xs">
             <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Valores de Referência:</div>
-            <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${escapeLisHtml(ex.valorReferencia || 'Verificar cadastro técnico.')}</div>
+            <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${formatLisHtmlText(ex.valorReferencia || 'Verificar cadastro técnico.')}</div>
           </div>
 
           <!-- 3. INTERPRETAÇÃO / NOTA TÉCNICA (SE HOUVER) -->
           ${hasInterpretation ? `
             <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
               <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Interpretação / Nota Técnica:</div>
-              <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${escapeLisHtml(ex.interpretacao)}</div>
+              <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono">${formatLisHtmlText(ex.interpretacao)}</div>
             </div>
           ` : ''}
 
           <!-- 4. OBSERVAÇÕES E NOTAS DO LAUDO (TEXTO DIRETO SEM TÍTULO) -->
           ${(hasObservacoesLaudo || hasObservacao) ? `
             <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
-              <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono">${escapeLisHtml(ex.observacoesLaudo || ex.observacao)}</div>
+              <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono">${formatLisHtmlText(ex.observacoesLaudo || ex.observacao)}</div>
             </div>
           ` : ''}
         </div>
@@ -3532,7 +3538,7 @@
             white-space: pre-wrap;
           "
         >
-          <span>${escapeLisHtml(displayText)}</span>
+          <span>${formatLisHtmlText(displayText)}</span>
           ${handles}
         </div>
       `;
@@ -3544,6 +3550,15 @@
   function escapeLisHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function formatLisHtmlText(str) {
+    if (str === null || str === undefined) return '';
+    let text = String(str);
+    text = text.replace(/&amp;lt;b&amp;gt;/gi, '<b>').replace(/&amp;lt;\/b&amp;gt;/gi, '</b>');
+    text = text.replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>');
+    let safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return safe.replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/gi, '<strong class="font-bold text-slate-950">$1</strong>');
   }
 
   function selectLisComponent(index) {

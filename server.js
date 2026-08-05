@@ -4641,6 +4641,63 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
   }
 });
 
+// Helper para renderizar texto no PDFKit com suporte a negrito através de <b>TEXTO</b>
+function renderPdfFormattedText(doc, textStr, options = {}) {
+  if (!textStr) return;
+  const str = String(textStr);
+  const { fillColor, fontSize, ...pdfOptions } = options;
+  if (fillColor) doc.fillColor(fillColor);
+  if (fontSize) doc.fontSize(fontSize);
+
+  if (!/<b>/i.test(str)) {
+    doc.text(str.replace(/<\/?b>/gi, ''), pdfOptions);
+    return;
+  }
+
+  const parseSegments = (rawText) => {
+    const segments = [];
+    const regex = /<b>([\s\S]*?)<\/b>/gi;
+    let lastIdx = 0;
+    let match;
+    while ((match = regex.exec(rawText)) !== null) {
+      if (match.index > lastIdx) {
+        segments.push({ text: rawText.substring(lastIdx, match.index), bold: false });
+      }
+      segments.push({ text: match[1], bold: true });
+      lastIdx = regex.lastIndex;
+    }
+    if (lastIdx < rawText.length) {
+      segments.push({ text: rawText.substring(lastIdx), bold: false });
+    }
+    return segments;
+  };
+
+  const lines = str.split('\n');
+  lines.forEach((line, lIdx) => {
+    const isLastLine = lIdx === lines.length - 1;
+    const segments = parseSegments(line);
+    if (segments.length === 0) {
+      doc.text('', { ...pdfOptions, continued: !isLastLine });
+      return;
+    }
+
+    segments.forEach((seg, sIdx) => {
+      const isLastSeg = sIdx === segments.length - 1;
+      const opts = {
+        ...pdfOptions,
+        continued: !isLastSeg || !isLastLine
+      };
+
+      if (seg.bold) {
+        doc.font('Helvetica-Bold').text(seg.text, opts);
+      } else {
+        doc.font('Helvetica').text(seg.text, opts);
+      }
+    });
+  });
+  doc.font('Helvetica');
+}
+
 // 5. ENDPOINT PARA EMISSÃO / DOWNLOAD DO LAUDO EM PDF (/laudo/pdf)
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -4817,7 +4874,11 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             doc.fillColor('#0f172a').fontSize(8.5).text(param, startX + 5, tableY, { width: 150 });
             doc.fillColor('#047857').fontSize(8.5).text(resVal, startX + 160, tableY, { width: 90, align: 'right', bold: true });
             doc.fillColor('#475569').fontSize(8).text(unitVal, startX + 260, tableY, { width: 55 });
-            doc.fillColor('#64748b').fontSize(8).text(refVal, startX + 325, tableY, { width: 185 });
+            if (/<b>/i.test(refVal)) {
+              renderPdfFormattedText(doc, refVal, { x: startX + 325, y: tableY, width: 185, fillColor: '#64748b', fontSize: 8 });
+            } else {
+              doc.fillColor('#64748b').fontSize(8).text(refVal.replace(/<\/?b>/gi, ''), startX + 325, tableY, { width: 185 });
+            }
 
             tableY += 16;
           });
@@ -4826,9 +4887,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
           if (refText && (!ex.linhas || ex.linhas.length === 0)) {
             doc.fillColor('#475569').fontSize(8).text('Notas de Referência:', { bold: true });
-            refText.split('\n').forEach(lineStr => {
-              doc.fillColor('#64748b').fontSize(7.5).text(lineStr, { indent: 10 });
-            });
+            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#64748b', fontSize: 7.5 });
             doc.moveDown(0.3);
           }
 
@@ -4876,9 +4935,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
           if (refText) {
             doc.fillColor('#334155').fontSize(8.5).text('VALORES DE REFERÊNCIA E TEXTO TÉCNICO:', { bold: true });
-            refText.split('\n').forEach(lineStr => {
-              doc.fillColor('#475569').fontSize(8).text(lineStr, { indent: 10 });
-            });
+            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#475569', fontSize: 8 });
             doc.moveDown(0.4);
           }
 
@@ -4889,20 +4946,18 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
           if (refText) {
             doc.fillColor('#334155').fontSize(8.5).text('Valores de Referência:', { bold: true });
-            refText.split('\n').forEach(lineStr => {
-              doc.fillColor('#475569').fontSize(8).text(lineStr, { indent: 10 });
-            });
+            renderPdfFormattedText(doc, refText, { indent: 10, fillColor: '#475569', fontSize: 8 });
             doc.moveDown(0.3);
           }
         }
 
         if (interpText) {
-          doc.fillColor('#1e293b').fontSize(8).text(`Interpretação / Nota Técnica: ${interpText}`, { italic: true });
+          renderPdfFormattedText(doc, `Interpretação / Nota Técnica: ${interpText}`, { fillColor: '#1e293b', fontSize: 8 });
           doc.moveDown(0.2);
         }
         const finalObsText = obsNotaRefText || obsText;
         if (finalObsText) {
-          doc.fillColor('#475569').fontSize(8).text(finalObsText, { align: 'justify' });
+          renderPdfFormattedText(doc, finalObsText, { align: 'justify', fillColor: '#475569', fontSize: 8 });
           doc.moveDown(0.3);
         }
 

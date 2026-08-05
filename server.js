@@ -1044,16 +1044,31 @@ async function initializeFirebaseCaches() {
 }
 
 async function cleanObsoleteDatabaseFields() {
-  console.log("Iniciando script de limpeza de campos obsoletos das tabelas...");
+  console.log("Iniciando script de limpeza de campos e colunas obsoletas das tabelas...");
   let removedFieldsCount = 0;
   let droppedColumnsCount = 0;
 
-  // 1. Limpar colunas físicas obsoletas no MySQL (se DB_HOST estiver configurado)
+  // 1. Limpar colunas físicas obsoletas e a coluna 'data' no MySQL (se DB_HOST estiver configurado)
   if (process.env.DB_HOST) {
     try {
       const pool = await getMysqlPool();
       const connection = await pool.getConnection();
       try {
+        const [tables] = await connection.query("SHOW TABLES LIKE 'tbl_%'");
+        for (const row of tables) {
+          const tableName = Object.values(row)[0];
+          try {
+            const [cols] = await connection.query(`SHOW COLUMNS FROM \`${tableName}\` LIKE 'data'`);
+            if (cols.length > 0) {
+              await connection.query(`ALTER TABLE \`${tableName}\` DROP COLUMN \`data\``);
+              droppedColumnsCount++;
+              console.log(`[Limpeza MySQL] Coluna 'data' removida com sucesso da tabela \`${tableName}\`.`);
+            }
+          } catch (e) {
+            console.error(`Erro ao verificar/remover coluna 'data' de ${tableName}:`, e.message);
+          }
+        }
+
         const dropRules = {
           tbl_patients: ['convenio'],
           tbl_exams: ['supportLab'],
@@ -1803,14 +1818,20 @@ const tableSchemas = {
 };
 
 async function checkAndMigrateTable(connection, name) {
-  // Garantir que a tabela existe com a estrutura flexivel, sem NUNCA dropar ou sobrescrever tabelas no MySQL
+  // Criar tabela se não existir (SEM a coluna 'data')
   await connection.query(
     "CREATE TABLE IF NOT EXISTS `tbl_" + name + "` (" +
     "  `id` VARCHAR(100) PRIMARY KEY," +
-    "  `data` LONGTEXT NOT NULL," +
     "  `order_index` INT DEFAULT 0" +
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
   );
+
+  // Se a coluna 'data' existia da versão legada, dropá-la da tabela
+  try {
+    await connection.query(`ALTER TABLE \`tbl_${name}\` DROP COLUMN \`data\``);
+  } catch (e) {
+    // A coluna 'data' já não existe na tabela
+  }
 
   const cols = tableSchemas[name];
   if (cols) {
@@ -1833,84 +1854,115 @@ async function saveCollectionToMysql(name, data) {
       await checkAndMigrateTable(connection, name);
 
       if (!Array.isArray(data)) {
-        const serialized = JSON.stringify(data);
-        await connection.query(
-          "INSERT INTO `tbl_" + name + "` (`id`, `data`, `order_index`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `data` = ?, `order_index` = ?",
-          ['default_config', serialized, 0, serialized, 0]
-        );
+        const schema = tableSchemas[name] || [];
+        if (schema.length > 0) {
+          const colNames = ['`id`', '`order_index`'];
+          const valPlaceholders = ['?', '?'];
+          const vals = ['default_config', 0];
+          const updateAssignments = ['`order_index`=VALUES(`order_index`)'];
+
+          for (const col of schema) {
+            colNames.push(`\`${col.name}\``);
+            valPlaceholders.push('?');
+            updateAssignments.push(`\`${col.name}\`=VALUES(\`${col.name}\`)`);
+
+            let rawVal = data[col.name];
+            if (rawVal === undefined) rawVal = null;
+
+            if (col.type.includes('LONGTEXT') || col.type.includes('TEXT')) {
+              vals.push(typeof rawVal === 'object' && rawVal !== null ? JSON.stringify(rawVal) : (rawVal !== null ? String(rawVal) : null));
+            } else if (col.type.includes('TINYINT(1)')) {
+              vals.push(rawVal ? 1 : 0);
+            } else if (col.type.includes('DECIMAL') || col.type.includes('INT')) {
+              vals.push(rawVal !== null && rawVal !== undefined && rawVal !== '' ? Number(rawVal) : 0);
+            } else {
+              vals.push(rawVal !== null ? String(rawVal) : null);
+            }
+          }
+          const sql = `INSERT INTO \`tbl_${name}\` (${colNames.join(', ')}) VALUES (${valPlaceholders.join(', ')}) ON DUPLICATE KEY UPDATE ${updateAssignments.join(', ')}`;
+          await connection.query(sql, vals);
+        }
       } else {
         if (data.length === 0) {
-          // Proteção extra: não deletar nada da tabela MySQL se o array em memória estiver vazio
           return;
         }
         await connection.beginTransaction();
-        const schema = tableSchemas[name];
+        const schema = tableSchemas[name] || [];
+        let activeSchema = [...schema];
+
+        // Se a tabela não tiver colunas explícitas no tableSchemas, derivar colunas das propriedades do objeto
+        if (activeSchema.length === 0 && data[0] && typeof data[0] === 'object') {
+          for (const key of Object.keys(data[0])) {
+            if (key !== 'id' && key !== 'order_index' && key !== 'data') {
+              const val = data[0][key];
+              let type = 'VARCHAR(255)';
+              if (typeof val === 'object' && val !== null) type = 'LONGTEXT';
+              else if (typeof val === 'boolean') type = 'TINYINT(1) DEFAULT 0';
+              else if (typeof val === 'number') type = Number.isInteger(val) ? 'INT DEFAULT 0' : 'DECIMAL(10,2) DEFAULT 0.00';
+              activeSchema.push({ name: key, type });
+
+              try {
+                await connection.query(`ALTER TABLE \`tbl_${name}\` ADD COLUMN \`${key}\` ${type}`);
+              } catch (e) {}
+            }
+          }
+        }
 
         for (let i = 0; i < data.length; i++) {
           const item = data[i];
           const itemId = getItemId(item, i);
-          const serialized = JSON.stringify(item);
 
-          if (schema && schema.length > 0) {
-            const colNames = ['`id`', '`data`', '`order_index`'];
-            const valPlaceholders = ['?', '?', '?'];
-            const vals = [itemId, serialized, i];
-            const updateAssignments = [
-              '`data`=VALUES(`data`)',
-              '`order_index`=VALUES(`order_index`)'
-            ];
+          const colNames = ['`id`', '`order_index`'];
+          const valPlaceholders = ['?', '?'];
+          const vals = [itemId, i];
+          const updateAssignments = ['`order_index`=VALUES(`order_index`)'];
 
-            for (const col of schema) {
-              colNames.push(`\`${col.name}\``);
-              valPlaceholders.push('?');
-              updateAssignments.push(`\`${col.name}\`=VALUES(\`${col.name}\`)`);
+          for (const col of activeSchema) {
+            colNames.push(`\`${col.name}\``);
+            valPlaceholders.push('?');
+            updateAssignments.push(`\`${col.name}\`=VALUES(\`${col.name}\`)`);
 
-              let rawVal = item[col.name];
+            let rawVal = item[col.name];
 
-              // Padrão relacional: extrair código do relacionamento caso só o objeto/nome tenha sido informado
-              if (col.name === 'convenioCode' && !rawVal) {
-                if (item.convenioCode) rawVal = item.convenioCode;
-                else if (typeof item.convenio === 'object' && item.convenio) rawVal = item.convenio.codigo || item.convenio.id;
-              } else if (col.name === 'patientCode' && !rawVal) {
-                if (item.patientCode) rawVal = item.patientCode;
-                else if (typeof item.patient === 'object' && item.patient) rawVal = item.patient.code || item.patient.id;
-              } else if (col.name === 'sectorCode' && !rawVal) {
-                if (item.sectorCode) rawVal = item.sectorCode;
-                else if (typeof item.sector === 'object' && item.sector) rawVal = item.sector.codigo || item.sector.id;
-              } else if (col.name === 'supportLabCode' && !rawVal) {
-                if (item.supportLabCode) rawVal = item.supportLabCode;
-                else if (typeof item.supportLab === 'object' && item.supportLab) rawVal = item.supportLab.codigo || item.supportLab.id;
-              } else if (col.name === 'doctorCrm' && !rawVal) {
-                if (item.doctorCrm) rawVal = item.doctorCrm;
-                else if (typeof item.doctor === 'object' && item.doctor) rawVal = item.doctor.crm || item.doctor.code;
-              }
+            // Padrão relacional: extrair código do relacionamento caso só o objeto/nome tenha sido informado
+            if (col.name === 'convenioCode' && !rawVal) {
+              if (item.convenioCode) rawVal = item.convenioCode;
+              else if (typeof item.convenio === 'object' && item.convenio) rawVal = item.convenio.codigo || item.convenio.id;
+            } else if (col.name === 'patientCode' && !rawVal) {
+              if (item.patientCode) rawVal = item.patientCode;
+              else if (typeof item.patient === 'object' && item.patient) rawVal = item.patient.code || item.patient.id;
+            } else if (col.name === 'sectorCode' && !rawVal) {
+              if (item.sectorCode) rawVal = item.sectorCode;
+              else if (typeof item.sector === 'object' && item.sector) rawVal = item.sector.codigo || item.sector.id;
+            } else if (col.name === 'supportLabCode' && !rawVal) {
+              if (item.supportLabCode) rawVal = item.supportLabCode;
+              else if (typeof item.supportLab === 'object' && item.supportLab) rawVal = item.supportLab.codigo || item.supportLab.id;
+            } else if (col.name === 'doctorCrm' && !rawVal) {
+              if (item.doctorCrm) rawVal = item.doctorCrm;
+              else if (typeof item.doctor === 'object' && item.doctor) rawVal = item.doctor.crm || item.doctor.code;
+            }
 
-              if (rawVal === undefined) rawVal = null;
+            if (rawVal === undefined) rawVal = null;
 
-              if (col.type.includes('LONGTEXT') || col.type.includes('TEXT')) {
-                if (typeof rawVal === 'object' && rawVal !== null) {
-                  vals.push(JSON.stringify(rawVal));
-                } else {
-                  vals.push(rawVal !== null ? String(rawVal) : null);
-                }
-              } else if (col.type.includes('TINYINT(1)')) {
-                vals.push(rawVal ? 1 : 0);
-              } else if (col.type.includes('DECIMAL') || col.type.includes('INT')) {
-                vals.push(rawVal !== null && rawVal !== undefined && rawVal !== '' ? Number(rawVal) : 0);
+            if (col.type.includes('LONGTEXT') || col.type.includes('TEXT')) {
+              if (typeof rawVal === 'object' && rawVal !== null) {
+                vals.push(JSON.stringify(rawVal));
               } else {
                 vals.push(rawVal !== null ? String(rawVal) : null);
               }
+            } else if (col.type.includes('TINYINT(1)')) {
+              vals.push(rawVal ? 1 : 0);
+            } else if (col.type.includes('DECIMAL') || col.type.includes('INT')) {
+              vals.push(rawVal !== null && rawVal !== undefined && rawVal !== '' ? Number(rawVal) : 0);
+            } else {
+              vals.push(rawVal !== null ? String(rawVal) : null);
             }
-
-            const sql = `INSERT INTO \`tbl_${name}\` (${colNames.join(', ')}) VALUES (${valPlaceholders.join(', ')}) ON DUPLICATE KEY UPDATE ${updateAssignments.join(', ')}`;
-            await connection.query(sql, vals);
-          } else {
-            await connection.query(
-              "INSERT INTO `tbl_" + name + "` (`id`, `data`, `order_index`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `data` = ?, `order_index` = ?",
-              [itemId, serialized, i, serialized, i]
-            );
           }
+
+          const sql = `INSERT INTO \`tbl_${name}\` (${colNames.join(', ')}) VALUES (${valPlaceholders.join(', ')}) ON DUPLICATE KEY UPDATE ${updateAssignments.join(', ')}`;
+          await connection.query(sql, vals);
         }
+
         const currentIds = data.map((item, i) => getItemId(item, i));
         if (currentIds.length > 0) {
           const placeholders = currentIds.map(() => '?').join(',');
@@ -1950,50 +2002,44 @@ async function loadCollectionFromMysql(name, localFile) {
 
       if (rows.length > 0) {
         if (rows.length === 1 && rows[0].id === 'default_config') {
-          try {
-            return JSON.parse(rows[0].data);
-          } catch (e) {
-            console.error(`Erro ao parsear config de '${name}':`, e);
-            return localData;
+          let itemObj = {};
+          for (const [colName, dbVal] of Object.entries(rows[0])) {
+            if (colName === 'id' || colName === 'order_index' || colName === 'data') continue;
+            if (dbVal !== undefined && dbVal !== null) {
+              if (typeof dbVal === 'string' && (dbVal.startsWith('[') || dbVal.startsWith('{'))) {
+                try { itemObj[colName] = JSON.parse(dbVal); } catch(e) { itemObj[colName] = dbVal; }
+              } else {
+                itemObj[colName] = dbVal;
+              }
+            }
           }
+          return itemObj;
         } else {
           const list = [];
-          const schema = tableSchemas[name];
-
           for (const row of rows) {
             try {
               let itemObj = {};
-              if (row.data) {
-                try { itemObj = JSON.parse(row.data); } catch(e) {}
-              }
-              itemObj.id = row.id || itemObj.id;
+              itemObj.id = row.id;
 
-              if (schema && schema.length > 0) {
-                for (const col of schema) {
-                  const dbVal = row[col.name];
-                  if (dbVal !== undefined && dbVal !== null) {
-                    if (col.type.includes('LONGTEXT')) {
-                      try {
-                        itemObj[col.name] = typeof dbVal === 'string' ? JSON.parse(dbVal) : dbVal;
-                      } catch(e) {
-                        itemObj[col.name] = dbVal;
-                      }
-                    } else if (col.type.includes('TINYINT(1)')) {
-                      itemObj[col.name] = Boolean(dbVal);
-                    } else if (col.type.includes('DECIMAL')) {
-                      itemObj[col.name] = parseFloat(dbVal) || 0;
-                    } else if (col.type.includes('INT')) {
-                      itemObj[col.name] = parseInt(dbVal, 10) || 0;
-                    } else {
-                      itemObj[col.name] = dbVal;
+              for (const [colName, dbVal] of Object.entries(row)) {
+                if (colName === 'id' || colName === 'order_index' || colName === 'data') continue;
+                if (dbVal !== undefined && dbVal !== null) {
+                  if (typeof dbVal === 'string' && (dbVal.startsWith('[') || dbVal.startsWith('{'))) {
+                    try {
+                      itemObj[colName] = JSON.parse(dbVal);
+                    } catch(e) {
+                      itemObj[colName] = dbVal;
                     }
+                  } else if (typeof dbVal === 'number' || typeof dbVal === 'boolean') {
+                    itemObj[colName] = dbVal;
+                  } else {
+                    itemObj[colName] = dbVal;
                   }
                 }
               }
-
               list.push(itemObj);
             } catch (e) {
-              console.error(`Erro ao parsear item na tabela 'tbl_${name}':`, e);
+              console.error(`Erro ao montar item da tabela 'tbl_${name}':`, e);
             }
           }
           return list;

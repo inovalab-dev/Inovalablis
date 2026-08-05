@@ -204,6 +204,8 @@ let medicosCache = [];
 let patientsCache = null;
 let appointmentsCache = null;
 let escalaPlantaoCache = null;
+let messageTemplatesCache = null;
+let shortcutsCache = null;
 let cisnorpiCache = [];
 let temperaturasCache = [];
 let financeSettingsCache = {
@@ -941,6 +943,41 @@ async function initializeFirebaseCaches() {
         }
       }
     }
+
+    // Carregamento direto do MySQL para tabelas de apoio, exames e configurações
+    labExamesAlvaroCache = await loadCollectionFromMysql('lab_exames_alvaro', LAB_EXAMES_ALVARO_FILE);
+    materiaisAlvaroCache = await loadCollectionFromMysql('materiais_alvaro', MATERIAIS_ALVARO_FILE);
+    labExamesPardiniCache = await loadCollectionFromMysql('lab_exames_pardini', LAB_EXAMES_PARDINI_FILE);
+
+    const savedConfigAlvaro = await loadCollectionFromMysql('config_apoio_alvaro', CONFIG_APOIO_ALVARO_FILE);
+    if (savedConfigAlvaro && typeof savedConfigAlvaro === 'object' && !Array.isArray(savedConfigAlvaro) && Object.keys(savedConfigAlvaro).length > 0) {
+      configApoioAlvaroCache = savedConfigAlvaro;
+    }
+
+    const savedConfigPardini = await loadCollectionFromMysql('config_apoio_pardini', CONFIG_APOIO_PARDINI_FILE);
+    if (savedConfigPardini && typeof savedConfigPardini === 'object' && !Array.isArray(savedConfigPardini) && Object.keys(savedConfigPardini).length > 0) {
+      configApoioPardiniCache = savedConfigPardini;
+    }
+
+    impressorasCache = await loadCollectionFromMysql('impressoras', IMPRESSORAS_FILE);
+    locaisColetaCache = await loadCollectionFromMysql('locais_coleta', LOCAIS_COLETA_FILE);
+    medicosCache = await loadCollectionFromMysql('medicos', MEDICOS_FILE);
+
+    const savedInterfaceData = await loadCollectionFromMysql('interface_data', INTERFACE_FILE);
+    if (savedInterfaceData && typeof savedInterfaceData === 'object' && !Array.isArray(savedInterfaceData) && Object.keys(savedInterfaceData).length > 0) {
+      interfaceCache = savedInterfaceData;
+    }
+
+    const savedMessageTemplates = await loadCollectionFromMysql('message_templates', MESSAGE_TEMPLATES_FILE);
+    if (savedMessageTemplates && typeof savedMessageTemplates === 'object' && !Array.isArray(savedMessageTemplates) && Object.keys(savedMessageTemplates).length > 0) {
+      messageTemplatesCache = savedMessageTemplates;
+    }
+
+    const savedShortcuts = await loadCollectionFromMysql('shortcuts', SHORTCUTS_FILE);
+    if (savedShortcuts && typeof savedShortcuts === 'object' && !Array.isArray(savedShortcuts) && Object.keys(savedShortcuts).length > 0) {
+      shortcutsCache = savedShortcuts;
+    }
+
     return;
   }
 
@@ -1933,6 +1970,153 @@ const tableSchemas = {
     { name: 'shift', type: 'VARCHAR(50)' },
     { name: 'sectorCode', type: 'VARCHAR(100)' }, // Relational FK
     { name: 'notes', type: 'TEXT' }
+  ],
+  blog_posts: [
+    { name: 'title', type: 'VARCHAR(255)' },
+    { name: 'category', type: 'VARCHAR(100)' },
+    { name: 'date', type: 'VARCHAR(100)' },
+    { name: 'readTime', type: 'VARCHAR(50)' },
+    { name: 'author', type: 'VARCHAR(255)' },
+    { name: 'authorRole', type: 'VARCHAR(255)' },
+    { name: 'summary', type: 'TEXT' },
+    { name: 'content', type: 'LONGTEXT' },
+    { name: 'tags', type: 'LONGTEXT' }
+  ],
+  evaluations: [
+    { name: 'patientName', type: 'VARCHAR(255)' },
+    { name: 'requisitionCode', type: 'VARCHAR(100)' },
+    { name: 'rating', type: 'INT DEFAULT 0' },
+    { name: 'comment', type: 'TEXT' },
+    { name: 'date', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(100)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'hash', type: 'VARCHAR(255)' },
+    { name: 'token', type: 'VARCHAR(255)' }
+  ],
+  eval_accesses: [
+    { name: 'requisitionCode', type: 'VARCHAR(100)' },
+    { name: 'patientName', type: 'VARCHAR(255)' },
+    { name: 'patientPhone', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(100)' },
+    { name: 'hash', type: 'VARCHAR(255)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'sentAt', type: 'VARCHAR(100)' },
+    { name: 'token', type: 'VARCHAR(255)' }
+  ],
+  eval_hashes: [
+    { name: 'hash', type: 'VARCHAR(255)' },
+    { name: 'requisitionCode', type: 'VARCHAR(100)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'used', type: 'TINYINT(1) DEFAULT 0' }
+  ],
+  cisnorpi: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'exame', type: 'VARCHAR(255)' },
+    { name: 'material', type: 'VARCHAR(255)' },
+    { name: 'valor', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'ativo', type: 'TINYINT(1) DEFAULT 1' },
+    { name: 'updatedAt', type: 'VARCHAR(100)' }
+  ],
+  finance_settings: [
+    { name: 'providers', type: 'LONGTEXT' },
+    { name: 'chartsOfAccounts', type: 'LONGTEXT' },
+    { name: 'docTypes', type: 'LONGTEXT' },
+    { name: 'banks', type: 'LONGTEXT' }
+  ],
+  movements: [
+    { name: 'code', type: 'INT DEFAULT 0' },
+    { name: 'type', type: 'VARCHAR(50)' },
+    { name: 'date', type: 'VARCHAR(100)' },
+    { name: 'chartOfAccounts', type: 'VARCHAR(100)' },
+    { name: 'complemento', type: 'TEXT' },
+    { name: 'bank', type: 'VARCHAR(100)' },
+    { name: 'amount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'createdAt', type: 'VARCHAR(100)' }
+  ],
+  shortcuts: [
+    { name: 'newRecord', type: 'LONGTEXT' },
+    { name: 'save', type: 'LONGTEXT' },
+    { name: 'cancel', type: 'LONGTEXT' },
+    { name: 'closeModal', type: 'LONGTEXT' },
+    { name: 'searchPatient', type: 'LONGTEXT' },
+    { name: 'quickSearch', type: 'LONGTEXT' }
+  ],
+  message_templates: [
+    { name: 'invite', type: 'TEXT' },
+    { name: 'reminder', type: 'TEXT' },
+    { name: 'resultReady', type: 'TEXT' }
+  ],
+  lab_exames_alvaro: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'material', type: 'VARCHAR(255)' },
+    { name: 'metodo', type: 'VARCHAR(255)' },
+    { name: 'prazo', type: 'VARCHAR(100)' },
+    { name: 'valor', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'instrucoes', type: 'TEXT' }
+  ],
+  materiais_alvaro: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'abreviatura', type: 'VARCHAR(50)' }
+  ],
+  lab_exames_pardini: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'material', type: 'VARCHAR(255)' },
+    { name: 'metodo', type: 'VARCHAR(255)' },
+    { name: 'prazo', type: 'VARCHAR(100)' },
+    { name: 'valor', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'instrucoes', type: 'TEXT' }
+  ],
+  config_apoio_alvaro: [
+    { name: 'urlAmbiente', type: 'VARCHAR(500)' },
+    { name: 'nomeLis', type: 'VARCHAR(100)' },
+    { name: 'entidade', type: 'VARCHAR(100)' },
+    { name: 'idAgente', type: 'VARCHAR(100)' },
+    { name: 'senha', type: 'VARCHAR(100)' },
+    { name: 'chave', type: 'VARCHAR(255)' },
+    { name: 'setorPadrao', type: 'VARCHAR(100)' }
+  ],
+  config_apoio_pardini: [
+    { name: 'urlAmbiente', type: 'VARCHAR(500)' },
+    { name: 'login', type: 'VARCHAR(100)' },
+    { name: 'senha', type: 'VARCHAR(100)' },
+    { name: 'codigoCliente', type: 'VARCHAR(100)' }
+  ],
+  impressoras: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'nome', type: 'VARCHAR(255)' },
+    { name: 'ip', type: 'VARCHAR(100)' },
+    { name: 'porta', type: 'VARCHAR(50)' },
+    { name: 'setor', type: 'VARCHAR(100)' },
+    { name: 'tipo', type: 'VARCHAR(100)' },
+    { name: 'modelo', type: 'VARCHAR(100)' },
+    { name: 'padrao', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'status', type: 'VARCHAR(50)' },
+    { name: 'observacao', type: 'TEXT' }
+  ],
+  locais_coleta: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'ativo', type: 'TINYINT(1) DEFAULT 1' },
+    { name: 'observacao', type: 'TEXT' }
+  ],
+  medicos: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'nome', type: 'VARCHAR(255)' },
+    { name: 'conselho', type: 'VARCHAR(50)' },
+    { name: 'numero', type: 'VARCHAR(100)' },
+    { name: 'uf', type: 'VARCHAR(50)' },
+    { name: 'especialidade', type: 'VARCHAR(100)' },
+    { name: 'telefone', type: 'VARCHAR(100)' },
+    { name: 'email', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(50)' }
+  ],
+  interface_data: [
+    { name: 'naoEnviados', type: 'LONGTEXT' },
+    { name: 'processando', type: 'LONGTEXT' },
+    { name: 'prontos', type: 'LONGTEXT' }
   ]
 };
 
@@ -2347,6 +2531,7 @@ function saveLabExamesAlvaro(data) {
   try {
     labExamesAlvaroCache = data;
     saveJsonFile(LAB_EXAMES_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('lab_exames_alvaro', data).catch(err => console.error("Erro ao salvar lab_exames_alvaro no MySQL:", err));
     syncToFirestore('lab_exames_alvaro', data);
   } catch (err) {
     console.error('Erro ao salvar exames Álvaro:', err);
@@ -2364,6 +2549,7 @@ function saveMateriaisAlvaro(data) {
   try {
     materiaisAlvaroCache = data;
     saveJsonFile(MATERIAIS_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('materiais_alvaro', data).catch(err => console.error("Erro ao salvar materiais_alvaro no MySQL:", err));
     syncToFirestore('materiais_alvaro', data);
   } catch (err) {
     console.error('Erro ao salvar materiais Álvaro:', err);
@@ -2393,6 +2579,7 @@ function saveConfigApoioAlvaro(data) {
   try {
     configApoioAlvaroCache = data;
     saveJsonFile(CONFIG_APOIO_ALVARO_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('config_apoio_alvaro', data).catch(err => console.error("Erro ao salvar config_apoio_alvaro no MySQL:", err));
   } catch (err) {
     console.error('Erro ao salvar config apoio Álvaro:', err);
   }
@@ -2410,6 +2597,7 @@ function saveConfigApoioPardini(data) {
   try {
     configApoioPardiniCache = data;
     saveJsonFile(CONFIG_APOIO_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('config_apoio_pardini', data).catch(err => console.error("Erro ao salvar config_apoio_pardini no MySQL:", err));
   } catch (err) {
     console.error('Erro ao salvar config apoio Pardini:', err);
   }
@@ -2426,6 +2614,7 @@ function saveLabExamesPardini(data) {
   try {
     labExamesPardiniCache = data;
     saveJsonFile(LAB_EXAMES_PARDINI_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('lab_exames_pardini', data).catch(err => console.error("Erro ao salvar lab_exames_pardini no MySQL:", err));
     syncToFirestore('lab_exames_pardini', data);
   } catch (err) {
     console.error('Erro ao salvar exames Pardini:', err);
@@ -3076,10 +3265,14 @@ function loadMessageTemplates() {
     reminder: "Olá, {nome}! Notamos que enviamos o link para avaliar o atendimento no InovaLab Cambará, mas ainda não recebemos seu retorno. Sua opinião é fundamental para nós! Leva menos de 1 minuto: {link}",
     resultReady: "Olá, {nome}! Seu resultado do exame do InovaLab já está disponível. Código da requisição: *{codigo}*. Usuário para acesso: *{usuario}* e Senha: *{senha}*."
   };
+  if (messageTemplatesCache && typeof messageTemplatesCache === 'object' && Object.keys(messageTemplatesCache).length > 0) {
+    return { ...defaultTemplates, ...messageTemplatesCache };
+  }
   try {
     if (fs.existsSync(MESSAGE_TEMPLATES_FILE)) {
       const saved = JSON.parse(fs.readFileSync(MESSAGE_TEMPLATES_FILE, 'utf-8'));
-      return { ...defaultTemplates, ...saved };
+      messageTemplatesCache = { ...defaultTemplates, ...saved };
+      return messageTemplatesCache;
     }
   } catch (error) {
     console.error("Erro ao ler MESSAGE_TEMPLATES_FILE:", error);
@@ -3089,6 +3282,7 @@ function loadMessageTemplates() {
 
 function saveMessageTemplates(templates) {
   try {
+    messageTemplatesCache = templates;
     saveJsonFile(MESSAGE_TEMPLATES_FILE, JSON.stringify(templates, null, 2), 'utf-8');
     saveCollectionToMysql('message_templates', templates).catch(err => console.error("Erro ao salvar message_templates no MySQL:", err));
     return true;
@@ -3168,10 +3362,14 @@ const DEFAULT_SYSTEM_SHORTCUTS = {
 };
 
 function loadShortcuts() {
+  if (shortcutsCache && typeof shortcutsCache === 'object' && Object.keys(shortcutsCache).length > 0) {
+    return { ...DEFAULT_SYSTEM_SHORTCUTS, ...shortcutsCache };
+  }
   try {
     if (fs.existsSync(SHORTCUTS_FILE)) {
       const saved = JSON.parse(fs.readFileSync(SHORTCUTS_FILE, 'utf-8'));
-      return { ...DEFAULT_SYSTEM_SHORTCUTS, ...saved };
+      shortcutsCache = { ...DEFAULT_SYSTEM_SHORTCUTS, ...saved };
+      return shortcutsCache;
     }
   } catch (error) {
     console.error("Erro ao ler SHORTCUTS_FILE:", error);
@@ -3181,6 +3379,7 @@ function loadShortcuts() {
 
 function saveShortcuts(shortcuts) {
   try {
+    shortcutsCache = shortcuts;
     saveJsonFile(SHORTCUTS_FILE, JSON.stringify(shortcuts, null, 2), 'utf-8');
     saveCollectionToMysql('shortcuts', shortcuts).catch(err => console.error("Erro ao salvar shortcuts no MySQL:", err));
     return true;
@@ -7706,6 +7905,7 @@ function saveInterfaceData(data) {
   interfaceCache = data;
   try {
     saveJsonFile(INTERFACE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveCollectionToMysql('interface_data', data).catch(err => console.error("Erro ao salvar interface_data no MySQL:", err));
   } catch (err) {
     console.error("Erro ao salvar interface_data.json:", err);
   }

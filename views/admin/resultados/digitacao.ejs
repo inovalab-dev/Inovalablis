@@ -1141,11 +1141,55 @@
         return String(str);
       };
 
+      const formatDdMmYyyy = (rawVal, fallbackDateVal) => {
+        const parseToDdMmYyyy = (val) => {
+          if (!val) return null;
+          const s = String(val).trim();
+          if (!s || s.toLowerCase() === 'hoje') return null;
+
+          // ISO format YYYY-MM-DD
+          const isoMatch = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+          if (isoMatch) {
+            const [, year, month, day] = isoMatch;
+            return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+          }
+
+          // BR format DD/MM/YYYY
+          const brMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (brMatch) {
+            const [, day, month, year] = brMatch;
+            return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+          }
+
+          try {
+            const d = new Date(s);
+            if (!isNaN(d.getTime())) {
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const year = d.getFullYear();
+              return `${day}/${month}/${year}`;
+            }
+          } catch(e) {}
+
+          return null;
+        };
+
+        const res = parseToDdMmYyyy(rawVal) || parseToDdMmYyyy(fallbackDateVal);
+        if (res) return res;
+
+        // Default to today in dd/MM/yyyy
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
       const convenioFormatted = (req.convenioCode && String(req.convenioCode).trim() !== '') 
         ? `${req.convenioCode} - ${req.convenio || 'Particular'}` 
         : (req.convenio || 'Particular');
 
-      const prazoFormatted = `${req.deliveryDate || 'Hoje'}${req.deliveryTime ? ' ' + req.deliveryTime : ''}`;
+      const prazoFormatted = formatDdMmYyyy(req.deliveryDate, req.createdAt);
 
       // Regras de Habilitação dos Botões (Liberar & Visualizar)
       // Liberar: Disponível quando o status da requisição for Coletado, Não Enviado ou Processando (ou Em Execução)
@@ -1444,16 +1488,17 @@
     }
   }
 
-  function previewAllExamsOfRequisition() {
+  function previewAllExamsOfRequisition(targetReqId) {
+    const reqIdToUse = targetReqId || selectedReqId;
     const allReqs = window.TRIAGEM_REQUISITIONS || [];
     const req = allReqs.find(r => 
-      String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
-      String(r.id || '') === String(selectedReqId || '') || 
-      String(r.requisitionCode || '') === String(selectedReqId || '')
+      String(r.id || r.requisitionCode || '') === String(reqIdToUse || '') || 
+      String(r.id || '') === String(reqIdToUse || '') || 
+      String(r.requisitionCode || '') === String(reqIdToUse || '')
     );
 
     let reqExams = req?.exams || [];
-    if (reqExams.length === 0 && activeExamCode) {
+    if (reqExams.length === 0 && activeExamCode && (!targetReqId || String(targetReqId) === String(selectedReqId))) {
       reqExams = [{ code: activeExamCode, name: document.getElementById('m-active-title')?.textContent?.trim() || activeExamCode }];
     }
 
@@ -1467,17 +1512,17 @@
       return;
     }
 
-    const patientName = document.getElementById('m-patient-name')?.textContent || req?.patientName || 'Paciente';
-    const doctor = document.getElementById('m-doctor')?.textContent || req?.doctorName || 'Médico Não Informado';
-    const convenio = document.getElementById('m-convenio')?.textContent || req?.convenio || 'Particular';
-    const reqCode = document.getElementById('m-req-code')?.textContent || req?.requisitionCode || '#' + (selectedReqId || '00000');
-    const patientAge = req?.patientAge || document.getElementById('m-patient-age')?.textContent || 'N/I';
+    const patientName = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-name')?.textContent : null) || req?.patientName || 'Paciente';
+    const doctor = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-doctor')?.textContent : null) || req?.doctorName || req?.responsibleName || 'Médico Não Informado';
+    const convenio = (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-convenio')?.textContent : null) || req?.convenio || 'Particular';
+    const reqCode = req?.requisitionCode || req?.id || (reqIdToUse ? String(reqIdToUse) : '00000');
+    const patientAge = req?.patientAge || (selectedReqId && String(reqIdToUse) === String(selectedReqId) ? document.getElementById('m-patient-age')?.textContent : null) || 'N/I';
     const dataColeta = req?.dataColeta || req?.createdAt || new Date().toLocaleDateString('pt-BR');
 
     const formattedExams = editedExams.map(ex => {
       const code = ex.code || ex.codigo;
       const catEx = findCatalogExam(code, ex.name || ex.titulo || ex.desc);
-      const isCurrentActive = activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase();
+      const isCurrentActive = selectedReqId && String(reqIdToUse) === String(selectedReqId) && activeExamCode && String(code).toUpperCase() === String(activeExamCode).toUpperCase();
       const currentInputRef = isCurrentActive ? document.getElementById('f-ref-value')?.value : '';
       const refVal = extractExamReferenceValue(ex, catEx, currentInputRef);
 
@@ -1491,7 +1536,7 @@
 
       return {
         codigo: code,
-        titulo: ex.name || ex.titulo || (catEx && (catEx.tituloLaudo || catEx.name)) || document.getElementById('m-active-title')?.textContent || code,
+        titulo: ex.name || ex.titulo || (catEx && (catEx.tituloLaudo || catEx.name)) || code,
         resultadoText: String(resText).trim() || 'Sem resultado',
         resultado: String(resText).trim() || 'Sem resultado',
         unidade: unitVal,
@@ -2767,18 +2812,7 @@
   }
 
   function openRequisitionPdfModal(reqCode) {
-    const modal = document.getElementById('pdf-view-modal');
-    const iframe = document.getElementById('pdf-view-iframe');
-    const titleEl = document.getElementById('pdf-modal-title');
-    const openTabBtn = document.getElementById('pdf-modal-open-tab');
-
-    const cleanCode = String(reqCode || '').trim();
-    const pdfUrl = `/api/paciente/laudo/pdf?requisicao=${encodeURIComponent(cleanCode)}`;
-
-    if (titleEl) titleEl.textContent = `Laudo em PDF - Requisição #${cleanCode}`;
-    if (openTabBtn) openTabBtn.href = pdfUrl;
-    if (iframe) iframe.src = pdfUrl;
-    if (modal) modal.classList.remove('hidden');
+    previewAllExamsOfRequisition(reqCode);
   }
 
   function closeRequisitionPdfModal() {

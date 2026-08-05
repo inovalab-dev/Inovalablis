@@ -20,13 +20,15 @@
     "neighborhood": "Centro",
     "city": "Cambará",
     "state": "PR",
-    "convenio": "Unimed",
     "insuranceNumber": "0123.4567.8901.23",
     "cns": "700102030405060",
     "allergies": "Alergia a Dipirona e Látex",
     "clinicalNotes": "Histórico de veias finas e de difícil acesso venoso.",
-    "specialConditions": ["Dificuldade de Acesso Venoso"],
-    "createdAt": "2026-01-10T08:30:00.000Z"
+    "specialConditions": [
+      "Dificuldade de Acesso Venoso"
+    ],
+    "createdAt": "2026-01-10T08:30:00.000Z",
+    "convenioCode": "Unimed"
   },
   {
     "id": "PAC-2",
@@ -49,13 +51,15 @@
     "neighborhood": "Vila Operária",
     "city": "Cambará",
     "state": "PR",
-    "convenio": "Particular",
     "insuranceNumber": "",
     "cns": "800203040506070",
     "allergies": "Nenhuma alergia relatada.",
     "clinicalNotes": "Paciente diabético em acompanhamento trimestral.",
-    "specialConditions": ["Jejum Confirmado"],
-    "createdAt": "2026-02-14T09:15:00.000Z"
+    "specialConditions": [
+      "Jejum Confirmado"
+    ],
+    "createdAt": "2026-02-14T09:15:00.000Z",
+    "convenioCode": "Particular"
   },
   {
     "id": "PAC-3",
@@ -78,13 +82,15 @@
     "neighborhood": "Jardim Paraíso",
     "city": "Cambará",
     "state": "PR",
-    "convenio": "Cisnorpi",
     "insuranceNumber": "CIS-998811",
     "cns": "900304050607080",
     "allergies": "Alergia a Penicilina",
     "clinicalNotes": "Gestante - 18ª semana de gestação (Pré-Natal).",
-    "specialConditions": ["Gestante"],
-    "createdAt": "2026-03-01T10:00:00.000Z"
+    "specialConditions": [
+      "Gestante"
+    ],
+    "createdAt": "2026-03-01T10:00:00.000Z",
+    "convenioCode": "Cisnorpi"
   },
   {
     "id": "PAC-4",
@@ -107,13 +113,16 @@
     "neighborhood": "Centro",
     "city": "Cambará",
     "state": "PR",
-    "convenio": "Bradesco Saúde",
     "insuranceNumber": "BRD-771122",
     "cns": "100405060708090",
     "allergies": "Nenhuma alergia.",
     "clinicalNotes": "Coleta domiciliar solicitada devido a dificuldade de mobilidade.",
-    "specialConditions": ["PCD", "Coleta Domiciliar"],
-    "createdAt": "2026-03-12T11:20:00.000Z"
+    "specialConditions": [
+      "PCD",
+      "Coleta Domiciliar"
+    ],
+    "createdAt": "2026-03-12T11:20:00.000Z",
+    "convenioCode": "Bradesco Saúde"
   },
   {
     "id": "PAC-5",
@@ -136,12 +145,12 @@
     "neighborhood": "Vila São José",
     "city": "Cambará",
     "state": "PR",
-    "convenio": "Particular",
     "insuranceNumber": "",
     "cns": "",
     "allergies": "Nenhuma",
     "clinicalNotes": "Exames admissionais para empresa de transporte.",
     "specialConditions": [],
-    "createdAt": "2026-04-05T07:45:00.000Z"
+    "createdAt": "2026-04-05T07:45:00.000Z",
+    "convenioCode": "Particular"
   }
 ]

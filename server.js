@@ -1029,6 +1029,151 @@ async function initializeFirebaseCaches() {
   }
 }
 
+async function cleanObsoleteDatabaseFields() {
+  console.log("Iniciando script de limpeza de campos obsoletos das tabelas...");
+  let removedFieldsCount = 0;
+  let droppedColumnsCount = 0;
+
+  // 1. Limpar colunas físicas obsoletas no MySQL (se DB_HOST estiver configurado)
+  if (process.env.DB_HOST) {
+    try {
+      const pool = await getMysqlPool();
+      const connection = await pool.getConnection();
+      try {
+        const dropRules = {
+          tbl_patients: ['convenio'],
+          tbl_exams: ['supportLab'],
+          tbl_professionals: ['sector'],
+          tbl_price_tables: ['convenioNome'],
+          tbl_budgets: ['convenio', 'situacao'],
+          tbl_requisitions: ['convenio', 'situacao']
+        };
+
+        for (const [tbl, cols] of Object.entries(dropRules)) {
+          for (const col of cols) {
+            try {
+              await connection.query(`ALTER TABLE \`${tbl}\` DROP COLUMN \`${col}\``);
+              droppedColumnsCount++;
+              console.log(`[Limpeza MySQL] Coluna obsoleta \`${col}\` removida da tabela \`${tbl}\`.`);
+            } catch (e) {
+              // Se a coluna não existe no MySQL, ignora silenciosamente
+            }
+          }
+        }
+      } finally {
+        connection.release();
+      }
+    } catch (err) {
+      console.error("Erro ao remover colunas obsoletas no MySQL:", err.message);
+    }
+  }
+
+  // 2. Limpar propriedades obsoletas dos dados armazenados nos caches e arquivos locais
+  if (Array.isArray(patientsCache)) {
+    patientsCache.forEach(patient => {
+      if (patient.convenio !== undefined) {
+        if (!patient.convenioCode && patient.convenio) {
+          patient.convenioCode = typeof patient.convenio === 'object' ? (patient.convenio.codigo || patient.convenio.id) : patient.convenio;
+        }
+        delete patient.convenio;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(PATIENTS_FILE, JSON.stringify(patientsCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('patients', patientsCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de pacientes:", e.message); }
+  }
+
+  if (Array.isArray(examsCache)) {
+    examsCache.forEach(exam => {
+      if (exam.supportLab !== undefined) {
+        if (!exam.supportLabCode && exam.supportLab) {
+          exam.supportLabCode = typeof exam.supportLab === 'object' ? (exam.supportLab.codigo || exam.supportLab.id) : exam.supportLab;
+        }
+        delete exam.supportLab;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(EXAMS_FILE, JSON.stringify(examsCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('exams', examsCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de exames:", e.message); }
+  }
+
+  if (Array.isArray(professionalsCache)) {
+    professionalsCache.forEach(prof => {
+      if (prof.sector !== undefined) {
+        if (!prof.sectorCode && prof.sector) {
+          prof.sectorCode = typeof prof.sector === 'object' ? (prof.sector.codigo || prof.sector.id) : prof.sector;
+        }
+        delete prof.sector;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(PROFESSIONALS_FILE, JSON.stringify(professionalsCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('professionals', professionalsCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de profissionais:", e.message); }
+  }
+
+  if (Array.isArray(priceTablesCache)) {
+    priceTablesCache.forEach(pt => {
+      if (pt.convenioNome !== undefined) {
+        delete pt.convenioNome;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(PRICE_TABLES_FILE, JSON.stringify(priceTablesCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('price_tables', priceTablesCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de tabelas de preco:", e.message); }
+  }
+
+  if (Array.isArray(budgetsCache)) {
+    budgetsCache.forEach(b => {
+      if (b.convenio !== undefined) {
+        if (!b.convenioCode && b.convenio) {
+          b.convenioCode = typeof b.convenio === 'object' ? (b.convenio.codigo || b.convenio.id) : b.convenio;
+        }
+        delete b.convenio;
+        removedFieldsCount++;
+      }
+      if (b.situacao !== undefined) {
+        delete b.situacao;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(BUDGETS_FILE, JSON.stringify(budgetsCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('budgets', budgetsCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de orçamentos:", e.message); }
+  }
+
+  if (Array.isArray(requisitionsCache)) {
+    requisitionsCache.forEach(r => {
+      if (r.convenio !== undefined) {
+        if (!r.convenioCode && r.convenio) {
+          r.convenioCode = typeof r.convenio === 'object' ? (r.convenio.codigo || r.convenio.id) : r.convenio;
+        }
+        delete r.convenio;
+        removedFieldsCount++;
+      }
+      if (r.situacao !== undefined) {
+        delete r.situacao;
+        removedFieldsCount++;
+      }
+    });
+    try {
+      fs.writeFileSync(REQUISITIONS_FILE, JSON.stringify(requisitionsCache, null, 2), 'utf-8');
+      await saveCollectionToMysql('requisitions', requisitionsCache);
+    } catch (e) { console.error("Erro ao salvar limpeza de requisições:", e.message); }
+  }
+
+  console.log(`[Limpeza de BD] Concluído! ${droppedColumnsCount} colunas físicas MySQL dropadas e ${removedFieldsCount} propriedades obsoletas removidas dos objetos.`);
+  return { droppedColumnsCount, removedFieldsCount };
+}
+
 // Carrega ou semeia coleção no Firestore
 async function loadCollectionFromFirestore(collectionName, localFile) {
   const colRef = db.collection(collectionName);
@@ -1288,68 +1433,360 @@ function getItemId(item, index) {
   return String(index);
 }
 
-const requisitionColumns = [
-  { name: 'requisitionCode', type: 'VARCHAR(100)' },
-  { name: 'createdAt', type: 'VARCHAR(100)' },
-  { name: 'patientCode', type: 'VARCHAR(100)' },
-  { name: 'patientName', type: 'VARCHAR(255)' },
-  { name: 'patientPhone', type: 'VARCHAR(100)' },
-  { name: 'patientCpf', type: 'VARCHAR(100)' },
-  { name: 'patientBirthDate', type: 'VARCHAR(100)' },
-  { name: 'patientAge', type: 'VARCHAR(100)' },
-  { name: 'patientSex', type: 'VARCHAR(50)' },
-  { name: 'isPregnant', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'gestationalPeriod', type: 'VARCHAR(100)' },
-  { name: 'isNeonate', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'isIncapacitated', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'isPsr', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'dum', type: 'VARCHAR(100)' },
-  { name: 'weight', type: 'VARCHAR(50)' },
-  { name: 'height', type: 'VARCHAR(50)' },
-  { name: 'address', type: 'VARCHAR(255)' },
-  { name: 'complement', type: 'VARCHAR(255)' },
-  { name: 'city', type: 'VARCHAR(100)' },
-  { name: 'cep', type: 'VARCHAR(50)' },
-  { name: 'responsibleName', type: 'VARCHAR(255)' },
-  { name: 'clinicalNotes', type: 'TEXT' },
-  { name: 'convenio', type: 'VARCHAR(255)' },
-  { name: 'convenioCode', type: 'VARCHAR(100)' },
-  { name: 'situacao', type: 'VARCHAR(100)' },
-  { name: 'situacaoCode', type: 'VARCHAR(100)' },
-  { name: 'matricula', type: 'VARCHAR(100)' },
-  { name: 'guia', type: 'VARCHAR(100)' },
-  { name: 'coleta', type: 'VARCHAR(100)' },
-  { name: 'susCard', type: 'VARCHAR(100)' },
-  { name: 'destino', type: 'VARCHAR(100)' },
-  { name: 'doctorCrm', type: 'VARCHAR(100)' },
-  { name: 'doctorUf', type: 'VARCHAR(50)' },
-  { name: 'doctorName', type: 'VARCHAR(255)' },
-  { name: 'fatura', type: 'VARCHAR(100)' },
-  { name: 'hora', type: 'VARCHAR(50)' },
-  { name: 'procedencia', type: 'VARCHAR(100)' },
-  { name: 'obs', type: 'TEXT' },
-  { name: 'empresa', type: 'VARCHAR(255)' },
-  { name: 'isUrgent', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'patientUsername', type: 'VARCHAR(100)' },
-  { name: 'patientPassword', type: 'VARCHAR(100)' },
-  { name: 'status', type: 'VARCHAR(100)' },
-  { name: 'subtotal', type: 'DECIMAL(10,2) DEFAULT 0.00' },
-  { name: 'discount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
-  { name: 'totalAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
-  { name: 'paymentMethod', type: 'VARCHAR(100)' },
-  { name: 'paymentCondition', type: 'VARCHAR(100)' },
-  { name: 'paidAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
-  { name: 'financialStatus', type: 'VARCHAR(100)' },
-  { name: 'deliveryDate', type: 'VARCHAR(100)' },
-  { name: 'deliveryTime', type: 'VARCHAR(50)' },
-  { name: 'cid10', type: 'VARCHAR(100)' },
-  { name: 'notifyWhatsapp', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'separateLabel', type: 'TINYINT(1) DEFAULT 0' },
-  { name: 'fastingHours', type: 'VARCHAR(50)' },
-  { name: 'collectedAt', type: 'VARCHAR(100)' },
-  { name: 'updatedAt', type: 'VARCHAR(100)' },
-  { name: 'exams', type: 'LONGTEXT' }
-];
+const tableSchemas = {
+  convenios: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'pessoa', type: 'VARCHAR(100)' },
+    { name: 'razaoSocial', type: 'VARCHAR(255)' },
+    { name: 'fantasia', type: 'VARCHAR(255)' },
+    { name: 'cnpj', type: 'VARCHAR(100)' },
+    { name: 'inscEstadual', type: 'VARCHAR(100)' },
+    { name: 'cei', type: 'VARCHAR(100)' },
+    { name: 'inscMunicipal', type: 'VARCHAR(100)' },
+    { name: 'cidade', type: 'VARCHAR(100)' },
+    { name: 'tipoEndereco', type: 'VARCHAR(100)' },
+    { name: 'endereco', type: 'VARCHAR(255)' },
+    { name: 'numero', type: 'VARCHAR(50)' },
+    { name: 'complemento', type: 'VARCHAR(255)' },
+    { name: 'ans', type: 'VARCHAR(100)' },
+    { name: 'bairro', type: 'VARCHAR(100)' },
+    { name: 'cep', type: 'VARCHAR(50)' },
+    { name: 'fone', type: 'VARCHAR(100)' },
+    { name: 'fax', type: 'VARCHAR(100)' },
+    { name: 'contato', type: 'VARCHAR(255)' },
+    { name: 'email1', type: 'VARCHAR(100)' },
+    { name: 'email2', type: 'VARCHAR(100)' },
+    { name: 'site', type: 'VARCHAR(255)' },
+    { name: 'observacao', type: 'TEXT' },
+    { name: 'proibido', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'bloquearWeb', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'senhaWeb', type: 'VARCHAR(100)' },
+    { name: 'ativo', type: 'TINYINT(1) DEFAULT 1' },
+    { name: 'tabelaPrecoId', type: 'VARCHAR(100)' } // FK para price_tables
+  ],
+  patients: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'prontuario', type: 'VARCHAR(100)' },
+    { name: 'name', type: 'VARCHAR(255)' },
+    { name: 'socialName', type: 'VARCHAR(255)' },
+    { name: 'cpf', type: 'VARCHAR(100)' },
+    { name: 'rg', type: 'VARCHAR(100)' },
+    { name: 'birthDate', type: 'VARCHAR(100)' },
+    { name: 'age', type: 'VARCHAR(100)' },
+    { name: 'gender', type: 'VARCHAR(50)' },
+    { name: 'biologicalSex', type: 'VARCHAR(50)' },
+    { name: 'motherName', type: 'VARCHAR(255)' },
+    { name: 'phone', type: 'VARCHAR(100)' },
+    { name: 'email', type: 'VARCHAR(100)' },
+    { name: 'cep', type: 'VARCHAR(50)' },
+    { name: 'street', type: 'VARCHAR(255)' },
+    { name: 'number', type: 'VARCHAR(50)' },
+    { name: 'neighborhood', type: 'VARCHAR(100)' },
+    { name: 'city', type: 'VARCHAR(100)' },
+    { name: 'state', type: 'VARCHAR(50)' },
+    { name: 'convenioCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'insuranceNumber', type: 'VARCHAR(100)' },
+    { name: 'cns', type: 'VARCHAR(100)' },
+    { name: 'allergies', type: 'TEXT' },
+    { name: 'clinicalNotes', type: 'TEXT' },
+    { name: 'specialConditions', type: 'TEXT' },
+    { name: 'createdAt', type: 'VARCHAR(100)' }
+  ],
+  exams: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'name', type: 'VARCHAR(255)' },
+    { name: 'category', type: 'VARCHAR(100)' },
+    { name: 'fasting', type: 'VARCHAR(100)' },
+    { name: 'timeframe', type: 'VARCHAR(100)' },
+    { name: 'instructions', type: 'TEXT' },
+    { name: 'supportLabCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'pricePrivate', type: 'DECIMAL(10,2) DEFAULT 0.00' }
+  ],
+  professionals: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'name', type: 'VARCHAR(255)' },
+    { name: 'role', type: 'VARCHAR(100)' },
+    { name: 'title', type: 'VARCHAR(100)' },
+    { name: 'description', type: 'TEXT' },
+    { name: 'username', type: 'VARCHAR(100)' },
+    { name: 'password', type: 'VARCHAR(100)' },
+    { name: 'profileId', type: 'VARCHAR(100)' }, // FK para access_profiles
+    { name: 'status', type: 'VARCHAR(50)' },
+    { name: 'sectorCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'admissionDate', type: 'VARCHAR(100)' },
+    { name: 'contractType', type: 'VARCHAR(100)' },
+    { name: 'workday', type: 'VARCHAR(100)' },
+    { name: 'vencidaEm', type: 'VARCHAR(100)' },
+    { name: 'faltas', type: 'INT DEFAULT 0' },
+    { name: 'diasDireito', type: 'INT DEFAULT 0' },
+    { name: 'diasGozados', type: 'INT DEFAULT 0' },
+    { name: 'saldoAGozar', type: 'INT DEFAULT 0' },
+    { name: 'concederAvisoAte', type: 'VARCHAR(100)' },
+    { name: 'proximoVencimento', type: 'VARCHAR(100)' },
+    { name: 'salaryData', type: 'LONGTEXT' },
+    { name: 'vacations', type: 'LONGTEXT' }
+  ],
+  pessoas: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'personType', type: 'VARCHAR(50)' },
+    { name: 'cpfCnpj', type: 'VARCHAR(100)' },
+    { name: 'name', type: 'VARCHAR(255)' },
+    { name: 'birthday', type: 'VARCHAR(100)' },
+    { name: 'phone', type: 'VARCHAR(100)' },
+    { name: 'email', type: 'VARCHAR(100)' },
+    { name: 'contactName', type: 'VARCHAR(255)' },
+    { name: 'observation', type: 'TEXT' },
+    { name: 'cep', type: 'VARCHAR(50)' },
+    { name: 'city', type: 'VARCHAR(100)' },
+    { name: 'uf', type: 'VARCHAR(50)' },
+    { name: 'address', type: 'VARCHAR(255)' },
+    { name: 'bairro', type: 'VARCHAR(100)' },
+    { name: 'number', type: 'VARCHAR(50)' },
+    { name: 'complement', type: 'VARCHAR(255)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' }
+  ],
+  appointments: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'patientId', type: 'VARCHAR(100)' }, // FK para patients
+    { name: 'patientCode', type: 'VARCHAR(100)' }, // FK para patients
+    { name: 'patientPhone', type: 'VARCHAR(100)' },
+    { name: 'type', type: 'VARCHAR(100)' },
+    { name: 'date', type: 'VARCHAR(100)' },
+    { name: 'timeSlot', type: 'VARCHAR(50)' },
+    { name: 'address', type: 'VARCHAR(255)' },
+    { name: 'neighborhood', type: 'VARCHAR(100)' },
+    { name: 'city', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(100)' },
+    { name: 'collectorName', type: 'VARCHAR(255)' },
+    { name: 'fastingMinutes', type: 'INT DEFAULT 0' },
+    { name: 'exams', type: 'LONGTEXT' },
+    { name: 'notes', type: 'TEXT' },
+    { name: 'createdAt', type: 'VARCHAR(100)' }
+  ],
+  budgets: [
+    { name: 'requisitionCode', type: 'VARCHAR(100)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'patientCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'patientPhone', type: 'VARCHAR(100)' },
+    { name: 'patientCpf', type: 'VARCHAR(100)' },
+    { name: 'patientBirthDate', type: 'VARCHAR(100)' },
+    { name: 'patientAge', type: 'VARCHAR(100)' },
+    { name: 'patientSex', type: 'VARCHAR(50)' },
+    { name: 'isPregnant', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'gestationalPeriod', type: 'VARCHAR(100)' },
+    { name: 'isNeonate', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'isIncapacitated', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'isPsr', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'dum', type: 'VARCHAR(100)' },
+    { name: 'weight', type: 'VARCHAR(50)' },
+    { name: 'height', type: 'VARCHAR(50)' },
+    { name: 'address', type: 'VARCHAR(255)' },
+    { name: 'complement', type: 'VARCHAR(255)' },
+    { name: 'city', type: 'VARCHAR(100)' },
+    { name: 'cep', type: 'VARCHAR(50)' },
+    { name: 'responsibleName', type: 'VARCHAR(255)' },
+    { name: 'clinicalNotes', type: 'TEXT' },
+    { name: 'convenioCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'situacaoCode', type: 'VARCHAR(100)' },
+    { name: 'matricula', type: 'VARCHAR(100)' },
+    { name: 'guia', type: 'VARCHAR(100)' },
+    { name: 'coleta', type: 'VARCHAR(100)' },
+    { name: 'susCard', type: 'VARCHAR(100)' },
+    { name: 'destino', type: 'VARCHAR(100)' },
+    { name: 'doctorCrm', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'doctorUf', type: 'VARCHAR(50)' },
+    { name: 'fatura', type: 'VARCHAR(100)' },
+    { name: 'hora', type: 'VARCHAR(50)' },
+    { name: 'procedencia', type: 'VARCHAR(100)' },
+    { name: 'obs', type: 'TEXT' },
+    { name: 'empresa', type: 'VARCHAR(255)' },
+    { name: 'isUrgent', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'patientUsername', type: 'VARCHAR(100)' },
+    { name: 'patientPassword', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(100)' },
+    { name: 'subtotal', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'discount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'totalAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'paymentMethod', type: 'VARCHAR(100)' },
+    { name: 'paymentCondition', type: 'VARCHAR(100)' },
+    { name: 'paidAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'financialStatus', type: 'VARCHAR(100)' },
+    { name: 'deliveryDate', type: 'VARCHAR(100)' },
+    { name: 'deliveryTime', type: 'VARCHAR(50)' },
+    { name: 'cid10', type: 'VARCHAR(100)' },
+    { name: 'notifyWhatsapp', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'separateLabel', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'fastingHours', type: 'VARCHAR(50)' },
+    { name: 'updatedAt', type: 'VARCHAR(100)' },
+    { name: 'exams', type: 'LONGTEXT' }
+  ],
+  requisitions: [
+    { name: 'requisitionCode', type: 'VARCHAR(100)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'patientCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'patientPhone', type: 'VARCHAR(100)' },
+    { name: 'patientCpf', type: 'VARCHAR(100)' },
+    { name: 'patientBirthDate', type: 'VARCHAR(100)' },
+    { name: 'patientAge', type: 'VARCHAR(100)' },
+    { name: 'patientSex', type: 'VARCHAR(50)' },
+    { name: 'isPregnant', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'gestationalPeriod', type: 'VARCHAR(100)' },
+    { name: 'isNeonate', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'isIncapacitated', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'isPsr', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'dum', type: 'VARCHAR(100)' },
+    { name: 'weight', type: 'VARCHAR(50)' },
+    { name: 'height', type: 'VARCHAR(50)' },
+    { name: 'address', type: 'VARCHAR(255)' },
+    { name: 'complement', type: 'VARCHAR(255)' },
+    { name: 'city', type: 'VARCHAR(100)' },
+    { name: 'cep', type: 'VARCHAR(50)' },
+    { name: 'responsibleName', type: 'VARCHAR(255)' },
+    { name: 'clinicalNotes', type: 'TEXT' },
+    { name: 'convenioCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'situacaoCode', type: 'VARCHAR(100)' },
+    { name: 'matricula', type: 'VARCHAR(100)' },
+    { name: 'guia', type: 'VARCHAR(100)' },
+    { name: 'coleta', type: 'VARCHAR(100)' },
+    { name: 'susCard', type: 'VARCHAR(100)' },
+    { name: 'destino', type: 'VARCHAR(100)' },
+    { name: 'doctorCrm', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'doctorUf', type: 'VARCHAR(50)' },
+    { name: 'fatura', type: 'VARCHAR(100)' },
+    { name: 'hora', type: 'VARCHAR(50)' },
+    { name: 'procedencia', type: 'VARCHAR(100)' },
+    { name: 'obs', type: 'TEXT' },
+    { name: 'empresa', type: 'VARCHAR(255)' },
+    { name: 'isUrgent', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'patientUsername', type: 'VARCHAR(100)' },
+    { name: 'patientPassword', type: 'VARCHAR(100)' },
+    { name: 'status', type: 'VARCHAR(100)' },
+    { name: 'subtotal', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'discount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'totalAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'paymentMethod', type: 'VARCHAR(100)' },
+    { name: 'paymentCondition', type: 'VARCHAR(100)' },
+    { name: 'paidAmount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'financialStatus', type: 'VARCHAR(100)' },
+    { name: 'deliveryDate', type: 'VARCHAR(100)' },
+    { name: 'deliveryTime', type: 'VARCHAR(50)' },
+    { name: 'cid10', type: 'VARCHAR(100)' },
+    { name: 'notifyWhatsapp', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'separateLabel', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'fastingHours', type: 'VARCHAR(50)' },
+    { name: 'collectedAt', type: 'VARCHAR(100)' },
+    { name: 'updatedAt', type: 'VARCHAR(100)' },
+    { name: 'exams', type: 'LONGTEXT' }
+  ],
+  price_tables: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'convenioId', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'precios', type: 'LONGTEXT' }
+  ],
+  transactions: [
+    { name: 'closureId', type: 'VARCHAR(100)' }, // FK para cash_closures
+    { name: 'isClosureRevenue', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'type', type: 'VARCHAR(50)' },
+    { name: 'number', type: 'VARCHAR(100)' },
+    { name: 'issueDate', type: 'VARCHAR(100)' },
+    { name: 'docNumber', type: 'VARCHAR(100)' },
+    { name: 'provider', type: 'VARCHAR(255)' },
+    { name: 'docType', type: 'VARCHAR(100)' },
+    { name: 'chartOfAccounts', type: 'VARCHAR(100)' },
+    { name: 'bank', type: 'VARCHAR(100)' },
+    { name: 'tags', type: 'VARCHAR(255)' },
+    { name: 'description', type: 'TEXT' },
+    { name: 'amount', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'installments', type: 'INT DEFAULT 1' },
+    { name: 'dueDate', type: 'VARCHAR(100)' },
+    { name: 'interval', type: 'VARCHAR(50)' },
+    { name: 'recurrent', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'status', type: 'VARCHAR(50)' },
+    { name: 'paidAt', type: 'VARCHAR(100)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'createdBy', type: 'VARCHAR(100)' }
+  ],
+  cash_closures: [
+    { name: 'recepcao', type: 'VARCHAR(100)' },
+    { name: 'data', type: 'VARCHAR(100)' },
+    { name: 'responsavel', type: 'VARCHAR(255)' },
+    { name: 'trocoAnterior', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'trocoAnteriorOriginal', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'trocoAnteriorEditado', type: 'TINYINT(1) DEFAULT 0' },
+    { name: 'dinheiro', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'pix', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'cartaoCredito', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'cartaoDebito', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'cheque', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'saidasDinheiro', type: 'LONGTEXT' },
+    { name: 'saidasDinheiroTotal', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'totalEntradas', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'totalDinheiroEmCaixa', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'totalDinheiroLiquido', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'trocoSeguinte', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'retiradaDinheiro', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'comprovantePrint', type: 'LONGTEXT' },
+    { name: 'status', type: 'VARCHAR(50)' },
+    { name: 'observacoes', type: 'TEXT' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'updatedAt', type: 'VARCHAR(100)' }
+  ],
+  setores: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'sigla', type: 'VARCHAR(50)' }
+  ],
+  recipientes: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' }
+  ],
+  materiais_coletados: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'abreviatura', type: 'VARCHAR(50)' }
+  ],
+  support_labs: [
+    { name: 'codigo', type: 'VARCHAR(100)' },
+    { name: 'descricao', type: 'VARCHAR(255)' },
+    { name: 'name', type: 'VARCHAR(255)' }
+  ],
+  documents: [
+    { name: 'title', type: 'VARCHAR(255)' },
+    { name: 'type', type: 'VARCHAR(100)' },
+    { name: 'fileUrl', type: 'VARCHAR(500)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' },
+    { name: 'createdBy', type: 'VARCHAR(100)' }
+  ],
+  pops: [
+    { name: 'title', type: 'VARCHAR(255)' },
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'sectorCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'version', type: 'VARCHAR(50)' },
+    { name: 'fileUrl', type: 'VARCHAR(500)' },
+    { name: 'updatedAt', type: 'VARCHAR(100)' }
+  ],
+  non_conformities: [
+    { name: 'code', type: 'VARCHAR(100)' },
+    { name: 'description', type: 'TEXT' },
+    { name: 'sectorCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'severity', type: 'VARCHAR(50)' },
+    { name: 'status', type: 'VARCHAR(50)' },
+    { name: 'createdAt', type: 'VARCHAR(100)' }
+  ],
+  access_profiles: [
+    { name: 'name', type: 'VARCHAR(255)' },
+    { name: 'description', type: 'TEXT' },
+    { name: 'permissions', type: 'LONGTEXT' }
+  ],
+  escala_plantao: [
+    { name: 'date', type: 'VARCHAR(100)' },
+    { name: 'professionalCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'shift', type: 'VARCHAR(50)' },
+    { name: 'sectorCode', type: 'VARCHAR(100)' }, // Relational FK
+    { name: 'notes', type: 'TEXT' }
+  ]
+};
 
 async function checkAndMigrateTable(connection, name) {
   // Garantir que a tabela existe com a estrutura flexivel, sem NUNCA dropar ou sobrescrever tabelas no MySQL
@@ -1361,10 +1798,11 @@ async function checkAndMigrateTable(connection, name) {
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
   );
 
-  if (name === 'requisitions') {
-    for (const col of requisitionColumns) {
+  const cols = tableSchemas[name];
+  if (cols) {
+    for (const col of cols) {
       try {
-        await connection.query(`ALTER TABLE \`tbl_requisitions\` ADD COLUMN \`${col.name}\` ${col.type}`);
+        await connection.query(`ALTER TABLE \`tbl_${name}\` ADD COLUMN \`${col.name}\` ${col.type}`);
       } catch (e) {
         // Coluna já existe no MySQL
       }
@@ -1392,109 +1830,66 @@ async function saveCollectionToMysql(name, data) {
           return;
         }
         await connection.beginTransaction();
+        const schema = tableSchemas[name];
+
         for (let i = 0; i < data.length; i++) {
           const item = data[i];
           const itemId = getItemId(item, i);
           const serialized = JSON.stringify(item);
 
-          if (name === 'requisitions') {
-            const examsJson = item.exams ? JSON.stringify(item.exams) : '[]';
-            await connection.query(
-              `INSERT INTO \`tbl_requisitions\` (
-                \`id\`, \`requisitionCode\`, \`createdAt\`, \`patientCode\`, \`patientName\`, \`patientPhone\`,
-                \`patientCpf\`, \`patientBirthDate\`, \`patientAge\`, \`patientSex\`, \`isPregnant\`, \`gestationalPeriod\`,
-                \`isNeonate\`, \`isIncapacitated\`, \`isPsr\`, \`dum\`, \`weight\`, \`height\`, \`address\`, \`complement\`,
-                \`city\`, \`cep\`, \`responsibleName\`, \`clinicalNotes\`, \`convenio\`, \`convenioCode\`, \`situacao\`,
-                \`situacaoCode\`, \`matricula\`, \`guia\`, \`coleta\`, \`susCard\`, \`destino\`, \`doctorCrm\`, \`doctorUf\`,
-                \`doctorName\`, \`fatura\`, \`hora\`, \`procedencia\`, \`obs\`, \`empresa\`, \`isUrgent\`, \`patientUsername\`,
-                \`patientPassword\`, \`status\`, \`subtotal\`, \`discount\`, \`totalAmount\`, \`paymentMethod\`, \`paymentCondition\`,
-                \`paidAmount\`, \`financialStatus\`, \`deliveryDate\`, \`deliveryTime\`, \`cid10\`, \`notifyWhatsapp\`,
-                \`separateLabel\`, \`fastingHours\`, \`collectedAt\`, \`updatedAt\`, \`exams\`, \`data\`, \`order_index\`
-              ) VALUES (
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?
-              ) ON DUPLICATE KEY UPDATE
-                \`requisitionCode\`=VALUES(\`requisitionCode\`),
-                \`createdAt\`=VALUES(\`createdAt\`),
-                \`patientCode\`=VALUES(\`patientCode\`),
-                \`patientName\`=VALUES(\`patientName\`),
-                \`patientPhone\`=VALUES(\`patientPhone\`),
-                \`patientCpf\`=VALUES(\`patientCpf\`),
-                \`patientBirthDate\`=VALUES(\`patientBirthDate\`),
-                \`patientAge\`=VALUES(\`patientAge\`),
-                \`patientSex\`=VALUES(\`patientSex\`),
-                \`isPregnant\`=VALUES(\`isPregnant\`),
-                \`gestationalPeriod\`=VALUES(\`gestationalPeriod\`),
-                \`isNeonate\`=VALUES(\`isNeonate\`),
-                \`isIncapacitated\`=VALUES(\`isIncapacitated\`),
-                \`isPsr\`=VALUES(\`isPsr\`),
-                \`dum\`=VALUES(\`dum\`),
-                \`weight\`=VALUES(\`weight\`),
-                \`height\`=VALUES(\`height\`),
-                \`address\`=VALUES(\`address\`),
-                \`complement\`=VALUES(\`complement\`),
-                \`city\`=VALUES(\`city\`),
-                \`cep\`=VALUES(\`cep\`),
-                \`responsibleName\`=VALUES(\`responsibleName\`),
-                \`clinicalNotes\`=VALUES(\`clinicalNotes\`),
-                \`convenio\`=VALUES(\`convenio\`),
-                \`convenioCode\`=VALUES(\`convenioCode\`),
-                \`situacao\`=VALUES(\`situacao\`),
-                \`situacaoCode\`=VALUES(\`situacaoCode\`),
-                \`matricula\`=VALUES(\`matricula\`),
-                \`guia\`=VALUES(\`guia\`),
-                \`coleta\`=VALUES(\`coleta\`),
-                \`susCard\`=VALUES(\`susCard\`),
-                \`destino\`=VALUES(\`destino\`),
-                \`doctorCrm\`=VALUES(\`doctorCrm\`),
-                \`doctorUf\`=VALUES(\`doctorUf\`),
-                \`doctorName\`=VALUES(\`doctorName\`),
-                \`fatura\`=VALUES(\`fatura\`),
-                \`hora\`=VALUES(\`hora\`),
-                \`procedencia\`=VALUES(\`procedencia\`),
-                \`obs\`=VALUES(\`obs\`),
-                \`empresa\`=VALUES(\`empresa\`),
-                \`isUrgent\`=VALUES(\`isUrgent\`),
-                \`patientUsername\`=VALUES(\`patientUsername\`),
-                \`patientPassword\`=VALUES(\`patientPassword\`),
-                \`status\`=VALUES(\`status\`),
-                \`subtotal\`=VALUES(\`subtotal\`),
-                \`discount\`=VALUES(\`discount\`),
-                \`totalAmount\`=VALUES(\`totalAmount\`),
-                \`paymentMethod\`=VALUES(\`paymentMethod\`),
-                \`paymentCondition\`=VALUES(\`paymentCondition\`),
-                \`paidAmount\`=VALUES(\`paidAmount\`),
-                \`financialStatus\`=VALUES(\`financialStatus\`),
-                \`deliveryDate\`=VALUES(\`deliveryDate\`),
-                \`deliveryTime\`=VALUES(\`deliveryTime\`),
-                \`cid10\`=VALUES(\`cid10\`),
-                \`notifyWhatsapp\`=VALUES(\`notifyWhatsapp\`),
-                \`separateLabel\`=VALUES(\`separateLabel\`),
-                \`fastingHours\`=VALUES(\`fastingHours\`),
-                \`collectedAt\`=VALUES(\`collectedAt\`),
-                \`updatedAt\`=VALUES(\`updatedAt\`),
-                \`exams\`=VALUES(\`exams\`),
-                \`data\`=VALUES(\`data\`),
-                \`order_index\`=VALUES(\`order_index\`)`,
-              [
-                itemId, item.requisitionCode || null, item.createdAt || null, item.patientCode || null, item.patientName || null, item.patientPhone || null,
-                item.patientCpf || null, item.patientBirthDate || null, item.patientAge || null, item.patientSex || null, item.isPregnant ? 1 : 0, item.gestationalPeriod || null,
-                item.isNeonate ? 1 : 0, item.isIncapacitated ? 1 : 0, item.isPsr ? 1 : 0, item.dum || null, item.weight || null, item.height || null, item.address || null, item.complement || null,
-                item.city || null, item.cep || null, item.responsibleName || null, item.clinicalNotes || null, item.convenio || null, item.convenioCode || null, item.situacao || null,
-                item.situacaoCode || null, item.matricula || null, item.guia || null, item.coleta || null, item.susCard || null, item.destino || null, item.doctorCrm || null, item.doctorUf || null,
-                item.doctorName || null, item.fatura || null, item.hora || null, item.procedencia || null, item.obs || null, item.empresa || null, item.isUrgent ? 1 : 0, item.patientUsername || null,
-                item.patientPassword || null, item.status || null, item.subtotal || 0, item.discount || 0, item.totalAmount || 0, item.paymentMethod || null, item.paymentCondition || null,
-                item.paidAmount || 0, item.financialStatus || null, item.deliveryDate || null, item.deliveryTime || null, item.cid10 || null, item.notifyWhatsapp ? 1 : 0,
-                item.separateLabel ? 1 : 0, item.fastingHours || null, item.collectedAt || null, item.updatedAt || null, examsJson, serialized, i
-              ]
-            );
+          if (schema && schema.length > 0) {
+            const colNames = ['`id`', '`data`', '`order_index`'];
+            const valPlaceholders = ['?', '?', '?'];
+            const vals = [itemId, serialized, i];
+            const updateAssignments = [
+              '`data`=VALUES(`data`)',
+              '`order_index`=VALUES(`order_index`)'
+            ];
+
+            for (const col of schema) {
+              colNames.push(`\`${col.name}\``);
+              valPlaceholders.push('?');
+              updateAssignments.push(`\`${col.name}\`=VALUES(\`${col.name}\`)`);
+
+              let rawVal = item[col.name];
+
+              // Padrão relacional: extrair código do relacionamento caso só o objeto/nome tenha sido informado
+              if (col.name === 'convenioCode' && !rawVal) {
+                if (item.convenioCode) rawVal = item.convenioCode;
+                else if (typeof item.convenio === 'object' && item.convenio) rawVal = item.convenio.codigo || item.convenio.id;
+              } else if (col.name === 'patientCode' && !rawVal) {
+                if (item.patientCode) rawVal = item.patientCode;
+                else if (typeof item.patient === 'object' && item.patient) rawVal = item.patient.code || item.patient.id;
+              } else if (col.name === 'sectorCode' && !rawVal) {
+                if (item.sectorCode) rawVal = item.sectorCode;
+                else if (typeof item.sector === 'object' && item.sector) rawVal = item.sector.codigo || item.sector.id;
+              } else if (col.name === 'supportLabCode' && !rawVal) {
+                if (item.supportLabCode) rawVal = item.supportLabCode;
+                else if (typeof item.supportLab === 'object' && item.supportLab) rawVal = item.supportLab.codigo || item.supportLab.id;
+              } else if (col.name === 'doctorCrm' && !rawVal) {
+                if (item.doctorCrm) rawVal = item.doctorCrm;
+                else if (typeof item.doctor === 'object' && item.doctor) rawVal = item.doctor.crm || item.doctor.code;
+              }
+
+              if (rawVal === undefined) rawVal = null;
+
+              if (col.type.includes('LONGTEXT') || col.type.includes('TEXT')) {
+                if (typeof rawVal === 'object' && rawVal !== null) {
+                  vals.push(JSON.stringify(rawVal));
+                } else {
+                  vals.push(rawVal !== null ? String(rawVal) : null);
+                }
+              } else if (col.type.includes('TINYINT(1)')) {
+                vals.push(rawVal ? 1 : 0);
+              } else if (col.type.includes('DECIMAL') || col.type.includes('INT')) {
+                vals.push(rawVal !== null && rawVal !== undefined && rawVal !== '' ? Number(rawVal) : 0);
+              } else {
+                vals.push(rawVal !== null ? String(rawVal) : null);
+              }
+            }
+
+            const sql = `INSERT INTO \`tbl_${name}\` (${colNames.join(', ')}) VALUES (${valPlaceholders.join(', ')}) ON DUPLICATE KEY UPDATE ${updateAssignments.join(', ')}`;
+            await connection.query(sql, vals);
           } else {
             await connection.query(
               "INSERT INTO `tbl_" + name + "` (`id`, `data`, `order_index`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `data` = ?, `order_index` = ?",
@@ -1549,77 +1944,39 @@ async function loadCollectionFromMysql(name, localFile) {
           }
         } else {
           const list = [];
+          const schema = tableSchemas[name];
+
           for (const row of rows) {
             try {
               let itemObj = {};
               if (row.data) {
                 try { itemObj = JSON.parse(row.data); } catch(e) {}
               }
-              if (name === 'requisitions') {
-                itemObj.id = row.id || itemObj.id;
-                if (row.requisitionCode !== undefined && row.requisitionCode !== null) itemObj.requisitionCode = row.requisitionCode;
-                if (row.createdAt !== undefined && row.createdAt !== null) itemObj.createdAt = row.createdAt;
-                if (row.patientCode !== undefined && row.patientCode !== null) itemObj.patientCode = row.patientCode;
-                if (row.patientName !== undefined && row.patientName !== null) itemObj.patientName = row.patientName;
-                if (row.patientPhone !== undefined && row.patientPhone !== null) itemObj.patientPhone = row.patientPhone;
-                if (row.patientCpf !== undefined && row.patientCpf !== null) itemObj.patientCpf = row.patientCpf;
-                if (row.patientBirthDate !== undefined && row.patientBirthDate !== null) itemObj.patientBirthDate = row.patientBirthDate;
-                if (row.patientAge !== undefined && row.patientAge !== null) itemObj.patientAge = row.patientAge;
-                if (row.patientSex !== undefined && row.patientSex !== null) itemObj.patientSex = row.patientSex;
-                if (row.isPregnant !== undefined && row.isPregnant !== null) itemObj.isPregnant = Boolean(row.isPregnant);
-                if (row.gestationalPeriod !== undefined && row.gestationalPeriod !== null) itemObj.gestationalPeriod = row.gestationalPeriod;
-                if (row.isNeonate !== undefined && row.isNeonate !== null) itemObj.isNeonate = Boolean(row.isNeonate);
-                if (row.isIncapacitated !== undefined && row.isIncapacitated !== null) itemObj.isIncapacitated = Boolean(row.isIncapacitated);
-                if (row.isPsr !== undefined && row.isPsr !== null) itemObj.isPsr = Boolean(row.isPsr);
-                if (row.dum !== undefined && row.dum !== null) itemObj.dum = row.dum;
-                if (row.weight !== undefined && row.weight !== null) itemObj.weight = row.weight;
-                if (row.height !== undefined && row.height !== null) itemObj.height = row.height;
-                if (row.address !== undefined && row.address !== null) itemObj.address = row.address;
-                if (row.complement !== undefined && row.complement !== null) itemObj.complement = row.complement;
-                if (row.city !== undefined && row.city !== null) itemObj.city = row.city;
-                if (row.cep !== undefined && row.cep !== null) itemObj.cep = row.cep;
-                if (row.responsibleName !== undefined && row.responsibleName !== null) itemObj.responsibleName = row.responsibleName;
-                if (row.clinicalNotes !== undefined && row.clinicalNotes !== null) itemObj.clinicalNotes = row.clinicalNotes;
-                if (row.convenio !== undefined && row.convenio !== null) itemObj.convenio = row.convenio;
-                if (row.convenioCode !== undefined && row.convenioCode !== null) itemObj.convenioCode = row.convenioCode;
-                if (row.situacao !== undefined && row.situacao !== null) itemObj.situacao = row.situacao;
-                if (row.situacaoCode !== undefined && row.situacaoCode !== null) itemObj.situacaoCode = row.situacaoCode;
-                if (row.matricula !== undefined && row.matricula !== null) itemObj.matricula = row.matricula;
-                if (row.guia !== undefined && row.guia !== null) itemObj.guia = row.guia;
-                if (row.coleta !== undefined && row.coleta !== null) itemObj.coleta = row.coleta;
-                if (row.susCard !== undefined && row.susCard !== null) itemObj.susCard = row.susCard;
-                if (row.destino !== undefined && row.destino !== null) itemObj.destino = row.destino;
-                if (row.doctorCrm !== undefined && row.doctorCrm !== null) itemObj.doctorCrm = row.doctorCrm;
-                if (row.doctorUf !== undefined && row.doctorUf !== null) itemObj.doctorUf = row.doctorUf;
-                if (row.doctorName !== undefined && row.doctorName !== null) itemObj.doctorName = row.doctorName;
-                if (row.fatura !== undefined && row.fatura !== null) itemObj.fatura = row.fatura;
-                if (row.hora !== undefined && row.hora !== null) itemObj.hora = row.hora;
-                if (row.procedencia !== undefined && row.procedencia !== null) itemObj.procedencia = row.procedencia;
-                if (row.obs !== undefined && row.obs !== null) itemObj.obs = row.obs;
-                if (row.empresa !== undefined && row.empresa !== null) itemObj.empresa = row.empresa;
-                if (row.isUrgent !== undefined && row.isUrgent !== null) itemObj.isUrgent = Boolean(row.isUrgent);
-                if (row.patientUsername !== undefined && row.patientUsername !== null) itemObj.patientUsername = row.patientUsername;
-                if (row.patientPassword !== undefined && row.patientPassword !== null) itemObj.patientPassword = row.patientPassword;
-                if (row.status !== undefined && row.status !== null) itemObj.status = row.status;
-                if (row.subtotal !== undefined && row.subtotal !== null) itemObj.subtotal = parseFloat(row.subtotal) || 0;
-                if (row.discount !== undefined && row.discount !== null) itemObj.discount = parseFloat(row.discount) || 0;
-                if (row.totalAmount !== undefined && row.totalAmount !== null) itemObj.totalAmount = parseFloat(row.totalAmount) || 0;
-                if (row.paymentMethod !== undefined && row.paymentMethod !== null) itemObj.paymentMethod = row.paymentMethod;
-                if (row.paymentCondition !== undefined && row.paymentCondition !== null) itemObj.paymentCondition = row.paymentCondition;
-                if (row.paidAmount !== undefined && row.paidAmount !== null) itemObj.paidAmount = parseFloat(row.paidAmount) || 0;
-                if (row.financialStatus !== undefined && row.financialStatus !== null) itemObj.financialStatus = row.financialStatus;
-                if (row.deliveryDate !== undefined && row.deliveryDate !== null) itemObj.deliveryDate = row.deliveryDate;
-                if (row.deliveryTime !== undefined && row.deliveryTime !== null) itemObj.deliveryTime = row.deliveryTime;
-                if (row.cid10 !== undefined && row.cid10 !== null) itemObj.cid10 = row.cid10;
-                if (row.notifyWhatsapp !== undefined && row.notifyWhatsapp !== null) itemObj.notifyWhatsapp = Boolean(row.notifyWhatsapp);
-                if (row.separateLabel !== undefined && row.separateLabel !== null) itemObj.separateLabel = Boolean(row.separateLabel);
-                if (row.fastingHours !== undefined && row.fastingHours !== null) itemObj.fastingHours = row.fastingHours;
-                if (row.collectedAt !== undefined && row.collectedAt !== null) itemObj.collectedAt = row.collectedAt;
-                if (row.updatedAt !== undefined && row.updatedAt !== null) itemObj.updatedAt = row.updatedAt;
-                if (row.exams) {
-                  try { itemObj.exams = typeof row.exams === 'string' ? JSON.parse(row.exams) : row.exams; } catch(e) {}
+              itemObj.id = row.id || itemObj.id;
+
+              if (schema && schema.length > 0) {
+                for (const col of schema) {
+                  const dbVal = row[col.name];
+                  if (dbVal !== undefined && dbVal !== null) {
+                    if (col.type.includes('LONGTEXT')) {
+                      try {
+                        itemObj[col.name] = typeof dbVal === 'string' ? JSON.parse(dbVal) : dbVal;
+                      } catch(e) {
+                        itemObj[col.name] = dbVal;
+                      }
+                    } else if (col.type.includes('TINYINT(1)')) {
+                      itemObj[col.name] = Boolean(dbVal);
+                    } else if (col.type.includes('DECIMAL')) {
+                      itemObj[col.name] = parseFloat(dbVal) || 0;
+                    } else if (col.type.includes('INT')) {
+                      itemObj[col.name] = parseInt(dbVal, 10) || 0;
+                    } else {
+                      itemObj[col.name] = dbVal;
+                    }
+                  }
                 }
               }
+
               list.push(itemObj);
             } catch (e) {
               console.error(`Erro ao parsear item na tabela 'tbl_${name}':`, e);
@@ -17063,9 +17420,39 @@ app.post('/admin/meu-rh/sign-paystub', requireAdmin, (req, res) => {
   }
 });
 
+// Endpoint administrativo para execução do script de limpeza de campos e colunas obsoletas
+app.post('/api/admin/clean-obsolete-fields', async (req, res) => {
+  try {
+    const result = await cleanObsoleteDatabaseFields();
+    res.json({
+      success: true,
+      message: 'Script de limpeza executado com sucesso!',
+      details: result
+    });
+  } catch (err) {
+    console.error("Erro ao executar script de limpeza:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/clean-obsolete-fields', async (req, res) => {
+  try {
+    const result = await cleanObsoleteDatabaseFields();
+    res.json({
+      success: true,
+      message: 'Script de limpeza executado com sucesso!',
+      details: result
+    });
+  } catch (err) {
+    console.error("Erro ao executar script de limpeza:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Inicialização do Servidor
 async function startServer() {
   await initializeFirebaseCaches();
+  await cleanObsoleteDatabaseFields();
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`InovaLab Cambará Server rodando na porta ${PORT}`);
   });

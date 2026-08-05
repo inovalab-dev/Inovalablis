@@ -7,8 +7,8 @@
     "timeframe": "24 horas",
     "instructions": "Evitar o consumo de bebidas alcoólicas nas 72 horas que antecedem o exame. Evitar esforço físico intenso antes da coleta.",
     "code": "HEMO01",
-    "supportLab": "Próprio",
-    "pricePrivate": 35.00
+    "pricePrivate": 35,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "2",
@@ -18,8 +18,8 @@
     "timeframe": "24 horas",
     "instructions": "Manter jejum absoluto de alimentos sólidos e líquidos (exceto água em quantidade moderada) por 8 a 12 horas.",
     "code": "GLIC02",
-    "supportLab": "Próprio",
-    "pricePrivate": 20.00
+    "pricePrivate": 20,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "3",
@@ -29,8 +29,8 @@
     "timeframe": "24 horas",
     "instructions": "Manter a sua dieta habitual nos 3 dias anteriores ao exame. Não praticar atividade física vigorosa antes da coleta.",
     "code": "COLE03",
-    "supportLab": "Álvaro Apoio",
-    "pricePrivate": 40.00
+    "pricePrivate": 40,
+    "supportLabCode": "Álvaro Apoio"
   },
   {
     "id": "4",
@@ -40,8 +40,8 @@
     "timeframe": "48 horas",
     "instructions": "Realizar a coleta preferencialmente pela manhã (até às 10h). Informar se utiliza medicamentos para a tireoide.",
     "code": "TSH04",
-    "supportLab": "Hermes Pardini",
-    "pricePrivate": 50.00
+    "pricePrivate": 50,
+    "supportLabCode": "Hermes Pardini"
   },
   {
     "id": "5",
@@ -51,8 +51,8 @@
     "timeframe": "24 horas",
     "instructions": "Evitar a ingestão excessiva de carne vermelha nas 24 horas que antecedem o exame. Repouso de 15 minutos.",
     "code": "CREA05",
-    "supportLab": "Próprio",
-    "pricePrivate": 25.00
+    "pricePrivate": 25,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "6",
@@ -62,8 +62,8 @@
     "timeframe": "24 horas",
     "instructions": "Coletar preferencialmente a primeira urina da manhã. Realizar higiene íntima rigorosa, desprezar o primeiro jato e coletar o jato médio.",
     "code": "EAS06",
-    "supportLab": "Próprio",
-    "pricePrivate": 22.00
+    "pricePrivate": 22,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "7",
@@ -73,8 +73,8 @@
     "timeframe": "5 dias úteis",
     "instructions": "Não estar no período menstrual. Não utilizar cremes ou duchas vaginais e não ter relações sexuais nas 48h anteriores.",
     "code": "PAPA07",
-    "supportLab": "Fleury Grupo",
-    "pricePrivate": 80.00
+    "pricePrivate": 80,
+    "supportLabCode": "Fleury Grupo"
   },
   {
     "id": "8",
@@ -84,8 +84,8 @@
     "timeframe": "3 dias úteis",
     "instructions": "Coleta de sangue comum por punção venosa. Informar se faz uso de suplementação diária de Vitamina D.",
     "code": "VITD08",
-    "supportLab": "Álvaro Apoio",
-    "pricePrivate": 90.00
+    "pricePrivate": 90,
+    "supportLabCode": "Álvaro Apoio"
   },
   {
     "id": "9",
@@ -95,8 +95,8 @@
     "timeframe": "4 horas",
     "instructions": "Exame de sangue para diagnóstico de gravidez. Pode ser realizado a qualquer hora do dia. Resultado rápido para sua tranquilidade.",
     "code": "BHCG09",
-    "supportLab": "Próprio",
-    "pricePrivate": 45.00
+    "pricePrivate": 45,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "10",
@@ -106,8 +106,8 @@
     "timeframe": "5 dias úteis",
     "instructions": "Coleta de queratina (cabelo ou pelos corporais). Indicado para renovação de CNH C, D e E, e concursos públicos.",
     "code": "TOXI10",
-    "supportLab": "DB Diagnósticos",
-    "pricePrivate": 220.00
+    "pricePrivate": 220,
+    "supportLabCode": "DB Diagnósticos"
   },
   {
     "id": "11",
@@ -117,8 +117,8 @@
     "timeframe": "24 horas",
     "instructions": "Coletar amostra em frasco limpo fornecido pelo laboratório. Enviar imediatamente ou manter refrigerado por no máximo 12h.",
     "code": "EPF11",
-    "supportLab": "Próprio",
-    "pricePrivate": 25.00
+    "pricePrivate": 25,
+    "supportLabCode": "Próprio"
   },
   {
     "id": "12",
@@ -128,7 +128,7 @@
     "timeframe": "24 horas",
     "instructions": "Evitar atividades físicas extremas na véspera da coleta. O jejum não é obrigatório, mas é aconselhável jejum de 3 horas.",
     "code": "UREI12",
-    "supportLab": "Próprio",
-    "pricePrivate": 20.00
+    "pricePrivate": 20,
+    "supportLabCode": "Próprio"
   }
 ]

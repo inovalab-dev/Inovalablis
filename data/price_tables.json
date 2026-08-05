@@ -1,0 +1,162 @@
+[
+  {
+    "id": "TAB-1",
+    "codigo": "1",
+    "descricao": "Particular",
+    "convenioId": "CONV-1",
+    "precios": [
+      {
+        "examCode": "11DES",
+        "material": "SGE",
+        "examName": "11 Desoxicortisol",
+        "amb": "4.03.16.18-1",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17AN",
+        "material": "SC",
+        "examName": "17 Alfa Hidroxiprogesterona",
+        "amb": "4.03.16.01-7",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17CET",
+        "material": "U24",
+        "examName": "17 Cetosteróides totais",
+        "amb": "4.03.05.06-6",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17O90",
+        "material": "SGE",
+        "examName": "17 ALFA HIDROXIPROGESTERONA",
+        "amb": "4.03.16.01-7",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17OH",
+        "material": "U24",
+        "examName": "17-Hidroxicorticosteroides totais",
+        "amb": "4.03.05.78-3",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17OHC",
+        "material": "U24",
+        "examName": "17 Oh Corticosteroides Fracionados",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17PRE",
+        "material": "SGE",
+        "examName": "17 Hidroxipregnenolona",
+        "amb": "4.03.05.09-0",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "17PRO",
+        "material": "SGE",
+        "examName": "17 Alfa Hidroxiprogesterona",
+        "amb": "4.03.16.01-7",
+        "valor": 40,
+        "proibir": false
+      },
+      {
+        "examCode": "18COR",
+        "material": "SGE",
+        "examName": "18-Hidroxicorticosterona",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "190PC",
+        "material": "SGE",
+        "examName": "Bcr/Abl - Qualitativo P190 prime",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "190PC",
+        "material": "SGT",
+        "examName": "Bcr/Abl - Qualitativo P190 prime",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "190QT",
+        "material": "SGE",
+        "examName": "Bcr/Abl - Quantitativo P190",
+        "amb": "4.05.03.54-2",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "190QT",
+        "material": "SGT",
+        "examName": "Bcr/Abl - Quantitativo P190",
+        "amb": "4.05.03.54-2",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "1P19Q",
+        "material": "TCT",
+        "examName": "Estudo Da Deleção 1p19q",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      },
+      {
+        "examCode": "210PC",
+        "material": "SGE",
+        "examName": "Bcr/Abl - Qualitativo P210",
+        "amb": "",
+        "valor": 0,
+        "proibir": true
+      }
+    ]
+  },
+  {
+    "id": "TAB-2",
+    "codigo": "2",
+    "descricao": "Unimed TUSS 2026",
+    "convenioId": "CONV-2",
+    "precios": [
+      {
+        "examCode": "11DES",
+        "material": "SGE",
+        "examName": "11 Desoxicortisol",
+        "amb": "4.03.16.18-1",
+        "valor": 35,
+        "proibir": false
+      },
+      {
+        "examCode": "17AN",
+        "material": "SC",
+        "examName": "17 Alfa Hidroxiprogesterona",
+        "amb": "4.03.16.01-7",
+        "valor": 22,
+        "proibir": false
+      },
+      {
+        "examCode": "17PRO",
+        "material": "SGE",
+        "examName": "17 Alfa Hidroxiprogesterona",
+        "amb": "4.03.16.01-7",
+        "valor": 28.5,
+        "proibir": false
+      }
+    ]
+  }
+]

@@ -2457,6 +2457,7 @@
             equipamento: ex.equipamento || (catEx && (catEx.equipment || catEx.equipamento)) || '',
             interpretacao: ex.interpretacao || ex.interpretation || '',
             observacao: ex.observacao || ex.observations || '',
+            observacoesLaudo: ex.observacoesLaudo || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '',
             valorReferencia: refVal,
             unidade: currentInputUnit,
             unit: currentInputUnit,
@@ -2578,6 +2579,7 @@
         equipamento: ex.equipamento || ex.equipment || (isCurrentActive ? document.getElementById('f-equipment')?.value : '') || (catEx && (catEx.equipment || catEx.equipamento)) || '',
         interpretacao: ex.interpretacao || ex.interpretation || (isCurrentActive ? document.getElementById('f-interpretation')?.value : '') || '',
         observacao: ex.observacao || ex.observations || (isCurrentActive ? document.getElementById('f-observations')?.value : '') || '',
+        observacoesLaudo: ex.observacoesLaudo || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '',
         valorReferencia: refVal,
         linhas: linhas
       };
@@ -2625,6 +2627,7 @@
     let examesHtml = laudoJson.exames.map(ex => {
       const hasInterpretation = Boolean(ex.interpretacao && String(ex.interpretacao).trim());
       const hasObservacao = Boolean(ex.observacao && String(ex.observacao).trim());
+      const hasObservacoesLaudo = Boolean(ex.observacoesLaudo && String(ex.observacoesLaudo).trim());
 
       return `
         <div class="mb-6 font-mono">
@@ -2689,6 +2692,14 @@
           ${hasObservacao ? `
             <div class="mt-2 pt-2 border-t border-slate-200 text-[10.5px] text-slate-700 italic">
               <strong class="not-italic text-slate-900">Observações:</strong> ${escapeLisHtml(ex.observacao)}
+            </div>
+          ` : ''}
+
+          <!-- 5. OBSERVAÇÕES/NOTA/REFERÊNCIAS DO CADASTRO DO EXAME (SE HOUVER) -->
+          ${hasObservacoesLaudo ? `
+            <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
+              <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Observações/Nota/Referências:</div>
+              <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono">${escapeLisHtml(ex.observacoesLaudo)}</div>
             </div>
           ` : ''}
         </div>

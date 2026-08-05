@@ -4378,6 +4378,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const refText = String(ex.valorReferencia || ex.referenceValue || ex.referencia || ex.refValue || '').trim();
         const obsText = String(ex.observacoes || ex.observations || '').trim();
         const interpText = String(ex.interpretacao || ex.interpretation || '').trim();
+        const obsNotaRefText = String(ex.observacoesLaudo || (catEx && (catEx.observacoesLaudo || catEx.observacoesNotaReferencias)) || '').trim();
 
         if (modelo === 'Modelo Hematologia em Colunas' || (Array.isArray(ex.linhas) && ex.linhas.length > 0)) {
           // --- MODELO EM COLUNAS / TABELA ---
@@ -4511,6 +4512,11 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
         if (obsText) {
           doc.fillColor('#64748b').fontSize(8).text(`Observações: ${obsText}`);
+          doc.moveDown(0.3);
+        }
+        if (obsNotaRefText) {
+          doc.fillColor('#334155').fontSize(8.5).text('Observações/Nota/Referências:', { bold: true });
+          doc.fillColor('#475569').fontSize(8).text(obsNotaRefText, { align: 'justify' });
           doc.moveDown(0.3);
         }
 
@@ -4744,7 +4750,7 @@ app.post('/admin/exames/add', requireAdmin, (req, res) => {
     codigoAlvaro, codigoPardini, sinonimia, idadeMin, idadeMinUnidade, idadeMax, idadeMaxUnidade,
     sexo, amostras, tagsResultado, filtro, bloquearExame, permitirSalvarParcialmente, servico,
     importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig,
-    modeloLaudo, formularioColeta, cabecalho,
+    modeloLaudo, formularioColeta, cabecalho, observacoesLaudo,
     tituloLaudo, materialLaudo, metodoLaudo, valorReferenciaLaudo
   } = req.body;
 
@@ -4810,6 +4816,7 @@ app.post('/admin/exames/add', requireAdmin, (req, res) => {
     modeloLaudo: (modeloLaudo || 'Padrão LIS InovaLab').trim(),
     formularioColeta: (formularioColeta || 'Ficha Padrão de Coleta').trim(),
     cabecalho: (cabecalho || '').trim(),
+    observacoesLaudo: (observacoesLaudo || '').trim(),
     tituloLaudo: (tituloLaudo || name || '').trim(),
     materialLaudo: (materialLaudo || category || '').trim(),
     metodoLaudo: (metodoLaudo || '').trim(),
@@ -4829,7 +4836,7 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
     codigoAlvaro, codigoPardini, sinonimia, idadeMin, idadeMinUnidade, idadeMax, idadeMaxUnidade,
     sexo, amostras, tagsResultado, filtro, bloquearExame, permitirSalvarParcialmente, servico,
     importarPdf, tipoBPA, setores, materiaisColetados, historico, webConfig,
-    modeloLaudo, formularioColeta, cabecalho,
+    modeloLaudo, formularioColeta, cabecalho, observacoesLaudo,
     tituloLaudo, materialLaudo, metodoLaudo, valorReferenciaLaudo
   } = req.body;
 
@@ -4914,6 +4921,7 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
       modeloLaudo: modeloLaudo !== undefined ? (modeloLaudo || 'Padrão LIS InovaLab').trim() : (exams[index].modeloLaudo || 'Padrão LIS InovaLab'),
       formularioColeta: formularioColeta !== undefined ? (formularioColeta || 'Ficha Padrão de Coleta').trim() : (exams[index].formularioColeta || 'Ficha Padrão de Coleta'),
       cabecalho: cabecalho !== undefined ? (cabecalho || '').trim() : (exams[index].cabecalho || ''),
+      observacoesLaudo: observacoesLaudo !== undefined ? (observacoesLaudo || '').trim() : (exams[index].observacoesLaudo || ''),
       tituloLaudo: tituloLaudo !== undefined ? (tituloLaudo || name || '').trim() : (exams[index].tituloLaudo || exams[index].name || ''),
       materialLaudo: materialLaudo !== undefined ? (materialLaudo || category || '').trim() : (exams[index].materialLaudo || exams[index].category || ''),
       metodoLaudo: metodoLaudo !== undefined ? (metodoLaudo || '').trim() : (exams[index].metodoLaudo || ''),

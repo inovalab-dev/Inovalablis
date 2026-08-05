@@ -429,8 +429,7 @@
       <input type="hidden" name="materiaisColetados" id="form-exam-materiais-json" value="[]">
       <input type="hidden" name="webConfig" id="form-exam-web-json" value="{}">
       <input type="hidden" name="modeloLaudo" id="form-exam-modeloLaudo" value="Padrão LIS InovaLab">
-      <input type="hidden" name="formularioColeta" id="form-exam-formularioColeta" value="Ficha Padrão de Coleta">
-      <input type="hidden" name="cabecalho" id="form-exam-cabecalho" value="">
+      <input type="hidden" name="observacoesLaudo" id="form-exam-observacoesLaudo" value="">
       <input type="hidden" name="tituloLaudo" id="form-exam-tituloLaudo" value="">
       <input type="hidden" name="materialLaudo" id="form-exam-materialLaudo" value="">
       <input type="hidden" name="metodoLaudo" id="form-exam-metodoLaudo" value="">
@@ -1485,20 +1484,10 @@
               <textarea id="mod-valor-referencia-laudo" name="valorReferenciaLaudo" rows="3" placeholder="Ex: Homens: 13.5 a 17.5 g/dL&#10;Mulheres: 12.0 a 15.5 g/dL" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
             </div>
 
-            <!-- Formulário de Coleta -->
-            <div>
-              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Formulário de Coleta:</label>
-              <select id="mod-formulario-coleta" name="formularioColeta" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all">
-                <option value="Ficha Padrão de Coleta">Ficha Padrão de Coleta</option>
-                <option value="Etiqueta com Código de Barras Duplo">Etiqueta com Código de Barras Duplo</option>
-                <option value="Guia Externa do Paciente">Guia Externa do Paciente</option>
-              </select>
-            </div>
-
-            <!-- Cabeçalho Personalizado -->
+            <!-- Observações/Nota/Referências -->
             <div class="md:col-span-2">
-              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Cabeçalho Personalizado do Laudo:</label>
-              <textarea id="mod-cabecalho" name="cabecalho" rows="2" placeholder="Observação no topo da folha do laudo..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
+              <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Observações/Nota/Referências:</label>
+              <textarea id="mod-observacoes-laudo" name="observacoesLaudo" rows="3" placeholder="Escreva observações, notas técnicas ou referências bibliográficas para constar no laudo (exibido justificado)..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
             </div>
           </div>
         </div>
@@ -3356,8 +3345,7 @@
 
     // Tab 5 - Modelos e Predefinições do Laudo Interno
     if (document.getElementById('mod-modelo-laudo')) document.getElementById('mod-modelo-laudo').value = exam.modeloLaudo || 'Padrão LIS InovaLab';
-    if (document.getElementById('mod-formulario-coleta')) document.getElementById('mod-formulario-coleta').value = exam.formularioColeta || 'Ficha Padrão de Coleta';
-    if (document.getElementById('mod-cabecalho')) document.getElementById('mod-cabecalho').value = exam.cabecalho || '';
+    if (document.getElementById('mod-observacoes-laudo')) document.getElementById('mod-observacoes-laudo').value = exam.observacoesLaudo || exam.observacoesNotaReferencias || '';
     if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = exam.tituloLaudo || exam.name || '';
     if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = exam.materialLaudo || (Array.isArray(exam.materiaisColetados) && exam.materiaisColetados[0]?.material) || exam.category || '';
     if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = exam.metodoLaudo || exam.metodo || '';
@@ -3505,8 +3493,7 @@
 
       // Modelos
       document.getElementById('mod-modelo-laudo').value = mat.modeloLaudo || 'Padrão LIS InovaLab';
-      document.getElementById('mod-formulario-coleta').value = mat.formularioColeta || 'Ficha Padrão de Coleta';
-      document.getElementById('mod-cabecalho').value = mat.cabecalho || '';
+      if (document.getElementById('mod-observacoes-laudo')) document.getElementById('mod-observacoes-laudo').value = mat.observacoesLaudo || mat.observacoesNotaReferencias || '';
       if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = mat.tituloLaudo || mat.nome || '';
       if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = mat.materialLaudo || mat.nome || '';
       if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = mat.metodoLaudo || mat.metodo || '';
@@ -3589,8 +3576,7 @@
       document.getElementById('preco-ch').value = '0.00';
       document.getElementById('preco-filme').value = '0.00';
       document.getElementById('mod-modelo-laudo').value = 'Padrão LIS InovaLab';
-      document.getElementById('mod-formulario-coleta').value = 'Ficha Padrão de Coleta';
-      document.getElementById('mod-cabecalho').value = '';
+      if (document.getElementById('mod-observacoes-laudo')) document.getElementById('mod-observacoes-laudo').value = '';
       if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = '';
       if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = '';
       if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = '';
@@ -3895,8 +3881,7 @@
       priceTableValues: materialPriceTableValues,
       // Tab 5
       modeloLaudo: document.getElementById('mod-modelo-laudo') ? document.getElementById('mod-modelo-laudo').value : 'Padrão LIS InovaLab',
-      formularioColeta: document.getElementById('mod-formulario-coleta') ? document.getElementById('mod-formulario-coleta').value : 'Ficha Padrão de Coleta',
-      cabecalho: document.getElementById('mod-cabecalho') ? document.getElementById('mod-cabecalho').value : '',
+      observacoesLaudo: document.getElementById('mod-observacoes-laudo') ? document.getElementById('mod-observacoes-laudo').value : '',
       tituloLaudo: document.getElementById('mod-titulo-laudo') ? document.getElementById('mod-titulo-laudo').value : '',
       materialLaudo: document.getElementById('mod-material-laudo') ? document.getElementById('mod-material-laudo').value : '',
       metodoLaudo: document.getElementById('mod-metodo-laudo') ? document.getElementById('mod-metodo-laudo').value : '',
@@ -4775,16 +4760,14 @@
         if (matElem) matElem.value = JSON.stringify(currentMateriaisList);
 
         const modModelo = document.getElementById('mod-modelo-laudo')?.value || 'Padrão LIS InovaLab';
-        const modForm = document.getElementById('mod-formulario-coleta')?.value || 'Ficha Padrão de Coleta';
-        const modCab = document.getElementById('mod-cabecalho')?.value || '';
+        const modObs = document.getElementById('mod-observacoes-laudo')?.value || '';
         const modTit = document.getElementById('mod-titulo-laudo')?.value || '';
         const modMat = document.getElementById('mod-material-laudo')?.value || '';
         const modMet = document.getElementById('mod-metodo-laudo')?.value || '';
         const modValRef = document.getElementById('mod-valor-referencia-laudo')?.value || '';
 
         if (document.getElementById('form-exam-modeloLaudo')) document.getElementById('form-exam-modeloLaudo').value = modModelo;
-        if (document.getElementById('form-exam-formularioColeta')) document.getElementById('form-exam-formularioColeta').value = modForm;
-        if (document.getElementById('form-exam-cabecalho')) document.getElementById('form-exam-cabecalho').value = modCab;
+        if (document.getElementById('form-exam-observacoesLaudo')) document.getElementById('form-exam-observacoesLaudo').value = modObs;
         if (document.getElementById('form-exam-tituloLaudo')) document.getElementById('form-exam-tituloLaudo').value = modTit;
         if (document.getElementById('form-exam-materialLaudo')) document.getElementById('form-exam-materialLaudo').value = modMat;
         if (document.getElementById('form-exam-metodoLaudo')) document.getElementById('form-exam-metodoLaudo').value = modMet;

@@ -125,13 +125,13 @@
             </tr>
           <% } else { %>
             <% locaisColeta.forEach(l => { %>
-              <tr class="local-row hover:bg-teal-50/40 transition-colors" data-search="<%= (l.codigo + ' ' + l.descricao).toLowerCase() %>">
+              <tr class="local-row hover:bg-teal-50/40 transition-colors" data-search="<%= ((l.codigo || '') + ' ' + (l.descricao || l.nome || '')).toLowerCase() %>">
                 <td class="p-3 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
-                  #<%= l.codigo %>
+                  #<%= l.codigo || '' %>
                 </td>
                 <td class="p-3">
                   <div class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <span class="text-teal-600">📍</span> <%= l.descricao %>
+                    <span class="text-teal-600">📍</span> <%= l.descricao || l.nome || '-' %>
                   </div>
                 </td>
                 <td class="p-3 text-center">
@@ -139,7 +139,7 @@
                     <button type="button" onclick="editLocal('<%= l.id %>')" title="Editar Local de Coleta" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
                       ✏️ Editar
                     </button>
-                    <button type="button" onclick="deleteLocal('<%= l.id %>', '<%= l.descricao.replace(/'/g, "\\'") %>')" title="Excluir Local de Coleta" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                    <button type="button" onclick="deleteLocal('<%= l.id %>', '<%= (l.descricao || l.nome || '').replace(/'/g, "\\'") %>')" title="Excluir Local de Coleta" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
                       🗑️
                     </button>
                   </div>

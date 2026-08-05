@@ -34,8 +34,13 @@
       </div>
     </div>
 
-    <!-- Botão Principal de Ação -->
+    <!-- Botões Principais de Ação -->
     <div class="flex items-center gap-3">
+      <button type="button" onclick="openImportModal()" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl border border-gray-300 shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+        <span>📥 Importar CSV</span>
+      </button>
+
       <button type="button" onclick="openNewSetorModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
         <span>+ Novo Setor</span>
@@ -222,8 +227,180 @@
   </div>
 </div>
 
+<!-- MODAL DE IMPORTAÇÃO DE SETORES VIA CSV -->
+<div id="importSetoresModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-150">
+    
+    <!-- Modal Header -->
+    <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📥</span>
+        <h3 class="text-sm font-extrabold uppercase font-mono tracking-wider text-brand-gold">
+          Importar Setores via CSV
+        </h3>
+      </div>
+      <button type="button" onclick="closeImportModal()" class="text-white/70 hover:text-white text-xl font-bold p-1 cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
+      
+      <!-- Informações & Modelo -->
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs space-y-2 text-emerald-900">
+        <div class="flex items-center justify-between font-bold">
+          <span>Formato Aceito para o CSV:</span>
+          <button type="button" onclick="downloadCsvTemplate()" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-mono text-[11px] transition-colors flex items-center gap-1 cursor-pointer">
+            ⬇️ Baixar Modelo CSV
+          </button>
+        </div>
+        <p class="text-emerald-800">
+          O arquivo pode utilizar delimitadores como vírgula (<code>,</code>) ou ponto e vírgula (<code>;</code>).<br>
+          Colunas suportadas: <strong>codigo, descricao, sigla</strong>
+        </p>
+        <div class="bg-white/80 p-2 rounded border border-emerald-200 font-mono text-[11px] text-slate-700">
+          codigo;descricao;sigla<br>
+          1;Hematologia;HEM<br>
+          2;Bioquímica;BIO<br>
+          3;Imunologia;IMU
+        </div>
+      </div>
+
+      <!-- Formulário de Upload -->
+      <form id="importSetoresForm" onsubmit="submitCsvImport(event)" class="space-y-4">
+        
+        <!-- Seleção do Arquivo File Drag & Drop -->
+        <div class="space-y-1">
+          <label class="block text-xs font-extrabold text-slate-700 uppercase font-mono">
+            1. Selecionar Arquivo CSV:
+          </label>
+          <div class="relative border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-4 text-center transition-colors cursor-pointer bg-slate-50 hover:bg-emerald-50/30 group">
+            <input type="file" id="csvFileInput" accept=".csv, .txt" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <div class="flex flex-col items-center gap-1.5">
+              <span class="text-2xl group-hover:scale-110 transition-transform">📄</span>
+              <span id="csvFileLabel" class="text-xs font-bold text-slate-600">
+                Clique aqui para selecionar ou arraste o arquivo .CSV
+              </span>
+              <span class="text-[10px] text-slate-400">Tamanho máximo: 5MB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center text-xs font-bold text-slate-400 uppercase font-mono my-2">OU</div>
+
+        <!-- Colagem Direta do Texto CSV -->
+        <div class="space-y-1">
+          <label for="csvTextInput" class="block text-xs font-extrabold text-slate-700 uppercase font-mono">
+            2. Cole o conteúdo do CSV diretamente:
+          </label>
+          <textarea id="csvTextInput" rows="4" placeholder="codigo;descricao;sigla&#10;1;Hematologia;HEM&#10;2;Bioquímica;BIO" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-mono text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 resize-y"></textarea>
+        </div>
+
+        <!-- Alerta / Status -->
+        <div id="importStatus" class="hidden text-xs font-bold p-3 rounded-xl"></div>
+
+        <!-- Footer Actions inside Modal -->
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeImportModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl uppercase font-mono transition-all cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" id="btnSubmitImport" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl uppercase font-mono tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+            <span>🚀 Importar Setores</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
 <script>
   let setoresList = <%- JSON.stringify(setores) %>;
+
+  function openImportModal() {
+    document.getElementById('importSetoresForm').reset();
+    document.getElementById('csvFileLabel').innerText = 'Clique aqui para selecionar ou arraste o arquivo .CSV';
+    const statusDiv = document.getElementById('importStatus');
+    statusDiv.classList.add('hidden');
+    statusDiv.innerHTML = '';
+    document.getElementById('importSetoresModal').classList.remove('hidden');
+  }
+
+  function closeImportModal() {
+    document.getElementById('importSetoresModal').classList.add('hidden');
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      document.getElementById('csvFileLabel').innerText = '📎 Selecionado: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+    } else {
+      document.getElementById('csvFileLabel').innerText = 'Clique aqui para selecionar ou arraste o arquivo .CSV';
+    }
+  }
+
+  function downloadCsvTemplate() {
+    const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent("codigo;descricao;sigla\n1;Hematologia;HEM\n2;Bioquímica;BIO\n3;Imunologia;IMU\n4;Parasitologia;PAR\n5;Uroanálise;URO");
+    const link = document.createElement("a");
+    link.setAttribute("href", csvContent);
+    link.setAttribute("download", "modelo_setores.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  async function submitCsvImport(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitImport');
+    const statusDiv = document.getElementById('importStatus');
+    const fileInput = document.getElementById('csvFileInput');
+    const textInput = document.getElementById('csvTextInput');
+
+    const formData = new FormData();
+    if (fileInput.files.length > 0) {
+      formData.append('csvFile', fileInput.files[0]);
+    } else if (textInput.value.trim()) {
+      formData.append('csvText', textInput.value.trim());
+    } else {
+      statusDiv.className = 'text-xs font-bold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200';
+      statusDiv.innerText = 'Por favor, escolha um arquivo CSV ou cole o conteúdo no campo de texto.';
+      statusDiv.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Processando...</span>';
+    statusDiv.className = 'text-xs font-bold p-3 rounded-xl bg-blue-50 text-blue-700 border border-blue-200';
+    statusDiv.innerText = 'Enviando e processando arquivo...';
+    statusDiv.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/admin/setores/import-csv', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        statusDiv.className = 'text-xs font-bold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200';
+        statusDiv.innerText = data.message || 'Importação realizada com sucesso!';
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else {
+        statusDiv.className = 'text-xs font-bold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200';
+        statusDiv.innerText = data.message || 'Erro ao importar dados.';
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀 Importar Setores</span>';
+      }
+    } catch (err) {
+      statusDiv.className = 'text-xs font-bold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200';
+      statusDiv.innerText = 'Falha na comunicação com o servidor: ' + err.message;
+      btn.disabled = false;
+      btn.innerHTML = '<span>🚀 Importar Setores</span>';
+    }
+  }
 
   function openNewSetorModal() {
     document.getElementById('setorForm').reset();

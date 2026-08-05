@@ -124,19 +124,19 @@
             </tr>
           <% } else { %>
             <% recipientes.forEach(r => { %>
-              <tr class="recipiente-row hover:bg-purple-50/40 transition-colors" data-search="<%= (r.codigo + ' ' + r.descricao).toLowerCase() %>">
+              <tr class="recipiente-row hover:bg-purple-50/40 transition-colors" data-search="<%= ((r.codigo || '') + ' ' + (r.descricao || r.nome || '')).toLowerCase() %>">
                 <td class="p-3 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
-                  #<%= r.codigo %>
+                  #<%= r.codigo || '' %>
                 </td>
                 <td class="p-3">
-                  <div class="font-bold text-slate-800 text-sm"><%= r.descricao %></div>
+                  <div class="font-bold text-slate-800 text-sm"><%= r.descricao || r.nome || '-' %></div>
                 </td>
                 <td class="p-3 text-center">
                   <div class="flex items-center justify-center gap-1.5">
                     <button type="button" onclick="editRecipiente('<%= r.id %>')" title="Editar Recipiente" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
                       ✏️ Editar
                     </button>
-                    <button type="button" onclick="deleteRecipiente('<%= r.id %>', '<%= r.descricao.replace(/'/g, "\\'") %>')" title="Excluir Recipiente" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                    <button type="button" onclick="deleteRecipiente('<%= r.id %>', '<%= (r.descricao || r.nome || '').replace(/'/g, "\\'") %>')" title="Excluir Recipiente" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
                       🗑️
                     </button>
                   </div>

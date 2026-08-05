@@ -12137,6 +12137,127 @@ app.post('/admin/setores/save', requireAdmin, (req, res) => {
   }
 });
 
+// Importar Setores via CSV (POST)
+app.post('/admin/setores/import-csv', requireAdmin, upload.single('csvFile'), (req, res) => {
+  try {
+    let rawCsvText = '';
+    if (req.file && req.file.buffer) {
+      rawCsvText = req.file.buffer.toString('utf-8');
+    } else if (req.body && req.body.csvText) {
+      rawCsvText = req.body.csvText;
+    } else if (req.body && req.body.csvData) {
+      rawCsvText = req.body.csvData;
+    }
+
+    if (!rawCsvText || !rawCsvText.trim()) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(400).json({ success: false, message: 'Nenhum dado CSV fornecido.' });
+      }
+      return res.redirect('/admin/setores?error=empty_csv');
+    }
+
+    const rows = parseCsvRows(rawCsvText);
+    if (rows.length === 0) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(400).json({ success: false, message: 'Arquivo CSV sem linhas válidas.' });
+      }
+      return res.redirect('/admin/setores?error=empty_csv');
+    }
+
+    let startIdx = 0;
+    const headerRow = rows[0].map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+
+    let codeIdx = -1;
+    let descIdx = -1;
+    let siglaIdx = -1;
+
+    headerRow.forEach((col, i) => {
+      if (col.includes('cod') || col.includes('codigo') || col.includes('id')) {
+        if (codeIdx === -1) codeIdx = i;
+      } else if (col.includes('desc') || col.includes('nome') || col.includes('setor') || col.includes('departamento')) {
+        if (descIdx === -1) descIdx = i;
+      } else if (col.includes('sigla') || col.includes('abrev')) {
+        if (siglaIdx === -1) siglaIdx = i;
+      }
+    });
+
+    const hasHeaderKeywords = headerRow.some(h => 
+      h.includes('codigo') || h.includes('cod') || h.includes('descricao') || h.includes('nome') || h.includes('setor') || h.includes('sigla')
+    );
+
+    if (hasHeaderKeywords) {
+      startIdx = 1;
+    }
+
+    if (codeIdx === -1) codeIdx = 0;
+    if (descIdx === -1) descIdx = (rows[0].length > 1) ? 1 : 0;
+    if (siglaIdx === -1) siglaIdx = (rows[0].length > 2) ? 2 : -1;
+
+    let setores = loadSetores();
+    let maxCod = 0;
+    setores.forEach(s => {
+      const num = parseInt(s.codigo, 10);
+      if (!isNaN(num) && num > maxCod) maxCod = num;
+    });
+
+    let importedCount = 0;
+    let updatedCount = 0;
+
+    for (let i = startIdx; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.length === 0) continue;
+
+      let codigoVal = (codeIdx >= 0 && r[codeIdx]) ? r[codeIdx].trim() : '';
+      let descVal = (descIdx >= 0 && r[descIdx]) ? r[descIdx].trim() : '';
+      let siglaVal = (siglaIdx >= 0 && r[siglaIdx]) ? r[siglaIdx].trim().toUpperCase() : '';
+
+      if (!descVal && codigoVal && isNaN(parseInt(codigoVal, 10))) {
+        descVal = codigoVal;
+        codigoVal = '';
+      }
+
+      if (!descVal) continue;
+
+      let existing = setores.find(s => 
+        (codigoVal && String(s.codigo) === String(codigoVal)) ||
+        (s.descricao && s.descricao.toLowerCase() === descVal.toLowerCase())
+      );
+
+      if (existing) {
+        if (codigoVal) existing.codigo = codigoVal;
+        existing.descricao = descVal;
+        if (siglaVal) existing.sigla = siglaVal;
+        updatedCount++;
+      } else {
+        maxCod++;
+        const newSetor = {
+          id: 'SET-' + Date.now() + '-' + i,
+          codigo: codigoVal || String(maxCod),
+          descricao: descVal,
+          sigla: siglaVal
+        };
+        setores.push(newSetor);
+        importedCount++;
+      }
+    }
+
+    saveSetores(setores);
+
+    const message = `Importação concluída com sucesso! ${importedCount} novos setores cadastrados, ${updatedCount} atualizados.`;
+
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: true, message, importedCount, updatedCount, setores });
+    }
+    return res.redirect('/admin/setores?success=imported');
+  } catch (err) {
+    console.error("Erro na importação CSV de setores:", err);
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.status(500).json({ success: false, message: 'Erro ao processar arquivo CSV: ' + err.message });
+    }
+    return res.redirect('/admin/setores?error=import_failed');
+  }
+});
+
 app.post('/admin/setores/delete/:id', requireAdmin, (req, res) => {
   let setores = loadSetores();
   setores = setores.filter(s => String(s.id) !== String(req.params.id));

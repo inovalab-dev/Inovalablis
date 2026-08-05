@@ -4692,51 +4692,29 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
       const isValid = validatePassword(patient, reqsFound, password);
       if (!isValid) {
         return res.status(401).json({
-          success: false,
-          error: "Senha incorreta",
-          message: "A senha informada não confere com o cadastro do paciente."
-        });
-      }
-    }
-
-    const examesFormatados = formatRequisitionExams(reqsFound);
-
-    const profileData = formatPatientProfile(patient);
-
-    return res.json({
-      success: true,
-      data: {
-        ...profileData,
-        exames: examesFormatados,
-        totalRequisicoes: examesFormatados.length
-      }
-    });
-
-  } catch (error) {
-    console.error("Erro na consulta de paciente:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Erro interno do servidor",
-      message: error.message
-    });
-  }
-});
-
-// Helper para renderizar texto no PDFKit com suporte a negrito através de <b>TEXTO</b>
+     // Helper para renderizar texto no PDFKit com suporte a negrito (<b>...</b>) e quebras de linha (\n, <br>)
 function renderPdfFormattedText(doc, textStr, options = {}) {
   if (!textStr) return;
-  const str = String(textStr);
-  const { fillColor, fontSize, font, ...pdfOptions } = options;
+  let str = String(textStr);
+  const { fillColor, fontSize, font, x, ...pdfOptions } = options;
   if (fillColor) doc.fillColor(fillColor);
   if (fontSize) doc.fontSize(fontSize);
 
   const baseFont = font || 'Courier';
   const boldFont = baseFont.includes('Helvetica') ? 'Helvetica-Bold' : 'Courier-Bold';
 
-  if (!/<b>/i.test(str)) {
-    doc.font(baseFont).text(str.replace(/<\/?b>/gi, ''), pdfOptions);
-    return;
-  }
+  // Normalizar quebras de linha HTML, entidades, e caracteres de retorno (\r, \n, \r\n, \n literal)
+  str = str
+    .replace(/&lt;br\s*\/?&gt;/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<p[^>]*>/gi, '')
+    .replace(/&#10;/gi, '\n')
+    .replace(/&#13;/gi, '')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
 
   const parseSegments = (rawText) => {
     const segments = [];
@@ -4757,11 +4735,48 @@ function renderPdfFormattedText(doc, textStr, options = {}) {
   };
 
   const lines = str.split('\n');
-  lines.forEach((line, lIdx) => {
-    const isLastLine = lIdx === lines.length - 1;
+  lines.forEach((line) => {
+    // Se a linha for vazia (linha em branco no texto)
+    if (line === '') {
+      doc.moveDown(0.3);
+      return;
+    }
+
     const segments = parseSegments(line);
     if (segments.length === 0) {
-      doc.font(baseFont).text('', { ...pdfOptions, continued: !isLastLine });
+      doc.moveDown(0.3);
+      return;
+    }
+
+    const startX = x || 45;
+
+    segments.forEach((seg, sIdx) => {
+      const isFirstSeg = sIdx === 0;
+      const isLastSeg = sIdx === segments.length - 1;
+      const opts = {
+        ...pdfOptions,
+        continued: !isLastSeg
+      };
+
+      const targetFont = seg.bold ? boldFont : baseFont;
+      doc.font(targetFont);
+
+      if (isFirstSeg) {
+        doc.text(seg.text, startX, undefined, opts);
+      } else {
+        doc.text(seg.text, opts);
+      }
+    });
+  });
+} vazia, adiciona uma linha em branco no PDF
+    if (!cleanLine) {
+      doc.font(baseFont).text(' ', pdfOptions);
+      return;
+    }
+
+    const segments = parseSegments(cleanLine);
+    if (segments.length === 0) {
+      doc.font(baseFont).text(' ', pdfOptions);
       return;
     }
 
@@ -4769,7 +4784,7 @@ function renderPdfFormattedText(doc, textStr, options = {}) {
       const isLastSeg = sIdx === segments.length - 1;
       const opts = {
         ...pdfOptions,
-        continued: !isLastSeg || !isLastLine
+        continued: !isLastSeg // IMPORTANTE: continued só deve ser true para segmentos da MESMA linha
       };
 
       if (seg.bold) {
@@ -4904,7 +4919,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     // Dados da Instituição (Direita - Alinhado)
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
-    doc.text('📍 Rua Tiradentes, N°999 - Centro', 300, startY + 12, { align: 'right' });
+    doc.text('Rua Tiradentes, N°999 - Centro', 300, startY + 12, { align: 'right' });
     doc.text('Cambará-PR', 300, startY + 23, { align: 'right' });
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });
@@ -5006,7 +5021,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           doc.moveDown(0.2);
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(45, doc.y).lineTo(550, doc.y).stroke();
           doc.moveDown(0.3);
-          renderPdfFormattedText(doc, refVal, { indent: 5, fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
+          renderPdfFormattedText(doc, refVal, { indent: 5, width: 500, align: 'left', fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
           doc.moveDown(0.5);
         }
 
@@ -5018,7 +5033,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           doc.moveDown(0.2);
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(45, doc.y).lineTo(550, doc.y).stroke();
           doc.moveDown(0.3);
-          renderPdfFormattedText(doc, interpVal, { indent: 5, fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
+          renderPdfFormattedText(doc, interpVal, { indent: 5, width: 500, align: 'left', fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
           doc.moveDown(0.5);
         }
 
@@ -5026,7 +5041,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
           if (doc.y > 670) doc.addPage();
-          renderPdfFormattedText(doc, obsVal, { indent: 5, align: 'justify', fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
+          renderPdfFormattedText(doc, obsVal, { indent: 5, width: 500, align: 'left', fillColor: '#334155', fontSize: 8.5, font: 'Courier' });
           doc.moveDown(0.5);
         }
 

@@ -3238,15 +3238,17 @@ function formatRequisitionExams(reqsFound) {
   return reqsFound.map(r => {
     const reqCode = r.requisitionCode || r.id;
     const reqStatus = r.status || 'Coletado';
-    const isReqLiberado = reqStatus.toLowerCase() === 'liberado' || reqStatus.toLowerCase() === 'concluido' || reqStatus.toLowerCase() === 'pronto';
+    const reqStatusLower = String(reqStatus).toLowerCase();
+    const isReqLiberado = ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(reqStatusLower);
 
     const examsList = (r.exams || []).map(e => {
       const eStatus = e.status || reqStatus || 'A Coletar';
-      const isExamLiberado = isReqLiberado || eStatus.toLowerCase() === 'liberado' || eStatus.toLowerCase() === 'concluido' || eStatus.toLowerCase() === 'pronto';
+      const eStatusLower = String(eStatus).toLowerCase();
+      const isExamLiberado = isReqLiberado || ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(eStatusLower);
       const pdfEndpoint = `/api/paciente/laudo/pdf?requisicao=${reqCode}&exame=${encodeURIComponent(e.code || '')}`;
 
       const rawDataResultado = isExamLiberado 
-        ? (e.dataResultado || e.resultDate || e.liberadoAt || r.liberadoAt || r.dataResultado || r.updatedAt || r.createdAt || '')
+        ? (e.dataResultado || e.resultDate || e.conferidoAt || e.liberadoAt || r.conferidoAt || r.liberadoAt || r.dataResultado || r.updatedAt || r.createdAt || '')
         : (e.dataResultado || e.resultDate || '');
 
       return {
@@ -3604,14 +3606,14 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     }
 
     const statusStr = String(reqFound.status || '').toLowerCase();
-    const isLiberado = statusStr === 'liberado' || statusStr === 'concluido' || statusStr === 'pronto' ||
-                      (reqFound.exams || []).some(e => String(e.status || '').toLowerCase() === 'liberado');
+    const isLiberado = ['liberado', 'concluido', 'pronto', 'conferido', 'laudado'].includes(statusStr) ||
+                      (reqFound.exams || []).some(e => ['liberado', 'conferido', 'pronto', 'concluido', 'laudado'].includes(String(e.status || '').toLowerCase()));
 
     if (!isLiberado) {
       return res.status(403).json({
         success: false,
         error: "Laudo não liberado",
-        message: `O laudo da requisição ${reqCode} ainda está com status '${reqFound.status || 'Em Análise'}'. O PDF só é gerado quando o laudo for LIBERADO.`,
+        message: `O laudo da requisição ${reqCode} ainda está com status '${reqFound.status || 'Em Análise'}'. O PDF só é gerado quando o laudo for CONFERIDO ou LIBERADO.`,
         statusAtual: reqFound.status || 'Em Análise'
       });
     }

@@ -1535,7 +1535,26 @@ const tableSchemas = {
     { name: 'timeframe', type: 'VARCHAR(100)' },
     { name: 'instructions', type: 'TEXT' },
     { name: 'supportLabCode', type: 'VARCHAR(100)' }, // Relational FK
-    { name: 'pricePrivate', type: 'DECIMAL(10,2) DEFAULT 0.00' }
+    { name: 'pricePrivate', type: 'DECIMAL(10,2) DEFAULT 0.00' },
+    { name: 'modeloLaudo', type: 'VARCHAR(100)' },
+    { name: 'observacoesLaudo', type: 'TEXT' },
+    { name: 'tituloLaudo', type: 'VARCHAR(255)' },
+    { name: 'materialLaudo', type: 'VARCHAR(255)' },
+    { name: 'metodoLaudo', type: 'VARCHAR(255)' },
+    { name: 'valorReferenciaLaudo', type: 'TEXT' },
+    { name: 'materiaisColetados', type: 'LONGTEXT' }
+  ],
+  exame_materiais_coletados: [
+    { name: 'examId', type: 'VARCHAR(100)' },
+    { name: 'examCode', type: 'VARCHAR(100)' },
+    { name: 'material', type: 'VARCHAR(255)' },
+    { name: 'abrev', type: 'VARCHAR(50)' },
+    { name: 'tubo', type: 'VARCHAR(100)' },
+    { name: 'recipiente', type: 'VARCHAR(100)' },
+    { name: 'quantidade', type: 'VARCHAR(100)' },
+    { name: 'unidade', type: 'VARCHAR(50)' },
+    { name: 'conservacao', type: 'VARCHAR(255)' },
+    { name: 'orientacoes', type: 'TEXT' }
   ],
   professionals: [
     { name: 'code', type: 'VARCHAR(100)' },
@@ -2518,6 +2537,32 @@ function saveExams(exams) {
     saveJsonFile(EXAMS_FILE, JSON.stringify(exams, null, 2), 'utf-8');
     saveCollectionToMysql('exams', exams).catch(err => console.error("Erro ao salvar exams no MySQL:", err));
     syncToFirestore('exams', exams);
+
+    // Salvar tabela relacional tbl_exame_materiais_coletados
+    if (Array.isArray(exams)) {
+      const relationalMateriais = [];
+      exams.forEach(ex => {
+        const matList = Array.isArray(ex.materiaisColetados) ? ex.materiaisColetados : [];
+        matList.forEach((m, idx) => {
+          relationalMateriais.push({
+            id: `${ex.id || ex.code}_${idx}`,
+            examId: ex.id || ex.code || '',
+            examCode: ex.code || ex.jalisCode || '',
+            material: m.material || m.nome || '',
+            abrev: m.abrev || '',
+            tubo: m.tubo || '',
+            recipiente: m.recipiente || '',
+            quantidade: m.quantidade || '',
+            unidade: m.unidade || '',
+            conservacao: m.conservacao || '',
+            orientacoes: m.orientacoes || ''
+          });
+        });
+      });
+      if (relationalMateriais.length > 0) {
+        saveCollectionToMysql('exame_materiais_coletados', relationalMateriais).catch(err => console.error("Erro ao salvar exame_materiais_coletados no MySQL:", err));
+      }
+    }
   } catch (error) {
     console.error("Erro ao salvar exames:", error);
   }

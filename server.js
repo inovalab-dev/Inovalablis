@@ -4904,7 +4904,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     // Dados da Instituição (Direita - Alinhado)
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
-    doc.text('📍 Rua Tiradentes, N°999 - Centro', 300, startY + 12, { align: 'right' });
+    doc.text('Rua Tiradentes, N°999 - Centro', 300, startY + 12, { align: 'right' });
     doc.text('Cambará-PR', 300, startY + 23, { align: 'right' });
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });

@@ -827,7 +827,7 @@
             <select id="mat-input-nome" class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
               <% if (locals.materiaisColetadosMaster && materiaisColetadosMaster.length > 0) { %>
                 <% materiaisColetadosMaster.forEach(m => { %>
-                  <option value="<%= m.descricao %>" data-abrev="<%= m.abreviatura %>" data-codigo="<%= m.codigo %>">
+                  <option value="<%= m.descricao %>" data-nome="<%= m.descricao %>" data-abrev="<%= m.abreviatura %>" data-codigo="<%= m.codigo %>">
                     [<%= m.codigo %>] <%= m.descricao %> <%= m.abreviatura ? ('(' + m.abreviatura + ')') : '' %>
                   </option>
                 <% }) %>
@@ -3799,9 +3799,10 @@
   }
 
   function saveMaterialToExamList() {
-    const nome = document.getElementById('mat-input-nome').value;
     const selElem = document.getElementById('mat-input-nome');
     const selectedOpt = selElem ? selElem.options[selElem.selectedIndex] : null;
+    const nome = selElem ? selElem.value : '';
+    let materialCodigo = selectedOpt ? (selectedOpt.getAttribute('data-codigo') || '') : '';
     let abrev = '';
     if (selectedOpt && selectedOpt.getAttribute('data-abrev')) {
       abrev = selectedOpt.getAttribute('data-abrev');
@@ -3809,11 +3810,11 @@
     if (!abrev) {
       const masterList = window.globalMateriaisColetadosMasterList || [];
       const foundMaster = masterList.find(m => (m.descricao || '').trim().toUpperCase() === nome.trim().toUpperCase());
-      if (foundMaster && foundMaster.abreviatura) {
-        abrev = foundMaster.abreviatura;
-      } else {
-        abrev = nome.slice(0, 3).toUpperCase();
+      if (foundMaster) {
+        if (foundMaster.abreviatura) abrev = foundMaster.abreviatura;
+        if (!materialCodigo && foundMaster.codigo) materialCodigo = foundMaster.codigo;
       }
+      if (!abrev) abrev = nome.slice(0, 3).toUpperCase();
     }
     const prazo = document.getElementById('mat-input-prazo').value;
     const metodo = document.getElementById('mat-input-metodo').value;
@@ -3840,6 +3841,8 @@
 
     const newMat = {
       id: editingMaterialIndex >= 0 && currentMateriaisList[editingMaterialIndex] ? currentMateriaisList[editingMaterialIndex].id : Date.now(),
+      materialCodigo,
+      material: materialCodigo || nome,
       nome,
       abrev,
       prazo,

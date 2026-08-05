@@ -4904,34 +4904,35 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     // Dados da Instituição (Direita - Alinhado)
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
-    doc.text('Rua Tiradentes, N°999 - Centro', 300, startY + 12, { align: 'right' });
-    doc.text('Cambará-PR', 300, startY + 23, { align: 'right' });
+    doc.text('Rua Tiradentes,999 - Centro Cambará-PR', 300, startY + 12, { align: 'right' });
+    doc.text('CNPJ: 56.428.462/0001-69', 300, startY + 23, { align: 'right' });
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });
 
     // 2. QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO (MOLDURA COM BORDA DUPLA / SOLIDA IGUAL À DA TELA)
     const boxY = startY + 58;
-    doc.rect(40, boxY, 515, 65).fillAndStroke('#ffffff', '#0f172a');
+    doc.rect(40, boxY, 515, 55).fillAndStroke('#ffffff', '#0f172a');
     doc.lineWidth(1.2);
 
     doc.fillColor('#0f172a').fontSize(9).font('Courier');
     doc.text('Paciente: ', 48, boxY + 8, { continued: true }).font('Courier-Bold').fontSize(10).text(patientName);
-    doc.font('Courier').fontSize(9).text(`Médico..: ${doctor}`, 48, boxY + 24);
-    doc.text(`Convênio: ${convenio}`, 48, boxY + 40, { continued: true }).text(`   Procedência: ${procedencia}`);
+    doc.font('Courier').fontSize(9).text(`Solicitante..: ${doctor}`, 48, boxY + 20);
+    doc.text(`Convênio.....: ${convenio}`, 48, boxY + 32);
+    doc.text(`Procedência...: ${procedencia}`, 48, boxY + 44, { continued: true });
 
     // Coluna da Direita (Divisor vertical e Metadados)
-    doc.moveTo(330, boxY).lineTo(330, boxY + 65).strokeColor('#cbd5e1').lineWidth(0.8).stroke();
+    //doc.moveTo(330, boxY).lineTo(330, boxY + 65).strokeColor('#cbd5e1').lineWidth(0.8).stroke();
 
     doc.fillColor('#0f172a').fontSize(8.5).font('Courier');
-    doc.text(`Idade......: ${patientAge}`, 338, boxY + 8);
-    doc.text(`Data Requis.: ${dataColeta}`, 338, boxY + 20);
-    doc.text(`Data Emissão: ${dataEmissao}`, 338, boxY + 32);
+    doc.fontSize(10).font('Courier-Bold').text('Requisição..:'+ String(reqCode), 40, boxY + 8, { align: 'right' });
+    doc.font('Courier').text(`Idade......: ${patientAge}`, 40, boxY + 20, { align: 'right' });
+    doc.text(`Data Requis.: ${dataColeta}`, 100, boxY + 32, { align: 'right' });
+    doc.text(`Data Emissão: ${dataEmissao}`, 30, boxY + 44, { align: 'right' });
 
     // Código de Barras e Número da Requisição
-    doc.fillColor('#0f172a').fontSize(7.5).font('Courier-Bold').text('||||||||||||||||||||||||||||||||', 338, boxY + 44, { align: 'right' });
-    doc.fontSize(10).font('Courier-Bold').text(String(reqCode), 338, boxY + 53, { align: 'right' });
+    // doc.fillColor('#0f172a').fontSize(7.5).font('Courier-Bold').text('||||||||||||||||||||||||||||||||', 338, boxY + 44, { align: 'right' });
 
-    doc.y = boxY + 75;
+    doc.y = boxY + 65;
 
     // 3. CORPO DOS EXAMES
     const exams = formattedReq.exams || formattedReq.listaExames || [];
@@ -4945,15 +4946,15 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
 
         const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
-        const matStr = ex.material || 'Soro';
-        const metStr = ex.metodo || 'Colorimétrico';
+        const matStr = ex.material || '';
+        const metStr = ex.metodo || '';
         const equipStr = ex.equipamento ? ` | Equipamento: ${ex.equipamento}` : '';
 
         // Banner do Exame (Caixa Cinza Destaque)
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
         doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
-        doc.y = bannerY + 24;
+        doc.y = bannerY + 30;
 
         // Cabeçalho técnico (Material e Método)
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`Material: ${matStr}   Método: ${metStr}${equipStr}`, 45, doc.y);
@@ -4980,10 +4981,10 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
               unitStr = '';
             }
 
-            const lineY = doc.y;
-            doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text(paramDisplay, 45, lineY);
+            const lineY = doc.y + 10;
+            doc.fillColor('#0f172a').fontSize(16).font('Courier-Bold').text(paramDisplay, 45, lineY);
             doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-            doc.y = lineY + 16;
+            doc.y = lineY + 24;
           });
         } else {
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();

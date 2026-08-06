@@ -4781,7 +4781,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   const pageWidth = 595.28;
   const pageHeight = doc.page.height || 841.89;
-  const footerY = 745;
+  const footerY = 770;
   const footerHeight = pageHeight - footerY + 5; // Estende o fundo verde até o fim da página, eliminando a faixa branca
 
   // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, mais à direita da página)
@@ -5001,7 +5001,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     // =====================================================
     const doc = new PDFDocument({
       size: 'A4',
-      margins: { top: 35, bottom: 95, left: 40, right: 40 }, // bottom: 95 garante espaço pro rodapé
+      margins: { top: 35, bottom: 75, left: 40, right: 40 }, // bottom: 75 garante espaço estendido pro laudo e rodapé compacto
       bufferPages: true // <--- HABILITA A ITERAÇÃO DE TODAS AS PÁGINAS NO FINAL
     });
 

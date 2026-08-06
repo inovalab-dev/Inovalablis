@@ -1,0 +1,455 @@
+[
+  {
+    "id": "EQ-1",
+    "name": "Geladeira Bioquímica 01",
+    "code": "GEL-BIO-01",
+    "type": "Geladeira",
+    "brand": "Consul",
+    "model": "Pró-Lab v4",
+    "serialNumber": "SN-987123",
+    "patrimony": "PAT-1284",
+    "sector": "Bioquímica",
+    "location": "Sala Técnica Principal",
+    "responsible": "Maria Oliveira",
+    "sensor": "Sensor IoT TempPro-A",
+    "minTemp": 2,
+    "maxTemp": 8,
+    "currentTemp": 3.8,
+    "status": "🟢 Dentro da Faixa",
+    "nextReading": "14:00",
+    "lastReadingTime": "08:12",
+    "content": "Reagentes de Bioquímica, Controles, Calibradores",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "08:00",
+        "temp": 3.8,
+        "responsible": "Maria",
+        "method": "Manual",
+        "notes": "Leitura matinal realizada dentro da normalidade.",
+        "status": "🟢"
+      },
+      {
+        "date": "19/07",
+        "time": "18:00",
+        "temp": 5.2,
+        "responsible": "João",
+        "method": "Sensor",
+        "notes": "Medição de fechamento de plantão.",
+        "status": "🟢"
+      },
+      {
+        "date": "19/07",
+        "time": "14:00",
+        "temp": 4.1,
+        "responsible": "Maria",
+        "method": "IoT",
+        "notes": "Leitura automática via sensor.",
+        "status": "🟢"
+      }
+    ],
+    "occurrences": [
+      {
+        "date": "12/07/2026",
+        "temp": 10.3,
+        "reason": "Porta Aberta",
+        "status": "Fechada",
+        "timeOutside": "45 min",
+        "identifiedBy": "Maria",
+        "description": "Esquecimento após reabastecimento de reagentes.",
+        "immediateAction": "Fechamento da porta e ativação do degelo rápido.",
+        "responsible": "Maria",
+        "result": "Temperatura restabelecida a 4.2°C após 15 minutos."
+      }
+    ],
+    "maintenances": [
+      {
+        "date": "15/06/2026",
+        "type": "Preventiva",
+        "description": "Higienização interna, desobstrução do dreno e teste de borrachas de vedação.",
+        "responsible": "Mantec Equipamentos",
+        "cost": 150
+      },
+      {
+        "date": "10/04/2026",
+        "type": "Calibração",
+        "description": "Calibração anual do termômetro interno com emissão de certificado RBC.",
+        "responsible": "CalibraLab Paraná",
+        "cost": 320
+      }
+    ],
+    "checklist": {
+      "ligado": true,
+      "vedacao": true,
+      "porta": true,
+      "alarmes": true,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 08:15",
+      "responsible": "Maria Oliveira"
+    },
+    "documents": [
+      {
+        "name": "Manual de Instruções Consul Pro-Lab v4.pdf",
+        "type": "Manual",
+        "date": "10/01/2026"
+      },
+      {
+        "name": "POP-BIO-004_Monitoramento_Temperatura.pdf",
+        "type": "POP",
+        "date": "12/01/2026"
+      },
+      {
+        "name": "Certificado_Calibracao_RBC_2026.pdf",
+        "type": "Calibração",
+        "date": "10/04/2026"
+      }
+    ],
+    "timeline": [
+      {
+        "date": "10/01/2026",
+        "event": "Instalado",
+        "description": "Equipamento instalado e posicionado na Sala Técnica Principal."
+      },
+      {
+        "date": "12/01/2026",
+        "event": "Ativação de POP",
+        "description": "Treinamento da equipe de bioquímica no POP de monitoramento."
+      },
+      {
+        "date": "10/04/2026",
+        "event": "Calibrado",
+        "description": "Realizada calibração anual rastreável RBC."
+      },
+      {
+        "date": "12/07/2026",
+        "event": "Temperatura Fora",
+        "description": "Porta esquecida aberta por 45 min, gerada não conformidade."
+      }
+    ]
+  },
+  {
+    "id": "EQ-2",
+    "name": "Geladeira Vacinas",
+    "code": "GEL-VAC-02",
+    "type": "Geladeira",
+    "brand": "Eletrolux",
+    "model": "MedSafe Pro",
+    "serialNumber": "SN-443112",
+    "patrimony": "PAT-3321",
+    "sector": "Imunologia",
+    "location": "Sala de Vacinação",
+    "responsible": "Ana Souza",
+    "sensor": "Sensor IoT TempPro-B",
+    "minTemp": 2,
+    "maxTemp": 8,
+    "currentTemp": 5.2,
+    "status": "🟢 Dentro da Faixa",
+    "nextReading": "14:00",
+    "lastReadingTime": "08:30",
+    "content": "Vacinas de Influenza, Hepatite B, Meningocócica, DTPa",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "08:30",
+        "temp": 5.2,
+        "responsible": "Ana",
+        "method": "Manual",
+        "notes": "Sem intercorrências no painel digital.",
+        "status": "🟢"
+      },
+      {
+        "date": "19/07",
+        "time": "17:30",
+        "temp": 4.8,
+        "responsible": "Ana",
+        "method": "IoT",
+        "notes": "Leitura de encerramento normal.",
+        "status": "🟢"
+      }
+    ],
+    "occurrences": [],
+    "maintenances": [
+      {
+        "date": "05/05/2026",
+        "type": "Preventiva",
+        "description": "Limpeza das serpentinas traseiras e calibração de alarmes sonoros.",
+        "responsible": "Mantec Equipamentos",
+        "cost": 180
+      }
+    ],
+    "checklist": {
+      "ligado": true,
+      "vedacao": true,
+      "porta": true,
+      "alarmes": true,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 08:35",
+      "responsible": "Ana Souza"
+    },
+    "documents": [
+      {
+        "name": "Manual_MedSafe_Eletrolux.pdf",
+        "type": "Manual",
+        "date": "05/05/2026"
+      }
+    ],
+    "timeline": [
+      {
+        "date": "05/05/2026",
+        "event": "Instalado e Calibrado",
+        "description": "Recebimento e qualificação térmica inicial."
+      }
+    ]
+  },
+  {
+    "id": "EQ-3",
+    "name": "Freezer Soroteca",
+    "code": "FRE-SOR-03",
+    "type": "Freezer",
+    "brand": "Metalfrio",
+    "model": "DeepFreeze -20",
+    "serialNumber": "SN-778811",
+    "patrimony": "PAT-0912",
+    "sector": "Sorologia",
+    "location": "Sala de Triagem",
+    "responsible": "Carlos Santos",
+    "sensor": "Sensor IoT TempPro-C",
+    "minTemp": -25,
+    "maxTemp": -15,
+    "currentTemp": -22,
+    "status": "🟢 Dentro da Faixa",
+    "nextReading": "14:00",
+    "lastReadingTime": "07:50",
+    "content": "Amostras biológicas arquivadas para soroteca (período de 30 dias)",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "07:50",
+        "temp": -22,
+        "responsible": "Carlos",
+        "method": "Manual",
+        "notes": "Início do expediente normal.",
+        "status": "🟢"
+      }
+    ],
+    "occurrences": [],
+    "maintenances": [],
+    "checklist": {
+      "ligado": true,
+      "vedacao": true,
+      "porta": true,
+      "alarmes": true,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 07:52",
+      "responsible": "Carlos Santos"
+    },
+    "documents": [],
+    "timeline": [
+      {
+        "date": "20/03/2026",
+        "event": "Instalado",
+        "description": "Ativação do freezer para armazenamento de amostras da soroteca."
+      }
+    ]
+  },
+  {
+    "id": "EQ-4",
+    "name": "Ultra Freezer",
+    "code": "ULT-FRE-04",
+    "type": "Ultra Freezer",
+    "brand": "Thermo Scientific",
+    "model": "TSU Series -80C",
+    "serialNumber": "SN-221199",
+    "patrimony": "PAT-0044",
+    "sector": "Pesquisa & Genética",
+    "location": "Sala de Biologia Molecular",
+    "responsible": "Dra. Eliana Costa",
+    "sensor": "Sensor IoT TempPro-D Ultra",
+    "minTemp": -86,
+    "maxTemp": -70,
+    "currentTemp": -79,
+    "status": "🟢 Dentro da Faixa",
+    "nextReading": "13:00",
+    "lastReadingTime": "08:05",
+    "content": "Controles de PCR, primers, enzimas de restrição de alto custo",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "08:05",
+        "temp": -79,
+        "responsible": "Eliana",
+        "method": "Manual",
+        "notes": "Display digital indica estabilidade.",
+        "status": "🟢"
+      }
+    ],
+    "occurrences": [],
+    "maintenances": [
+      {
+        "date": "15/02/2026",
+        "type": "Calibração",
+        "description": "Verificação de estabilidade em 9 pontos térmicos e calibração fina.",
+        "responsible": "Thermolab RBC",
+        "cost": 1200
+      }
+    ],
+    "checklist": {
+      "ligado": true,
+      "vedacao": true,
+      "porta": true,
+      "alarmes": true,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 08:05",
+      "responsible": "Dra. Eliana Costa"
+    },
+    "documents": [
+      {
+        "name": "Thermo_Scientific_TSU_Manual.pdf",
+        "type": "Manual",
+        "date": "15/02/2026"
+      }
+    ],
+    "timeline": [
+      {
+        "date": "15/02/2026",
+        "event": "Instalado e Qualificado",
+        "description": "Equipamento ativado com certificação de validação térmica."
+      }
+    ]
+  },
+  {
+    "id": "EQ-5",
+    "name": "Sala Coleta",
+    "code": "SAL-COL-05",
+    "type": "Ambiente",
+    "brand": "N/A",
+    "model": "Ar Condicionado Split 18k BTUs LG",
+    "serialNumber": "SN-338877",
+    "patrimony": "PAT-4491",
+    "sector": "Atendimento",
+    "location": "Recepção / Boxes de Coleta",
+    "responsible": "Letícia Ramos",
+    "sensor": "Sensor Parede IoT",
+    "minTemp": 15,
+    "maxTemp": 25,
+    "currentTemp": 24,
+    "status": "🟢 Dentro da Faixa",
+    "nextReading": "12:00",
+    "lastReadingTime": "09:00",
+    "content": "Conforto térmico de pacientes, insumos de coleta (tubos, agulhas)",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "09:00",
+        "temp": 24,
+        "responsible": "Letícia",
+        "method": "Manual",
+        "notes": "Coleta cheia, ar condicionado no máximo.",
+        "status": "🟢"
+      }
+    ],
+    "occurrences": [],
+    "maintenances": [],
+    "checklist": {
+      "ligado": true,
+      "vedacao": true,
+      "porta": true,
+      "alarmes": false,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 09:00",
+      "responsible": "Letícia Ramos"
+    },
+    "documents": [],
+    "timeline": [
+      {
+        "date": "10/01/2026",
+        "event": "Início das Medições",
+        "description": "Primeira checagem de temperatura ambiente de conforto regulamentar."
+      }
+    ]
+  },
+  {
+    "id": "EQ-6",
+    "name": "Sala Técnica",
+    "code": "SAL-TEC-06",
+    "type": "Ambiente",
+    "brand": "N/A",
+    "model": "Ar Condicionado Split 24k BTUs Carrier",
+    "serialNumber": "SN-449900",
+    "patrimony": "PAT-4492",
+    "sector": "Processamento de Amostras",
+    "location": "Sala Técnica Geral",
+    "responsible": "Roberto Lima",
+    "sensor": "Sensor Parede IoT Carrier-X",
+    "minTemp": 15,
+    "maxTemp": 25,
+    "currentTemp": 29,
+    "status": "🔴 Fora da Faixa",
+    "nextReading": "11:00",
+    "lastReadingTime": "09:15",
+    "content": "Área de operação dos analisadores de hematologia, bioquímica e coagulação",
+    "readings": [
+      {
+        "date": "20/07",
+        "time": "09:15",
+        "temp": 29,
+        "responsible": "Roberto",
+        "method": "Sensor",
+        "notes": "Temperatura ambiente muito alta. Ar condicionado falhou em desarmar o compressor.",
+        "status": "🔴"
+      },
+      {
+        "date": "20/07",
+        "time": "07:00",
+        "temp": 26.5,
+        "responsible": "Roberto",
+        "method": "Manual",
+        "notes": "Ambiente já amanheceu aquecido.",
+        "status": "🟡"
+      }
+    ],
+    "occurrences": [
+      {
+        "date": "20/07/2026",
+        "temp": 29,
+        "reason": "Falha Ar Condicionado",
+        "status": "Aberta",
+        "timeOutside": "2h 30m",
+        "identifiedBy": "Roberto",
+        "description": "Ar condicionado parou de refrigerar. Risco de superaquecimento dos reagentes nos carrosséis dos equipamentos.",
+        "immediateAction": "Abertura de portas internas para circulação e ventiladores de suporte acionados.",
+        "responsible": "Roberto",
+        "result": "Aguardando chegada do técnico de manutenção de ar condicionado para diagnóstico."
+      }
+    ],
+    "maintenances": [],
+    "checklist": {
+      "ligado": true,
+      "vedacao": false,
+      "porta": true,
+      "alarmes": true,
+      "limpeza": true,
+      "gelo": false,
+      "updatedAt": "20/07/2026 09:15",
+      "responsible": "Roberto Lima"
+    },
+    "documents": [],
+    "timeline": [
+      {
+        "date": "10/01/2026",
+        "event": "Início das Medições",
+        "description": "Monitoramento de temperatura ambiente dos analisadores automatizados."
+      },
+      {
+        "date": "20/07/2026",
+        "event": "Temperatura Fora",
+        "description": "Falha de refrigeração registrada com temperatura de 29°C."
+      }
+    ]
+  }
+]

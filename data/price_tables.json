@@ -124,6 +124,14 @@
         "amb": "",
         "valor": 0,
         "proibir": true
+      },
+      {
+        "examCode": "HEMO01",
+        "material": "Sangue",
+        "examName": "Hemograma Completo",
+        "amb": "",
+        "valor": 35,
+        "proibir": false
       }
     ]
   },
@@ -155,6 +163,14 @@
         "examName": "17 Alfa Hidroxiprogesterona",
         "amb": "4.03.16.01-7",
         "valor": 28.5,
+        "proibir": false
+      },
+      {
+        "examCode": "HEMO01",
+        "material": "Sangue",
+        "examName": "Hemograma Completo",
+        "amb": "",
+        "valor": 0,
         "proibir": false
       }
     ]

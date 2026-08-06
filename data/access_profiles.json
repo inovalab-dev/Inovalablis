@@ -1,0 +1,65 @@
+[
+  {
+    "id": "PROF-ADMIN",
+    "name": "Administrador Geral",
+    "description": "Acesso total a todas as funcionalidades do sistema",
+    "permissions": {
+      "dashboard": true,
+      "exames": true,
+      "orcamentos": true,
+      "requisicoes": true,
+      "comparador": true,
+      "financeiro": true,
+      "pops": true,
+      "documentos": true,
+      "profissionais": true,
+      "avaliacoes": true,
+      "nao_conformidades": true,
+      "blog": true,
+      "controle_acesso": true
+    },
+    "createdAt": "2026-08-05T17:36:51.673Z"
+  },
+  {
+    "id": "PROF-RECEP",
+    "name": "Recepção / Atendimento",
+    "description": "Acesso a exames, orçamentos, requisições, avaliações de pacientes e blog",
+    "permissions": {
+      "dashboard": true,
+      "exames": true,
+      "orcamentos": true,
+      "requisicoes": true,
+      "comparador": false,
+      "financeiro": false,
+      "pops": true,
+      "documentos": true,
+      "profissionais": false,
+      "avaliacoes": true,
+      "nao_conformidades": false,
+      "blog": true,
+      "controle_acesso": false
+    },
+    "createdAt": "2026-08-05T17:36:51.673Z"
+  },
+  {
+    "id": "PROF-TECNICO",
+    "name": "Corpo Técnico / Laboratório",
+    "description": "Acesso a exames, POPs, documentos e não conformidades",
+    "permissions": {
+      "dashboard": true,
+      "exames": true,
+      "orcamentos": false,
+      "requisicoes": false,
+      "comparador": false,
+      "financeiro": false,
+      "pops": true,
+      "documentos": true,
+      "profissionais": false,
+      "avaliacoes": false,
+      "nao_conformidades": true,
+      "blog": false,
+      "controle_acesso": false
+    },
+    "createdAt": "2026-08-05T17:36:51.673Z"
+  }
+]

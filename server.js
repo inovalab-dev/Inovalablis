@@ -4723,10 +4723,7 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
 });
 
 // =====================================================
-// HELPER PARA TEXTO FORMATADO
-// =====================================================
-// =====================================================
-// HELPER PARA TEXTO FORMATADO
+// HELPER
 // =====================================================
 function renderPdfFormattedText(doc, text, options = {}) {
   if (!text) return;
@@ -4770,50 +4767,39 @@ function renderPdfFormattedText(doc, text, options = {}) {
 }
 
 // =====================================================
-// FUNÇÃO DO RODAPÉ FIXO (com proteção)
+// RODAPÉ (versão simples – só na última página por enquanto)
 // =====================================================
 function drawFooter(doc) {
-  const pageWidth = doc.page.width;
+  const pageWidth = 595.28;
   const footerY = 700;
   const footerHeight = 62;
 
-  // Salva e zera a margem inferior temporariamente
-  const oldBottomMargin = doc.page.margins.bottom;
-  doc.page.margins.bottom = 0;
-
-  // Fundo verde
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
 
   const colY = footerY + 8;
 
-  // CONTATO
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('CONTATO:', 30, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('(43) 99618-3406', 30, colY + 13);
   doc.text('inovalabcambara@gmail.com', 30, colY + 23);
   doc.text('www.inovalabcambara.com.br', 30, colY + 33);
 
-  // Divisor 1
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
      .moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
 
-  // REDES SOCIAIS
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('inovalabcambara', 192, colY + 13);
   doc.text('Inovalab-Cambarâ', 192, colY + 23);
 
-  // Divisor 2
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
      .moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
 
-  // RESPONSÁVEL TÉCNICA
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('Monara Natana Idem', 322, colY + 13);
   doc.text('CRF/PR 28.129', 322, colY + 23);
 
-  // Logos
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
   if (fs.existsSync(pncqLogo)) {
     doc.image(pncqLogo, 475, colY + 2, { width: 65 });
@@ -4821,7 +4807,6 @@ function drawFooter(doc) {
     doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 480, colY + 14);
   }
 
-  // Texto de isenção
   doc.fillColor('#334155').fontSize(7).font('Helvetica')
      .text(
        'O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.',
@@ -4829,13 +4814,10 @@ function drawFooter(doc) {
        footerY + footerHeight + 5,
        { width: pageWidth, align: 'center' }
      );
-
-  // Restaura a margem
-  doc.page.margins.bottom = oldBottomMargin;
 }
 
 // =====================================================
-// ENDPOINT COMPLETO
+// ENDPOINT
 // =====================================================
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -4914,31 +4896,15 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const hash = getOrCreateHashForPatient(reqCode, patientName);
 
     // =================================================
-    // CRIAÇÃO DO DOCUMENTO
+    // DOCUMENTO
     // =================================================
     const doc = new PDFDocument({
       size: 'A4',
-      margins: { top: 40, bottom: 120, left: 40, right: 40 }
+      margins: { top: 40, bottom: 110, left: 40, right: 40 }
     });
 
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
-
-    // ===== PROTEÇÃO CONTRA RECURSÃO =====
-    let isDrawingFooter = false;
-
-    // Desenha na primeira página
-    isDrawingFooter = true;
-    drawFooter(doc);
-    isDrawingFooter = false;
-
-    // Desenha em todas as páginas seguintes
-    doc.on('pageAdded', () => {
-      if (isDrawingFooter) return;
-      isDrawingFooter = true;
-      drawFooter(doc);
-      isDrawingFooter = false;
-    });
 
     doc.on('end', () => {
       const pdfBuffer = Buffer.concat(chunks);
@@ -4961,7 +4927,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     });
 
     // =================================================
-    // MONTAGEM DO CONTEÚDO
+    // CONTEÚDO
     // =================================================
     const startY = 35;
 
@@ -5002,176 +4968,157 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
     doc.y = boxY + 65;
 
-    // =====================================================
-// CORPO DOS EXAMES (substitua o forEach inteiro)
-// =====================================================
-const exams = formattedReq.exams || formattedReq.listaExames || [];
+    // Exames
+    const exams = formattedReq.exams || formattedReq.listaExames || [];
 
-if (exams.length === 0) {
-  doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
-} else {
-  exams.forEach((ex) => {
-    // Quebra de página segura antes de começar um novo exame
-    if (doc.y > 580) {
+    if (exams.length === 0) {
+      doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
+    } else {
+      exams.forEach((ex) => {
+        if (doc.y > 620) {
+          doc.addPage();
+        }
+
+        const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
+        const matStr = ex.material || '';
+        const metStr = ex.metodo || '';
+
+        const bannerY = doc.y;
+        doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
+        doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
+        doc.y = bannerY + 30;
+
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
+        doc.moveDown(0.3);
+        doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+        doc.moveDown(0.4);
+
+        const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+
+        if (linhasToRender.length > 0) {
+          linhasToRender.forEach(l => {
+            if (doc.y > 640) doc.addPage();
+
+            const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+            const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+            let paramDisplay = isGenericParam
+              ? 'Resultado...:'
+              : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+
+            let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+            let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
+            if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+              unitStr = '';
+            }
+
+            const lineY = doc.y + 10;
+            doc.fillColor('#0f172a').fontSize(16).font('Courier-Bold').text(paramDisplay, 45, lineY);
+            doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
+            doc.y = lineY + 24;
+          });
+        } else {
+          const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
+          const unitStr = String(ex.unidade || ex.unit || '').trim();
+          const lineY = doc.y;
+          doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY);
+          doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
+          doc.y = lineY + 18;
+        }
+
+        doc.moveDown(0.4);
+
+        // Valores de Referência
+        const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
+        if (refVal) {
+          if (doc.y > 580) doc.addPage();
+
+          const boxStartY = doc.y;
+          const boxPadding = 10;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          doc.y = boxStartY + boxPadding;
+          doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
+          doc.moveDown(0.4);
+          doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
+          doc.moveDown(1.0);
+
+          renderPdfFormattedText(doc, refVal, {
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
+            align: 'left',
+            fillColor: '#334155',
+            fontSize: 8.5
+          });
+
+          const boxEndY = doc.y + boxPadding;
+          const boxHeight = boxEndY - boxStartY;
+
+          doc.rect(boxX, boxStartY, boxWidth, boxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1')
+             .stroke();
+
+          doc.y = boxEndY + 8;
+        }
+
+        // Observações
+        const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
+        if (obsVal) {
+          if (doc.y > 580) doc.addPage();
+
+          const obsBoxStartY = doc.y;
+          const boxPadding = 6;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          doc.y = obsBoxStartY + boxPadding;
+          doc.moveDown(0.3);
+
+          renderPdfFormattedText(doc, obsVal, {
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
+            align: 'justify',
+            fillColor: '#334155',
+            fontSize: 8.5
+          });
+
+          const obsBoxEndY = doc.y + boxPadding;
+          const obsBoxHeight = obsBoxEndY - obsBoxStartY;
+
+          doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1')
+             .stroke();
+
+          doc.y = obsBoxEndY + 10;
+        }
+
+        doc.moveDown(0.6);
+      });
+    }
+
+    // Chancela
+    if (doc.y > 620) {
       doc.addPage();
     }
 
-    const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
-    const matStr = ex.material || '';
-    const metStr = ex.metodo || '';
+    const authY = Math.min(doc.y + 10, 650);
+    doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
 
-    // Banner do exame
-    const bannerY = doc.y;
-    doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
-    doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
-    doc.y = bannerY + 30;
+    const authTextY = authY + 6;
+    doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
+    doc.text(`Coleta: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
+    doc.font('Helvetica').text(`Liberado eletronicamente por: `, 180, authTextY, { continued: true })
+       .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
+    doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
+       .fontSize(7.5).text(hash);
 
-    // Material e Método
-    doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
-    doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
-    doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
-    doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
-    doc.moveDown(0.3);
-    doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-    doc.moveDown(0.4);
-
-    // Resultados
-    const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
-
-    if (linhasToRender.length > 0) {
-      linhasToRender.forEach(l => {
-        if (doc.y > 600) doc.addPage();
-
-        const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
-        const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
-        let paramDisplay = isGenericParam
-          ? 'Resultado...:'
-          : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
-
-        let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
-        let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
-        if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
-          unitStr = '';
-        }
-
-        const lineY = doc.y + 8;
-        doc.fillColor('#0f172a').fontSize(14).font('Courier-Bold').text(paramDisplay, 45, lineY);
-        doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-        doc.y = lineY + 20;
-      });
-    } else {
-      if (doc.y > 600) doc.addPage();
-      const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
-      const unitStr = String(ex.unidade || ex.unit || '').trim();
-      const lineY = doc.y;
-      doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY);
-      doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-      doc.y = lineY + 18;
-    }
-
-    doc.moveDown(0.4);
-
-    // ========== VALORES DE REFERÊNCIA (com proteção de espaço) ==========
-    const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
-    if (refVal && refVal !== 'Verificar cadastro técnico.') {
-      // Se restar pouco espaço, força nova página ANTES de começar a caixa
-      if (doc.y > 480) {
-        doc.addPage();
-      }
-
-      const boxStartY = doc.y;
-      const boxPadding = 10;
-      const boxX = 40;
-      const boxWidth = 515;
-
-      doc.y = boxStartY + boxPadding;
-      doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
-      doc.moveDown(0.4);
-      doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
-      doc.moveDown(0.8);
-
-      renderPdfFormattedText(doc, refVal, {
-        indent: boxX + boxPadding,
-        width: boxWidth - (boxPadding * 2),
-        align: 'left',
-        fillColor: '#334155',
-        fontSize: 8
-      });
-
-      const boxEndY = doc.y + boxPadding;
-      const boxHeight = boxEndY - boxStartY;
-
-      // Só desenha a borda se a caixa não estourou a página
-      if (boxHeight < 280) {
-        doc.rect(boxX, boxStartY, boxWidth, boxHeight)
-           .lineWidth(0.8)
-           .strokeColor('#cbd5e1')
-           .stroke();
-      }
-
-      doc.y = boxEndY + 8;
-    } else if (refVal) {
-      // Caso genérico "Verificar cadastro técnico"
-      if (doc.y > 600) doc.addPage();
-      doc.fillColor('#334155').fontSize(8.5).font('Courier').text('Valores de Referência: Verificar cadastro técnico.', 45, doc.y);
-      doc.moveDown(0.8);
-    }
-
-    // ========== OBSERVAÇÕES ==========
-    const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
-    if (obsVal) {
-      if (doc.y > 500) {
-        doc.addPage();
-      }
-
-      const obsBoxStartY = doc.y;
-      const boxPadding = 6;
-      const boxX = 40;
-      const boxWidth = 515;
-
-      doc.y = obsBoxStartY + boxPadding;
-      doc.moveDown(0.2);
-
-      renderPdfFormattedText(doc, obsVal, {
-        indent: boxX + boxPadding,
-        width: boxWidth - (boxPadding * 2),
-        align: 'justify',
-        fillColor: '#334155',
-        fontSize: 8
-      });
-
-      const obsBoxEndY = doc.y + boxPadding;
-      const obsBoxHeight = obsBoxEndY - obsBoxStartY;
-
-      if (obsBoxHeight < 250) {
-        doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
-           .lineWidth(0.8)
-           .strokeColor('#cbd5e1')
-           .stroke();
-      }
-
-      doc.y = obsBoxEndY + 10;
-    }
-
-    doc.moveDown(0.6);
-  });
-}
-
-// Chancela (só na última página)
-if (doc.y > 580) {
-  doc.addPage();
-}
-
-const authY = Math.min(doc.y + 12, 640);
-doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
-
-const authTextY = authY + 6;
-doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
-doc.text(`Coleta: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
-doc.font('Helvetica').text(`Liberado eletronicamente por: `, 180, authTextY, { continued: true })
-   .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
-doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
-   .fontSize(7.5).text(hash);
+    // Rodapé apenas na última página (estável)
+    drawFooter(doc);
 
     doc.end();
 

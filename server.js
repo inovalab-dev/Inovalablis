@@ -4781,7 +4781,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   const pageWidth = 595.28;
   const pageHeight = doc.page.height || 841.89;
-  const footerY = 770;
+  const footerY = 785;
   const footerHeight = pageHeight - footerY + 5; // Estende o fundo verde até o fim da página, eliminando a faixa branca
 
   // Marca d'Água (DNA) no canto inferior direito do laudo (Aumentado 1.8x)
@@ -4872,7 +4872,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
 
-  const colY = footerY + 10;
+  const colY = footerY + 6;
 
   // Função auxiliar para desenhar ícones em crachá circular bronze/dourado no rodapé
   const drawFooterIcon = (iconType, cx, cy) => {
@@ -4904,38 +4904,38 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('CONTATO:', 30, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
 
-  drawFooterIcon('phone', 35, colY + 17.5);
-  doc.text('(43) 99618-3406', 42, colY + 14, { lineBreak: false });
+  drawFooterIcon('phone', 35, colY + 15.5);
+  doc.text('(43) 99618-3406', 42, colY + 12, { lineBreak: false });
 
-  drawFooterIcon('email', 35, colY + 28.5);
-  doc.text('inovalabcambara@gmail.com', 42, colY + 25, { lineBreak: false });
+  drawFooterIcon('email', 35, colY + 25.5);
+  doc.text('inovalabcambara@gmail.com', 42, colY + 22, { lineBreak: false });
 
-  drawFooterIcon('web', 35, colY + 39.5);
-  doc.text('www.inovalabcambara.com.br', 42, colY + 36, { lineBreak: false });
+  drawFooterIcon('web', 35, colY + 35.5);
+  doc.text('www.inovalabcambara.com.br', 42, colY + 32, { lineBreak: false });
 
   // Divisor 1
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
-     .moveTo(180, footerY + 8).lineTo(180, footerY + footerHeight - 8).stroke();
+     .moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
 
   // Redes Sociais
   doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
 
-  drawFooterIcon('instagram', 197, colY + 17.5);
-  doc.text('inovalabcambara', 204, colY + 14, { lineBreak: false });
+  drawFooterIcon('instagram', 197, colY + 15.5);
+  doc.text('inovalabcambara', 204, colY + 12, { lineBreak: false });
 
-  drawFooterIcon('facebook', 197, colY + 28.5);
-  doc.text('Inovalab-Cambará', 204, colY + 25, { lineBreak: false });
+  drawFooterIcon('facebook', 197, colY + 25.5);
+  doc.text('Inovalab-Cambará', 204, colY + 22, { lineBreak: false });
 
   // Divisor 2
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
-     .moveTo(310, footerY + 8).lineTo(310, footerY + footerHeight - 8).stroke();
+     .moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
 
   // Responsável Técnica
   doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('Monara Natana Idem', 322, colY + 14, { lineBreak: false });
-  doc.text('CRF/PR 28.129', 322, colY + 25, { lineBreak: false });
+  doc.text('Monara Natana Idem', 322, colY + 12, { lineBreak: false });
+  doc.text('CRF/PR 28.129', 322, colY + 22, { lineBreak: false });
 
   // PNCQ & SBAC Logos ou Selo Acreditação
   const pncqImgPath = path.join(process.cwd(), 'public', 'pncq.png');
@@ -4944,8 +4944,8 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   if (fs.existsSync(pncqImgPath) && fs.existsSync(sbacImgPath)) {
     try {
-      doc.image(pncqImgPath, 440, colY + 2, { height: 39 });
-      doc.image(sbacImgPath, 482, colY + 1.3, { height: 43.6 });
+      doc.image(pncqImgPath, 440, colY + 2, { height: 35 });
+      doc.image(sbacImgPath, 482, colY + 1, { height: 38 });
     } catch (err) {
       console.error("Erro ao renderizar pncq.png/sbac.png:", err);
     }
@@ -4956,9 +4956,9 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
       doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 440, colY + 16, { lineBreak: false });
     }
   } else {
-    doc.rect(435, colY + 4, 75, 38).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
-    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 435, colY + 10, { width: 75, align: 'center', lineBreak: false });
-    doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 435, colY + 23, { width: 75, align: 'center', lineBreak: false });
+    doc.rect(435, colY + 2, 75, 36).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
+    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 435, colY + 8, { width: 75, align: 'center', lineBreak: false });
+    doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 435, colY + 21, { width: 75, align: 'center', lineBreak: false });
   }
 
   // Símbolo do Laboratório / Banner DNA (Restrito estritamente dentro da faixa verde)
@@ -5232,7 +5232,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
 
         // Se o exame não couber no restante da página atual, move o EXAME INTEIRO para a próxima página!
-        if (doc.y + estimatedExamHeight > 710 && doc.y > 165) {
+        if (doc.y + estimatedExamHeight > 730 && doc.y > 165) {
           doc.addPage();
         }
 
@@ -5251,7 +5251,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
-            if (doc.y > 710) doc.addPage();
+            if (doc.y > 730) doc.addPage();
 
             const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
             const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
@@ -5283,7 +5283,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
         // Valores de Referência
         if (refVal) {
-          if (doc.y > 710 && doc.y > 165) doc.addPage();
+          if (doc.y > 730 && doc.y > 165) doc.addPage();
 
           const boxStartY = doc.y;
           const boxPadding = 8;
@@ -5317,7 +5317,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
         // Observações
         if (obsVal) {
-          if (doc.y > 710 && doc.y > 165) doc.addPage();
+          if (doc.y > 730 && doc.y > 165) doc.addPage();
 
           const obsBoxStartY = doc.y;
           const boxPadding = 6;
@@ -5346,7 +5346,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
 
         // Rodapé de autenticidade individual do exame
-        if (doc.y > 710 && doc.y > 165) doc.addPage();
+        if (doc.y > 730 && doc.y > 165) doc.addPage();
         doc.moveDown(0.2);
         doc.fillColor('#475569').fontSize(6.0).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
         doc.moveDown(0.6);
@@ -5354,7 +5354,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     }
 
     // Chancela de Autenticidade
-    if (doc.y > 700) {
+    if (doc.y > 725) {
       doc.addPage();
     }
 

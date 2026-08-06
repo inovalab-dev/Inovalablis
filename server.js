@@ -4992,38 +4992,85 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         // 2. Bloco de Valores de Referência
         const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
         if (refVal) {
-          if (doc.y > 670) doc.addPage();
-          const refBoxY = doc.y;
-          doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', 45, refBoxY + 4);
+          if (doc.y > 640) doc.addPage(); // Quebra de página preventiva ajustada para o quadro
+
+          // 1. Posição Y onde o quadro vai começar
+          const boxStartY = doc.y;
+          const boxPadding = 10;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          // Pula o padding inicial interno do quadro para o texto não colar na borda superior
+          doc.y = boxStartY + boxPadding;
+
+          // Desenha o título e a linha divisória interna
+          doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
           doc.moveDown(0.2);
-          doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(45, doc.y).lineTo(550, doc.y).stroke();
+          doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
           doc.moveDown(0.3);
 
+          // Renderiza o texto formatado (com suporte a <b>, \n e alinhamento)
           renderPdfFormattedText(doc, refVal, {
-            indent: 45,
-            width: 515,
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
             align: 'left',
             fillColor: '#334155',
             fontSize: 8.5
           });
 
-          doc.moveDown(0.5);
+          // 2. Posição Y onde o texto terminou
+          const boxEndY = doc.y + boxPadding;
+          const boxHeight = boxEndY - boxStartY;
+
+          // 3. Desenha o Retângulo Dinâmico em volta de todo o bloco
+          doc.rect(boxX, boxStartY, boxWidth, boxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1') // Cor da borda
+             .stroke();
+
+          // Atualiza a posição do cursor Y para o próximo bloco do PDF
+          doc.y = boxEndY + 8;
         }
 
         // 3. Bloco de Observações
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
-          if (doc.y > 670) doc.addPage();
+          if (doc.y > 640) doc.addPage();
 
+          // Posição Y inicial do quadro de observações
+          const obsBoxStartY = doc.y;
+          const boxPadding = 6;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          doc.y = obsBoxStartY + boxPadding;
+
+          // Título e linha divisória interna do bloco de observações
+          // doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Observações:', boxX + boxPadding, doc.y);
+          // doc.moveDown(0.2);
+          // doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
+          doc.moveDown(0.3);
+
+          // Texto justificado das Observações
           renderPdfFormattedText(doc, obsVal, {
-            indent: 45,
-            width: 515,
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
             align: 'justify',
             fillColor: '#334155',
             fontSize: 8.5
           });
 
-          doc.moveDown(0.5);
+          // Posição Y final e cálculo da altura dinâmica
+          const obsBoxEndY = doc.y + boxPadding;
+          const obsBoxHeight = obsBoxEndY - obsBoxStartY;
+
+          // Desenha a moldura externa do bloco 3
+          doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1')
+             .stroke();
+
+          doc.y = obsBoxEndY + 10;
         }
 
         doc.moveDown(0.6);

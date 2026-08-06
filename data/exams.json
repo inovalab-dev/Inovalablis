@@ -95,7 +95,7 @@
           }
         ],
         "modeloLaudo": "Padrão LIS InovaLab",
-        "observacoesLaudo": "<b>Referência bibliográfica:</b>\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
+        "observacoesLaudo": "<b>Observação:</b>\nVide bula\n\n<b>Referência bibliográfica:</b>\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
         "tituloLaudo": "HEMOGRAMA",
         "materialLaudo": "Soro",
         "metodoLaudo": "Colorimétrico",
@@ -187,7 +187,7 @@
     "modeloLaudo": "Padrão LIS InovaLab",
     "formularioColeta": "Ficha Padrão de Coleta",
     "cabecalho": "",
-    "observacoesLaudo": "<b>Referência bibliográfica:</b>\r\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
+    "observacoesLaudo": "<b>Observação:</b>\r\nVide bula\r\n\r\n<b>Referência bibliográfica:</b>\r\nDiagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024).Melanie Rodacki, Roberta A. Cobas, Lenita Zajdenverg, Wellington Santana da Silva Júnior, Luciano Giacaglia, Luis Eduardo Calliari, Renata Maria Noronha, Cynthia Valerio, Joaquim Custódio, Mauro Scharf, Cristiano Roberto Grimaldi Barcellos, Maithe Pimentel Tomarchio, Maria Elizabeth Rossi da Silva, Rosa Ferreira  os Santos, Bianca de Almeida-Pitito, Carlos Antonio Negrato, Monica Gabbay, Marcello Bertoluci | Diagnóstico de diabetes mellitus. Diretriz Oficial da Sociedade Brasileira de Diabetes (2024). DOI: 10.29327/5412848.2024-1, ISBN: 978-65-272-0704-7.",
     "tituloLaudo": "HEMOGRAMA",
     "materialLaudo": "Soro",
     "metodoLaudo": "Colorimétrico",

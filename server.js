@@ -4802,8 +4802,8 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, mais à direita da página)
   if (sigInfo) {
     const sigWidth = 165;
-    const sigX = pageWidth - 40 - sigWidth; // Alinhado à margem direita (40px da borda)
-    const sigY = footerY - 35; // Posicionado rente ao rodapé verde no final da folha
+    const sigX = pageWidth - 25 - sigWidth; // Alinhado à margem direita
+    const sigY = footerY - 48; // Compactado para economizar espaço no laudo
 
     let imgDrawn = false;
     if (sigInfo.signatureFile) {

@@ -4746,6 +4746,18 @@ function renderPdfFormattedText(doc, text, options = {}) {
     }
     
     doc.x = indent;
+
+    if (!line.includes('<')) {
+      doc.font('Courier')
+         .fontSize(fontSize)
+         .fillColor(fillColor);
+      doc.text(line, indent, doc.y, {
+        width: width,
+        align: align
+      });
+      return;
+    }
+
     const tokens = line.match(/(<b>.*?<\/b>|[^<]+|<[^>]+>)/g) || [line];
     const validTokens = tokens.filter(t => t.trim() !== '');
 
@@ -5330,7 +5342,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           renderPdfFormattedText(doc, obsVal, {
             indent: boxX + boxPadding,
             width: boxWidth - (boxPadding * 2),
-            align: 'left',
+            align: 'justify',
             fillColor: '#334155',
             fontSize: 8.0
           });

@@ -4900,6 +4900,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     // =================================================
     const doc = new PDFDocument({
       size: 'A4',
+      bufferPages: true,                    // ← OBRIGATÓRIO
       margins: { top: 40, bottom: 110, left: 40, right: 40 }
     });
 

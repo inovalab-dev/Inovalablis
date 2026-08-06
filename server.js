@@ -4914,9 +4914,19 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   doc.text('Monara Natana Idem', 322, colY + 14, { lineBreak: false });
   doc.text('CRF/PR 28.129', 322, colY + 25, { lineBreak: false });
 
-  // PNCQ Logo ou Selo Acreditação
+  // PNCQ & SBAC Logos ou Selo Acreditação
+  const pncqImgPath = path.join(process.cwd(), 'public', 'pncq.png');
+  const sbacImgPath = path.join(process.cwd(), 'public', 'sbac.png');
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
-  if (fs.existsSync(pncqLogo)) {
+
+  if (fs.existsSync(pncqImgPath) && fs.existsSync(sbacImgPath)) {
+    try {
+      doc.image(pncqImgPath, 442, colY + 2, { height: 42 });
+      doc.image(sbacImgPath, 480, colY + 2, { height: 42 });
+    } catch (err) {
+      console.error("Erro ao renderizar pncq.png/sbac.png:", err);
+    }
+  } else if (fs.existsSync(pncqLogo)) {
     try {
       doc.image(pncqLogo, 435, colY + 4, { width: 65 });
     } catch {

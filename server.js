@@ -4784,11 +4784,11 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const footerY = 770;
   const footerHeight = pageHeight - footerY + 5; // Estende o fundo verde até o fim da página, eliminando a faixa branca
 
-  // Marca d'Água (DNA) no canto inferior direito do laudo
+  // Marca d'Água (DNA) no canto inferior direito do laudo (Aumentado 1.8x)
   const marcaDaguaPath = path.join(process.cwd(), 'public', 'marca-dagua.png');
   if (fs.existsSync(marcaDaguaPath)) {
     try {
-      const wHeight = 280;
+      const wHeight = 504; // 280 * 1.8
       const wWidth = wHeight * (767 / 651);
       const targetRight = 555; // Alinhado com a margem direita das escritas/quadros (40 + 515)
       const wX = targetRight - (wWidth * (498 / 767));

@@ -4788,9 +4788,10 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const marcaDaguaPath = path.join(process.cwd(), 'public', 'marca-dagua.png');
   if (fs.existsSync(marcaDaguaPath)) {
     try {
-      const wHeight = 330;
+      const wHeight = 280;
       const wWidth = wHeight * (767 / 651);
-      const wX = pageWidth - 10 - wWidth;
+      const targetRight = 555; // Alinhado com a margem direita das escritas/quadros (40 + 515)
+      const wX = targetRight - (wWidth * (498 / 767));
       const wY = footerY - 5 - wHeight;
       doc.image(marcaDaguaPath, wX, wY, { width: wWidth, height: wHeight });
     } catch (e) {

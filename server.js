@@ -4807,10 +4807,14 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
         if (fs.existsSync(fullSigPath)) {
           try {
-            doc.image(fullSigPath, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
+            let sigBuffer = fs.readFileSync(fullSigPath);
+            if (sigBuffer.slice(0, 3).toString('hex') === 'efbfbd') {
+              sigBuffer = Buffer.concat([Buffer.from([0x89]), sigBuffer.slice(3)]);
+            }
+            doc.image(sigBuffer, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
             imgDrawn = true;
           } catch (e) {
-            console.error("Erro ao desenhar arquivo de assinatura:", e);
+            console.error("Aviso: Formato ou arquivo de assinatura incompatível:", e.message || e);
           }
         }
       }
@@ -4820,7 +4824,11 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
       const defaultSigPath = path.join(process.cwd(), 'public', 'signatures', 'mgamaral.png');
       if (fs.existsSync(defaultSigPath)) {
         try {
-          doc.image(defaultSigPath, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
+          let sigBuffer = fs.readFileSync(defaultSigPath);
+          if (sigBuffer.slice(0, 3).toString('hex') === 'efbfbd') {
+            sigBuffer = Buffer.concat([Buffer.from([0x89]), sigBuffer.slice(3)]);
+          }
+          doc.image(sigBuffer, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
           imgDrawn = true;
         } catch (e) {}
       }

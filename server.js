@@ -4734,49 +4734,45 @@ function renderPdfFormattedText(doc, text, options = {}) {
     align = 'left'
   } = options;
 
-  // 1. Garante a troca de quebras literais ("\n" texto) por quebras de linha reais
-  const cleanText = String(text).replace(/\\n/g, '\n');
+  // 1. Normaliza quebras de linha literais (\n) e remove \r
+  const cleanText = String(text).replace(/\\n/g, '\n').replace(/\r/g, '');
 
-  // 2. Divide em linhas utilizando a quebra de linha do sistema
+  // 2. Divide em linhas reais
   const lines = cleanText.split('\n');
 
   lines.forEach((line) => {
-    // Se for uma linha inteiramente em branco, aplica um salto vertical limpo no PDFKit
-    if (line.trim() === '') {
+    // Se for uma linha vazia, pula o espaço vertical de um parágrafo
+    if (!line.trim()) {
       doc.moveDown(0.5);
       return;
     }
 
-    // 3. Separa o conteúdo preservando as tags <b> e </b>
-    const parts = line.split(/(<b>.*?<\/b>)/g);
+    // 3. Regex para encontrar todas as tags <b>...</b> ou texto normal
+    // Ex: "<b>Texto</b> Resto" -> ["<b>Texto</b>", " Resto"]
+    const tokens = line.match(/(<b>.*?<\/b>|[^<]+|<[^>]+>)/g) || [line];
+    
+    // Remove tags HTML desconhecidas que não sejam <b>
+    const validTokens = tokens.filter(t => t.trim() !== '');
 
-    parts.forEach((part, index) => {
-      const isLastPart = index === parts.length - 1;
+    validTokens.forEach((token, index) => {
+      const isLastToken = index === validTokens.length - 1;
+      const isBold = token.startsWith('<b>') && token.endsWith('</b>');
+      const content = isBold ? token.replace(/<\/?b>/g, '') : token;
 
-      // Configuração para o PDFKit: só continua na mesma linha se NÃO for o último pedaço daquela linha
-      const textOpts = {
-        continued: !isLastPart,
+      // Configura a fonte antes de desenhar
+      doc.font(isBold ? 'Courier-Bold' : 'Courier')
+         .fontSize(fontSize)
+         .fillColor(fillColor);
+
+      // O SEGREDO DO PDFKIT:
+      // Passamos 'continued: !isLastToken' para manter na mesma linha.
+      // Se for o último token da linha (isLastToken === true), 'continued' vira false
+      // e o PDFKit aplica a quebra de linha perfeita para a próxima instrução!
+      doc.text(content, {
+        continued: !isLastToken,
         align: align,
         width: width
-      };
-
-      // Na primeira palavra da linha, fixa a posição X na margem esquerda (indent)
-      if (index === 0) {
-        textOpts.x = indent;
-      }
-
-      if (part.startsWith('<b>') && part.endsWith('</b>')) {
-        const boldContent = part.replace(/<\/?b>/g, '');
-        doc.fillColor(fillColor)
-           .fontSize(fontSize)
-           .font('Courier-Bold')
-           .text(boldContent, textOpts);
-      } else if (part) {
-        doc.fillColor(fillColor)
-           .fontSize(fontSize)
-           .font('Courier')
-           .text(part, textOpts);
-      }
+      });
     });
   });
 }

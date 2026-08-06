@@ -4728,40 +4728,40 @@ function renderPdfFormattedText(doc, text, options = {}) {
 
   const {
     indent = 45,
+    width = 515,
     fillColor = '#334155',
     fontSize = 8.5,
-    align = 'left',
-    width = 515
+    align = 'left'
   } = options;
 
-  // 1. Normaliza as quebras de linha literais (\n)
+  // 1. Garante a troca de quebras literais ("\n" texto) por quebras de linha reais
   const cleanText = String(text).replace(/\\n/g, '\n');
 
-  // 2. Divide por linhas preservando linhas vazias
+  // 2. Divide em linhas utilizando a quebra de linha do sistema
   const lines = cleanText.split('\n');
 
   lines.forEach((line) => {
-    // Se for linha em branco, aplica salto vertical no PDF
+    // Se for uma linha inteiramente em branco, aplica um salto vertical limpo no PDFKit
     if (line.trim() === '') {
       doc.moveDown(0.5);
       return;
     }
 
-    // 3. Separa o texto pelas tags <b> e </b>
+    // 3. Separa o conteúdo preservando as tags <b> e </b>
     const parts = line.split(/(<b>.*?<\/b>)/g);
 
     parts.forEach((part, index) => {
       const isLastPart = index === parts.length - 1;
-      const isFirstPart = index === 0;
 
+      // Configuração para o PDFKit: só continua na mesma linha se NÃO for o último pedaço daquela linha
       const textOpts = {
         continued: !isLastPart,
         align: align,
         width: width
       };
 
-      // Garante alinhamento com a margem esquerda na primeira palavra da linha
-      if (isFirstPart) {
+      // Na primeira palavra da linha, fixa a posição X na margem esquerda (indent)
+      if (index === 0) {
         textOpts.x = indent;
       }
 
@@ -4990,26 +4990,26 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.moveDown(0.4);
 
         // 2. Bloco de Valores de Referência
-        const rawRefVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
-        const refVal = formatReferenceText(rawRefVal);
-
+        const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
         if (refVal) {
-          if (doc.y > 640) doc.addPage();
+          if (doc.y > 640) doc.addPage(); // Quebra de página preventiva ajustada para o quadro
 
-          const refBoxStartY = doc.y;
-          const boxPadding = 6;
+          // 1. Posição Y onde o quadro vai começar
+          const boxStartY = doc.y;
+          const boxPadding = 10;
           const boxX = 40;
           const boxWidth = 515;
 
-          doc.y = refBoxStartY + boxPadding;
+          // Pula o padding inicial interno do quadro para o texto não colar na borda superior
+          doc.y = boxStartY + boxPadding;
 
-          // Título do quadro
+          // Desenha o título e a linha divisória interna
           doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
           doc.moveDown(0.2);
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
           doc.moveDown(0.3);
 
-          // Renderiza o texto já sanitizado e com quebras corretas
+          // Renderiza o texto formatado (com suporte a <b>, \n e alinhamento)
           renderPdfFormattedText(doc, refVal, {
             indent: boxX + boxPadding,
             width: boxWidth - (boxPadding * 2),
@@ -5018,16 +5018,18 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             fontSize: 8.5
           });
 
-          const refBoxEndY = doc.y + boxPadding;
-          const refBoxHeight = refBoxEndY - refBoxStartY;
+          // 2. Posição Y onde o texto terminou
+          const boxEndY = doc.y + boxPadding;
+          const boxHeight = boxEndY - boxStartY;
 
-          // Desenha a moldura
-          doc.rect(boxX, refBoxStartY, boxWidth, refBoxHeight)
-            .lineWidth(0.8)
-            .strokeColor('#cbd5e1')
-            .stroke();
+          // 3. Desenha o Retângulo Dinâmico em volta de todo o bloco
+          doc.rect(boxX, boxStartY, boxWidth, boxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1') // Cor da borda
+             .stroke();
 
-          doc.y = refBoxEndY + 10;
+          // Atualiza a posição do cursor Y para o próximo bloco do PDF
+          doc.y = boxEndY + 8;
         }
 
         // 3. Bloco de Observações

@@ -44,7 +44,7 @@ function saveJsonFile(filePath, content, options) {
     const dataToWrite = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
     fs.writeFileSync(filePath, dataToWrite, options || 'utf-8');
   } catch (e) {
-    console.error(`Erro ao salvar arquivo JSON-TESTE local (${filePath}):`, e.message);
+    console.error(`Erro ao salvar arquivo JSON local (${filePath}):`, e.message);
   }
 }
 
@@ -4722,8 +4722,6 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
   }
 });
 
-
-
 // =====================================================
 // HELPER: FORMATADOR DE TEXTO COM TAGS <b>...</b>
 // =====================================================
@@ -4773,70 +4771,71 @@ function renderPdfFormattedText(doc, text, options = {}) {
 }
 
 // =====================================================
-// CABEÇALHO FIXO (DESENHADO EM TODAS AS PÁGINAS)
-// =====================================================
-function drawHeader(doc, data) {
-  const startY = 35;
-  const {
-    patientName,
-    patientAge,
-    doctor,
-    convenio,
-    procedencia,
-    reqCode,
-    dataColeta,
-    dataEmissao
-  } = data;
-
-  // Logo Inovalab
-  const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
-  if (fs.existsSync(logoPath)) {
-    try {
-      doc.image(logoPath, 40, startY, { width: 140 });
-    } catch {
-      doc.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true, lineBreak: false });
-      doc.fillColor('#1E3E17').text('LAB', { lineBreak: false });
-      doc.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18, { lineBreak: false });
-    }
-  } else {
-    doc.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true, lineBreak: false });
-    doc.fillColor('#1E3E17').text('LAB', { lineBreak: false });
-    doc.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18, { lineBreak: false });
-  }
-
-  // Dados da Instituição
-  doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 40, startY, { align: 'right', width: 515, lineBreak: false });
-  doc.fillColor('#334155').fontSize(8.5).font('Courier');
-  doc.text('Rua Tiradentes, 999 - Centro - Cambará-PR', 40, startY + 12, { align: 'right', width: 515, lineBreak: false });
-  doc.text('CNPJ: 56.428.462/0001-69 | CNES: 4832884', 40, startY + 23, { align: 'right', width: 515, lineBreak: false });
-  doc.text('(43) 99618-3406', 40, startY + 34, { align: 'right', width: 515, lineBreak: false });
-
-  // Quadro de Informações do Paciente
-  const boxY = startY + 52;
-  doc.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f172a');
-  doc.lineWidth(1.2);
-
-  // Coluna Esquerda
-  doc.fillColor('#0f172a').fontSize(9).font('Courier');
-  doc.text('Paciente..: ', 48, boxY + 8, { continued: true, lineBreak: false }).font('Courier-Bold').fontSize(10).text(patientName, { lineBreak: false });
-  doc.font('Courier').fontSize(8.5).text(`Solicitante: ${doctor}`, 48, boxY + 21, { lineBreak: false });
-  doc.text(`Convênio...: ${convenio}`, 48, boxY + 33, { lineBreak: false });
-  doc.text(`Procedência: ${procedencia}`, 48, boxY + 45, { lineBreak: false });
-
-  // Coluna Direita
-  doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Requisição: ' + String(reqCode), 40, boxY + 8, { align: 'right', width: 505, lineBreak: false });
-  doc.font('Courier').fontSize(8.5).text(`Idade......: ${patientAge}`, 40, boxY + 21, { align: 'right', width: 505, lineBreak: false });
-  doc.text(`Data Requis: ${dataColeta}`, 40, boxY + 33, { align: 'right', width: 505, lineBreak: false });
-  doc.text(`Data Emissão: ${dataEmissao}`, 40, boxY + 45, { align: 'right', width: 505, lineBreak: false });
-}
-
-// =====================================================
 // RODAPÉ FIXO (DESENHADO EM TODAS AS PÁGINAS)
 // =====================================================
-function drawFooter(doc, pageNum, totalPages) {
+function drawFooter(doc, pageNum, totalPages, sigInfo) {
+  const origBottom = doc.page.margins.bottom;
+  const origTop = doc.page.margins.top;
+  doc.page.margins.bottom = 0;
+  doc.page.margins.top = 0;
+
   const pageWidth = 595.28;
   const footerY = 745;
   const footerHeight = 75;
+
+  // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, acima da faixa verde)
+  if (sigInfo) {
+    const sigWidth = 180;
+    const sigX = pageWidth - 40 - sigWidth;
+    const sigY = footerY - 65;
+
+    let imgDrawn = false;
+    if (sigInfo.signatureFile) {
+      if (sigInfo.signatureFile.startsWith('data:image')) {
+        try {
+          const base64Data = sigInfo.signatureFile.replace(/^data:image\/\w+;base64,/, '');
+          const imgBuffer = Buffer.from(base64Data, 'base64');
+          doc.image(imgBuffer, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+          imgDrawn = true;
+        } catch (e) {
+          console.error("Erro ao desenhar imagem base64 de assinatura:", e);
+        }
+      } else {
+        const relPath = sigInfo.signatureFile.startsWith('/') ? sigInfo.signatureFile.slice(1) : sigInfo.signatureFile;
+        const fullSigPath = path.join(process.cwd(), 'public', relPath);
+
+        if (fs.existsSync(fullSigPath)) {
+          try {
+            doc.image(fullSigPath, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+            imgDrawn = true;
+          } catch (e) {
+            console.error("Erro ao desenhar arquivo de assinatura:", e);
+          }
+        }
+      }
+    }
+
+    if (!imgDrawn) {
+      const defaultSigPath = path.join(process.cwd(), 'public', 'signatures', 'mgamaral.png');
+      if (fs.existsSync(defaultSigPath)) {
+        try {
+          doc.image(defaultSigPath, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+          imgDrawn = true;
+        } catch (e) {}
+      }
+    }
+
+    // Linhas de Texto da Assinatura
+    const textY = imgDrawn ? (sigY + 30) : (sigY + 12);
+    doc.fillColor('#0f172a').fontSize(8).font('Helvetica-Bold')
+       .text(sigInfo.name || 'Maria Gabriela de Oliveira Amaral', sigX, textY, { width: sigWidth, align: 'center', lineBreak: false });
+
+    doc.fillColor('#334155').fontSize(7.5).font('Helvetica')
+       .text(sigInfo.laudoTitle || 'Biomédica', sigX, textY + 10, { width: sigWidth, align: 'center', lineBreak: false });
+
+    doc.fillColor('#334155').fontSize(7.5).font('Helvetica')
+       .text(sigInfo.laudoCouncil || 'CRBM-PR: 5929', sigX, textY + 19, { width: sigWidth, align: 'center', lineBreak: false });
+  }
 
   // Página X de Y (Exibido acima da faixa verde no lado esquerdo, conforme laudo padrão)
   if (pageNum && totalPages) {
@@ -4898,6 +4897,9 @@ function drawFooter(doc, pageNum, totalPages) {
        825,
        { width: pageWidth, align: 'center', lineBreak: false }
      );
+
+  doc.page.margins.bottom = origBottom;
+  doc.page.margins.top = origTop;
 }
 
 // =====================================================
@@ -4976,15 +4978,36 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
     const dataColeta = formattedReq.data || formatDateTimeToBR(reqFound.createdAt || new Date());
     const dataEmissao = formatDateTimeToBR(new Date());
-    const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
+    const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'MARIA GABRIELA DE OLIVEIRA AMARAL';
     const hash = getOrCreateHashForPatient(reqCode, patientName);
+
+    // Identificação e busca do profissional para assinatura digital
+    const professionals = loadProfessionals();
+    const libClean = String(liberadoPor || '').toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
+
+    let matchedProf = professionals.find(p => {
+      if (!p || !p.name) return false;
+      const pName = String(p.name).toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
+      return libClean.includes(pName) || pName.includes(libClean);
+    });
+
+    if (!matchedProf) {
+      matchedProf = professionals.find(p => String(p.name || '').toLowerCase().includes('maria gabriela')) || professionals[0];
+    }
+
+    const sigInfo = {
+      name: matchedProf ? matchedProf.name : 'MARIA GABRIELA DE OLIVEIRA AMARAL',
+      laudoTitle: matchedProf ? (matchedProf.laudoTitle || matchedProf.role || matchedProf.title || 'Biomédica') : 'Biomédica',
+      laudoCouncil: matchedProf ? (matchedProf.laudoCouncil || (matchedProf.regType && matchedProf.regNumber ? `${matchedProf.regType.split(' ')[0]}-${matchedProf.regState || 'PR'}: ${matchedProf.regNumber}` : 'CRBM-PR: 5929')) : 'CRBM-PR: 5929',
+      signatureFile: matchedProf ? (matchedProf.signatureFile || '/signatures/mgamaral.png') : '/signatures/mgamaral.png'
+    };
 
     // =====================================================
     // ATENÇÃO - SOLUÇÃO CHAVE: bufferPages: true
     // =====================================================
     const doc = new PDFDocument({
       size: 'A4',
-      margins: { top: 155, bottom: 130, left: 40, right: 40 }, // top: 155 garante espaço pro cabeçalho e bottom: 130 pro rodapé
+      margins: { top: 35, bottom: 95, left: 40, right: 40 }, // bottom: 95 garante espaço pro rodapé
       bufferPages: true // <--- HABILITA A ITERAÇÃO DE TODAS AS PÁGINAS NO FINAL
     });
 
@@ -5012,7 +5035,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     });
 
     // =====================================================
-    // DADOS PARA O CABEÇALHO
+    // CONTEÚDO DO DOCUMENTO E CABEÇALHO
     // =====================================================
     const headerData = {
       patientName,
@@ -5025,7 +5048,56 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       dataEmissao
     };
 
-    doc.y = 155;
+    function renderHeader(docObj) {
+      const startY = 35;
+
+      // Logo
+      const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
+      if (fs.existsSync(logoPath)) {
+        try {
+          docObj.image(logoPath, 40, startY, { width: 140 });
+        } catch {
+          docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
+          docObj.fillColor('#1E3E17').text('LAB');
+          docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
+        }
+      } else {
+        docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
+        docObj.fillColor('#1E3E17').text('LAB');
+        docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
+      }
+
+      // Dados da instituição
+      docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 40, startY, { align: 'right', width: 515 });
+      docObj.fillColor('#334155').fontSize(8.5).font('Courier');
+      docObj.text('Rua Tiradentes, 999 - Centro - Cambará-PR', 40, startY + 12, { align: 'right', width: 515 });
+      docObj.text('CNPJ: 56.428.462/0001-69', 40, startY + 23, { align: 'right', width: 515 });
+      docObj.text('(43) 99618-3406 | CNES: 4832884', 40, startY + 34, { align: 'right', width: 515 });
+
+      // Quadro do paciente
+      const boxY = startY + 52;
+      docObj.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f172a');
+      docObj.lineWidth(1.2);
+
+      docObj.fillColor('#0f172a').fontSize(9).font('Courier');
+      docObj.text('Paciente..: ', 48, boxY + 8, { continued: true }).font('Courier-Bold').fontSize(10).text(headerData.patientName);
+      docObj.font('Courier').fontSize(8.5).text(`Solicitante: ${headerData.doctor}`, 48, boxY + 21);
+      docObj.text(`Convênio...: ${headerData.convenio}`, 48, boxY + 33);
+      docObj.text(`Procedência: ${headerData.procedencia}`, 48, boxY + 45);
+
+      docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Requisição: ' + String(headerData.reqCode), 40, boxY + 8, { align: 'right', width: 505 });
+      docObj.font('Courier').fontSize(8.5).text(`Idade......: ${headerData.patientAge}`, 40, boxY + 21, { align: 'right', width: 505 });
+      docObj.text(`Data Requis: ${headerData.dataColeta}`, 40, boxY + 33, { align: 'right', width: 505 });
+      docObj.text(`Data Emissão: ${headerData.dataEmissao}`, 40, boxY + 45, { align: 'right', width: 505 });
+
+      docObj.y = boxY + 68;
+    }
+
+    doc.on('pageAdded', () => {
+      renderHeader(doc);
+    });
+
+    renderHeader(doc);
 
     // Exames
     const exams = formattedReq.exams || formattedReq.listaExames || [];
@@ -5042,56 +5114,52 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
 
         // Estimar a altura total necessária para renderizar este exame
-        let estimatedExamHeight = 40;
+        let estimatedExamHeight = 50;
         if (linhasToRender.length > 0) {
-          estimatedExamHeight += linhasToRender.length * 15;
+          estimatedExamHeight += linhasToRender.length * 16;
         } else {
-          estimatedExamHeight += 15;
+          estimatedExamHeight += 16;
         }
 
         if (refVal) {
-          const cleanRefLines = refVal.split('');
+          const cleanRefLines = refVal.split('\n');
           let refLinesCount = 0;
           cleanRefLines.forEach(l => {
-            refLinesCount += Math.ceil(Math.max(1, l.length) / 80);
+            refLinesCount += Math.ceil(Math.max(1, l.length) / 75);
           });
-          estimatedExamHeight += 16 + (refLinesCount * 9);
+          estimatedExamHeight += 24 + (refLinesCount * 11);
         }
 
         if (obsVal) {
-          const cleanObsLines = obsVal.split('');
+          const cleanObsLines = obsVal.split('\n');
           let obsLinesCount = 0;
           cleanObsLines.forEach(l => {
-            obsLinesCount += Math.ceil(Math.max(1, l.length) / 80);
+            obsLinesCount += Math.ceil(Math.max(1, l.length) / 75);
           });
-          estimatedExamHeight += 12 + (obsLinesCount * 9);
+          estimatedExamHeight += 20 + (obsLinesCount * 11);
         }
 
-        estimatedExamHeight += 8;
-
         // Se o exame não couber no restante da página atual, move o EXAME INTEIRO para a próxima página!
-        if (doc.y + estimatedExamHeight > 715 && doc.y > 165) {
+        if (doc.y + estimatedExamHeight > 710 && doc.y > 165) {
           doc.addPage();
         }
 
-  
-
         const bannerY = doc.y;
-        doc.rect(40, bannerY, 515, 18).fillAndStroke('#e2e8f0', '#94a3b8');
-        doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text(examTitle, 45, bannerY + 4, { width: 505, align: 'center' });
-        doc.y = bannerY + 22;
+        doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
+        doc.fillColor('#0f172a').fontSize(10).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
+        doc.y = bannerY + 26;
 
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`);
-        doc.moveDown(0.2);
-        doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
         doc.moveDown(0.3);
+        doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+        doc.moveDown(0.4);
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
-            if (doc.y > 715 && doc.y > 165) doc.addPage();
+            if (doc.y > 710) doc.addPage();
 
             const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
             const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
@@ -5106,10 +5174,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             }
 
             const lineY = doc.y;
-            // CORRIGIDO: tamanho da fonte do parâmetro ajustado para 9.5pt (era 16pt!)
             doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
             doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 230, lineY, { align: 'left', width: 315 });
-            doc.y = lineY + 15;
+            doc.y = lineY + 16;
           });
         } else {
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
@@ -5117,25 +5184,25 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           const lineY = doc.y;
           doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
           doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 230, lineY, { align: 'left', width: 315 });
-          doc.y = lineY + 15;
+          doc.y = lineY + 16;
         }
 
-        doc.moveDown(0.3);
+        doc.moveDown(0.4);
 
         // Valores de Referência
         if (refVal) {
-          if (doc.y > 700 && doc.y > 165) doc.addPage();
+          if (doc.y > 710 && doc.y > 165) doc.addPage();
 
           const boxStartY = doc.y;
-          const boxPadding = 5;
+          const boxPadding = 8;
           const boxX = 40;
           const boxWidth = 515;
 
           doc.y = boxStartY + boxPadding;
           doc.fillColor('#0f172a').fontSize(8.5).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
-          doc.moveDown(0.2);
-          doc.strokeColor('#cbd5e1').lineWidth(0.6).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
           doc.moveDown(0.3);
+          doc.strokeColor('#cbd5e1').lineWidth(0.6).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
+          doc.moveDown(0.4);
 
           renderPdfFormattedText(doc, refVal, {
             indent: boxX + boxPadding,
@@ -5153,15 +5220,15 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
              .strokeColor('#cbd5e1')
              .stroke();
 
-          doc.y = boxEndY + 4;
+          doc.y = boxEndY + 8;
         }
 
         // Observações
         if (obsVal) {
-          if (doc.y > 700 && doc.y > 165) doc.addPage();
+          if (doc.y > 710 && doc.y > 165) doc.addPage();
 
           const obsBoxStartY = doc.y;
-          const boxPadding = 5;
+          const boxPadding = 6;
           const boxX = 40;
           const boxWidth = 515;
 
@@ -5183,28 +5250,31 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
              .strokeColor('#cbd5e1')
              .stroke();
 
-          doc.y = obsBoxEndY + 6;
+          doc.y = obsBoxEndY + 10;
         }
 
-        doc.moveDown(0.3);
+        doc.moveDown(0.6);
       });
     }
 
     // Chancela de Autenticidade
-    if (doc.y > 670) {
+    if (doc.y > 700) {
       doc.addPage();
     }
 
-    const authY = Math.min(doc.y + 10, 645);
+    const authY = doc.y + 10;
     doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
 
     const authTextY = authY + 6;
     doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
-    doc.text(`Data Requis.: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
-    doc.font('Helvetica').text(`   Liberado eletronicamente por: `, { continued: true })
+    doc.text(`Data Requis.: `, 40, authTextY, { continued: true })
+       .font('Helvetica-Bold').text(`${dataColeta}   `, { continued: true })
+       .font('Helvetica').text(`Liberado eletronicamente por: `, { continued: true })
        .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
-    doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
-       .fontSize(7.5).text(hash);
+
+    doc.font('Helvetica').fillColor('#334155').fontSize(8.0)
+       .text(`Cód. Autenticidade: `, 40, authTextY + 14, { continued: true })
+       .font('Helvetica-Bold').text(hash);
 
     // =====================================================
     // PASSO FINAL CRUCIAL: ITERAÇÃO POR TODAS AS PÁGINAS
@@ -5212,19 +5282,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const range = doc.bufferedPageRange(); // { start: 0, count: totalPages }
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
-
-      // Zera temporariamente as margens da página para impedir
-      // que o PDFKit crie uma nova página em branco ao desenhar o rodapé (y=745 / 825)
-      const origTop = doc.page.margins.top;
-      const origBottom = doc.page.margins.bottom;
-      doc.page.margins.top = 0;
-      doc.page.margins.bottom = 0;
-
-      drawHeader(doc, headerData);
-      drawFooter(doc, i + 1, range.count);
-
-      doc.page.margins.top = origTop;
-      doc.page.margins.bottom = origBottom;
+      drawFooter(doc, i + 1, range.count, sigInfo);
     }
 
     // Finaliza o documento PDFKit
@@ -13405,6 +13463,7 @@ app.post('/admin/profissionais/add', requireAdmin, (req, res) => {
     registration, sector, admissionDate, contractType, workday, supervisor, status, terminationReason,
     education, postGrad, specializations, masterDegree, doctorateDegree,
     regType, regNumber, regState, regValidity, regDocFile,
+    laudoTitle, laudoCouncil, signatureFile,
     trainings, vaccinations, documents, absences
   } = req.body;
   
@@ -13478,6 +13537,11 @@ app.post('/admin/profissionais/add', requireAdmin, (req, res) => {
     regValidity: regValidity || '',
     regDocFile: regDocFile || '',
 
+    // Assinatura e Laudo
+    laudoTitle: (laudoTitle || '').trim(),
+    laudoCouncil: (laudoCouncil || '').trim(),
+    signatureFile: signatureFile || '',
+
     // Arrays
     trainings: safeParseJson(trainings, []),
     vaccinations: safeParseJson(vaccinations, []),
@@ -13510,6 +13574,7 @@ app.post('/admin/profissionais/edit', requireAdmin, (req, res) => {
     registration, sector, admissionDate, contractType, workday, supervisor, status, terminationReason,
     education, postGrad, specializations, masterDegree, doctorateDegree,
     regType, regNumber, regState, regValidity, regDocFile,
+    laudoTitle, laudoCouncil, signatureFile,
     trainings, vaccinations, documents, absences
   } = req.body;
   
@@ -13581,6 +13646,11 @@ app.post('/admin/profissionais/edit', requireAdmin, (req, res) => {
       regState: (regState || '').trim(),
       regValidity: regValidity || '',
       regDocFile: regDocFile || '',
+
+      // Assinatura e Laudo
+      laudoTitle: (laudoTitle || '').trim(),
+      laudoCouncil: (laudoCouncil || '').trim(),
+      signatureFile: signatureFile || '',
 
       // Arrays
       trainings: safeParseJson(trainings, []),

@@ -450,6 +450,50 @@
                 </div>
               </div>
             </div>
+
+            <!-- Assinatura Digitalizada para Laudos -->
+            <div class="bg-amber-50/70 border border-amber-200 p-5 rounded-2xl space-y-4 mt-6">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-amber-100 rounded-xl text-amber-800">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-extrabold text-amber-950 font-mono uppercase tracking-wider">✒️ Assinatura Digitalizada & Identificação em Laudos</h4>
+                  <p class="text-[10px] text-amber-800/80">A imagem da assinatura e esses dados serão inseridos no rodapé de todas as páginas dos laudos emitidos por este profissional.</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider font-mono mb-1">Título / Cargo no Laudo</label>
+                  <input type="text" name="laudoTitle" id="form-prof-laudoTitle" placeholder="Ex: Biomédica" class="form-input bg-white" oninput="updateSigPreviewText()">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider font-mono mb-1">Inscrição no Conselho para Laudo</label>
+                  <input type="text" name="laudoCouncil" id="form-prof-laudoCouncil" placeholder="Ex: CRBM-PR: 5929" class="form-input bg-white" oninput="updateSigPreviewText()">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider font-mono mb-1">Upload da Assinatura (PNG)</label>
+                  <input type="file" id="sig-file" accept="image/*" onchange="handleSigUpload(event)" class="text-[10px] w-full text-gray-500 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-amber-200 file:text-amber-900 cursor-pointer">
+                  <input type="hidden" name="signatureFile" id="form-prof-signatureFile">
+                </div>
+              </div>
+
+              <!-- Real-time Preview Box -->
+              <div class="flex items-center gap-4 bg-white p-3.5 rounded-xl border border-amber-200/80 shadow-sm">
+                <div class="w-36 h-12 bg-gray-50 border border-dashed border-amber-300 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
+                  <img id="sig-preview-img" src="" class="max-h-full object-contain hidden">
+                  <span id="sig-preview-placeholder" class="text-[9px] text-gray-400 font-mono text-center">Sem Assinatura</span>
+                </div>
+                <div class="space-y-0.5 text-left">
+                  <p id="sig-preview-name" class="text-xs font-extrabold text-gray-900">Nome do Profissional</p>
+                  <p id="sig-preview-title" class="text-[11px] text-gray-600 font-medium">Cargo / Título no Laudo</p>
+                  <p id="sig-preview-council" class="text-[10px] text-gray-500 font-mono">Conselho Profissional</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1083,6 +1127,23 @@
       document.getElementById('regdoc-preview-container').classList.add('hidden');
     }
 
+    // Preenche Assinatura & Dados do Laudo
+    document.getElementById('form-prof-laudoTitle').value = prof.laudoTitle || prof.role || "";
+    document.getElementById('form-prof-laudoCouncil').value = prof.laudoCouncil || (prof.regType && prof.regNumber ? (prof.regType.split(' ')[0] + '-' + (prof.regState || 'PR') + ': ' + prof.regNumber) : "");
+    document.getElementById('form-prof-signatureFile').value = prof.signatureFile || "";
+
+    if (prof.signatureFile) {
+      document.getElementById('sig-preview-img').src = prof.signatureFile;
+      document.getElementById('sig-preview-img').classList.remove('hidden');
+      document.getElementById('sig-preview-placeholder').classList.add('hidden');
+    } else {
+      document.getElementById('sig-preview-img').src = "";
+      document.getElementById('sig-preview-img').classList.add('hidden');
+      document.getElementById('sig-preview-placeholder').classList.remove('hidden');
+    }
+
+    updateSigPreviewText();
+
     // Atribui os arrays do EJS para os arrays locais
     localEducation = Array.isArray(prof.education) ? prof.education : [];
     localTrainings = Array.isArray(prof.trainings) ? prof.trainings : [];
@@ -1123,6 +1184,31 @@
       document.getElementById('regdoc-preview-container').classList.remove('hidden');
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleSigUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const base64Str = evt.target.result;
+      document.getElementById('form-prof-signatureFile').value = base64Str;
+      document.getElementById('sig-preview-img').src = base64Str;
+      document.getElementById('sig-preview-img').classList.remove('hidden');
+      document.getElementById('sig-preview-placeholder').classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function updateSigPreviewText() {
+    const nameVal = document.getElementById('form-prof-name')?.value || 'Nome do Profissional';
+    const titleVal = document.getElementById('form-prof-laudoTitle')?.value || 'Cargo / Título no Laudo';
+    const councilVal = document.getElementById('form-prof-laudoCouncil')?.value || 'Conselho Profissional';
+
+    if (document.getElementById('sig-preview-name')) document.getElementById('sig-preview-name').textContent = nameVal;
+    if (document.getElementById('sig-preview-title')) document.getElementById('sig-preview-title').textContent = titleVal;
+    if (document.getElementById('sig-preview-council')) document.getElementById('sig-preview-council').textContent = councilVal;
   }
 
   // Lê arquivos de graduações

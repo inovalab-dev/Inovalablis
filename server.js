@@ -4866,8 +4866,8 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   }
 
   // Texto de Aviso Clínico / Valor Preditivo em linha única
-  doc.fillColor('#475569').fontSize(6).font('Helvetica')
-     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 98, footerY - 12, { width: 305, align: 'left', lineBreak: false });
+  doc.fillColor('#475569').fontSize(6.8).font('Helvetica')
+     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 90, footerY - 12, { width: 305, align: 'left', lineBreak: false });
 
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
@@ -5348,7 +5348,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         // Rodapé de autenticidade individual do exame
         if (doc.y > 710 && doc.y > 165) doc.addPage();
         doc.moveDown(0.2);
-        doc.fillColor('#475569').fontSize(7.5).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
+        doc.fillColor('#475569').fontSize(6.0).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
         doc.moveDown(0.6);
       });
     }
@@ -5359,18 +5359,18 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     }
 
     const authY = doc.y + 10;
-    doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
+    // doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
 
     const authTextY = authY + 6;
     doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
-    doc.text(`Data Requis.: `, 40, authTextY, { continued: true })
-       .font('Helvetica-Bold').text(`${dataColeta}   `, { continued: true })
-       .font('Helvetica').text(`Liberado eletronicamente por: `, { continued: true })
-       .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
+    // doc.text(`Data Requis.: `, 40, authTextY, { continued: true })
+    //    .font('Helvetica-Bold').text(`${dataColeta}   `, { continued: true })
+    //    .font('Helvetica').text(`Liberado eletronicamente por: `, { continued: true })
+    //    .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
 
-    doc.font('Helvetica').fillColor('#334155').fontSize(8.0)
-       .text(`Cód. Autenticidade: `, 40, authTextY + 14, { continued: true })
-       .font('Helvetica-Bold').text(hash);
+    // doc.font('Helvetica').fillColor('#334155').fontSize(8.0)
+    //    .text(`Cód. Autenticidade: `, 40, authTextY + 14, { continued: true })
+    //    .font('Helvetica-Bold').text(hash);
 
     // =====================================================
     // PASSO FINAL CRUCIAL: ITERAÇÃO POR TODAS AS PÁGINAS

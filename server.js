@@ -4784,22 +4784,6 @@ function renderPdfFormattedText(doc, text, options = {}) {
 }
 
 // =====================================================
-// HELPER SEGURO DE LEITURA DE IMAGENS PARA PDFKIT
-// =====================================================
-function safeReadImageBuffer(filePath) {
-  if (!filePath || typeof filePath !== 'string' || !fs.existsSync(filePath)) return null;
-  try {
-    let buf = fs.readFileSync(filePath);
-    if (buf && buf.length > 3 && buf.slice(0, 3).toString('hex') === 'efbfbd') {
-      buf = Buffer.concat([Buffer.from([0x89]), buf.slice(3)]);
-    }
-    return buf;
-  } catch {
-    return null;
-  }
-}
-
-// =====================================================
 // RODAPÉ FIXO (DESENHADO EM TODAS AS PÁGINAS)
 // =====================================================
 function drawFooter(doc, pageNum, totalPages, sigInfo) {
@@ -4815,15 +4799,14 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   // Marca d'Água (DNA) no canto inferior direito do laudo (Aumentado 1.8x)
   const marcaDaguaPath = path.join(process.cwd(), 'public', 'marca-dagua.png');
-  const marcaDaguaBuf = safeReadImageBuffer(marcaDaguaPath);
-  if (marcaDaguaBuf) {
+  if (fs.existsSync(marcaDaguaPath)) {
     try {
       const wHeight = 504; // 280 * 1.8
       const wWidth = wHeight * (767 / 651);
       const targetRight = 555; // Alinhado com a margem direita das escritas/quadros (40 + 515)
       const wX = targetRight - (wWidth * (498 / 767));
       const wY = footerY - 5 - wHeight;
-      doc.image(marcaDaguaBuf, wX, wY, { width: wWidth, height: wHeight });
+      doc.image(marcaDaguaPath, wX, wY, { width: wWidth, height: wHeight });
     } catch (e) {
       console.error("Erro ao desenhar marca-d'água no laudo:", e);
     }
@@ -4972,20 +4955,16 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const sbacImgPath = path.join(process.cwd(), 'public', 'sbac.png');
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
 
-  const pncqBuf = safeReadImageBuffer(pncqImgPath);
-  const sbacBuf = safeReadImageBuffer(sbacImgPath);
-  const pncqLogoBuf = safeReadImageBuffer(pncqLogo);
-
-  if (pncqBuf && sbacBuf) {
+  if (fs.existsSync(pncqImgPath) && fs.existsSync(sbacImgPath)) {
     try {
-      doc.image(pncqBuf, 440, colY + 2, { height: 35 });
-      doc.image(sbacBuf, 482, colY + 1, { height: 38 });
+      doc.image(pncqImgPath, 440, colY + 2, { height: 35 });
+      doc.image(sbacImgPath, 482, colY + 1, { height: 38 });
     } catch (err) {
       console.error("Erro ao renderizar pncq.png/sbac.png:", err);
     }
-  } else if (pncqLogoBuf) {
+  } else if (fs.existsSync(pncqLogo)) {
     try {
-      doc.image(pncqLogoBuf, 435, colY + 4, { width: 65 });
+      doc.image(pncqLogo, 435, colY + 4, { width: 65 });
     } catch {
       doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 440, colY + 16, { lineBreak: false });
     }
@@ -4997,12 +4976,11 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   // Símbolo do Laboratório / Banner DNA (Restrito estritamente dentro da faixa verde)
   const bannerLabPath = path.join(process.cwd(), 'public', 'banner-laboratorio.png');
-  const bannerBuf = safeReadImageBuffer(bannerLabPath);
-  if (bannerBuf) {
+  if (fs.existsSync(bannerLabPath)) {
     try {
       doc.save();
       doc.rect(0, footerY, pageWidth, footerHeight).clip();
-      doc.image(bannerBuf, pageWidth - 72, footerY, { height: footerHeight, fit: [72, footerHeight] });
+      doc.image(bannerLabPath, pageWidth - 72, footerY, { height: footerHeight, fit: [72, footerHeight] });
       doc.restore();
     } catch (e) {
       console.error("Erro ao carregar banner-laboratorio.png no rodapé:", e);
@@ -5014,354 +4992,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 }
 
 // =====================================================
-// HELPER PARA GERAR BUFFER DE PDF DA REQUISIÇÃO
-// =====================================================
-function buildPdfBufferForRequisition(reqFound) {
-  return new Promise((resolve, reject) => {
-    try {
-      if (!reqFound) return resolve(null);
-
-      const formattedReqs = formatRequisitionExams([reqFound]);
-      const formattedReq = formattedReqs[0] || {};
-
-      const allPatients = loadPatients();
-      let patientName = reqFound.patientName || reqFound.nomePaciente || reqFound.paciente || '';
-      let patientCode = reqFound.patientCode || reqFound.idPaciente || reqFound.patientId || '';
-      let patientAge = reqFound.patientAge || reqFound.idade || '';
-      let doctor = reqFound.doctorName || reqFound.responsibleName || 'Dr. Solicitante';
-      let convenio = reqFound.convenio || reqFound.insurance || 'Particular';
-      let procedencia = reqFound.procedencia || 'Laboratório Central';
-      const reqCode = reqFound.requisitionCode || reqFound.id || '';
-
-      if (!patientName || !patientAge || patientName === 'Não Informado') {
-        const matchedP = allPatients.find(p => 
-          String(p.id || '').toLowerCase() === String(patientCode).toLowerCase() ||
-          String(p.code || '').toLowerCase() === String(patientCode).toLowerCase() ||
-          (patientName && String(p.name || '').toLowerCase() === String(patientName).toLowerCase())
-        );
-        if (matchedP) {
-          if (!patientName || patientName === 'Não Informado') patientName = matchedP.name || matchedP.nome || patientName;
-          if (!patientAge) patientAge = matchedP.age || matchedP.idade || 'N/I';
-          if (!convenio || convenio === 'Particular') convenio = matchedP.insurance || matchedP.convenio || convenio;
-        }
-      }
-      if (!patientName) patientName = 'Não Informado';
-      if (!patientAge) patientAge = 'N/I';
-
-      const dataColeta = formattedReq.data || formatDateTimeToBR(reqFound.createdAt || new Date());
-      const dataEmissao = formatDateTimeToBR(new Date());
-      const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'MARIA GABRIELA DE OLIVEIRA AMARAL';
-
-      // Identificação e busca do profissional para assinatura digital
-      const professionals = loadProfessionals();
-      const libClean = String(liberadoPor || '').toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
-
-      let matchedProf = professionals.find(p => {
-        if (!p || !p.name) return false;
-        const pName = String(p.name).toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
-        return libClean.includes(pName) || pName.includes(libClean);
-      });
-
-      if (!matchedProf) {
-        matchedProf = professionals.find(p => String(p.name || '').toLowerCase().includes('maria gabriela')) || professionals[0];
-      }
-
-      const sigInfo = {
-        name: matchedProf ? matchedProf.name : 'MARIA GABRIELA DE OLIVEIRA AMARAL',
-        laudoTitle: matchedProf ? (matchedProf.laudoTitle || matchedProf.role || matchedProf.title || 'Biomédica') : 'Biomédica',
-        laudoCouncil: matchedProf ? (matchedProf.laudoCouncil || (matchedProf.regType && matchedProf.regNumber ? `${matchedProf.regType.split(' ')[0]}-${matchedProf.regState || 'PR'}: ${matchedProf.regNumber}` : 'CRBM-PR: 5929')) : 'CRBM-PR: 5929',
-        signatureFile: matchedProf ? (matchedProf.signatureFile || '/signatures/mgamaral.png') : '/signatures/mgamaral.png'
-      };
-
-      const doc = new PDFDocument({
-        size: 'A4',
-        margins: { top: 35, bottom: 75, left: 40, right: 40 },
-        bufferPages: true
-      });
-
-      const chunks = [];
-      doc.on('data', chunk => chunks.push(chunk));
-      doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(chunks);
-        resolve(pdfBuffer);
-      });
-      doc.on('error', err => reject(err));
-
-      const headerData = {
-        patientName,
-        patientAge,
-        doctor,
-        convenio,
-        procedencia,
-        reqCode,
-        dataColeta,
-        dataEmissao
-      };
-
-      function renderHeader(docObj) {
-        const startY = 35;
-
-        const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
-        const logoBuf = safeReadImageBuffer(logoPath);
-        if (logoBuf) {
-          try {
-            docObj.image(logoBuf, 40, startY, { width: 180 });
-          } catch {
-            docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
-            docObj.fillColor('#1E3E17').text('LAB');
-            docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
-          }
-        } else {
-          docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
-          docObj.fillColor('#1E3E17').text('LAB');
-          docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
-        }
-
-        docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 40, startY, { align: 'right', width: 515 });
-        docObj.fillColor('#334155').fontSize(8.5).font('Courier');
-        docObj.text('Rua Tiradentes, 999 - Centro - Cambará-PR', 40, startY + 12, { align: 'right', width: 515 });
-        docObj.text('CNPJ: 56.428.462/0001-69', 40, startY + 23, { align: 'right', width: 515 });
-        docObj.text('(43) 99618-3406 | CNES: 4832884', 40, startY + 34, { align: 'right', width: 515 });
-
-        const boxY = startY + 52;
-        docObj.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f2a16');
-        docObj.lineWidth(1.2);
-
-        docObj.fillColor('#0f172a').fontSize(9).font('Courier');
-        docObj.text('Paciente..: ', 48, boxY + 8, { continued: true }).font('Courier-Bold').fontSize(10).text(headerData.patientName);
-        docObj.font('Courier').fontSize(8.5).text(`Solicitante: ${headerData.doctor}`, 48, boxY + 21);
-        docObj.text(`Convênio...: ${headerData.convenio}`, 48, boxY + 33);
-        docObj.text(`Procedência: ${headerData.procedencia}`, 48, boxY + 45);
-
-        docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Requisição: ' + String(headerData.reqCode), 40, boxY + 8, { align: 'right', width: 505 });
-        docObj.font('Courier').fontSize(8.5).text(`Idade......: ${headerData.patientAge}`, 40, boxY + 21, { align: 'right', width: 505 });
-        docObj.text(`Data Requis: ${headerData.dataColeta}`, 40, boxY + 33, { align: 'right', width: 505 });
-        docObj.text(`Data Emissão: ${headerData.dataEmissao}`, 40, boxY + 45, { align: 'right', width: 505 });
-
-        docObj.y = boxY + 68;
-      }
-
-      doc.on('pageAdded', () => {
-        renderHeader(doc);
-      });
-
-      renderHeader(doc);
-
-      const exams = formattedReq.exams || formattedReq.listaExames || [];
-
-      if (exams.length === 0) {
-        doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
-      } else {
-        exams.forEach((ex, exIndex) => {
-          const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
-          const matStr = ex.material || '';
-          const metStr = ex.metodo || '';
-          const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
-          const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
-          const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
-
-          const rawColeta = ex.dataColeta || ex.coletaDate || ex.data || headerData.dataColeta || dataColeta;
-          let coletaStr = formatDateTimeToBR(rawColeta) || headerData.dataColeta || dataColeta;
-          coletaStr = coletaStr.replace(/(\d{2}\/\d{2}\/)20(\d{2})/, '$1$2');
-
-          const rawLib = String(ex.liberadoPor || ex.conferidoPor || ex.responsavel || liberadoPor || 'Maria Gabriela').trim();
-          let libDisplay = rawLib;
-          if (rawLib === rawLib.toUpperCase()) {
-            libDisplay = rawLib.toLowerCase().split(' ').map(w => ['de','da','do','das','dos'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-          }
-
-          const codSeg = ex.codSeguranca || ex.codigoSeguranca || ex.hash ||
-            crypto.createHash('md5').update(`${reqCode}_${ex.codigo || ex.id || ex.nome || exIndex}_${patientName}`).digest('hex');
-
-          const examAuthFooter = `Coleta: ${coletaStr} - Exame liberado eletronicamente por: ${libDisplay} - Cód. Seg.: ${codSeg}`;
-
-          let estimatedExamHeight = 65;
-          if (linhasToRender.length > 0) {
-            estimatedExamHeight += linhasToRender.length * 16;
-          } else {
-            estimatedExamHeight += 16;
-          }
-
-          if (refVal) {
-            const cleanRefLines = refVal.split('\n');
-            let refLinesCount = 0;
-            cleanRefLines.forEach(l => {
-              refLinesCount += Math.ceil(Math.max(1, l.length) / 75);
-            });
-            estimatedExamHeight += 24 + (refLinesCount * 11);
-          }
-
-          if (obsVal) {
-            const cleanObsLines = obsVal.split('\n');
-            let obsLinesCount = 0;
-            cleanObsLines.forEach(l => {
-              obsLinesCount += Math.ceil(Math.max(1, l.length) / 75);
-            });
-            estimatedExamHeight += 20 + (obsLinesCount * 11);
-          }
-
-          if (doc.y + estimatedExamHeight > 730 && doc.y > 165) {
-            doc.addPage();
-          }
-
-          const bannerY = doc.y;
-          doc.rect(40, bannerY, 515, 20).fillAndStroke('#DCDCDC', '#DCDCDC');
-          doc.fillColor('#0f172a').fontSize(10).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
-          doc.y = bannerY + 26;
-
-          doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
-          doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, { continued: true });
-          doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, { continued: true });
-          doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`);
-          doc.moveDown(0.3);
-          doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-          doc.moveDown(2.3);
-
-          if (linhasToRender.length > 0) {
-            linhasToRender.forEach(l => {
-              if (doc.y > 730) doc.addPage();
-
-              const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
-              const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
-              let paramDisplay = isGenericParam
-                ? 'Resultado...:'
-                : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
-
-              let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
-              let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
-              if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
-                unitStr = '';
-              }
-
-              const lineY = doc.y;
-              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
-              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${valStr}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
-              doc.y = lineY + 16;
-            });
-          } else {
-            const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
-            const unitStr = String(ex.unidade || ex.unit || '').trim();
-            const lineY = doc.y;
-            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
-            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${rawRes}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
-            doc.y = lineY + 16;
-          }
-
-          doc.moveDown(1.3);
-
-          if (refVal) {
-            if (doc.y > 730 && doc.y > 165) doc.addPage();
-
-            const boxStartY = doc.y;
-            const boxPadding = 8;
-            const boxX = 40;
-            const boxWidth = 515;
-
-            doc.y = boxStartY + boxPadding;
-            doc.fillColor('#0f172a').fontSize(8.5).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
-            doc.moveDown(0.3);
-            doc.strokeColor('#cbd5e1').lineWidth(0.6).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
-            doc.moveDown(0.4);
-
-            renderPdfFormattedText(doc, refVal, {
-              indent: boxX + boxPadding,
-              width: boxWidth - (boxPadding * 2),
-              align: 'justify',
-              fillColor: '#334155',
-              fontSize: 8.0
-            });
-
-            const boxEndY = doc.y + boxPadding;
-            const boxHeight = boxEndY - boxStartY;
-
-            doc.rect(boxX, boxStartY, boxWidth, boxHeight)
-               .lineWidth(0.8)
-               .strokeColor('#cbd5e1')
-               .stroke();
-
-            doc.y = boxEndY + 8;
-          }
-
-          if (obsVal) {
-            if (doc.y > 730 && doc.y > 165) doc.addPage();
-
-            const obsBoxStartY = doc.y;
-            const boxPadding = 6;
-            const boxX = 40;
-            const boxWidth = 515;
-
-            doc.y = obsBoxStartY + boxPadding;
-
-            renderPdfFormattedText(doc, obsVal, {
-              indent: boxX + boxPadding,
-              width: boxWidth - (boxPadding * 2),
-              align: 'justify',
-              fillColor: '#334155',
-              fontSize: 8.0
-            });
-
-            const obsBoxEndY = doc.y + boxPadding;
-            const obsBoxHeight = obsBoxEndY - obsBoxStartY;
-
-            doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
-               .lineWidth(0.8)
-               .strokeColor('#cbd5e1')
-               .stroke();
-
-            doc.y = obsBoxEndY + 10;
-          }
-
-          if (doc.y > 730 && doc.y > 165) doc.addPage();
-          doc.moveDown(0.2);
-          doc.fillColor('#475569').fontSize(6.0).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
-          doc.moveDown(0.6);
-        });
-      }
-
-      const range = doc.bufferedPageRange();
-      for (let i = 0; i < range.count; i++) {
-        doc.switchToPage(i);
-        drawFooter(doc, i + 1, range.count, sigInfo);
-      }
-
-      doc.end();
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
-
-// Gera e salva o PDF em pdfbase64 diretamente no banco para a requisição informada
-async function generateAndStorePdfForRequisition(requisitionId) {
-  try {
-    if (!requisitionId) return null;
-    const requisitions = loadRequisitions();
-    const targetReq = requisitions.find(r => 
-      String(r.id || '').toLowerCase() === String(requisitionId).toLowerCase() ||
-      String(r.requisitionCode || '').toLowerCase() === String(requisitionId).toLowerCase()
-    );
-    if (!targetReq) return null;
-
-    const pdfBuffer = await buildPdfBufferForRequisition(targetReq);
-    if (!pdfBuffer) return null;
-
-    const base64Str = pdfBuffer.toString('base64');
-    targetReq.pdfbase64 = base64Str;
-    targetReq.pdfBase64 = base64Str;
-    targetReq.pdfDataUri = `data:application/pdf;base64,${base64Str}`;
-    targetReq.pdfUpdatedAt = new Date().toISOString();
-
-    saveRequisitions(requisitions);
-    console.log(`[PDF] Laudo em pdfbase64 gerado e salvo no banco para a requisição #${targetReq.requisitionCode || targetReq.id}`);
-    return base64Str;
-  } catch (err) {
-    console.error('Erro ao gerar e salvar pdfbase64 da requisição:', err);
-    return null;
-  }
-}
-
-// =====================================================
-// ENDPOINT COMPLETO (BUSCA DO BANCO OU GERA SOB DEMANDA)
+// ENDPOINT COMPLETO (VERSÃO CORRIGIDA E ESTÁVEL)
 // =====================================================
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -5408,47 +5039,373 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       });
     }
 
-    // Busca o PDF diretamente do banco (pdfbase64) se já existir, senão gera e salva no banco
-    let base64Pdf = reqFound.pdfbase64 || reqFound.pdfBase64;
-    if (!base64Pdf || req.query?.forceRegenerate === 'true') {
-      base64Pdf = await generateAndStorePdfForRequisition(reqCode);
+    const formattedReqs = formatRequisitionExams([reqFound]);
+    const formattedReq = formattedReqs[0] || {};
+
+    const allPatients = loadPatients();
+    let patientName = reqFound.patientName || reqFound.nomePaciente || reqFound.paciente || '';
+    let patientCode = reqFound.patientCode || reqFound.idPaciente || reqFound.patientId || '';
+    let patientAge = reqFound.patientAge || reqFound.idade || '';
+    let doctor = reqFound.doctorName || reqFound.responsibleName || 'Dr. Solicitante';
+    let convenio = reqFound.convenio || reqFound.insurance || 'Particular';
+    let procedencia = reqFound.procedencia || 'Laboratório Central';
+
+    if (!patientName || !patientAge || patientName === 'Não Informado') {
+      const matchedP = allPatients.find(p => 
+        String(p.id || '').toLowerCase() === String(patientCode).toLowerCase() ||
+        String(p.code || '').toLowerCase() === String(patientCode).toLowerCase() ||
+        (patientName && String(p.name || '').toLowerCase() === String(patientName).toLowerCase())
+      );
+      if (matchedP) {
+        if (!patientName || patientName === 'Não Informado') patientName = matchedP.name || matchedP.nome || patientName;
+        if (!patientAge) patientAge = matchedP.age || matchedP.idade || 'N/I';
+        if (!convenio || convenio === 'Particular') convenio = matchedP.insurance || matchedP.convenio || convenio;
+      }
+    }
+    if (!patientName) patientName = 'Não Informado';
+    if (!patientAge) patientAge = 'N/I';
+
+    const dataColeta = formattedReq.data || formatDateTimeToBR(reqFound.createdAt || new Date());
+    const dataEmissao = formatDateTimeToBR(new Date());
+    const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'MARIA GABRIELA DE OLIVEIRA AMARAL';
+    const hash = getOrCreateHashForPatient(reqCode, patientName);
+
+    // Identificação e busca do profissional para assinatura digital
+    const professionals = loadProfessionals();
+    const libClean = String(liberadoPor || '').toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
+
+    let matchedProf = professionals.find(p => {
+      if (!p || !p.name) return false;
+      const pName = String(p.name).toLowerCase().replace(/dr\(a\)\.|\bdr\b|\bdra\b/gi, '').trim();
+      return libClean.includes(pName) || pName.includes(libClean);
+    });
+
+    if (!matchedProf) {
+      matchedProf = professionals.find(p => String(p.name || '').toLowerCase().includes('maria gabriela')) || professionals[0];
     }
 
-    if (!base64Pdf) {
-      return res.status(500).json({
-        success: false,
-        error: "Erro na geração do PDF",
-        message: "Não foi possível gerar ou recuperar o PDF do laudo."
+    const sigInfo = {
+      name: matchedProf ? matchedProf.name : 'MARIA GABRIELA DE OLIVEIRA AMARAL',
+      laudoTitle: matchedProf ? (matchedProf.laudoTitle || matchedProf.role || matchedProf.title || 'Biomédica') : 'Biomédica',
+      laudoCouncil: matchedProf ? (matchedProf.laudoCouncil || (matchedProf.regType && matchedProf.regNumber ? `${matchedProf.regType.split(' ')[0]}-${matchedProf.regState || 'PR'}: ${matchedProf.regNumber}` : 'CRBM-PR: 5929')) : 'CRBM-PR: 5929',
+      signatureFile: matchedProf ? (matchedProf.signatureFile || '/signatures/mgamaral.png') : '/signatures/mgamaral.png'
+    };
+
+    // =====================================================
+    // ATENÇÃO - SOLUÇÃO CHAVE: bufferPages: true
+    // =====================================================
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 35, bottom: 75, left: 40, right: 40 }, // bottom: 75 garante espaço estendido pro laudo e rodapé compacto
+      bufferPages: true // <--- HABILITA A ITERAÇÃO DE TODAS AS PÁGINAS NO FINAL
+    });
+
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+
+      if (req.query?.base64 === 'true' || req.body?.base64 === true) {
+        return res.json({
+          success: true,
+          codigoRequisicao: reqCode,
+          filename: `laudo_${reqCode}.pdf`,
+          mimeType: 'application/pdf',
+          base64: pdfBuffer.toString('base64'),
+          dataUri: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="laudo_${reqCode}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      return res.send(pdfBuffer);
+    });
+
+    // =====================================================
+    // CONTEÚDO DO DOCUMENTO E CABEÇALHO
+    // =====================================================
+    const headerData = {
+      patientName,
+      patientAge,
+      doctor,
+      convenio,
+      procedencia,
+      reqCode,
+      dataColeta,
+      dataEmissao
+    };
+
+    function renderHeader(docObj) {
+      const startY = 35;
+
+      // Logo
+      const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
+      if (fs.existsSync(logoPath)) {
+        try {
+          docObj.image(logoPath, 40, startY, { width: 180 });
+        } catch {
+          docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
+          docObj.fillColor('#1E3E17').text('LAB');
+          docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
+        }
+      } else {
+        docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
+        docObj.fillColor('#1E3E17').text('LAB');
+        docObj.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
+      }
+
+      // Dados da instituição
+      docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 40, startY, { align: 'right', width: 515 });
+      docObj.fillColor('#334155').fontSize(8.5).font('Courier');
+      docObj.text('Rua Tiradentes, 999 - Centro - Cambará-PR', 40, startY + 12, { align: 'right', width: 515 });
+      docObj.text('CNPJ: 56.428.462/0001-69', 40, startY + 23, { align: 'right', width: 515 });
+      docObj.text('(43) 99618-3406 | CNES: 4832884', 40, startY + 34, { align: 'right', width: 515 });
+
+      // Quadro do paciente
+      const boxY = startY + 52;
+      docObj.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f2a16');
+      docObj.lineWidth(1.2);
+
+      docObj.fillColor('#0f172a').fontSize(9).font('Courier');
+      docObj.text('Paciente..: ', 48, boxY + 8, { continued: true }).font('Courier-Bold').fontSize(10).text(headerData.patientName);
+      docObj.font('Courier').fontSize(8.5).text(`Solicitante: ${headerData.doctor}`, 48, boxY + 21);
+      docObj.text(`Convênio...: ${headerData.convenio}`, 48, boxY + 33);
+      docObj.text(`Procedência: ${headerData.procedencia}`, 48, boxY + 45);
+
+      docObj.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Requisição: ' + String(headerData.reqCode), 40, boxY + 8, { align: 'right', width: 505 });
+      docObj.font('Courier').fontSize(8.5).text(`Idade......: ${headerData.patientAge}`, 40, boxY + 21, { align: 'right', width: 505 });
+      docObj.text(`Data Requis: ${headerData.dataColeta}`, 40, boxY + 33, { align: 'right', width: 505 });
+      docObj.text(`Data Emissão: ${headerData.dataEmissao}`, 40, boxY + 45, { align: 'right', width: 505 });
+
+      docObj.y = boxY + 68;
+    }
+
+    doc.on('pageAdded', () => {
+      renderHeader(doc);
+    });
+
+    renderHeader(doc);
+
+    // Exames
+    const exams = formattedReq.exams || formattedReq.listaExames || [];
+
+    if (exams.length === 0) {
+      doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
+    } else {
+      exams.forEach((ex, exIndex) => {
+        const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
+        const matStr = ex.material || '';
+        const metStr = ex.metodo || '';
+        const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+        const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
+        const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
+
+        // Dados dinâmicos de autenticidade e segurança por exame
+        const rawColeta = ex.dataColeta || ex.coletaDate || ex.data || headerData.dataColeta || dataColeta;
+        let coletaStr = formatDateTimeToBR(rawColeta) || headerData.dataColeta || dataColeta;
+        coletaStr = coletaStr.replace(/(\d{2}\/\d{2}\/)20(\d{2})/, '$1$2');
+
+        const rawLib = String(ex.liberadoPor || ex.conferidoPor || ex.responsavel || liberadoPor || 'Maria Gabriela').trim();
+        let libDisplay = rawLib;
+        if (rawLib === rawLib.toUpperCase()) {
+          libDisplay = rawLib.toLowerCase().split(' ').map(w => ['de','da','do','das','dos'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        const codSeg = ex.codSeguranca || ex.codigoSeguranca || ex.hash ||
+          crypto.createHash('md5').update(`${reqCode}_${ex.codigo || ex.id || ex.nome || exIndex}_${patientName}`).digest('hex');
+
+        const examAuthFooter = `Coleta: ${coletaStr} - Exame liberado eletronicamente por: ${libDisplay} - Cód. Seg.: ${codSeg}`;
+
+        // Estimar a altura total necessária para renderizar este exame
+        let estimatedExamHeight = 65;
+        if (linhasToRender.length > 0) {
+          estimatedExamHeight += linhasToRender.length * 16;
+        } else {
+          estimatedExamHeight += 16;
+        }
+
+        if (refVal) {
+          const cleanRefLines = refVal.split('\n');
+          let refLinesCount = 0;
+          cleanRefLines.forEach(l => {
+            refLinesCount += Math.ceil(Math.max(1, l.length) / 75);
+          });
+          estimatedExamHeight += 24 + (refLinesCount * 11);
+        }
+
+        if (obsVal) {
+          const cleanObsLines = obsVal.split('\n');
+          let obsLinesCount = 0;
+          cleanObsLines.forEach(l => {
+            obsLinesCount += Math.ceil(Math.max(1, l.length) / 75);
+          });
+          estimatedExamHeight += 20 + (obsLinesCount * 11);
+        }
+
+        // Se o exame não couber no restante da página atual, move o EXAME INTEIRO para a próxima página!
+        if (doc.y + estimatedExamHeight > 730 && doc.y > 165) {
+          doc.addPage();
+        }
+
+        const bannerY = doc.y;
+        doc.rect(40, bannerY, 515, 20).fillAndStroke('#DCDCDC', '#DCDCDC');
+        doc.fillColor('#0f172a').fontSize(10).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
+        doc.y = bannerY + 26;
+
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`);
+        doc.moveDown(0.3);
+        doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+        doc.moveDown(2.3);
+
+        if (linhasToRender.length > 0) {
+          linhasToRender.forEach(l => {
+            if (doc.y > 730) doc.addPage();
+
+            const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+            const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+            let paramDisplay = isGenericParam
+              ? 'Resultado...:'
+              : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+
+            let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+            let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
+            if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+              unitStr = '';
+            }
+
+            const lineY = doc.y;
+            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
+            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${valStr}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
+            doc.y = lineY + 16;
+          });
+        } else {
+          const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
+          const unitStr = String(ex.unidade || ex.unit || '').trim();
+          const lineY = doc.y;
+          doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
+          doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${rawRes}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
+          doc.y = lineY + 16;
+        }
+
+        doc.moveDown(1.3);
+
+        // Valores de Referência
+        if (refVal) {
+          if (doc.y > 730 && doc.y > 165) doc.addPage();
+
+          const boxStartY = doc.y;
+          const boxPadding = 8;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          doc.y = boxStartY + boxPadding;
+          doc.fillColor('#0f172a').fontSize(8.5).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
+          doc.moveDown(0.3);
+          doc.strokeColor('#cbd5e1').lineWidth(0.6).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
+          doc.moveDown(0.4);
+
+          renderPdfFormattedText(doc, refVal, {
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
+            align: 'justify',
+            fillColor: '#334155',
+            fontSize: 8.0
+          });
+
+          const boxEndY = doc.y + boxPadding;
+          const boxHeight = boxEndY - boxStartY;
+
+          doc.rect(boxX, boxStartY, boxWidth, boxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1')
+             .stroke();
+
+          doc.y = boxEndY + 8;
+        }
+
+        // Observações
+        if (obsVal) {
+          if (doc.y > 730 && doc.y > 165) doc.addPage();
+
+          const obsBoxStartY = doc.y;
+          const boxPadding = 6;
+          const boxX = 40;
+          const boxWidth = 515;
+
+          doc.y = obsBoxStartY + boxPadding;
+
+          renderPdfFormattedText(doc, obsVal, {
+            indent: boxX + boxPadding,
+            width: boxWidth - (boxPadding * 2),
+            align: 'justify',
+            fillColor: '#334155',
+            fontSize: 8.0
+          });
+
+          const obsBoxEndY = doc.y + boxPadding;
+          const obsBoxHeight = obsBoxEndY - obsBoxStartY;
+
+          doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
+             .lineWidth(0.8)
+             .strokeColor('#cbd5e1')
+             .stroke();
+
+          doc.y = obsBoxEndY + 10;
+        }
+
+        // Rodapé de autenticidade individual do exame
+        if (doc.y > 730 && doc.y > 165) doc.addPage();
+        doc.moveDown(0.2);
+        doc.fillColor('#475569').fontSize(6.0).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
+        doc.moveDown(0.6);
       });
     }
 
-    if (req.query?.base64 === 'true' || req.body?.base64 === true) {
-      return res.json({
-        success: true,
-        codigoRequisicao: reqCode,
-        filename: `laudo_${reqCode}.pdf`,
-        mimeType: 'application/pdf',
-        base64: base64Pdf,
-        dataUri: `data:application/pdf;base64,${base64Pdf}`
-      });
+    // Chancela de Autenticidade
+    if (doc.y > 725) {
+      doc.addPage();
     }
 
-    const pdfBuffer = Buffer.from(base64Pdf, 'base64');
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="laudo_${reqCode}.pdf"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    return res.send(pdfBuffer);
+    const authY = doc.y + 10;
+    // doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
+
+    const authTextY = authY + 6;
+    doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
+    // doc.text(`Data Requis.: `, 40, authTextY, { continued: true })
+    //    .font('Helvetica-Bold').text(`${dataColeta}   `, { continued: true })
+    //    .font('Helvetica').text(`Liberado eletronicamente por: `, { continued: true })
+    //    .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
+
+    // doc.font('Helvetica').fillColor('#334155').fontSize(8.0)
+    //    .text(`Cód. Autenticidade: `, 40, authTextY + 14, { continued: true })
+    //    .font('Helvetica-Bold').text(hash);
+
+    // =====================================================
+    // PASSO FINAL CRUCIAL: ITERAÇÃO POR TODAS AS PÁGINAS
+    // =====================================================
+    const range = doc.bufferedPageRange(); // { start: 0, count: totalPages }
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
+      drawFooter(doc, i + 1, range.count, sigInfo);
+    }
+
+    // Finaliza o documento PDFKit
+    doc.end();
+
   } catch (error) {
-    console.error("Erro ao processar PDF do laudo:", error);
+    console.error("Erro ao gerar PDF do laudo:", error);
     return res.status(500).json({
       success: false,
-      error: "Erro no processamento do PDF",
+      error: "Erro na geração do PDF",
       message: error.message
     });
   }
 });
-
-
 
 // 6. PORTAL DE RESULTADOS
 app.get('/resultados', (req, res) => {
@@ -6688,7 +6645,7 @@ app.get('/admin/resultados/digitacao', requireAdmin, (req, res) => {
 });
 
 // Salvar Resultado de Exame Individual
-app.post('/admin/resultados/salvar-exame', requireAdmin, async (req, res) => {
+app.post('/admin/resultados/salvar-exame', requireAdmin, (req, res) => {
   try {
     const {
       requisitionId,
@@ -6808,13 +6765,6 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, async (req, res) => {
 
     saveRequisitions(requisitions);
 
-    // Gerar e salvar pdfbase64 automaticamente no banco de dados
-    try {
-      await generateAndStorePdfForRequisition(targetReq.requisitionCode || targetReq.id);
-    } catch (e) {
-      console.error("Erro ao gerar pdfbase64 ao salvar exame:", e);
-    }
-
     return res.json({
       success: true,
       message: `Exame ${ex.code} atualizado para status "${newStatus}"!`,
@@ -6828,7 +6778,7 @@ app.post('/admin/resultados/salvar-exame', requireAdmin, async (req, res) => {
 });
 
 // Salvar Todos os Exames da Requisição (Lote / Ação Completa)
-app.post('/admin/resultados/salvar-requisicao-completa', requireAdmin, async (req, res) => {
+app.post('/admin/resultados/salvar-requisicao-completa', requireAdmin, (req, res) => {
   try {
     const { requisitionId, action, exams } = req.body;
     if (!requisitionId) {
@@ -6899,13 +6849,6 @@ app.post('/admin/resultados/salvar-requisicao-completa', requireAdmin, async (re
     }
 
     saveRequisitions(requisitions);
-
-    // Gerar e salvar pdfbase64 automaticamente no banco de dados
-    try {
-      await generateAndStorePdfForRequisition(targetReq.requisitionCode || targetReq.id);
-    } catch (e) {
-      console.error("Erro ao gerar pdfbase64 ao salvar requisição completa:", e);
-    }
 
     return res.json({
       success: true,

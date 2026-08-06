@@ -1308,11 +1308,7 @@
   // ==========================================
   function openTypingModal(reqId, initialExamCode) {
     const allReqs = window.TRIAGEM_REQUISITIONS || [];
-    const req = allReqs.find(r => 
-      String(r.id || r.requisitionCode || '') === String(reqId || '') || 
-      String(r.id || '') === String(reqId || '') || 
-      String(r.requisitionCode || '') === String(reqId || '')
-    );
+    const req = allReqs.find(r => (r.id || r.requisitionCode) === reqId || r.id === reqId);
     if (!req) return showToast('Requisição não encontrada.', 'error');
 
     selectedReqId = req.id || req.requisitionCode;
@@ -1705,14 +1701,10 @@
   function selectExamInModal(examCode) {
     activeExamCode = examCode;
     const allReqs = window.TRIAGEM_REQUISITIONS || [];
-    const req = allReqs.find(r => 
-      String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
-      String(r.id || '') === String(selectedReqId || '') || 
-      String(r.requisitionCode || '') === String(selectedReqId || '')
-    );
+    const req = allReqs.find(r => (r.id || r.requisitionCode) === selectedReqId || r.id === selectedReqId);
     if (!req) return;
 
-    const ex = (req.exams || []).find(e => String(e.code || e.codigo || '').toLowerCase() === String(examCode || '').toLowerCase());
+    const ex = (req.exams || []).find(e => (e.code || e.codigo) === examCode);
     if (!ex) return;
 
     // Atualizar classe ativa na sidebar esquerda com destaque visual claro
@@ -1774,13 +1766,9 @@
   function onModeloLaudoChange(val) {
     if (!selectedReqId || !activeExamCode) return;
     const allReqs = window.TRIAGEM_REQUISITIONS || [];
-    const req = allReqs.find(r => 
-      String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
-      String(r.id || '') === String(selectedReqId || '') || 
-      String(r.requisitionCode || '') === String(selectedReqId || '')
-    );
+    const req = allReqs.find(r => (r.id || r.requisitionCode) === selectedReqId || r.id === selectedReqId);
     if (req) {
-      const ex = (req.exams || []).find(e => String(e.code || e.codigo || '').toLowerCase() === String(activeExamCode || '').toLowerCase());
+      const ex = (req.exams || []).find(e => (e.code || e.codigo) === activeExamCode);
       if (ex) {
         ex.modeloLaudo = val;
       }
@@ -1842,13 +1830,9 @@
         showToast(data.message || 'Exame salvo com sucesso!', 'success');
 
         // Atualizar estado local em memória
-        const req = (window.TRIAGEM_REQUISITIONS || []).find(r => 
-          String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
-          String(r.id || '') === String(selectedReqId || '') || 
-          String(r.requisitionCode || '') === String(selectedReqId || '')
-        );
+        const req = (window.TRIAGEM_REQUISITIONS || []).find(r => (r.id || r.requisitionCode) === selectedReqId || r.id === selectedReqId);
         if (req && Array.isArray(req.exams)) {
-          const ex = req.exams.find(e => String(e.code || e.codigo || '').toLowerCase() === String(activeExamCode || '').toLowerCase());
+          const ex = req.exams.find(e => (e.code || e.codigo) === activeExamCode);
           if (ex) {
             ex.result = payload.result;
             ex.resultado = payload.result;
@@ -1904,11 +1888,7 @@
       if (data.success) {
         showToast(data.message || 'Requisição atualizada!', 'success');
 
-        const req = (window.TRIAGEM_REQUISITIONS || []).find(r => 
-          String(r.id || r.requisitionCode || '') === String(selectedReqId || '') || 
-          String(r.id || '') === String(selectedReqId || '') || 
-          String(r.requisitionCode || '') === String(selectedReqId || '')
-        );
+        const req = (window.TRIAGEM_REQUISITIONS || []).find(r => (r.id || r.requisitionCode) === selectedReqId || r.id === selectedReqId);
         if (req && Array.isArray(req.exams)) {
           req.exams.forEach(ex => {
             ex.status = action === 'conferir_todos' ? 'Conferido' : 'Liberado';

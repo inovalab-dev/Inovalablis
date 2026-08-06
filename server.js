@@ -5118,7 +5118,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
        .fontSize(7.5).text(hash);
 
     // Rodapé só na última página
-    drawFooter(doc);
+    //drawFooter(doc);
 
     doc.end();
 

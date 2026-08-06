@@ -4802,8 +4802,8 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, mais à direita da página)
   if (sigInfo) {
     const sigWidth = 165;
-    const sigX = pageWidth - 25 - sigWidth; // Alinhado à margem direita
-    const sigY = footerY - 48; // Compactado para economizar espaço no laudo
+    const sigX = pageWidth - 5 - sigWidth; // Alinhado à margem direita
+    const sigY = footerY - 44; // Compactado para economizar espaço no laudo
 
     let imgDrawn = false;
     if (sigInfo.signatureFile) {
@@ -4851,7 +4851,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
     // Linhas de Texto da Assinatura (Nome e Cargo + Conselho na mesma linha)
     const textY = imgDrawn ? (sigY + 23) : (sigY + 10);
-    doc.fillColor('#0f172a').fontSize(7.5).font('Helvetica-Bold')
+    doc.fillColor('#0f172a').fontSize(7.0).font('Helvetica-Bold')
        .text(sigInfo.name || 'Maria Gabriela de Oliveira Amaral', sigX, textY, { width: sigWidth, align: 'center', lineBreak: false });
 
     const titleCouncilStr = [sigInfo.laudoTitle || 'Biomédica', sigInfo.laudoCouncil || 'CRBM-PR: 5929'].filter(Boolean).join(' - ');
@@ -4867,7 +4867,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   // Texto de Aviso Clínico / Valor Preditivo em linha única
   doc.fillColor('#475569').fontSize(6.8).font('Helvetica')
-     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 90, footerY - 12, { width: 305, align: 'left', lineBreak: false });
+     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 120, footerY - 12, { width: 305, align: 'left', lineBreak: false });
 
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');

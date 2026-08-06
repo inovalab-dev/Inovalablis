@@ -5131,7 +5131,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
       if (fs.existsSync(logoPath)) {
         try {
-          docObj.image(logoPath, 40, startY, { width: 140 });
+          docObj.image(logoPath, 40, startY, { width: 180 });
         } catch {
           docObj.fillColor('#8A7142').fontSize(16).font('Courier-Bold').text('INOVA', 40, startY, { continued: true });
           docObj.fillColor('#1E3E17').text('LAB');
@@ -5247,7 +5247,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`);
         doc.moveDown(0.3);
         doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-        doc.moveDown(0.4);
+        doc.moveDown(2.3);
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
@@ -5266,20 +5266,20 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             }
 
             const lineY = doc.y;
-            doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
-            doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 230, lineY, { align: 'left', width: 315 });
+            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
+            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${valStr}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
             doc.y = lineY + 16;
           });
         } else {
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
           const unitStr = String(ex.unidade || ex.unit || '').trim();
           const lineY = doc.y;
-          doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
-          doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 230, lineY, { align: 'left', width: 315 });
+          doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
+          doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${rawRes}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
           doc.y = lineY + 16;
         }
 
-        doc.moveDown(0.4);
+        doc.moveDown(1.3);
 
         // Valores de Referência
         if (refVal) {

@@ -4841,9 +4841,9 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
        .text('Página: ' + pageNum + ' de ' + totalPages, 30, footerY - 12, { lineBreak: false });
   }
 
-  // Texto de Aviso Clínico / Valor Preditivo na mesma linha da numeração de página
-  doc.fillColor('#475569').fontSize(6.5).font('Helvetica')
-     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 105, footerY - 12, { width: 270, align: 'left', lineBreak: false });
+  // Texto de Aviso Clínico / Valor Preditivo em linha única
+  doc.fillColor('#475569').fontSize(6).font('Helvetica')
+     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 98, footerY - 12, { width: 305, align: 'left', lineBreak: false });
 
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');

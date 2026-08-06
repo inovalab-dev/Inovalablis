@@ -4921,8 +4921,8 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   if (fs.existsSync(pncqImgPath) && fs.existsSync(sbacImgPath)) {
     try {
-      doc.image(pncqImgPath, 442, colY + 2, { height: 42 });
-      doc.image(sbacImgPath, 480, colY + 2, { height: 42 });
+      doc.image(pncqImgPath, 440, colY + 2, { height: 39 });
+      doc.image(sbacImgPath, 482, colY + 1.3, { height: 43.6 });
     } catch (err) {
       console.error("Erro ao renderizar pncq.png/sbac.png:", err);
     }

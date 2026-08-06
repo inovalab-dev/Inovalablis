@@ -44,7 +44,7 @@ function saveJsonFile(filePath, content, options) {
     const dataToWrite = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
     fs.writeFileSync(filePath, dataToWrite, options || 'utf-8');
   } catch (e) {
-    console.error(`Erro ao salvar arquivo JSON local (${filePath}):`, e.message);
+    console.error(`Erro ao salvar arquivo JSON-TESTE local (${filePath}):`, e.message);
   }
 }
 

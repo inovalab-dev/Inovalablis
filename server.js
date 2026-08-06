@@ -4775,59 +4775,59 @@ function renderPdfFormattedText(doc, text, options = {}) {
 // =====================================================
 function drawFooter(doc, pageNum, totalPages) {
   const pageWidth = 595.28;
-  const footerY = 715;
-  const footerHeight = 62;
+  const footerY = 745;
+  const footerHeight = 75;
+
+  // Página X de Y (Exibido acima da faixa verde no lado esquerdo, conforme laudo padrão)
+  if (pageNum && totalPages) {
+    doc.fillColor('#334155').fontSize(8).font('Helvetica-Bold')
+       .text('Página: ' + pageNum + ' de ' + totalPages, 30, footerY - 14, { lineBreak: false });
+  }
 
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
 
-  const colY = footerY + 8;
+  const colY = footerY + 10;
 
   // Contato
-  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('CONTATO:', 30, colY);
+  doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('CONTATO:', 30, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('(43) 99618-3406', 30, colY + 13);
-  doc.text('inovalabcambara@gmail.com', 30, colY + 23);
-  doc.text('www.inovalabcambara.com.br', 30, colY + 33);
+  doc.text('(43) 99618-3406', 30, colY + 14, { lineBreak: false });
+  doc.text('inovalabcambara@gmail.com', 30, colY + 25, { lineBreak: false });
+  doc.text('www.inovalabcambara.com.br', 30, colY + 36, { lineBreak: false });
 
   // Divisor 1
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
-     .moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
+     .moveTo(180, footerY + 8).lineTo(180, footerY + footerHeight - 8).stroke();
 
   // Redes Sociais
-  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY);
+  doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('inovalabcambara', 192, colY + 13);
-  doc.text('Inovalab-Cambará', 192, colY + 23);
+  doc.text('inovalabcambara', 192, colY + 14, { lineBreak: false });
+  doc.text('Inovalab-Cambará', 192, colY + 25, { lineBreak: false });
 
   // Divisor 2
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
-     .moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
+     .moveTo(310, footerY + 8).lineTo(310, footerY + footerHeight - 8).stroke();
 
   // Responsável Técnica
-  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY);
+  doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('Monara Natana Idem', 322, colY + 13);
-  doc.text('CRF/PR 28.129', 322, colY + 23);
+  doc.text('Monara Natana Idem', 322, colY + 14, { lineBreak: false });
+  doc.text('CRF/PR 28.129', 322, colY + 25, { lineBreak: false });
 
   // PNCQ Logo ou Selo Acreditação
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
   if (fs.existsSync(pncqLogo)) {
     try {
-      doc.image(pncqLogo, 470, colY + 2, { width: 65 });
+      doc.image(pncqLogo, 470, colY + 4, { width: 65 });
     } catch {
-      doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 475, colY + 14);
+      doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 475, colY + 16, { lineBreak: false });
     }
   } else {
-    doc.rect(470, colY + 2, 85, 36).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
-    doc.fillColor('#FFFFFF').fontSize(7).font('Helvetica-Bold').text('PNCQ | SBAC', 470, colY + 8, { width: 85, align: 'center' });
-    doc.fillColor('#D1FAE5').fontSize(6).font('Helvetica').text('QUALIDADE 2026', 470, colY + 20, { width: 85, align: 'center' });
-  }
-
-  // Número da Página (Página X de Y)
-  if (pageNum && totalPages) {
-    doc.fillColor('#A7F3D0').fontSize(7).font('Helvetica-Bold')
-       .text(`Página ${pageNum} de ${totalPages}`, 0, footerY + footerHeight - 12, { width: pageWidth - 20, align: 'right' });
+    doc.rect(470, colY + 4, 85, 38).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
+    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 470, colY + 10, { width: 85, align: 'center', lineBreak: false });
+    doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 470, colY + 23, { width: 85, align: 'center', lineBreak: false });
   }
 
   // Legenda de Aviso Clínico
@@ -4835,8 +4835,8 @@ function drawFooter(doc, pageNum, totalPages) {
      .text(
        'O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.',
        0,
-       footerY + footerHeight + 5,
-       { width: pageWidth, align: 'center' }
+       825,
+       { width: pageWidth, align: 'center', lineBreak: false }
      );
 }
 
@@ -4998,13 +4998,47 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
     } else {
       exams.forEach((ex) => {
-        if (doc.y > 600) {
-          doc.addPage();
-        }
-
         const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
+        const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+        const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
+        const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
+
+        // Estimar a altura total necessária para renderizar este exame
+        let estimatedExamHeight = 50;
+        if (linhasToRender.length > 0) {
+          estimatedExamHeight += linhasToRender.length * 16;
+        } else {
+          estimatedExamHeight += 16;
+        }
+
+        if (refVal) {
+          const cleanRefLines = refVal.split('');
+          let refLinesCount = 0;
+          cleanRefLines.forEach(l => {
+            refLinesCount += Math.ceil(Math.max(1, l.length) / 75);
+          });
+          estimatedExamHeight += 24 + (refLinesCount * 11) + 16;
+        }
+
+        if (obsVal) {
+          const cleanObsLines = obsVal.split('');
+          let obsLinesCount = 0;
+          cleanObsLines.forEach(l => {
+            obsLinesCount += Math.ceil(Math.max(1, l.length) / 75);
+          });
+          estimatedExamHeight += 20 + (obsLinesCount * 11) + 12;
+        }
+
+        // Se o exame não couber no restante da página atual, move o EXAME INTEIRO para a próxima página!
+        if (doc.y + estimatedExamHeight > 670 && doc.y > 165) {
+          doc.addPage();
+        }
+
+        //const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
+        //const matStr = ex.material || '';
+        //const metStr = ex.metodo || '';
 
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
@@ -5019,7 +5053,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
         doc.moveDown(0.4);
 
-        const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
+        //const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
@@ -5055,9 +5089,8 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.moveDown(0.4);
 
         // Valores de Referência
-        const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
         if (refVal) {
-          if (doc.y > 580) doc.addPage();
+          if (doc.y > 640 && doc.y > 165) doc.addPage();
 
           const boxStartY = doc.y;
           const boxPadding = 8;
@@ -5090,9 +5123,8 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
 
         // Observações
-        const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
-          if (doc.y > 580) doc.addPage();
+          if (doc.y > 640 && doc.y > 165) doc.addPage();
 
           const obsBoxStartY = doc.y;
           const boxPadding = 6;

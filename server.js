@@ -4722,7 +4722,12 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
   }
 });
 
-// Helper para renderizar textos com formatação (tags <b> e quebras \n) no PDFKit
+// =====================================================
+// HELPER PARA TEXTO FORMATADO
+// =====================================================
+// =====================================================
+// HELPER PARA TEXTO FORMATADO
+// =====================================================
 function renderPdfFormattedText(doc, text, options = {}) {
   if (!text) return;
 
@@ -4739,7 +4744,7 @@ function renderPdfFormattedText(doc, text, options = {}) {
 
   lines.forEach((line) => {
     if (!line.trim()) {
-      doc.moveDown(0.4);
+      doc.moveDown(0.5);
       return;
     }
 
@@ -4755,71 +4760,60 @@ function renderPdfFormattedText(doc, text, options = {}) {
          .fontSize(fontSize)
          .fillColor(fillColor);
 
-      const textOpts = {
+      doc.text(content, {
         continued: !isLastToken,
         align: align,
         width: width
-      };
-
-      if (index === 0) {
-        textOpts.x = indent;
-      }
-
-      doc.text(content, textOpts);
+      });
     });
   });
 }
 
-// --- HELPER 2: DESENHO DO RODAPÉ FIXO NO FIM DA FOLHA A4 ---
-function drawFooter(doc, dataColeta, liberadoPor, hash) {
-  const pageHeight = 841.89; 
-  const pageWidth = 595.28;  
-  const footerHeight = 60;
-  
-  // Posicionamento colado na margem inferior
-  const footerY = pageHeight - footerHeight - 25; // Y ~ 756
+// =====================================================
+// FUNÇÃO DO RODAPÉ FIXO (com proteção)
+// =====================================================
+function drawFooter(doc) {
+  const pageWidth = doc.page.width;
+  const footerY = 700;
+  const footerHeight = 62;
 
-  // 1. Chancela e Autenticidade (Linha divisória e metadados)
-  const authY = footerY - 18;
-  doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
+  // Salva e zera a margem inferior temporariamente
+  const oldBottomMargin = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
 
-  const authTextY = authY + 4;
-  doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
-  doc.text(`Coleta: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
-  doc.font('Helvetica').text(`Liberado eletronicamente por: `, 180, authTextY, { continued: true }).font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
-  doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 11, { continued: true }).fontSize(7.5).text(hash);
-
-  // 2. Banner Verde Institucional (#1E3E17)
+  // Fundo verde
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
 
   const colY = footerY + 8;
 
-  // Coluna 1: CONTATO
+  // CONTATO
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('CONTATO:', 30, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('(43) 99618-3406', 30, colY + 12);
-  doc.text('inovalabcambara@gmail.com', 30, colY + 22);
-  doc.text('www.inovalabcambara.com.br', 30, colY + 32);
+  doc.text('(43) 99618-3406', 30, colY + 13);
+  doc.text('inovalabcambara@gmail.com', 30, colY + 23);
+  doc.text('www.inovalabcambara.com.br', 30, colY + 33);
 
-  // Divisor Vertical 1
-  doc.strokeColor('#FFFFFF').lineWidth(0.8).moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
+  // Divisor 1
+  doc.strokeColor('#FFFFFF').lineWidth(0.8)
+     .moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
 
-  // Coluna 2: REDES SOCIAIS
+  // REDES SOCIAIS
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('inovalabcambara', 192, colY + 12);
-  doc.text('Inovalab-Cambarâ', 192, colY + 22);
+  doc.text('inovalabcambara', 192, colY + 13);
+  doc.text('Inovalab-Cambarâ', 192, colY + 23);
 
-  // Divisor Vertical 2
-  doc.strokeColor('#FFFFFF').lineWidth(0.8).moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
+  // Divisor 2
+  doc.strokeColor('#FFFFFF').lineWidth(0.8)
+     .moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
 
-  // Coluna 3: RESPONSÁVEL TÉCNICA
+  // RESPONSÁVEL TÉCNICA
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('Monara Natana Idem', 322, colY + 12);
-  doc.text('CRF/PR 28.129', 322, colY + 22);
+  doc.text('Monara Natana Idem', 322, colY + 13);
+  doc.text('CRF/PR 28.129', 322, colY + 23);
 
-  // Selos / Logos PNCQ e SBAC
+  // Logos
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
   if (fs.existsSync(pncqLogo)) {
     doc.image(pncqLogo, 475, colY + 2, { width: 65 });
@@ -4827,15 +4821,22 @@ function drawFooter(doc, dataColeta, liberadoPor, hash) {
     doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 480, colY + 14);
   }
 
-  // 3. Texto de Aviso Clínico
+  // Texto de isenção
   doc.fillColor('#334155').fontSize(7).font('Helvetica')
-     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 0, footerY + footerHeight + 4, {
-       width: pageWidth,
-       align: 'center'
-     });
+     .text(
+       'O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.',
+       0,
+       footerY + footerHeight + 5,
+       { width: pageWidth, align: 'center' }
+     );
+
+  // Restaura a margem
+  doc.page.margins.bottom = oldBottomMargin;
 }
 
-// --- ROTA DA API ---
+// =====================================================
+// ENDPOINT COMPLETO
+// =====================================================
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
     const reqCode = req.query?.requisicao || req.query?.codigoRequisicao || req.query?.codigo || req.query?.id ||
@@ -4912,16 +4913,32 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
     const hash = getOrCreateHashForPatient(reqCode, patientName);
 
-    // Ajustado bottom para 85 (máximo aproveitamento de área antes do rodapé)
-    const doc = new PDFDocument({ 
+    // =================================================
+    // CRIAÇÃO DO DOCUMENTO
+    // =================================================
+    const doc = new PDFDocument({
       size: 'A4',
-      bufferPages: true,
-      margin: 40,
-      margins: { top: 35, bottom: 85, left: 40, right: 40 }
+      margins: { top: 40, bottom: 120, left: 40, right: 40 }
     });
-    const chunks = [];
 
+    const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
+
+    // ===== PROTEÇÃO CONTRA RECURSÃO =====
+    let isDrawingFooter = false;
+
+    // Desenha na primeira página
+    isDrawingFooter = true;
+    drawFooter(doc);
+    isDrawingFooter = false;
+
+    // Desenha em todas as páginas seguintes
+    doc.on('pageAdded', () => {
+      if (isDrawingFooter) return;
+      isDrawingFooter = true;
+      drawFooter(doc);
+      isDrawingFooter = false;
+    });
 
     doc.on('end', () => {
       const pdfBuffer = Buffer.concat(chunks);
@@ -4943,9 +4960,12 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       return res.send(pdfBuffer);
     });
 
-    // --- CABEÇALHO DO LAUDO ---
+    // =================================================
+    // MONTAGEM DO CONTEÚDO
+    // =================================================
     const startY = 35;
-    
+
+    // Logo
     const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, startY, { width: 140 });
@@ -4955,6 +4975,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       doc.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
     }
 
+    // Dados da instituição
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
     doc.text('Rua Tiradentes,999 - Centro Cambará-PR', 300, startY + 12, { align: 'right' });
@@ -4962,7 +4983,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });
 
-    // QUADRO DE DADOS DO PACIENTE
+    // Quadro do paciente
     const boxY = startY + 58;
     doc.rect(40, boxY, 515, 55).fillAndStroke('#ffffff', '#0f172a');
     doc.lineWidth(1.2);
@@ -4974,22 +4995,21 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.text(`Procedência...: ${procedencia}`, 48, boxY + 44, { continued: true });
 
     doc.fillColor('#0f172a').fontSize(8.5).font('Courier');
-    doc.fontSize(10).font('Courier-Bold').text('Requisição..:'+ String(reqCode), 40, boxY + 8, { align: 'right' });
+    doc.fontSize(10).font('Courier-Bold').text('Requisição..:' + String(reqCode), 40, boxY + 8, { align: 'right' });
     doc.font('Courier').text(`Idade......: ${patientAge}`, 40, boxY + 20, { align: 'right' });
     doc.text(`Data Requis.: ${dataColeta}`, 100, boxY + 32, { align: 'right' });
     doc.text(`Data Emissão: ${dataEmissao}`, 30, boxY + 44, { align: 'right' });
 
     doc.y = boxY + 65;
 
-    // CORPO DOS EXAMES
+    // Corpo dos exames
     const exams = formattedReq.exams || formattedReq.listaExames || [];
 
     if (exams.length === 0) {
       doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
     } else {
       exams.forEach((ex) => {
-        // Limite de quebra ajustado para 680 (aproveita melhor o final da página)
-        if (doc.y > 680) {
+        if (doc.y > 610) {
           doc.addPage();
         }
 
@@ -4997,29 +5017,32 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
 
+        // Banner do exame
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
         doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
-        doc.y = bannerY + 28;
+        doc.y = bannerY + 30;
 
+        // Material e Método
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
-        doc.moveDown(0.2);
-        doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
         doc.moveDown(0.3);
+        doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+        doc.moveDown(0.4);
 
-        // Bloco de Resultados
+        // Resultados
         const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
-            if (doc.y > 680) doc.addPage();
+            if (doc.y > 620) doc.addPage();
+
             const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
             const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
-            let paramDisplay = isGenericParam 
-              ? 'Resultado...:' 
+            let paramDisplay = isGenericParam
+              ? 'Resultado...:'
               : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
 
             let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
@@ -5028,38 +5051,37 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
               unitStr = '';
             }
 
-            const lineY = doc.y + 6;
-            doc.fillColor('#0f172a').fontSize(14).font('Courier-Bold').text(paramDisplay, 45, lineY);
+            const lineY = doc.y + 10;
+            doc.fillColor('#0f172a').fontSize(16).font('Courier-Bold').text(paramDisplay, 45, lineY);
             doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-            doc.y = lineY + 20;
+            doc.y = lineY + 24;
           });
         } else {
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
           const unitStr = String(ex.unidade || ex.unit || '').trim();
-          const lineY = doc.y + 4;
+          const lineY = doc.y;
           doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY);
           doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-          doc.y = lineY + 16;
+          doc.y = lineY + 18;
         }
 
-        doc.moveDown(0.3);
+        doc.moveDown(0.4);
 
-        // Bloco de Valores de Referência
+        // Valores de Referência
         const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
         if (refVal) {
-          if (doc.y > 670) doc.addPage();
+          if (doc.y > 590) doc.addPage();
 
           const boxStartY = doc.y;
-          const boxPadding = 8;
+          const boxPadding = 10;
           const boxX = 40;
           const boxWidth = 515;
 
           doc.y = boxStartY + boxPadding;
-
           doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
-          doc.moveDown(0.3);
+          doc.moveDown(0.4);
           doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
-          doc.moveDown(0.6);
+          doc.moveDown(1.0);
 
           renderPdfFormattedText(doc, refVal, {
             indent: boxX + boxPadding,
@@ -5077,13 +5099,13 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
              .strokeColor('#cbd5e1')
              .stroke();
 
-          doc.y = boxEndY + 6;
+          doc.y = boxEndY + 8;
         }
 
-        // Bloco de Observações
+        // Observações
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
-          if (doc.y > 670) doc.addPage();
+          if (doc.y > 590) doc.addPage();
 
           const obsBoxStartY = doc.y;
           const boxPadding = 6;
@@ -5091,7 +5113,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           const boxWidth = 515;
 
           doc.y = obsBoxStartY + boxPadding;
-          doc.moveDown(0.2);
+          doc.moveDown(0.3);
 
           renderPdfFormattedText(doc, obsVal, {
             indent: boxX + boxPadding,
@@ -5109,19 +5131,28 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
              .strokeColor('#cbd5e1')
              .stroke();
 
-          doc.y = obsBoxEndY + 6;
+          doc.y = obsBoxEndY + 10;
         }
 
-        doc.moveDown(0.4);
+        doc.moveDown(0.6);
       });
     }
 
-    // --- DESENHA O RODAPÉ EM TODAS AS PÁGINAS ---
-    const range = doc.bufferedPageRange();
-    for (let i = range.start; i < range.start + range.count; i++) {
-      doc.switchToPage(i);
-      drawFooter(doc, dataColeta, liberadoPor, hash);
+    // Chancela eletrônica (última página)
+    if (doc.y > 610) {
+      doc.addPage();
     }
+
+    const authY = Math.min(doc.y + 10, 640);
+    doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
+
+    const authTextY = authY + 6;
+    doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
+    doc.text(`Coleta: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
+    doc.font('Helvetica').text(`Liberado eletronicamente por: `, 180, authTextY, { continued: true })
+       .font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
+    doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
+       .fontSize(7.5).text(hash);
 
     doc.end();
 
@@ -5663,7 +5694,7 @@ app.post('/admin/orcamentos/add', requireAdmin, (req, res) => {
       });
     }
 
-    const cleanPatientName = (patientName || 'Cliente Balcão').trim();
+    const cleanPatientName = (patientNameStr || 'Cliente Balcão').trim();
     
     if (selectedExams.length === 0) {
       return res.status(400).send("Selecione pelo menos um exame para o orçamento");

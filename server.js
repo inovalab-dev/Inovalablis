@@ -4918,14 +4918,24 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
   if (fs.existsSync(pncqLogo)) {
     try {
-      doc.image(pncqLogo, 470, colY + 4, { width: 65 });
+      doc.image(pncqLogo, 435, colY + 4, { width: 65 });
     } catch {
-      doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 475, colY + 16, { lineBreak: false });
+      doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 440, colY + 16, { lineBreak: false });
     }
   } else {
-    doc.rect(470, colY + 4, 85, 38).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
-    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 470, colY + 10, { width: 85, align: 'center', lineBreak: false });
-    doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 470, colY + 23, { width: 85, align: 'center', lineBreak: false });
+    doc.rect(435, colY + 4, 75, 38).lineWidth(1).strokeColor('#A2884E').fill('#2A5222');
+    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 435, colY + 10, { width: 75, align: 'center', lineBreak: false });
+    doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 435, colY + 23, { width: 75, align: 'center', lineBreak: false });
+  }
+
+  // Símbolo do Laboratório / Banner DNA
+  const bannerLabPath = path.join(process.cwd(), 'public', 'banner-laboratorio.png');
+  if (fs.existsSync(bannerLabPath)) {
+    try {
+      doc.image(bannerLabPath, pageWidth - 72, footerY - 14, { height: 86 });
+    } catch (e) {
+      console.error("Erro ao carregar banner-laboratorio.png no rodapé:", e);
+    }
   }
 
   doc.page.margins.bottom = origBottom;

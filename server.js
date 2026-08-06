@@ -4726,7 +4726,7 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
 // HELPER
 // =====================================================
 // =====================================================
-// HELPER
+// HELPER PARA TEXTO FORMATADO
 // =====================================================
 function renderPdfFormattedText(doc, text, options = {}) {
   if (!text) return;
@@ -4770,7 +4770,7 @@ function renderPdfFormattedText(doc, text, options = {}) {
 }
 
 // =====================================================
-// RODAPÉ (só na última página – estável)
+// FUNÇÃO DO RODAPÉ (última página)
 // =====================================================
 function drawFooter(doc) {
   const pageWidth = 595.28;
@@ -4781,28 +4781,34 @@ function drawFooter(doc) {
 
   const colY = footerY + 8;
 
+  // CONTATO
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('CONTATO:', 30, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('(43) 99618-3406', 30, colY + 13);
   doc.text('inovalabcambara@gmail.com', 30, colY + 23);
   doc.text('www.inovalabcambara.com.br', 30, colY + 33);
 
+  // Divisor 1
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
      .moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
 
+  // REDES SOCIAIS
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('inovalabcambara', 192, colY + 13);
   doc.text('Inovalab-Cambarâ', 192, colY + 23);
 
+  // Divisor 2
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
      .moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
 
+  // RESPONSÁVEL TÉCNICA
   doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY);
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
   doc.text('Monara Natana Idem', 322, colY + 13);
   doc.text('CRF/PR 28.129', 322, colY + 23);
 
+  // Logos
   const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
   if (fs.existsSync(pncqLogo)) {
     doc.image(pncqLogo, 475, colY + 2, { width: 65 });
@@ -4810,6 +4816,7 @@ function drawFooter(doc) {
     doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 480, colY + 14);
   }
 
+  // Texto de isenção
   doc.fillColor('#334155').fontSize(7).font('Helvetica')
      .text(
        'O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.',
@@ -4820,7 +4827,7 @@ function drawFooter(doc) {
 }
 
 // =====================================================
-// ENDPOINT COMPLETO (versão estável)
+// ENDPOINT COMPLETO
 // =====================================================
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -4898,6 +4905,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
     const hash = getOrCreateHashForPatient(reqCode, patientName);
 
+    // =================================================
+    // CRIAÇÃO DO DOCUMENTO
+    // =================================================
     const doc = new PDFDocument({
       size: 'A4',
       margins: { top: 40, bottom: 110, left: 40, right: 40 }
@@ -4927,7 +4937,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     });
 
     // =================================================
-    // CONTEÚDO
+    // MONTAGEM DO CONTEÚDO
     // =================================================
     const startY = 35;
 
@@ -4968,14 +4978,15 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
     doc.y = boxY + 65;
 
-    // Exames
+    // Corpo dos exames
     const exams = formattedReq.exams || formattedReq.listaExames || [];
 
     if (exams.length === 0) {
       doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
     } else {
       exams.forEach((ex) => {
-        if (doc.y > 620) {
+        // Quebra de página segura
+        if (doc.y > 600) {
           doc.addPage();
         }
 
@@ -4983,11 +4994,13 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
 
+        // Banner do exame
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
         doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
         doc.y = bannerY + 30;
 
+        // Material e Método
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
@@ -4996,11 +5009,12 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
         doc.moveDown(0.4);
 
+        // Resultados
         const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
-            if (doc.y > 640) doc.addPage();
+            if (doc.y > 630) doc.addPage();
 
             const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
             const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
@@ -5020,6 +5034,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             doc.y = lineY + 24;
           });
         } else {
+          if (doc.y > 630) doc.addPage();
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
           const unitStr = String(ex.unidade || ex.unit || '').trim();
           const lineY = doc.y;
@@ -5033,7 +5048,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         // Valores de Referência
         const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
         if (refVal) {
-          if (doc.y > 580) doc.addPage();
+          if (doc.y > 520) doc.addPage();
 
           const boxStartY = doc.y;
           const boxPadding = 10;
@@ -5068,7 +5083,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         // Observações
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
-          if (doc.y > 580) doc.addPage();
+          if (doc.y > 520) doc.addPage();
 
           const obsBoxStartY = doc.y;
           const boxPadding = 6;
@@ -5101,8 +5116,8 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       });
     }
 
-    // Chancela
-    if (doc.y > 620) {
+    // Chancela eletrônica
+    if (doc.y > 600) {
       doc.addPage();
     }
 
@@ -5117,8 +5132,8 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
        .fontSize(7.5).text(hash);
 
-    // Rodapé só na última página
-    //drawFooter(doc);
+    // Rodapé na última página
+    drawFooter(doc);
 
     doc.end();
 

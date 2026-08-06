@@ -5165,7 +5165,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
       // Quadro do paciente
       const boxY = startY + 52;
-      docObj.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f172a');
+      docObj.rect(40, boxY, 515, 58).fillAndStroke('#ffffff', '#0f2a16');
       docObj.lineWidth(1.2);
 
       docObj.fillColor('#0f172a').fontSize(9).font('Courier');
@@ -5250,7 +5250,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         }
 
         const bannerY = doc.y;
-        doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
+        doc.rect(40, bannerY, 515, 20).fillAndStroke('#DCDCDC', '#DCDCDC');
         doc.fillColor('#0f172a').fontSize(10).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
         doc.y = bannerY + 26;
 

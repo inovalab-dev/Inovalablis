@@ -4725,6 +4725,9 @@ app.all(['/api/paciente/consultar', '/api/paciente/consulta', '/api/paciente/bus
 // =====================================================
 // HELPER
 // =====================================================
+// =====================================================
+// HELPER
+// =====================================================
 function renderPdfFormattedText(doc, text, options = {}) {
   if (!text) return;
 
@@ -4767,7 +4770,7 @@ function renderPdfFormattedText(doc, text, options = {}) {
 }
 
 // =====================================================
-// RODAPÉ (versão simples – só na última página por enquanto)
+// RODAPÉ (só na última página – estável)
 // =====================================================
 function drawFooter(doc) {
   const pageWidth = 595.28;
@@ -4817,7 +4820,7 @@ function drawFooter(doc) {
 }
 
 // =====================================================
-// ENDPOINT
+// ENDPOINT COMPLETO (versão estável)
 // =====================================================
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
@@ -4895,12 +4898,8 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
     const hash = getOrCreateHashForPatient(reqCode, patientName);
 
-    // =================================================
-    // DOCUMENTO
-    // =================================================
     const doc = new PDFDocument({
       size: 'A4',
-      bufferPages: true,                    // ← OBRIGATÓRIO
       margins: { top: 40, bottom: 110, left: 40, right: 40 }
     });
 
@@ -5118,7 +5117,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 12, { continued: true })
        .fontSize(7.5).text(hash);
 
-    // Rodapé apenas na última página (estável)
+    // Rodapé só na última página
     drawFooter(doc);
 
     doc.end();

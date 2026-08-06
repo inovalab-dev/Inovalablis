@@ -4928,11 +4928,14 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
     doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 435, colY + 23, { width: 75, align: 'center', lineBreak: false });
   }
 
-  // Símbolo do Laboratório / Banner DNA
+  // Símbolo do Laboratório / Banner DNA (Restrito estritamente dentro da faixa verde)
   const bannerLabPath = path.join(process.cwd(), 'public', 'banner-laboratorio.png');
   if (fs.existsSync(bannerLabPath)) {
     try {
-      doc.image(bannerLabPath, pageWidth - 72, footerY - 14, { height: 86 });
+      doc.save();
+      doc.rect(0, footerY, pageWidth, footerHeight).clip();
+      doc.image(bannerLabPath, pageWidth - 72, footerY, { height: footerHeight, fit: [72, footerHeight] });
+      doc.restore();
     } catch (e) {
       console.error("Erro ao carregar banner-laboratorio.png no rodapé:", e);
     }

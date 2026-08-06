@@ -4990,26 +4990,26 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.moveDown(0.4);
 
         // 2. Bloco de Valores de Referência
-        const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
-        if (refVal) {
-          if (doc.y > 640) doc.addPage(); // Quebra de página preventiva ajustada para o quadro
+        const rawRefVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
+        const refVal = formatReferenceText(rawRefVal);
 
-          // 1. Posição Y onde o quadro vai começar
-          const boxStartY = doc.y;
-          const boxPadding = 10;
+        if (refVal) {
+          if (doc.y > 640) doc.addPage();
+
+          const refBoxStartY = doc.y;
+          const boxPadding = 6;
           const boxX = 40;
           const boxWidth = 515;
 
-          // Pula o padding inicial interno do quadro para o texto não colar na borda superior
-          doc.y = boxStartY + boxPadding;
+          doc.y = refBoxStartY + boxPadding;
 
-          // Desenha o título e a linha divisória interna
+          // Título do quadro
           doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
           doc.moveDown(0.2);
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
           doc.moveDown(0.3);
 
-          // Renderiza o texto formatado (com suporte a <b>, \n e alinhamento)
+          // Renderiza o texto já sanitizado e com quebras corretas
           renderPdfFormattedText(doc, refVal, {
             indent: boxX + boxPadding,
             width: boxWidth - (boxPadding * 2),
@@ -5018,18 +5018,16 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             fontSize: 8.5
           });
 
-          // 2. Posição Y onde o texto terminou
-          const boxEndY = doc.y + boxPadding;
-          const boxHeight = boxEndY - boxStartY;
+          const refBoxEndY = doc.y + boxPadding;
+          const refBoxHeight = refBoxEndY - refBoxStartY;
 
-          // 3. Desenha o Retângulo Dinâmico em volta de todo o bloco
-          doc.rect(boxX, boxStartY, boxWidth, boxHeight)
-             .lineWidth(0.8)
-             .strokeColor('#cbd5e1') // Cor da borda
-             .stroke();
+          // Desenha a moldura
+          doc.rect(boxX, refBoxStartY, boxWidth, refBoxHeight)
+            .lineWidth(0.8)
+            .strokeColor('#cbd5e1')
+            .stroke();
 
-          // Atualiza a posição do cursor Y para o próximo bloco do PDF
-          doc.y = boxEndY + 8;
+          doc.y = refBoxEndY + 10;
         }
 
         // 3. Bloco de Observações
@@ -5488,6 +5486,19 @@ app.post('/admin/exames/edit', requireAdmin, (req, res) => {
   res.redirect('/admin/exames');
 });
 
+function formatReferenceText(rawText) {
+  if (!rawText) return '';
+
+  return String(rawText)
+    // Converte literais '\n' para quebras reais
+    .replace(/\\n/g, '\n')
+    // Adiciona quebra de linha caso "Crianças e adolescentes" esteja colado no texto seguinte
+    .replace(/(Crianças e adolescentes)\s*(\d)/gi, '$1\n$2')
+    // Adiciona quebra de linha caso "Referência bibliográfica:" esteja colada no texto seguinte
+    .replace(/(Referência bibliográfica:)\s*([^\n])/gi, '$1\n$2')
+    // Garante que "Referência bibliográfica:" tenha uma linha em branco antes dela se estiver colada no bloco anterior
+    .replace(/([^\n])\n*(Referência bibliográfica:)/gi, '$1\n\n$2');
+}
 
 function parsePriceValue(val) {
   if (val === undefined || val === null) return 0;

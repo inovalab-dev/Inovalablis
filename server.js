@@ -4851,12 +4851,44 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
   const colY = footerY + 10;
 
+  // Função auxiliar para desenhar ícones em crachá circular bronze/dourado no rodapé
+  const drawFooterIcon = (iconType, cx, cy) => {
+    doc.save();
+    doc.circle(cx, cy, 4).fill('#987F47');
+
+    if (iconType === 'phone') {
+      doc.path(`M ${cx - 1.5} ${cy - 2.1} C ${cx - 2.0} ${cy - 2.1} ${cx - 2.3} ${cy - 1.6} ${cx - 2.0} ${cy - 1.1} L ${cx - 1.3} ${cy - 0.2} C ${cx - 1.1} ${cy + 0.1} ${cx - 0.7} ${cy + 0.1} ${cx - 0.5} ${cy - 0.1} L ${cx - 0.1} ${cy - 0.5} C ${cx + 0.5} ${cy - 0.1} ${cx + 0.9} ${cy + 0.3} ${cx + 1.2} ${cy + 0.8} L ${cx + 0.7} ${cy + 1.2} C ${cx + 0.5} ${cy + 1.4} ${cx + 0.5} ${cy + 1.8} ${cx + 0.8} ${cy + 2.0} L ${cx + 1.7} ${cy + 2.6} C ${cx + 2.2} ${cy + 2.9} ${cx + 2.7} ${cy + 2.7} ${cx + 2.7} ${cy + 2.2} C ${cx + 2.6} ${cy + 0.8} ${cx + 1.6} ${cy - 0.8} ${cx + 0.3} ${cy - 1.9} C ${cx - 0.6} ${cy - 2.5} ${cx - 1.0} ${cy - 2.1} ${cx - 1.5} ${cy - 2.1} Z`).fill('#FFFFFF');
+    } else if (iconType === 'email') {
+      doc.rect(cx - 2.2, cy - 1.6, 4.4, 3.2).lineWidth(0.5).strokeColor('#FFFFFF').stroke();
+      doc.moveTo(cx - 2.2, cy - 1.6).lineTo(cx, cy + 0.2).lineTo(cx + 2.2, cy - 1.6).lineWidth(0.5).strokeColor('#FFFFFF').stroke();
+    } else if (iconType === 'web') {
+      doc.circle(cx, cy, 2.2).lineWidth(0.5).strokeColor('#FFFFFF').stroke();
+      doc.moveTo(cx - 2.2, cy).lineTo(cx + 2.2, cy).lineWidth(0.4).strokeColor('#FFFFFF').stroke();
+      doc.moveTo(cx, cy - 2.2).lineTo(cx, cy + 2.2).lineWidth(0.4).strokeColor('#FFFFFF').stroke();
+      doc.ellipse(cx, cy, 1.0, 2.2).lineWidth(0.4).strokeColor('#FFFFFF').stroke();
+    } else if (iconType === 'instagram') {
+      doc.roundedRect(cx - 2.1, cy - 2.1, 4.2, 4.2, 1.1).lineWidth(0.5).strokeColor('#FFFFFF').stroke();
+      doc.circle(cx, cy, 1.0).lineWidth(0.4).strokeColor('#FFFFFF').stroke();
+      doc.circle(cx + 1.2, cy - 1.2, 0.3).fill('#FFFFFF');
+    } else if (iconType === 'facebook') {
+      doc.fillColor('#FFFFFF').fontSize(5.5).font('Helvetica-Bold')
+         .text('f', cx - 1.4, cy - 3.2, { width: 3, align: 'center', lineBreak: false });
+    }
+    doc.restore();
+  };
+
   // Contato
   doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('CONTATO:', 30, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('(43) 99618-3406', 30, colY + 14, { lineBreak: false });
-  doc.text('inovalabcambara@gmail.com', 30, colY + 25, { lineBreak: false });
-  doc.text('www.inovalabcambara.com.br', 30, colY + 36, { lineBreak: false });
+
+  drawFooterIcon('phone', 35, colY + 17.5);
+  doc.text('(43) 99618-3406', 42, colY + 14, { lineBreak: false });
+
+  drawFooterIcon('email', 35, colY + 28.5);
+  doc.text('inovalabcambara@gmail.com', 42, colY + 25, { lineBreak: false });
+
+  drawFooterIcon('web', 35, colY + 39.5);
+  doc.text('www.inovalabcambara.com.br', 42, colY + 36, { lineBreak: false });
 
   // Divisor 1
   doc.strokeColor('#FFFFFF').lineWidth(0.8)
@@ -4865,8 +4897,12 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   // Redes Sociais
   doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY, { lineBreak: false });
   doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
-  doc.text('inovalabcambara', 192, colY + 14, { lineBreak: false });
-  doc.text('Inovalab-Cambará', 192, colY + 25, { lineBreak: false });
+
+  drawFooterIcon('instagram', 197, colY + 17.5);
+  doc.text('inovalabcambara', 204, colY + 14, { lineBreak: false });
+
+  drawFooterIcon('facebook', 197, colY + 28.5);
+  doc.text('Inovalab-Cambará', 204, colY + 25, { lineBreak: false });
 
   // Divisor 2
   doc.strokeColor('#FFFFFF').lineWidth(0.8)

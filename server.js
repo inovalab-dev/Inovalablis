@@ -4947,9 +4947,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         doc.y = bannerY + 30;
 
         // Cabeçalho técnico (Material e Método)
-        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material:`, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
-        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método:`, 45, doc.y, { continued: true });
+        doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
         doc.moveDown(0.3);
         doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();

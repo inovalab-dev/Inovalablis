@@ -4780,8 +4780,9 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   doc.page.margins.top = 0;
 
   const pageWidth = 595.28;
+  const pageHeight = doc.page.height || 841.89;
   const footerY = 745;
-  const footerHeight = 75;
+  const footerHeight = pageHeight - footerY + 5; // Estende o fundo verde até o fim da página, eliminando a faixa branca
 
   // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, mais à direita da página)
   if (sigInfo) {

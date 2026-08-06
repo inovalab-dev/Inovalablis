@@ -4734,24 +4734,16 @@ function renderPdfFormattedText(doc, text, options = {}) {
     align = 'left'
   } = options;
 
-  // 1. Normaliza quebras de linha literais (\n) e remove \r
   const cleanText = String(text).replace(/\\n/g, '\n').replace(/\r/g, '');
-
-  // 2. Divide em linhas reais
   const lines = cleanText.split('\n');
 
   lines.forEach((line) => {
-    // Se for uma linha vazia, pula o espaço vertical de um parágrafo
     if (!line.trim()) {
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
       return;
     }
 
-    // 3. Regex para encontrar todas as tags <b>...</b> ou texto normal
-    // Ex: "<b>Texto</b> Resto" -> ["<b>Texto</b>", " Resto"]
     const tokens = line.match(/(<b>.*?<\/b>|[^<]+|<[^>]+>)/g) || [line];
-    
-    // Remove tags HTML desconhecidas que não sejam <b>
     const validTokens = tokens.filter(t => t.trim() !== '');
 
     validTokens.forEach((token, index) => {
@@ -4759,24 +4751,91 @@ function renderPdfFormattedText(doc, text, options = {}) {
       const isBold = token.startsWith('<b>') && token.endsWith('</b>');
       const content = isBold ? token.replace(/<\/?b>/g, '') : token;
 
-      // Configura a fonte antes de desenhar
       doc.font(isBold ? 'Courier-Bold' : 'Courier')
          .fontSize(fontSize)
          .fillColor(fillColor);
 
-      // O SEGREDO DO PDFKIT:
-      // Passamos 'continued: !isLastToken' para manter na mesma linha.
-      // Se for o último token da linha (isLastToken === true), 'continued' vira false
-      // e o PDFKit aplica a quebra de linha perfeita para a próxima instrução!
-      doc.text(content, {
+      const textOpts = {
         continued: !isLastToken,
         align: align,
         width: width
-      });
+      };
+
+      if (index === 0) {
+        textOpts.x = indent;
+      }
+
+      doc.text(content, textOpts);
     });
   });
 }
-// 5. ENDPOINT PARA EMISSÃO / DOWNLOAD DO LAUDO EM PDF (/laudo/pdf)
+
+// --- HELPER 2: DESENHO DO RODAPÉ FIXO NO FIM DA FOLHA A4 ---
+function drawFooter(doc, dataColeta, liberadoPor, hash) {
+  const pageHeight = 841.89; 
+  const pageWidth = 595.28;  
+  const footerHeight = 60;
+  
+  // Posicionamento colado na margem inferior
+  const footerY = pageHeight - footerHeight - 25; // Y ~ 756
+
+  // 1. Chancela e Autenticidade (Linha divisória e metadados)
+  const authY = footerY - 18;
+  doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(40, authY).lineTo(555, authY).stroke();
+
+  const authTextY = authY + 4;
+  doc.fillColor('#334155').fontSize(8.5).font('Helvetica');
+  doc.text(`Coleta: `, 40, authTextY, { continued: true }).font('Helvetica-Bold').text(dataColeta);
+  doc.font('Helvetica').text(`Liberado eletronicamente por: `, 180, authTextY, { continued: true }).font('Helvetica-Bold').fillColor('#065f46').text(liberadoPor);
+  doc.font('Helvetica').fillColor('#334155').text(`Cód. Autenticidade: `, 40, authTextY + 11, { continued: true }).fontSize(7.5).text(hash);
+
+  // 2. Banner Verde Institucional (#1E3E17)
+  doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
+
+  const colY = footerY + 8;
+
+  // Coluna 1: CONTATO
+  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('CONTATO:', 30, colY);
+  doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
+  doc.text('(43) 99618-3406', 30, colY + 12);
+  doc.text('inovalabcambara@gmail.com', 30, colY + 22);
+  doc.text('www.inovalabcambara.com.br', 30, colY + 32);
+
+  // Divisor Vertical 1
+  doc.strokeColor('#FFFFFF').lineWidth(0.8).moveTo(180, footerY + 6).lineTo(180, footerY + footerHeight - 6).stroke();
+
+  // Coluna 2: REDES SOCIAIS
+  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('REDES SOCIAIS:', 192, colY);
+  doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
+  doc.text('inovalabcambara', 192, colY + 12);
+  doc.text('Inovalab-Cambarâ', 192, colY + 22);
+
+  // Divisor Vertical 2
+  doc.strokeColor('#FFFFFF').lineWidth(0.8).moveTo(310, footerY + 6).lineTo(310, footerY + footerHeight - 6).stroke();
+
+  // Coluna 3: RESPONSÁVEL TÉCNICA
+  doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold').text('RESPONSÁVEL TÉCNICA:', 322, colY);
+  doc.fillColor('#E2E8F0').fontSize(7.5).font('Helvetica');
+  doc.text('Monara Natana Idem', 322, colY + 12);
+  doc.text('CRF/PR 28.129', 322, colY + 22);
+
+  // Selos / Logos PNCQ e SBAC
+  const pncqLogo = path.join(process.cwd(), 'public', 'pncq-sbac-logo.png');
+  if (fs.existsSync(pncqLogo)) {
+    doc.image(pncqLogo, 475, colY + 2, { width: 65 });
+  } else {
+    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 480, colY + 14);
+  }
+
+  // 3. Texto de Aviso Clínico
+  doc.fillColor('#334155').fontSize(7).font('Helvetica')
+     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 0, footerY + footerHeight + 4, {
+       width: pageWidth,
+       align: 'center'
+     });
+}
+
+// --- ROTA DA API ---
 app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'], async (req, res) => {
   try {
     const reqCode = req.query?.requisicao || req.query?.codigoRequisicao || req.query?.codigo || req.query?.id ||
@@ -4822,11 +4881,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       });
     }
 
-    // Formatar requisição e exames com metadados do catálogo
     const formattedReqs = formatRequisitionExams([reqFound]);
     const formattedReq = formattedReqs[0] || {};
 
-    // Resolver dados completos do paciente
     const allPatients = loadPatients();
     let patientName = reqFound.patientName || reqFound.nomePaciente || reqFound.paciente || '';
     let patientCode = reqFound.patientCode || reqFound.idPaciente || reqFound.patientId || '';
@@ -4855,8 +4912,13 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     const liberadoPor = reqFound.liberadoPor || reqFound.conferidoPor || 'Dr. Alysson Silva (Resp. Técnico)';
     const hash = getOrCreateHashForPatient(reqCode, patientName);
 
-    // Gerar documento PDF com pdfkit
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    // Ajustado bottom para 85 (máximo aproveitamento de área antes do rodapé)
+    const doc = new PDFDocument({ 
+      size: 'A4',
+      bufferPages: true,
+      margin: 40,
+      margins: { top: 35, bottom: 85, left: 40, right: 40 }
+    });
     const chunks = [];
 
     doc.on('data', chunk => chunks.push(chunk));
@@ -4881,10 +4943,9 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       return res.send(pdfBuffer);
     });
 
-    // --- MONTAGEM DO LAUDO EM PDF ---
+    // --- CABEÇALHO DO LAUDO ---
     const startY = 35;
     
-    // Logo Oficial InovaLab
     const logoPath = path.join(process.cwd(), 'public', 'logo-inovalab.png');
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, startY, { width: 140 });
@@ -4894,7 +4955,6 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
       doc.fillColor('#A2884E').fontSize(7.5).font('Courier-Bold').text('CUIDANDO DA SUA SAÚDE', 40, startY + 18);
     }
 
-    // Dados da Instituição
     doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('LABORATÓRIO INOVALAB', 300, startY, { align: 'right' });
     doc.fillColor('#334155').fontSize(8.5).font('Courier');
     doc.text('Rua Tiradentes,999 - Centro Cambará-PR', 300, startY + 12, { align: 'right' });
@@ -4902,7 +4962,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     doc.text('(43) 99618-3406', 300, startY + 34, { align: 'right' });
     doc.text('CNES: 4832884', 300, startY + 45, { align: 'right' });
 
-    // 2. QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO
+    // QUADRO DE DADOS DO PACIENTE
     const boxY = startY + 58;
     doc.rect(40, boxY, 515, 55).fillAndStroke('#ffffff', '#0f172a');
     doc.lineWidth(1.2);
@@ -4921,13 +4981,14 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
 
     doc.y = boxY + 65;
 
-    // 3. CORPO DOS EXAMES
+    // CORPO DOS EXAMES
     const exams = formattedReq.exams || formattedReq.listaExames || [];
 
     if (exams.length === 0) {
       doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
     } else {
-      exams.forEach((ex, idx) => {
+      exams.forEach((ex) => {
+        // Limite de quebra ajustado para 680 (aproveita melhor o final da página)
         if (doc.y > 680) {
           doc.addPage();
         }
@@ -4936,27 +4997,25 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
 
-        // Banner do Exame
         const bannerY = doc.y;
         doc.rect(40, bannerY, 515, 20).fillAndStroke('#e2e8f0', '#94a3b8');
         doc.fillColor('#0f172a').fontSize(10.5).font('Courier-Bold').text(examTitle, 45, bannerY + 5, { width: 505, align: 'center' });
-        doc.y = bannerY + 30;
+        doc.y = bannerY + 28;
 
-        // Cabeçalho técnico (Material e Método)
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`Material: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${matStr} `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier-Bold').text(`   Método: `, 45, doc.y, { continued: true });
         doc.fillColor('#334155').fontSize(8.5).font('Courier').text(`${metStr}`, 45, doc.y);
-        doc.moveDown(0.3);
+        doc.moveDown(0.2);
         doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-        doc.moveDown(0.4);
+        doc.moveDown(0.3);
 
-        // 1. Bloco de Resultados
+        // Bloco de Resultados
         const linhasToRender = Array.isArray(ex.linhas) && ex.linhas.length > 0 ? ex.linhas : [];
 
         if (linhasToRender.length > 0) {
           linhasToRender.forEach(l => {
-            if (doc.y > 720) doc.addPage();
+            if (doc.y > 680) doc.addPage();
             const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
             const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
             let paramDisplay = isGenericParam 
@@ -4969,43 +5028,39 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
               unitStr = '';
             }
 
-            const lineY = doc.y + 10;
-            doc.fillColor('#0f172a').fontSize(16).font('Courier-Bold').text(paramDisplay, 45, lineY);
+            const lineY = doc.y + 6;
+            doc.fillColor('#0f172a').fontSize(14).font('Courier-Bold').text(paramDisplay, 45, lineY);
             doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-            doc.y = lineY + 24;
+            doc.y = lineY + 20;
           });
         } else {
           const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
           const unitStr = String(ex.unidade || ex.unit || '').trim();
-          const lineY = doc.y;
+          const lineY = doc.y + 4;
           doc.fillColor('#0f172a').fontSize(9.5).font('Courier-Bold').text('Resultado...:', 45, lineY);
           doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${rawRes}${unitStr ? ' ' + unitStr : ''}`, 200, lineY, { align: 'left', width: 345 });
-          doc.y = lineY + 18;
+          doc.y = lineY + 16;
         }
 
-        doc.moveDown(0.4);
+        doc.moveDown(0.3);
 
-        // 2. Bloco de Valores de Referência
+        // Bloco de Valores de Referência
         const refVal = String(ex.valorReferencia || ex.referenceValue || 'Verificar cadastro técnico.').trim();
         if (refVal) {
-          if (doc.y > 640) doc.addPage(); // Quebra de página preventiva ajustada para o quadro
+          if (doc.y > 670) doc.addPage();
 
-          // 1. Posição Y onde o quadro vai começar
           const boxStartY = doc.y;
-          const boxPadding = 10;
+          const boxPadding = 8;
           const boxX = 40;
           const boxWidth = 515;
 
-          // Pula o padding inicial interno do quadro para o texto não colar na borda superior
           doc.y = boxStartY + boxPadding;
 
-          // Desenha o título e a linha divisória interna
           doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Valores de Referência:', boxX + boxPadding, doc.y);
-          doc.moveDown(0.2);
-          doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
           doc.moveDown(0.3);
+          doc.strokeColor('#cbd5e1').lineWidth(0.8).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
+          doc.moveDown(0.6);
 
-          // Renderiza o texto formatado (com suporte a <b>, \n e alinhamento)
           renderPdfFormattedText(doc, refVal, {
             indent: boxX + boxPadding,
             width: boxWidth - (boxPadding * 2),
@@ -5014,40 +5069,30 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             fontSize: 8.5
           });
 
-          // 2. Posição Y onde o texto terminou
           const boxEndY = doc.y + boxPadding;
           const boxHeight = boxEndY - boxStartY;
 
-          // 3. Desenha o Retângulo Dinâmico em volta de todo o bloco
           doc.rect(boxX, boxStartY, boxWidth, boxHeight)
              .lineWidth(0.8)
-             .strokeColor('#cbd5e1') // Cor da borda
+             .strokeColor('#cbd5e1')
              .stroke();
 
-          // Atualiza a posição do cursor Y para o próximo bloco do PDF
-          doc.y = boxEndY + 8;
+          doc.y = boxEndY + 6;
         }
 
-        // 3. Bloco de Observações
+        // Bloco de Observações
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
         if (obsVal) {
-          if (doc.y > 640) doc.addPage();
+          if (doc.y > 670) doc.addPage();
 
-          // Posição Y inicial do quadro de observações
           const obsBoxStartY = doc.y;
           const boxPadding = 6;
           const boxX = 40;
           const boxWidth = 515;
 
           doc.y = obsBoxStartY + boxPadding;
+          doc.moveDown(0.2);
 
-          // Título e linha divisória interna do bloco de observações
-          // doc.fillColor('#0f172a').fontSize(9).font('Courier-Bold').text('Observações:', boxX + boxPadding, doc.y);
-          // doc.moveDown(0.2);
-          // doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(boxX + boxPadding, doc.y).lineTo(boxX + boxWidth - boxPadding, doc.y).stroke();
-          doc.moveDown(0.3);
-
-          // Texto justificado das Observações
           renderPdfFormattedText(doc, obsVal, {
             indent: boxX + boxPadding,
             width: boxWidth - (boxPadding * 2),
@@ -5056,36 +5101,27 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
             fontSize: 8.5
           });
 
-          // Posição Y final e cálculo da altura dinâmica
           const obsBoxEndY = doc.y + boxPadding;
           const obsBoxHeight = obsBoxEndY - obsBoxStartY;
 
-          // Desenha a moldura externa do bloco 3
           doc.rect(boxX, obsBoxStartY, boxWidth, obsBoxHeight)
              .lineWidth(0.8)
              .strokeColor('#cbd5e1')
              .stroke();
 
-          doc.y = obsBoxEndY + 10;
+          doc.y = obsBoxEndY + 6;
         }
 
-        doc.moveDown(0.6);
+        doc.moveDown(0.4);
       });
     }
 
-    // 4. RODAPÉ DE LIBERAÇÃO DIGITAL
-    if (doc.y > 720) {
-      doc.addPage();
+    // --- DESENHA O RODAPÉ EM TODAS AS PÁGINAS ---
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      drawFooter(doc, dataColeta, liberadoPor, hash);
     }
-
-    const footerY = 740;
-    doc.strokeColor('#0f172a').lineWidth(1.2).moveTo(40, footerY).lineTo(555, footerY).stroke();
-
-    const footerTextY = footerY + 8;
-    doc.fillColor('#334155').fontSize(8.5).font('Courier');
-    doc.text(`Coleta: `, 40, footerTextY, { continued: true }).font('Courier-Bold').text(dataColeta);
-    doc.font('Courier').text(`Liberado eletronicamente por: `, 180, footerTextY, { continued: true }).font('Courier-Bold').fillColor('#065f46').text(liberadoPor);
-    doc.font('Courier').fillColor('#334155').text(`Cód. Autenticidade: `, 40, footerTextY + 13, { continued: true }).fontSize(7.5).text(hash);
 
     doc.end();
 

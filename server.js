@@ -5181,7 +5181,7 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
     if (exams.length === 0) {
       doc.fillColor('#475569').fontSize(10).font('Courier').text('Nenhum exame liberado nesta requisição.', 40, doc.y);
     } else {
-      exams.forEach((ex) => {
+      exams.forEach((ex, exIndex) => {
         const examTitle = (ex.titulo || ex.name || ex.nome || ex.codigo || 'EXAME').toUpperCase();
         const matStr = ex.material || '';
         const metStr = ex.metodo || '';
@@ -5189,8 +5189,24 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
         const refVal = String(ex.valorReferencia || ex.referenceValue || '').trim();
         const obsVal = String(ex.observacoesLaudo || ex.observacao || ex.observations || '').trim();
 
+        // Dados dinâmicos de autenticidade e segurança por exame
+        const rawColeta = ex.dataColeta || ex.coletaDate || ex.data || headerData.dataColeta || dataColeta;
+        let coletaStr = formatDateTimeToBR(rawColeta) || headerData.dataColeta || dataColeta;
+        coletaStr = coletaStr.replace(/(\d{2}\/\d{2}\/)20(\d{2})/, '$1$2');
+
+        const rawLib = String(ex.liberadoPor || ex.conferidoPor || ex.responsavel || liberadoPor || 'Maria Gabriela').trim();
+        let libDisplay = rawLib;
+        if (rawLib === rawLib.toUpperCase()) {
+          libDisplay = rawLib.toLowerCase().split(' ').map(w => ['de','da','do','das','dos'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        const codSeg = ex.codSeguranca || ex.codigoSeguranca || ex.hash ||
+          crypto.createHash('md5').update(`${reqCode}_${ex.codigo || ex.id || ex.nome || exIndex}_${patientName}`).digest('hex');
+
+        const examAuthFooter = `Coleta: ${coletaStr} - Exame liberado eletronicamente por: ${libDisplay} - Cód. Seg.: ${codSeg}`;
+
         // Estimar a altura total necessária para renderizar este exame
-        let estimatedExamHeight = 50;
+        let estimatedExamHeight = 65;
         if (linhasToRender.length > 0) {
           estimatedExamHeight += linhasToRender.length * 16;
         } else {
@@ -5329,6 +5345,10 @@ app.all(['/api/paciente/laudo/pdf', '/api/pacientes/laudo/pdf', '/api/laudo/pdf'
           doc.y = obsBoxEndY + 10;
         }
 
+        // Rodapé de autenticidade individual do exame
+        if (doc.y > 710 && doc.y > 165) doc.addPage();
+        doc.moveDown(0.2);
+        doc.fillColor('#475569').fontSize(7.5).font('Courier-Oblique').text(examAuthFooter, 45, doc.y, { width: 505, align: 'left' });
         doc.moveDown(0.6);
       });
     }

@@ -4784,6 +4784,20 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const footerY = 770;
   const footerHeight = pageHeight - footerY + 5; // Estende o fundo verde até o fim da página, eliminando a faixa branca
 
+  // Marca d'Água (DNA) no canto inferior direito do laudo
+  const marcaDaguaPath = path.join(process.cwd(), 'public', 'marca-dagua.png');
+  if (fs.existsSync(marcaDaguaPath)) {
+    try {
+      const wHeight = 330;
+      const wWidth = wHeight * (767 / 651);
+      const wX = pageWidth - 10 - wWidth;
+      const wY = footerY - 5 - wHeight;
+      doc.image(marcaDaguaPath, wX, wY, { width: wWidth, height: wHeight });
+    } catch (e) {
+      console.error("Erro ao desenhar marca-d'água no laudo:", e);
+    }
+  }
+
   // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, mais à direita da página)
   if (sigInfo) {
     const sigWidth = 165;

@@ -4783,11 +4783,11 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
   const footerY = 745;
   const footerHeight = 75;
 
-  // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, acima da faixa verde)
+  // Assinatura Digitalizada do Profissional (Exibida no canto inferior direito, de forma compacta)
   if (sigInfo) {
-    const sigWidth = 180;
-    const sigX = pageWidth - 40 - sigWidth;
-    const sigY = footerY - 65;
+    const sigWidth = 175;
+    const sigX = pageWidth - 35 - sigWidth;
+    const sigY = footerY - 48; // Compactado para economizar espaço no laudo
 
     let imgDrawn = false;
     if (sigInfo.signatureFile) {
@@ -4795,7 +4795,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
         try {
           const base64Data = sigInfo.signatureFile.replace(/^data:image\/\w+;base64,/, '');
           const imgBuffer = Buffer.from(base64Data, 'base64');
-          doc.image(imgBuffer, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+          doc.image(imgBuffer, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
           imgDrawn = true;
         } catch (e) {
           console.error("Erro ao desenhar imagem base64 de assinatura:", e);
@@ -4806,7 +4806,7 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
 
         if (fs.existsSync(fullSigPath)) {
           try {
-            doc.image(fullSigPath, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+            doc.image(fullSigPath, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
             imgDrawn = true;
           } catch (e) {
             console.error("Erro ao desenhar arquivo de assinatura:", e);
@@ -4819,29 +4819,31 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
       const defaultSigPath = path.join(process.cwd(), 'public', 'signatures', 'mgamaral.png');
       if (fs.existsSync(defaultSigPath)) {
         try {
-          doc.image(defaultSigPath, sigX + (sigWidth - 120) / 2, sigY - 4, { width: 120, height: 32, fit: [120, 32], align: 'center' });
+          doc.image(defaultSigPath, sigX + (sigWidth - 100) / 2, sigY - 2, { width: 100, height: 25, fit: [100, 25], align: 'center' });
           imgDrawn = true;
         } catch (e) {}
       }
     }
 
-    // Linhas de Texto da Assinatura
-    const textY = imgDrawn ? (sigY + 30) : (sigY + 12);
-    doc.fillColor('#0f172a').fontSize(8).font('Helvetica-Bold')
+    // Linhas de Texto da Assinatura (Nome e Cargo + Conselho na mesma linha)
+    const textY = imgDrawn ? (sigY + 23) : (sigY + 10);
+    doc.fillColor('#0f172a').fontSize(7.5).font('Helvetica-Bold')
        .text(sigInfo.name || 'Maria Gabriela de Oliveira Amaral', sigX, textY, { width: sigWidth, align: 'center', lineBreak: false });
 
-    doc.fillColor('#334155').fontSize(7.5).font('Helvetica')
-       .text(sigInfo.laudoTitle || 'Biomédica', sigX, textY + 10, { width: sigWidth, align: 'center', lineBreak: false });
-
-    doc.fillColor('#334155').fontSize(7.5).font('Helvetica')
-       .text(sigInfo.laudoCouncil || 'CRBM-PR: 5929', sigX, textY + 19, { width: sigWidth, align: 'center', lineBreak: false });
+    const titleCouncilStr = [sigInfo.laudoTitle || 'Biomédica', sigInfo.laudoCouncil || 'CRBM-PR: 5929'].filter(Boolean).join(' - ');
+    doc.fillColor('#334155').fontSize(6.5).font('Helvetica')
+       .text(titleCouncilStr, sigX, textY + 9, { width: sigWidth, align: 'center', lineBreak: false });
   }
 
-  // Página X de Y (Exibido acima da faixa verde no lado esquerdo, conforme laudo padrão)
+  // Página X de Y e Texto de Valor Preditivo na mesma linha (acima da faixa verde)
   if (pageNum && totalPages) {
-    doc.fillColor('#334155').fontSize(8).font('Helvetica-Bold')
-       .text('Página: ' + pageNum + ' de ' + totalPages, 30, footerY - 14, { lineBreak: false });
+    doc.fillColor('#334155').fontSize(7.5).font('Helvetica-Bold')
+       .text('Página: ' + pageNum + ' de ' + totalPages, 30, footerY - 12, { lineBreak: false });
   }
+
+  // Texto de Aviso Clínico / Valor Preditivo na mesma linha da numeração de página
+  doc.fillColor('#475569').fontSize(6.5).font('Helvetica')
+     .text('O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.', 105, footerY - 12, { width: 270, align: 'left', lineBreak: false });
 
   // Fundo Verde Institucional
   doc.rect(0, footerY, pageWidth, footerHeight).fill('#1E3E17');
@@ -4888,15 +4890,6 @@ function drawFooter(doc, pageNum, totalPages, sigInfo) {
     doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold').text('PNCQ | SBAC', 470, colY + 10, { width: 85, align: 'center', lineBreak: false });
     doc.fillColor('#D1FAE5').fontSize(6.5).font('Helvetica').text('QUALIDADE 2026', 470, colY + 23, { width: 85, align: 'center', lineBreak: false });
   }
-
-  // Legenda de Aviso Clínico
-  doc.fillColor('#334155').fontSize(7).font('Helvetica')
-     .text(
-       'O valor preditivo dos testes laboratoriais depende da situação clínico epidemiológica do(a) paciente.',
-       0,
-       825,
-       { width: pageWidth, align: 'center', lineBreak: false }
-     );
 
   doc.page.margins.bottom = origBottom;
   doc.page.margins.top = origTop;

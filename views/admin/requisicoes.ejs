@@ -234,8 +234,17 @@
               </td>
 
               <!-- 8. Valor Pendente -->
-              <td class="py-1.5 px-2.5 font-mono text-xs font-bold <%= pendingVal > 0 ? 'text-rose-600' : 'text-emerald-600' %> text-right whitespace-nowrap">
-                R$ <%= pendingVal.toFixed(2).replace('.', ',') %>
+              <td class="py-1.5 px-2.5 font-mono text-xs font-bold text-right whitespace-nowrap">
+                <% if (pendingVal > 0 && !isRowPago) { %>
+                  <span class="text-rose-600">R$ <%= pendingVal.toFixed(2).replace('.', ',') %></span>
+                <% } else { %>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                    <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                    </svg>
+                    Pago
+                  </span>
+                <% } %>
               </td>
 
               <!-- 9. Previsão Entrega -->

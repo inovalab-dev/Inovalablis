@@ -1,0 +1,20 @@
+[
+  {
+    "id": "req_sc_1",
+    "examId": "1",
+    "examCode": "HEMO01",
+    "examName": "Hemograma Completo",
+    "description": "Hemograma",
+    "material": "Sangue Total",
+    "createdAt": "2026-08-07T12:00:00.000Z"
+  },
+  {
+    "id": "req_sc_2",
+    "examId": "GLI01",
+    "examCode": "GLI01",
+    "examName": "GLicemia em Jejum",
+    "description": "Glicose",
+    "material": "Soro",
+    "createdAt": "2026-08-07T12:00:00.000Z"
+  }
+]

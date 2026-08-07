@@ -1,0 +1,3054 @@
+<%- include('../../partials/header', { page: 'admin-triagem-criar-lote' }) %>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+<!-- Serialized Data for Client JS -->
+<script>
+  window.CATALOG_EXAMS = <%- JSON.stringify(exams || []) %>;
+  window.RECIPIENTES = <%- JSON.stringify(recipientes || []) %>;
+  window.SETORES = <%- JSON.stringify(setores || []) %>;
+  window.SUPPORT_LABS = <%- JSON.stringify(labs || []) %>;
+  window.TRIAGEM_REQUISITIONS = <%- JSON.stringify(requisitions || []) %>;
+  window.TRIAGEM_PATIENTS = <%- JSON.stringify(patients || []) %>;
+  window.TRIAGEM_MEDICOS = <%- JSON.stringify(medicos || []) %>;
+  window.CONFIG_ALVARO = <%- JSON.stringify(configAlvaro || {}) %>;
+</script>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Header Breadcrumbs & Title -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-slate-800 transition-colors">Administração</a>
+        <span>•</span>
+        <a href="/admin/triagem/amostras" class="hover:text-slate-800 transition-colors">Triagem</a>
+        <span>•</span>
+        <span class="text-amber-800 font-bold">Criar Lote</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-purple-500/20 border border-amber-300 shadow-xs flex items-center justify-center shrink-0 text-amber-900 font-black text-xl">
+          📦
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            Criar Lote de Envio Externo
+            <span class="text-xs font-mono font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full uppercase border border-amber-200">Apoio Álvaro & Pardini</span>
+          </h1>
+          <p class="text-xs text-slate-500">
+            Agrupamento de pacientes e exames já triados para geração de lote e envio aos laboratórios de apoio.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" onclick="openXmlAlvaroModal('response')" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-2 cursor-pointer">
+        <span>🏷️</span> Response & Etiquetas Álvaro
+      </button>
+      <a href="/admin/triagem/amostras" class="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-2">
+        <span>⬅️</span> Voltar para Triagem
+      </a>
+      <button type="button" onclick="window.location.reload()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-2 cursor-pointer">
+        <span>🔄</span> Atualizar Dados
+      </button>
+    </div>
+  </div>
+
+  <!-- Global Metrics Header Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-slate-500 uppercase font-mono tracking-wider">Total Pacientes Triados</p>
+        <p id="stat-total-pacientes" class="text-2xl font-black text-slate-900 font-mono mt-0.5">0</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 font-bold text-lg">🩺</div>
+    </div>
+
+    <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-amber-800 uppercase font-mono tracking-wider">Pacientes Álvaro</p>
+        <p id="stat-alvaro-pacientes" class="text-2xl font-black text-amber-900 font-mono mt-0.5">0</p>
+        <p class="text-[10px] text-amber-700/80 font-mono font-bold mt-0.5"><span id="stat-alvaro-exames">0</span> exames triados</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800 font-bold text-lg">🟡</div>
+    </div>
+
+    <div class="bg-purple-50/60 p-4 rounded-2xl border border-purple-200/80 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-purple-800 uppercase font-mono tracking-wider">Pacientes Pardini</p>
+        <p id="stat-pardini-pacientes" class="text-2xl font-black text-purple-900 font-mono mt-0.5">0</p>
+        <p class="text-[10px] text-purple-700/80 font-mono font-bold mt-0.5"><span id="stat-pardini-exames">0</span> exames triados</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-purple-100 border border-purple-300 flex items-center justify-center text-purple-800 font-bold text-lg">🟣</div>
+    </div>
+
+    <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-800 uppercase font-mono tracking-wider">Lotes em Aberto</p>
+        <p id="stat-lotes-pendentes" class="text-2xl font-black text-emerald-900 font-mono mt-0.5">2</p>
+        <p class="text-[10px] text-emerald-700/80 font-mono font-bold mt-0.5">Prontos p/ geração</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 font-bold text-lg">📋</div>
+    </div>
+
+  </div>
+
+  <!-- Search & Filtering Bar -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="relative flex-1 w-full">
+      <input 
+        type="text" 
+        id="searchInput" 
+        oninput="filterLotes()" 
+        placeholder="Pesquisar por Paciente, CPF, Código de Requisição (#REQ-...) ou Nome do Exame..." 
+        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+      >
+      <span class="absolute left-3.5 top-3 text-slate-400 text-sm">🔍</span>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs font-mono font-bold text-slate-500 shrink-0">
+      <span>Filtrar Lote:</span>
+      <select id="loteFilterSelect" onchange="filterLotes()" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl px-3 py-2 font-bold outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+        <option value="todos" selected>Exibir Todos Pendentes</option>
+        <option value="sem_lote">Sem Lote Gerado</option>
+        <option value="com_lote">Com Lote Gerado</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Layout: Álvaro & Pardini -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+    <!-- ==================== COLUNA ÁLVARO ==================== -->
+    <div class="bg-amber-50/30 rounded-2xl border border-amber-200/90 p-4 shadow-sm space-y-4">
+      
+      <!-- Header Coluna Álvaro -->
+      <div class="bg-amber-500/10 border border-amber-300/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500 text-white font-black text-sm flex items-center justify-center shadow-xs">
+            Á
+          </div>
+          <div>
+            <h2 class="text-base font-black text-amber-950 flex items-center gap-2">
+              Laboratório Álvaro
+              <span id="badge-count-alvaro" class="text-[10px] font-mono font-extrabold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-md border border-amber-300">
+                0 pacientes
+              </span>
+            </h2>
+            <p class="text-[11px] text-amber-800/80 font-medium">Exames triados destinados ao Apoio Álvaro</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button 
+            type="button" 
+            onclick="selectAllColumn('alvaro')" 
+            class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] rounded-lg border border-amber-300 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <span>☑️</span> Sel. Todos
+          </button>
+          <button 
+            type="button" 
+            id="btn-criar-lote-alvaro"
+            onclick="openXmlAlvaroModal()" 
+            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+          >
+            <span>📦</span> Criar Lote Álvaro
+          </button>
+        </div>
+      </div>
+
+      <!-- Container de Pacientes Álvaro (Sem Collapse) -->
+      <div id="container-pacientes-alvaro" class="space-y-4 min-h-[250px]">
+        <!-- Populado dinamicamente pelo JS -->
+      </div>
+
+      <!-- Empty State Álvaro -->
+      <div id="empty-alvaro" class="hidden py-12 text-center bg-white rounded-2xl border border-dashed border-amber-200 p-6">
+        <div class="text-3xl mb-2">🟡</div>
+        <p class="text-xs font-bold text-amber-900">Nenhum exame triado para o Laboratório Álvaro</p>
+        <p class="text-[11px] text-amber-700/70 mt-1">Realize a triagem das amostras para que os exames apareçam nesta coluna.</p>
+      </div>
+
+    </div>
+
+    <!-- ==================== COLUNA PARDINI ==================== -->
+    <div class="bg-purple-50/30 rounded-2xl border border-purple-200/90 p-4 shadow-sm space-y-4">
+      
+      <!-- Header Coluna Pardini -->
+      <div class="bg-purple-500/10 border border-purple-300/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-purple-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
+            P
+          </div>
+          <div>
+            <h2 class="text-base font-black text-purple-950 flex items-center gap-2">
+              Laboratório Pardini
+              <span id="badge-count-pardini" class="text-[10px] font-mono font-extrabold bg-purple-200/80 text-purple-900 px-2 py-0.5 rounded-md border border-purple-300">
+                0 pacientes
+              </span>
+            </h2>
+            <p class="text-[11px] text-purple-800/80 font-medium">Exames triados destinados ao Apoio Pardini</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button 
+            type="button" 
+            onclick="selectAllColumn('pardini')" 
+            class="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-[11px] rounded-lg border border-purple-300 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <span>☑️</span> Sel. Todos
+          </button>
+          <button 
+            type="button" 
+            id="btn-criar-lote-pardini"
+            onclick="triggerGerarLote('pardini')" 
+            class="px-4 py-2 bg-purple-700 hover:bg-purple-800 active:bg-purple-900 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+          >
+            <span>📦</span> Gerar Lote Pardini
+          </button>
+        </div>
+      </div>
+
+      <!-- Container de Pacientes Pardini (Sem Collapse) -->
+      <div id="container-pacientes-pardini" class="space-y-4 min-h-[250px]">
+        <!-- Populado dinamicamente pelo JS -->
+      </div>
+
+      <!-- Empty State Pardini -->
+      <div id="empty-pardini" class="hidden py-12 text-center bg-white rounded-2xl border border-dashed border-purple-200 p-6">
+        <div class="text-3xl mb-2">🟣</div>
+        <p class="text-xs font-bold text-purple-900">Nenhum exame triado para o Laboratório Pardini</p>
+        <p class="text-[11px] text-purple-700/70 mt-1">Realize a triagem das amostras para que os exames apareçam nesta coluna.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal de Confirmação e Impressão do Lote -->
+<div id="modal-gerar-lote" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    
+    <div id="modal-lote-header" class="p-5 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📦</span>
+        <div>
+          <h3 id="modal-lote-title" class="font-extrabold text-base tracking-tight">Confirmar Lote de Envio</h3>
+          <p id="modal-lote-subtitle" class="text-xs text-slate-300 font-mono">Revisão e confirmação de exames triados</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeLoteModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1 cursor-pointer">✕</button>
+    </div>
+
+    <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+      
+      <div id="modal-lote-summary" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between gap-3 text-xs">
+        <div>
+          <p class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Laboratório de Destino</p>
+          <p id="modal-lote-lab-name" class="font-extrabold text-slate-900 text-sm mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Total de Pacientes</p>
+          <p id="modal-lote-pacientes-count" class="font-extrabold text-slate-900 text-sm mt-0.5">0</p>
+        </div>
+        <div>
+          <p class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Total de Exames</p>
+          <p id="modal-lote-exames-count" class="font-extrabold text-amber-700 text-sm mt-0.5">0</p>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Relação de Pacientes e Exames do Lote:</h4>
+        <div id="modal-lote-items-list" class="space-y-2 border border-slate-200 rounded-xl p-3 bg-white font-mono text-xs max-h-60 overflow-y-auto">
+          <!-- Item list injected by JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <div class="p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <button type="button" onclick="closeLoteModal()" class="w-full sm:w-auto px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer">
+        Cancelar
+      </button>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button type="button" id="btn-confirmar-gerar-lote" onclick="processGerarLote(false)" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>✅</span> Gerar Lote
+        </button>
+        <button type="button" onclick="processGerarLote(true)" class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>🖨️</span> Gerar e Imprimir
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Alert/Toast Dialog -->
+<div id="alert-dialog-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden p-6 text-center space-y-4">
+    <div id="alert-dialog-icon" class="text-4xl">⚠️</div>
+    <h3 id="alert-dialog-title" class="text-base font-extrabold text-slate-900">Atenção</h3>
+    <p id="alert-dialog-message" class="text-xs text-slate-600 leading-relaxed font-medium"></p>
+    <button type="button" onclick="closeAlertDialog()" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer w-full">
+      Entender e Fechar
+    </button>
+  </div>
+</div>
+
+<!-- Modal Request & Response XML / Etiquetas Álvaro -->
+<div id="modal-xml-alvaro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+    
+    <!-- Header -->
+    <div class="p-5 bg-slate-950 border-b border-slate-800 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold flex items-center justify-center text-xl shrink-0">
+          🏷️
+        </div>
+        <div>
+          <h3 class="font-black text-base text-white tracking-tight flex items-center gap-2">
+            WebService & Etiquetas — Apoio Álvaro
+            <span class="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30 uppercase">WebService Apoio</span>
+          </h3>
+          <p class="text-xs text-slate-400 font-mono">Solicitação de exames e geração de etiquetas com código de barras</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeXmlAlvaroModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1 cursor-pointer transition-colors">✕</button>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="flex border-b border-slate-800 bg-slate-950 px-5 gap-4 shrink-0 overflow-x-auto">
+      <button type="button" id="tab-alvaro-status" onclick="switchAlvaroModalTab('status')" class="py-3 text-xs font-bold border-b-2 border-amber-400 text-amber-300 flex items-center gap-2 cursor-pointer transition-all shrink-0">
+        <span>📊 1. Status do Lote</span>
+      </button>
+      <button type="button" id="tab-alvaro-request" onclick="switchAlvaroModalTab('request')" class="py-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 cursor-pointer transition-all shrink-0">
+        <span>📜 2. Request & Response XML</span>
+      </button>
+      <button type="button" id="tab-alvaro-response" onclick="switchAlvaroModalTab('response')" class="py-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 cursor-pointer transition-all shrink-0">
+        <span>🏷️ 3. Layouts de Etiquetas</span>
+      </button>
+    </div>
+
+    <!-- Body Container -->
+    <div class="p-6 space-y-4 overflow-y-auto bg-slate-900 flex-1">
+      
+      <!-- VIEW TAB 1: STATUS DO LOTE -->
+      <div id="view-alvaro-status" class="space-y-4">
+        <div id="alvaro-status-summary-container" class="space-y-4">
+          <!-- Estado Inicial / Loading -->
+          <div class="p-6 bg-slate-950 border border-slate-800 rounded-2xl flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-2xl shrink-0 animate-pulse">
+              ⏳
+            </div>
+            <div>
+              <h4 class="font-extrabold text-base text-slate-100">Transmitindo Lote para o WebService Álvaro...</h4>
+              <p class="text-xs text-slate-400 mt-1">Conectando e enviando os dados dos exames triados para inclusão no apoio.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW TAB 2: REQUEST & RESPONSE XML -->
+      <div id="view-alvaro-request" class="space-y-4 hidden">
+        <div class="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200/90 flex items-start gap-3">
+          <span class="text-lg shrink-0">💡</span>
+          <div>
+            <p class="font-bold text-amber-300">Dados da Transmissão ao WebService Álvaro</p>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-slate-300">
+              Comando cURL gerado e payload de resposta em formato XML retornado pela API do Apoio Álvaro (Entidade: <strong><%= (configAlvaro && configAlvaro.entidade) || '19816' %></strong>, Agente: <strong><%= (configAlvaro && configAlvaro.idAgente) || '193762' %></strong>).
+            </p>
+          </div>
+        </div>
+
+        <!-- CAMPO COMANDO cURL (COLLAPSED BY DEFAULT) -->
+        <details class="group bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden">
+          <summary class="p-3.5 text-xs font-bold text-amber-300 font-mono flex items-center justify-between cursor-pointer select-none">
+            <span class="flex items-center gap-2">
+              <span>💻</span> Comando cURL de Envio (PUT WebService)
+            </span>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                onclick="event.stopPropagation(); copyCurlAlvaroToClipboard()" 
+                class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-300 border border-slate-700 font-mono font-bold text-[11px] rounded-lg transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>📋</span> Copiar cURL
+              </button>
+              <span class="text-[10px] text-slate-500 font-mono group-open:rotate-180 transition-transform">▼</span>
+            </div>
+          </summary>
+          <div class="p-3.5 border-t border-slate-800 space-y-2">
+            <textarea 
+              id="curl-code-alvaro" 
+              rows="3" 
+              readonly 
+              class="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-amber-200/90 focus:outline-none selection:bg-amber-500 selection:text-slate-950 leading-relaxed cursor-text resize-none"
+              placeholder="Comando cURL gerado..."
+            ></textarea>
+          </div>
+        </details>
+
+        <!-- Response Container do WebService Álvaro (COLLAPSED BY DEFAULT) -->
+        <details id="alvaro-api-response-box" class="group bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+          <summary class="p-3.5 text-xs font-bold font-mono uppercase tracking-wider text-slate-200 flex items-center justify-between cursor-pointer select-none">
+            <div class="flex items-center gap-2">
+              <span>📬</span> Resposta Retornada pelo WebService Álvaro
+              <span id="alvaro-api-status-badge" class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                HTTP 200 OK
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="alvaro-api-endpoint-url" class="text-[10px] font-mono text-slate-400 truncate max-w-[200px]"></span>
+              <span class="text-[10px] text-slate-500 font-mono group-open:rotate-180 transition-transform">▼</span>
+            </div>
+          </summary>
+          <div class="p-3.5 border-t border-slate-800 space-y-2">
+            <textarea id="alvaro-api-response-text" rows="7" readonly class="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-sky-300 focus:outline-none selection:bg-amber-500 selection:text-slate-950 leading-relaxed" placeholder="Aguardando envio do lote..."></textarea>
+          </div>
+        </details>
+      </div>
+
+      <!-- VIEW TAB 3: LAYOUTS DE ETIQUETAS -->
+      <div id="view-alvaro-response" class="space-y-4 hidden">
+        <div class="flex items-center justify-between gap-3 p-1">
+          <div class="text-xs text-slate-300 font-mono flex items-center gap-2">
+            <span>🏷️</span> Layouts de Etiquetas extraídos do XML de resposta:
+          </div>
+          <button 
+            type="button" 
+            onclick="copyAllAlvaroEpl()" 
+            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <span>📋</span> Copiar EPLs
+          </button>
+        </div>
+
+        <!-- Etiquetas Output Container -->
+        <div id="container-etiquetas-alvaro" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Etiquetas cards populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="p-5 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+      <div class="text-[11px] text-slate-400 font-mono">
+        Status: <span id="alvaro-modal-status" class="text-amber-400 font-bold">Iniciando Inclusão...</span>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+        <button 
+          type="button" 
+          onclick="closeXmlAlvaroModal()" 
+          class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-all cursor-pointer"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal 'Ver Etiquetas' - Visualização de Layouts Extraídos do Response WebService Álvaro -->
+<div id="modal-ver-etiquetas" class="fixed inset-0 bg-slate-950/85 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-4 hidden">
+  <div class="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[92vh]">
+    
+    <!-- Modal Header -->
+    <div class="p-5 bg-slate-950 border-b border-slate-800 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold flex items-center justify-center text-xl shrink-0">
+          🏷️
+        </div>
+        <div>
+          <h3 class="font-black text-base text-white tracking-tight flex items-center gap-2">
+            Etiquetas do Response WebService Álvaro
+            <span id="ver-etiquetas-badge-count" class="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30 uppercase">0 Encontrada(s)</span>
+          </h3>
+          <p class="text-xs text-slate-400 font-mono">Extração e renderização das tags &lt;layoutetiqueta&gt; e &lt;layout&gt; do XML de retorno</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeVerEtiquetasModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1 cursor-pointer transition-colors">✕</button>
+    </div>
+
+    <!-- Toolbar / Action Bar -->
+    <div class="p-4 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between gap-3 flex-wrap shrink-0">
+      <div class="text-xs font-mono text-slate-300 flex items-center gap-2">
+        <span>🔎 Origem do XML:</span>
+        <span id="ver-etiquetas-source-label" class="text-amber-300 font-bold">Response API Álvaro</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          onclick="copyAllExtractedLayouts()" 
+          class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold font-mono rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <span>📋</span> Copiar Todos os Layouts
+        </button>
+        <button 
+          type="button" 
+          onclick="printAlvaroLabels()" 
+          class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <span>🖨️</span> Imprimir Todas
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body (Etiquetas Container) -->
+    <div class="p-6 space-y-4 overflow-y-auto bg-slate-900 flex-1" id="ver-etiquetas-container">
+      <!-- Cards rendered dynamically -->
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
+      <span class="text-xs text-slate-400 font-mono">Apoio Álvaro — Padrão EPL2 (203 DPI)</span>
+      <button 
+        type="button" 
+        onclick="closeVerEtiquetasModal()" 
+        class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-all cursor-pointer"
+      >
+        Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Floating Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+<!-- Client Logic JS -->
+<script>
+  let currentXmlText = '';
+
+  function escapeXmlAttr(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function formatPatientBirthDate(bdate) {
+    if (!bdate) return '1991-01-01';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(bdate)) return bdate;
+    const d = new Date(bdate);
+    if (isNaN(d.getTime())) {
+      const parts = String(bdate).split('/');
+      if (parts.length === 3) {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+      return '1991-01-01';
+    }
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatPatientSexo(sex) {
+    if (!sex) return 'F';
+    const s = String(sex).trim().toUpperCase();
+    if (s.startsWith('F') || s.includes('FEM')) return 'F';
+    if (s.startsWith('M') || s.includes('MASC')) return 'M';
+    return 'F';
+  }
+
+  function formatPatientCpf(cpf) {
+    if (!cpf) return '345.678.901-22';
+    const str = String(cpf).trim();
+    return str || '345.678.901-22';
+  }
+
+  function openXmlAlvaroModal(defaultTab) {
+    const btnAlvaro = document.getElementById('btn-criar-lote-alvaro');
+    if (btnAlvaro && btnAlvaro.disabled) {
+      showToast('Nenhuma requisição triada para o Apoio Álvaro para criar o lote.', 'error');
+      return;
+    }
+
+    const modal = document.getElementById('modal-xml-alvaro');
+    const container = document.getElementById('container-pacientes-alvaro');
+    
+    let selectedReqIds = new Set();
+    if (container) {
+      const checkedExams = container.querySelectorAll('.exam-lote-checkbox[data-lab="alvaro"]:checked:not([disabled])');
+      checkedExams.forEach(cb => {
+        if (cb.dataset.reqId) selectedReqIds.add(cb.dataset.reqId);
+      });
+    }
+
+    const requisitions = window.TRIAGEM_REQUISITIONS || [];
+    const patientsList = window.TRIAGEM_PATIENTS || [];
+    let selectedReqs = requisitions.filter(r => selectedReqIds.has(String(r.requisitionCode || r.id)) || selectedReqIds.has(String(r.id)));
+
+    if (selectedReqs.length === 0) {
+      selectedReqs = requisitions.filter(r => {
+        const isRTriado = String(r.status || '').trim().toLowerCase().includes('triad') || r.triado === true || String(r.triado) === 'true';
+        const triados = (r.exams || []).filter(e => {
+          const eStatus = String(e.status || '').trim().toLowerCase();
+          return isRTriado || eStatus.includes('triad') || e.triado === true || String(e.triado) === 'true';
+        });
+        return triados.some(e => getExamDestinationLab(e) === 'alvaro');
+      });
+    }
+
+    const patientMap = new Map();
+    selectedReqs.forEach(req => {
+      const matched = patientsList.find(p => {
+        if (req.patientId && (p.id === req.patientId || p.code === String(req.patientId).replace(/^PAC-/, ''))) return true;
+        if (req.patientCode && (String(p.code) === String(req.patientCode) || p.id === 'PAC-' + req.patientCode || p.id === req.patientCode)) return true;
+        if (req.patientName && p.name && p.name.trim().toLowerCase() === req.patientName.trim().toLowerCase()) return true;
+        return false;
+      }) || {};
+
+      const code = String(matched.code || (req.patientCode ? String(req.patientCode).replace(/^PAC-/, '') : '') || (req.patientId ? String(req.patientId).replace(/^PAC-/, '') : '') || '3');
+      
+      if (!patientMap.has(code)) {
+        const datanasc = formatPatientBirthDate(matched.birthDate || req.patientBirthDate || req.birthDate || req.dataNasc);
+        const nome = (matched.name || req.patientName || req.nome || 'Ana Paula Mendes').trim();
+        const nomeSocial = (matched.socialName || matched.name || req.patientSocialName || req.nomeSocial || req.patientName || 'Ana Paula Mendes').trim();
+        const sexo = formatPatientSexo(matched.gender || matched.biologicalSex || req.patientSex || req.patientGender || req.sexo);
+        const cpf = formatPatientCpf(matched.cpf || req.patientCpf || req.cpf);
+        const email = (matched.email || req.patientEmail || req.email || 'ana.mendes@email.com').trim();
+
+        patientMap.set(code, {
+          codigolis: code,
+          datanasc,
+          nome,
+          nomeSocial,
+          sexo,
+          cpf,
+          email
+        });
+      }
+    });
+
+    let patientsXml = '';
+    if (patientMap.size > 0) {
+      patientsXml = Array.from(patientMap.values()).map(p => {
+        return `            <paciente codigolis="${escapeXmlAttr(p.codigolis)}" datanasc="${escapeXmlAttr(p.datanasc)}" nome="${escapeXmlAttr(p.nome)}" nomeSocial="${escapeXmlAttr(p.nomeSocial)}" sexo="${escapeXmlAttr(p.sexo)}" cpf="${escapeXmlAttr(p.cpf)}" email="${escapeXmlAttr(p.email)}"/>`;
+      }).join('\n');
+    } else {
+      patientsXml = `            <paciente codigolis="3" datanasc="1994-11-03" nome="Ana Paula Mendes" nomeSocial="Ana Paula Mendes" sexo="F" cpf="345.678.901-22" email="ana.mendes@email.com"/>`;
+    }
+
+    // Processamento Dinâmico dos Médicos das Requisições
+    const medicosList = window.TRIAGEM_MEDICOS || [];
+    const medicoMap = new Map();
+
+    selectedReqs.forEach(req => {
+      let rawName = (req.doctorName || '').trim();
+      let rawCrm = (req.doctorCrm || '').trim();
+      let rawUf = (req.doctorUf || 'PR').trim();
+
+      // Busca correspondência no cadastro de médicos
+      let matched = null;
+      if (rawName) {
+        matched = medicosList.find(m => m.nome && m.nome.toLowerCase() === rawName.toLowerCase());
+      }
+      if (!matched && rawCrm) {
+        matched = medicosList.find(m => m.numero && String(m.numero).trim() === rawCrm);
+      }
+      if (!matched && rawName) {
+        matched = medicosList.find(m => m.nome && (rawName.toLowerCase().includes(m.nome.toLowerCase()) || m.nome.toLowerCase().includes(rawName.toLowerCase())));
+      }
+
+      let finalName = matched ? matched.nome : rawName;
+      let finalCrmNum = matched ? matched.numero : rawCrm;
+      let finalUf = matched ? matched.uf : rawUf;
+
+      // Limpeza se houver sufixos "(CRM 12345/PR)" no nome do médico
+      if (finalName && finalName.includes('(') && finalName.includes(')')) {
+        const crmMatch = finalName.match(/\((?:CRM|CRO|CRBM|CRN|CRV)?\s*([\d\.\-]+)\/([A-Z]{2})\)/i);
+        if (crmMatch) {
+          if (!finalCrmNum) finalCrmNum = crmMatch[1];
+          if (!finalUf) finalUf = crmMatch[2];
+        }
+        finalName = finalName.replace(/\s*\([^)]*\)/, '').trim();
+      }
+
+      if (!finalName) finalName = 'Dr. Fernando Ribeiro';
+      if (!finalCrmNum) finalCrmNum = '45678';
+      if (!finalUf) finalUf = 'PR';
+
+      const crmString = `${finalCrmNum}-${finalUf}`;
+      const key = `${crmString}_${finalName}`;
+
+      if (!medicoMap.has(key)) {
+        medicoMap.set(key, {
+          crm: crmString,
+          nome: finalName
+        });
+      }
+    });
+
+    let medicosXml = '';
+    if (medicoMap.size > 0) {
+      medicosXml = Array.from(medicoMap.values()).map(m => {
+        return `            <medico crm="${escapeXmlAttr(m.crm)}" nome="${escapeXmlAttr(m.nome)}"/>`;
+      }).join('\n');
+    } else {
+      medicosXml = `            <medico crm="45678-PR" nome="Dr. Fernando Ribeiro"/>`;
+    }
+
+    function formatReqData(req) {
+      if (req.createdAt) {
+        const match = String(req.createdAt).match(/(\d{2})\/(\d{2})\/(\d{4})(?:,\s*(\d{2}):(\d{2}))?/);
+        if (match) {
+          const [, d, m, y, h = '00', min = '00'] = match;
+          return `${y}-${m}-${d}-${h}:${min}`;
+        }
+        const dt = new Date(req.createdAt);
+        if (!isNaN(dt.getTime())) {
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const d = String(dt.getDate()).padStart(2, '0');
+          const h = String(dt.getHours()).padStart(2, '0');
+          const min = String(dt.getMinutes()).padStart(2, '0');
+          return `${y}-${m}-${d}-${h}:${min}`;
+        }
+      }
+      if (req.fatura) {
+        const match = String(req.fatura).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+          const [, d, m, y] = match;
+          const horaStr = req.hora || '08:00';
+          const [h = '08', min = '00'] = horaStr.split(':');
+          return `${y}-${m}-${d}-${h.padStart(2, '0')}:${min.padStart(2, '0')}`;
+        }
+      }
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const h = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${d}-${h}:${min}`;
+    }
+
+    function formatReqDataColeta(req) {
+      let raw = req.collectedAt || req.dataColeta || req.triadoAt || req.updatedAt || req.createdAt;
+      let dt;
+      if (raw) {
+        if (typeof raw === 'string' && raw.includes('/')) {
+          const match = raw.match(/(\d{2})\/(\d{2})\/(\d{4})(?:,\s*(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+          if (match) {
+            const [, d, m, y, h = '00', min = '00', s = '00'] = match;
+            dt = new Date(`${y}-${m}-${d}T${h}:${min}:${s}`);
+          }
+        }
+        if (!dt || isNaN(dt.getTime())) {
+          dt = new Date(raw);
+        }
+      }
+      if (!dt || isNaN(dt.getTime())) dt = new Date();
+
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const d = String(dt.getDate()).padStart(2, '0');
+      const h = String(dt.getHours()).padStart(2, '0');
+      const min = String(dt.getMinutes()).padStart(2, '0');
+      const sec = String(dt.getSeconds()).padStart(2, '0');
+      const ms = String(dt.getMilliseconds()).padStart(3, '0');
+
+      return `${y}-${m}-${d}T${h}:${min}:${sec}.${ms}-03:00`;
+    }
+
+    let solicitacoesXml = '';
+    if (selectedReqs.length > 0) {
+      solicitacoesXml = selectedReqs.map(req => {
+    const codigolis = buildReqCodigolis(req);
+        
+        const patientList = window.TRIAGEM_PATIENTS || [];
+        const rawPName = (req.patientName || '').trim().toLowerCase();
+        const matchedP = patientList.find(p => p.nome && p.nome.toLowerCase() === rawPName);
+        const codigopaciente = String((matchedP && matchedP.codigo) || req.patientCode || req.patientId || '1').replace(/^PAC-/, '');
+
+        let rawName = (req.doctorName || '').trim();
+        let rawCrm = (req.doctorCrm || '').trim();
+        let rawUf = (req.doctorUf || 'PR').trim();
+
+        let matchedMed = null;
+        if (rawName) {
+          matchedMed = medicosList.find(m => m.nome && m.nome.toLowerCase() === rawName.toLowerCase());
+        }
+        if (!matchedMed && rawCrm) {
+          matchedMed = medicosList.find(m => m.numero && String(m.numero).trim() === rawCrm);
+        }
+        if (!matchedMed && rawName) {
+          matchedMed = medicosList.find(m => m.nome && (rawName.toLowerCase().includes(m.nome.toLowerCase()) || m.nome.toLowerCase().includes(rawName.toLowerCase())));
+        }
+
+        let finalCrmNum = matchedMed ? matchedMed.numero : rawCrm;
+        let finalUf = matchedMed ? matchedMed.uf : rawUf;
+
+        if (rawName && rawName.includes('(') && rawName.includes(')')) {
+          const crmMatch = rawName.match(/\((?:CRM|CRO|CRBM|CRN|CRV)?\s*([\d\.\-]+)\/([A-Z]{2})\)/i);
+          if (crmMatch) {
+            if (!finalCrmNum) finalCrmNum = crmMatch[1];
+            if (!finalUf) finalUf = crmMatch[2];
+          }
+        }
+
+        if (!finalCrmNum) finalCrmNum = '45678';
+        if (!finalUf) finalUf = 'PR';
+        const doctorCrmStr = `${finalCrmNum}-${finalUf}`;
+
+        const dataStr = formatReqData(req);
+        const dataColetaStr = formatReqDataColeta(req);
+        const postoDeColeta = "MATRIZ";
+
+        let examesXml = '';
+        if (Array.isArray(req.exams) && req.exams.length > 0) {
+          examesXml = req.exams.map(ex => {
+            const supportInfo = getSupportLabExamInfo(ex, 'alvaro');
+            const matInfo = getSupportLabMaterialInfo(ex, 'alvaro');
+
+            const exCode = supportInfo.code;
+            const exDesc = matInfo.desc;
+            const exMaterialCode = matInfo.code;
+
+            return `            <amostra descricao="${escapeXmlAttr(exDesc)}" codigoBarras="" material="${escapeXmlAttr(exMaterialCode)}">
+                <exame codigo="${escapeXmlAttr(exCode)}" dadosadicionais="" urgente="false"/>
+            </amostra>`;
+          }).join('\n');
+        } else {
+          examesXml = `            <amostra descricao="Soro" codigoBarras="" material="543">
+                <exame codigo="TSH04" dadosadicionais="" urgente="false"/>
+            </amostra>`;
+        }
+
+        return `        <solicitacao codigolis="${escapeXmlAttr(codigolis)}" codigopaciente="${escapeXmlAttr(codigopaciente)}" crm="${escapeXmlAttr(doctorCrmStr)}" data="${escapeXmlAttr(dataStr)}" dataColeta="${escapeXmlAttr(dataColetaStr)}" postoDeColeta="${postoDeColeta}">
+${examesXml}
+        </solicitacao>`;
+      }).join('\n');
+    } else {
+      solicitacoesXml = `        <solicitacao codigolis="010000100112" codigopaciente="1" crm="45678-PR" data="2026-07-30-03:00" dataColeta="2026-07-30T00:00:00.000-03:00" postoDeColeta="MATRIZ">
+            <amostra descricao="Soro" codigoBarras="" material="543">
+                <exame codigo="TSH04" dadosadicionais="" urgente="false"/>
+            </amostra>
+        </solicitacao>`;
+    }
+
+    const idAgente = "<%= (configAlvaro && configAlvaro.idAgente) || '193762' %>";
+    const nomeLis = "<%= (configAlvaro && configAlvaro.nomeLis) || 'InovalabLis' %>";
+    const senha = "<%= (configAlvaro && configAlvaro.senha) || '4353cd' %>";
+    const chave = "<%= (configAlvaro && configAlvaro.chave) || '581abd3154b1e858' %>";
+    const entidade = "<%= (configAlvaro && configAlvaro.entidade) || '19816' %>";
+
+    const datahoraIso = new Date().toISOString();
+
+    currentXmlText = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<solicitacoes datahora="${datahoraIso}" idagente="${idAgente}" lis="${nomeLis}" operador="NOME-OPERADOR" senha="${senha}" versao="20170918">
+    <entidade chave="${chave}" codigo="${entidade}">
+        <pacientes>
+${patientsXml}
+        </pacientes>
+        <medicos>
+${medicosXml}
+        </medicos>
+${solicitacoesXml}
+    </entidade>
+</solicitacoes>`;
+
+    const codeEl = document.getElementById('xml-code-alvaro');
+    if (codeEl) {
+      codeEl.textContent = currentXmlText;
+    }
+
+    // Gerar comando cURL formatado para exibição acima do XML
+    const urlAmbiente = (window.CONFIG_ALVARO && window.CONFIG_ALVARO.urlAmbiente) ? window.CONFIG_ALVARO.urlAmbiente : 'http://webservice.alvaro.com.br/webserviceaol/rest/homologacao';
+    const curlCommand = `curl --location --request PUT '${urlAmbiente}' \\\n--header 'Content-Type: application/xml' \\\n--data-raw '${currentXmlText.replace(/'/g, "'\\''")}'`;
+    
+    const curlEl = document.getElementById('curl-code-alvaro');
+    if (curlEl) {
+      curlEl.value = curlCommand;
+    }
+
+    // Gerar e preencher Response XML padrão de amostra com base nas requisições selecionadas
+    const respArea = document.getElementById('alvaro-api-response-text');
+    if (respArea) {
+      respArea.value = generateDefaultAlvaroResponseXml(selectedReqs);
+      processAndRenderAlvaroResponseXml();
+    }
+
+    // Ocultar botões de ver etiqueta e imprimir antes de criar o lote
+    setEtiquetasButtonsVisible(false);
+
+    switchAlvaroModalTab(defaultTab || 'status');
+
+    if (modal) modal.classList.remove('hidden');
+
+    // Transmitir e criar o lote no Álvaro automaticamente ao abrir a janela
+    sendAlvaroXmlToApoio();
+  }
+
+  function setEtiquetasButtonsVisible(visible) {
+    const btnIds = [
+      'btn-ver-etiquetas-api',
+      'btn-imprimir-etiquetas-api',
+      'btn-ver-etiquetas-tab2',
+      'btn-imprimir-etiquetas-tab2',
+      'btn-footer-ver-etiquetas',
+      'btn-footer-imprimir-etiquetas'
+    ];
+    btnIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (visible) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  let currentParsedAlvaroLabels = [];
+
+  function switchAlvaroModalTab(tabName) {
+    const tabStatus = document.getElementById('tab-alvaro-status');
+    const tabReq = document.getElementById('tab-alvaro-request');
+    const tabResp = document.getElementById('tab-alvaro-response');
+
+    const viewStatus = document.getElementById('view-alvaro-status');
+    const viewReq = document.getElementById('view-alvaro-request');
+    const viewResp = document.getElementById('view-alvaro-response');
+    const statusEl = document.getElementById('alvaro-modal-status');
+
+    const activeClass = 'py-3 text-xs font-bold border-b-2 border-amber-400 text-amber-300 flex items-center gap-2 cursor-pointer transition-all shrink-0';
+    const inactiveClass = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 cursor-pointer transition-all shrink-0';
+
+    if (tabStatus) tabStatus.className = tabName === 'status' ? activeClass : inactiveClass;
+    if (tabReq) tabReq.className = tabName === 'request' ? activeClass : inactiveClass;
+    if (tabResp) tabResp.className = tabName === 'response' ? activeClass : inactiveClass;
+
+    if (viewStatus) viewStatus.classList.toggle('hidden', tabName !== 'status');
+    if (viewReq) viewReq.classList.toggle('hidden', tabName !== 'request');
+    if (viewResp) viewResp.classList.toggle('hidden', tabName !== 'response');
+
+    if (statusEl) {
+      if (tabName === 'status') statusEl.textContent = 'Status e Inclusão do Lote no Apoio';
+      else if (tabName === 'request') statusEl.textContent = 'Comando cURL e Response XML';
+      else statusEl.textContent = 'Etiquetas Extraídas do Response API';
+    }
+  }
+
+  function parseAlvaroResponseXml(xmlString) {
+    const result = {
+      isSuccess: false,
+      solicitacoes: [],
+      errorMessage: '',
+      rawXml: xmlString || ''
+    };
+
+    if (!xmlString) return result;
+
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+      const solNodes = Array.from(xmlDoc.getElementsByTagName('solicitacao'));
+      if (solNodes.length > 0) {
+        solNodes.forEach(node => {
+          const idLis = node.getAttribute('idLis') || node.getAttribute('id_lis') || node.getAttribute('codigolis') || '';
+          const idAlvaro = node.getAttribute('idAlvaro') || node.getAttribute('id_alvaro') || '';
+          const baseBarras = node.getAttribute('baseBarras') || node.getAttribute('base_barras') || '';
+          const incluidoAttr = (node.getAttribute('incluido') || '').toLowerCase().trim();
+          const informacao = node.getAttribute('informacao') || node.getAttribute('info') || node.textContent || '';
+
+          const isIncluido = incluidoAttr === 'true' || incluidoAttr === '1';
+
+          result.solicitacoes.push({
+            idLis,
+            idAlvaro,
+            baseBarras,
+            incluido: isIncluido,
+            informacao: informacao ? informacao.trim() : ''
+          });
+        });
+
+        // O lote só é considerado criado com sucesso se 'incluido="true"' em pelo menos uma solicitação e sem erro fatal
+        result.isSuccess = result.solicitacoes.length > 0 && result.solicitacoes.every(s => s.incluido);
+
+        if (!result.isSuccess) {
+          const firstErr = result.solicitacoes.find(s => !s.incluido && s.informacao) || result.solicitacoes[0];
+          if (firstErr && firstErr.informacao) {
+            result.errorMessage = firstErr.informacao;
+          } else {
+            result.errorMessage = 'A solicitação de lote foi rejeitada ou não incluída pelo Apoio Álvaro (incluido=false).';
+          }
+        }
+      } else {
+        const erroNode = xmlDoc.getElementsByTagName('erro')[0] || xmlDoc.getElementsByTagName('error')[0];
+        if (erroNode) {
+          result.errorMessage = erroNode.textContent.trim();
+        } else if (xmlString.includes('incluido="false"')) {
+          result.isSuccess = false;
+          const matchInfo = xmlString.match(/informacao="([^"]+)"/i);
+          result.errorMessage = matchInfo ? matchInfo[1] : 'O lote não foi incluído pelo Apoio Álvaro.';
+        } else if (xmlString.includes('incluido="true"')) {
+          result.isSuccess = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao parsear XML de resposta do Álvaro:', e);
+      result.errorMessage = 'XML de resposta em formato inesperado.';
+    }
+
+    return result;
+  }
+
+  function renderAlvaroStatusSummary(state) {
+    const container = document.getElementById('alvaro-status-summary-container');
+    if (!container) return;
+
+    if (state.loading) {
+      container.innerHTML = `
+        <div class="p-6 bg-slate-950 border border-slate-800 rounded-2xl flex items-center gap-4 animate-pulse">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-2xl shrink-0">
+            ⏳
+          </div>
+          <div>
+            <h4 class="font-extrabold text-base text-slate-100">Transmitindo Lote para o WebService Álvaro...</h4>
+            <p class="text-xs text-slate-400 mt-1">Conectando e enviando os dados dos exames triados para inclusão no apoio.</p>
+          </div>
+        </div>
+      `;
+      setEtiquetasButtonsVisible(false);
+      return;
+    }
+
+    if (state.isSuccess) {
+      const sols = state.solicitacoes || [];
+      const etiquetasCount = (getReceivedXmlLabelLayouts() || []).length;
+
+      let solCardsHtml = '';
+      sols.forEach(s => {
+        solCardsHtml += `
+          <div class="p-3.5 bg-slate-900 border border-emerald-500/30 rounded-xl space-y-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>✅</span> LIS #${s.idLis || 'N/A'}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">
+                Lote Incluído com Sucesso
+              </span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono text-slate-300 pt-2 border-t border-slate-800">
+              <div><span class="text-slate-500">ID Álvaro:</span> <strong class="text-white">${s.idAlvaro || '-'}</strong></div>
+              <div><span class="text-slate-500">Base Barras:</span> <strong class="text-amber-300">${s.baseBarras || '-'}</strong></div>
+              <div><span class="text-slate-500">ID LIS:</span> <strong class="text-white">${s.idLis || '-'}</strong></div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = `
+        <div class="p-5 bg-emerald-950/30 border border-emerald-500/40 rounded-2xl space-y-4">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xl shrink-0 border border-emerald-500/30">
+                ✅
+              </div>
+              <div>
+                <h4 class="font-black text-base text-emerald-300">Lote Criado com Sucesso no Apoio Álvaro!</h4>
+                <p class="text-xs text-emerald-200/80 mt-0.5 leading-relaxed">
+                  A solicitação foi aceita e o lote foi cadastrado no sistema do laboratório Álvaro.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                onclick="switchAlvaroModalTab('response')" 
+                class="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-extrabold text-xs rounded-xl border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1.5"
+                title="Visualizar os layouts de etiquetas extraídos do XML"
+              >
+                <span>🏷️</span> Ver Etiquetas
+              </button>
+              <button 
+                type="button" 
+                onclick="printAlvaroLabels()" 
+                class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center gap-2"
+              >
+                <span>🖨️</span> Imprimir Etiquetas
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+              📋 Informações do Lote Cadastrado:
+            </p>
+            ${solCardsHtml || '<p class="text-xs text-slate-400">Solicitação incluída com sucesso.</p>'}
+          </div>
+        </div>
+      `;
+
+      setEtiquetasButtonsVisible(true);
+
+    } else {
+      const friendlyError = state.errorMessage || 'A solicitação foi rejeitada ou não foi incluída no laboratório parceiro (incluido=false).';
+
+      container.innerHTML = `
+        <div class="p-5 bg-rose-950/30 border border-rose-500/40 rounded-2xl space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 font-bold flex items-center justify-center text-xl shrink-0 border border-rose-500/30">
+              ⚠️
+            </div>
+            <div>
+              <h4 class="font-black text-base text-rose-300">O Lote NÃO foi criado no Apoio Álvaro</h4>
+              <p class="text-xs text-rose-200/80 mt-0.5 leading-relaxed">
+                O laboratório parceiro recusou a inclusão desta solicitação no sistema.
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-950 border border-rose-500/30 rounded-xl space-y-2">
+            <p class="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📢</span> Informação de Retorno do Apoio:
+            </p>
+            <p class="text-xs text-amber-200 font-mono leading-relaxed bg-slate-900 p-3 rounded-lg border border-slate-800">
+              ${friendlyError}
+            </p>
+          </div>
+
+          <div class="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span>🚫</span>
+              <span>A impressão de etiquetas foi bloqueada pois o lote não foi incluído.</span>
+            </div>
+            <button 
+              type="button" 
+              onclick="sendAlvaroXmlToApoio()" 
+              class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs rounded-xl border border-slate-700 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <span>🔄</span> Transmitir Novamente
+            </button>
+          </div>
+        </div>
+      `;
+
+      setEtiquetasButtonsVisible(false);
+    }
+  }
+
+  function getReceivedXmlLabelLayouts() {
+    const respTextarea = document.getElementById('alvaro-api-response-text');
+    const respInput = document.getElementById('xml-response-alvaro-input');
+    const xmlString = (respTextarea && respTextarea.value) || (respInput && respInput.value) || '';
+    if (!xmlString) return [];
+    
+    const layouts = [];
+    const regexTag = /<(layoutetiqueta|layout)[^>]*>([\s\S]*?)<\/\1>/gi;
+    let match;
+    while ((match = regexTag.exec(xmlString)) !== null) {
+      if (match[2] && match[2].trim()) {
+        layouts.push(match[2].trim());
+      }
+    }
+    return layouts;
+  }
+
+  async function sendAlvaroXmlToApoio() {
+    if (!currentXmlText) {
+      renderAlvaroStatusSummary({
+        loading: false,
+        isSuccess: false,
+        errorMessage: "Nenhum Request XML gerado para envio."
+      });
+      return;
+    }
+
+    const statusEl = document.getElementById('alvaro-modal-status');
+    renderAlvaroStatusSummary({ loading: true });
+
+    if (statusEl) {
+      statusEl.textContent = 'Enviando requisição PUT ao WebService Álvaro...';
+      statusEl.className = 'text-sky-400 font-bold';
+    }
+
+    try {
+      const res = await fetch('/api/lab-externo/alvaro/criar-lote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ xml: currentXmlText })
+      });
+
+      const data = await res.json();
+      
+      const responseBox = document.getElementById('alvaro-api-response-box');
+      const responseTextEl = document.getElementById('alvaro-api-response-text');
+      const responseStatusBadge = document.getElementById('alvaro-api-status-badge');
+      const responseUrlEl = document.getElementById('alvaro-api-endpoint-url');
+      const respInputArea = document.getElementById('alvaro-api-response-text');
+
+      const responseXmlStr = data.responseXml || (data.message ? `<erro>${data.message}</erro>` : '<resposta_vazia/>');
+
+      if (responseBox) responseBox.classList.remove('hidden');
+      if (responseTextEl) responseTextEl.value = responseXmlStr;
+      if (responseUrlEl) responseUrlEl.textContent = `Endpoint: ${data.url || ''}`;
+
+      if (responseStatusBadge) {
+        if (data.statusCode >= 200 && data.statusCode < 300) {
+          responseStatusBadge.textContent = `HTTP ${data.statusCode} OK`;
+          responseStatusBadge.className = "px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        } else {
+          responseStatusBadge.textContent = `HTTP ${data.statusCode || 500} ERRO`;
+          responseStatusBadge.className = "px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+        }
+      }
+
+      if (respInputArea) {
+        respInputArea.value = responseXmlStr;
+      }
+
+      // Processar e renderizar etiquetas na aba 3
+      processAndRenderAlvaroResponseXml();
+
+      // Parse do XML de resposta para verificar se incluido === "true"
+      const parsedRes = parseAlvaroResponseXml(responseXmlStr);
+
+      // Se o lote foi incluído com sucesso, atualizar o id do lote e status dos exames
+      if (parsedRes.isSuccess) {
+        const requisitions = window.TRIAGEM_REQUISITIONS || [];
+        parsedRes.solicitacoes.forEach(sol => {
+          if (!sol.incluido) return;
+          const idLisStr = String(sol.idLis || '').trim();
+          const idAlvaroStr = String(sol.idAlvaro || sol.baseBarras || '').trim();
+
+          const targetReq = requisitions.find(r => isMatchingRequisition(r, idLisStr));
+
+          if (targetReq && Array.isArray(targetReq.exams)) {
+            targetReq.exams.forEach(ex => {
+              if (ex.triagemDestination === 'alvaro' || !ex.triagemDestination) {
+                ex.idLote = idAlvaroStr;
+                ex.loteCode = idAlvaroStr;
+                ex.loteId = idAlvaroStr;
+                ex.status = 'Lote criado';
+                ex.loteStatus = 'Lote criado';
+                ex.loteAt = new Date().toISOString();
+              }
+            });
+            const allInLote = targetReq.exams.every(e => 
+              e.status === 'Lote criado' || e.loteStatus === 'Lote criado' || e.loteStatus === 'Gerado' || !!e.loteCode || !!e.idLote
+            );
+            if (allInLote) {
+              targetReq.status = 'Lote criado';
+              targetReq.loteStatus = 'Lote criado';
+            }
+          }
+        });
+
+        // Atualizar lista na tela principal
+        if (typeof renderCriarLoteScreen === 'function') {
+          renderCriarLoteScreen();
+        }
+
+        // Salvar persistência no backend
+        fetch('/admin/triagem/confirmar-lote-alvaro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ solicitacoes: parsedRes.solicitacoes })
+        })
+        .then(r => r.json())
+        .then(resData => {
+          if (resData.success) {
+            console.log(`Lote confirmado e persistido no servidor para ${resData.updatedCount} exames.`);
+          }
+        })
+        .catch(err => console.error('Erro ao persistir lote no servidor:', err));
+      }
+
+      // Atualizar aba 1 (Status do Lote)
+      renderAlvaroStatusSummary({
+        loading: false,
+        isSuccess: parsedRes.isSuccess,
+        errorMessage: parsedRes.errorMessage,
+        solicitacoes: parsedRes.solicitacoes,
+        httpStatus: data.statusCode
+      });
+
+      if (statusEl) {
+        if (parsedRes.isSuccess) {
+          statusEl.textContent = `Lote incluído com SUCESSO no Apoio Álvaro (HTTP ${data.statusCode})`;
+          statusEl.className = 'text-emerald-400 font-bold';
+        } else {
+          statusEl.textContent = `Lote NÃO foi incluído no Apoio Álvaro (HTTP ${data.statusCode || 'Erro'})`;
+          statusEl.className = 'text-rose-400 font-bold';
+        }
+      }
+
+    } catch (err) {
+      console.error("Erro ao enviar lote ao Álvaro:", err);
+      renderAlvaroStatusSummary({
+        loading: false,
+        isSuccess: false,
+        errorMessage: "Erro de comunicação com o servidor ao transmitir lote: " + err.message
+      });
+      if (statusEl) {
+        statusEl.textContent = 'Erro na transmissão do lote';
+        statusEl.className = 'text-rose-400 font-bold';
+      }
+    }
+  }
+
+  function generateDefaultAlvaroResponseXml(selectedReqs) {
+    const entidade = "<%= (configAlvaro && configAlvaro.entidade) || '19816' %>";
+    const patientsList = window.TRIAGEM_PATIENTS || [];
+    
+    if (!selectedReqs || selectedReqs.length === 0) {
+      const requisitions = window.TRIAGEM_REQUISITIONS || [];
+      selectedReqs = requisitions.filter(r => {
+        const isRTriado = String(r.status || '').trim().toLowerCase().includes('triad') || r.triado === true || String(r.triado) === 'true';
+        const triados = (r.exams || []).filter(e => {
+          const eStatus = String(e.status || '').trim().toLowerCase();
+          return isRTriado || eStatus.includes('triad') || e.triado === true || String(e.triado) === 'true';
+        });
+        return triados.some(e => getExamDestinationLab(e) === 'alvaro');
+      }).slice(0, 2);
+    }
+
+    if (!selectedReqs || selectedReqs.length === 0) {
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<aol versao="0">
+    <cadastros tempoProcessamento="245.0">
+        <pacientes tempoProcessamento="20.0">
+            <paciente idAlvaro="452072535" idLis="3"/>
+            <paciente idAlvaro="452072536" idLis="4"/>
+        </pacientes>
+        <medicos tempoProcessamento="225.0">
+            <medico crm="45678-PR" idAlvaro="4582811"/>
+            <medico crm="654321-SP" idAlvaro="4582755"/>
+        </medicos>
+    </cadastros>
+    <solicitacoes tempoProcessamento="1020.0">
+        <solicitacao idLis="0000111" incluido="true" baseBarras="6E4SA1" idAlvaro="386534953" tempoProcessamento="0.0">
+            <amostra codigoBarras="708052186344" descricao="Soro" descricaoAcondicionamento="R" descricaoMaterial="SORO" idAcondicionamento="26" idAmostra="0" idAmostraExecutor="708052186344" idDestino="54" identificacao="" lote="LT0A34873393" material="543" mnemonico="ALP.R.2" sequencia="0" volume="900.0">
+                <exame exame="TSH" incluido="true" informacao="Exame(s): TSH - Incluído(s) com sucesso!"/>
+                <layoutetiqueta>
+                    <layout>N\r\nZB\r\nq400\r\nD7\r\nA1,1,0,1,1,1,N,"ANA PAULA MENDES"\r\nA55,12,0,1,1,1,N,"DN:03/11/1994"\r\nA365,15,3,4,1,1,R,""\r\nA190,12,0,1,1,1,N,"COLETA:30/07 11:50"\r\nA1,12,0,1,1,1,N,"19816"\r\nA1,24,0,1,1,1,N,"708052186344"\r\nA120,24,0,1,1,1,N,"|386534953"\r\nA220,24,0,1,1,1,N,"|0000111"\r\nB60,36,0,2,3,6,80,N,"708052186344"\r\nA1,120,0,1,1,1,N,"TSH"\r\nA1,169,0,1,1,1,N,"SORO-SORO"\r\nA235,169,0,1,1,1,N,"V.Min:0.9 ml"\r\nA375,175,3,1,1,1,N,"ALP.R.2"\r\nP1\r\n</layout>
+                </layoutetiqueta>
+            </amostra>
+        </solicitacao>
+        <solicitacao idLis="0000112" incluido="true" baseBarras="6E4SA2" idAlvaro="386534954" tempoProcessamento="0.0">
+            <amostra codigoBarras="708052186351" descricao="Soro" descricaoAcondicionamento="R" descricaoMaterial="SORO" idAcondicionamento="26" idAmostra="0" idAmostraExecutor="708052186351" idDestino="54" identificacao="" lote="LT0A34873393" material="543" mnemonico="ALP.R.2" sequencia="0" volume="930.0">
+                <exame exame="TSH" incluido="true" informacao="Exame(s): TSH - Incluído(s) com sucesso!"/>
+                <exame exame="UREIA" incluido="true" informacao="Exame(s): UREIA - Incluído(s) com sucesso!"/>
+                <layoutetiqueta>
+                    <layout>N\r\nZB\r\nq400\r\nD7\r\nA1,1,0,1,1,1,N,"ROBERTO RODRIGUES DE OLIVEIRA"\r\nA55,12,0,1,1,1,N,"DN:18/06/1962"\r\nA365,15,3,4,1,1,R,""\r\nA190,12,0,1,1,1,N,"COLETA:30/07 11:51"\r\nA1,12,0,1,1,1,N,"19816"\r\nA1,24,0,1,1,1,N,"708052186351"\r\nA120,24,0,1,1,1,N,"|386534954"\r\nA220,24,0,1,1,1,N,"|0000112"\r\nB60,36,0,2,3,6,80,N,"708052186351"\r\nA1,120,0,1,1,1,N,"TSH,UREIA"\r\nA1,169,0,1,1,1,N,"SORO-SORO"\r\nA235,169,0,1,1,1,N,"V.Min:0.93 ml"\r\nA375,175,3,1,1,1,N,"ALP.R.2"\r\nP1\r\n</layout>
+                </layoutetiqueta>
+            </amostra>
+        </solicitacao>
+    </solicitacoes>
+</aol>`;
+    }
+
+    let baseBarcode = 708052186344;
+    let baseAlvaroId = 386534953;
+
+    let solXmlNodes = selectedReqs.map((req, rIdx) => {
+      const idLis = buildReqCodigolis(req, 1010 + rIdx);
+      const idAlvaro = String(baseAlvaroId + rIdx);
+      const barcode = String(baseBarcode + (rIdx * 7));
+
+      const rawPName = (req.patientName || 'PACIENTE TESTE').trim().toUpperCase();
+      const matchedP = patientsList.find(p => p.nome && p.nome.toLowerCase() === rawPName.toLowerCase()) || {};
+      
+      let dnStr = '03/11/1994';
+      if (matchedP.birthDate || req.patientBirthDate || req.birthDate) {
+        const b = matchedP.birthDate || req.patientBirthDate || req.birthDate;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(b)) {
+          const [y, m, d] = b.split('-');
+          dnStr = `${d}/${m}/${y}`;
+        } else dnStr = String(b);
+      }
+
+      const now = new Date();
+      const coletaStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const reqExams = req.exams || [];
+      const firstEx = reqExams[0] || {};
+      const matInfo = getSupportLabMaterialInfo(firstEx, 'alvaro');
+
+      const examsArr = reqExams.map(e => {
+        const info = getSupportLabExamInfo(e, 'alvaro');
+        return info.code;
+      });
+      const examsStr = examsArr.join(',');
+      const exListXml = reqExams.map(ex => {
+        const info = getSupportLabExamInfo(ex, 'alvaro');
+        return `<exame exame="${escapeXmlAttr(info.code)}" incluido="true" informacao="Exame(s): ${escapeXmlAttr(info.code)} - Incluído(s) com sucesso!"/>`;
+      }).join('\n                ');
+
+      const vMinVal = (900 + (rIdx * 30));
+      const vMinStr = (vMinVal / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + ' ml';
+
+      const layoutText = `N\r\nZB\r\nq400\r\nD7\r\nA1,1,0,1,1,1,N,"${rawPName}"\r\nA55,12,0,1,1,1,N,"DN:${dnStr}"\r\nA365,15,3,4,1,1,R,""\r\nA190,12,0,1,1,1,N,"COLETA:${coletaStr}"\r\nA1,12,0,1,1,1,N,"${entidade}"\r\nA1,24,0,1,1,1,N,"${barcode}"\r\nA120,24,0,1,1,1,N,"|${idAlvaro}"\r\nA220,24,0,1,1,1,N,"|${idLis}"\r\nB60,36,0,2,3,6,80,N,"${barcode}"\r\nA1,120,0,1,1,1,N,"${examsStr}"\r\nA1,169,0,1,1,1,N,"SORO-SORO"\r\nA235,169,0,1,1,1,N,"V.Min:${vMinStr}"\r\nA375,175,3,1,1,1,N,"ALP.R.2"\r\nP1\r\n`;
+
+      return `        <solicitacao idLis="${escapeXmlAttr(idLis)}" incluido="true" baseBarras="6E4SA${rIdx+1}" idAlvaro="${idAlvaro}" tempoProcessamento="0.0">
+            <amostra codigoBarras="${barcode}" descricao="${escapeXmlAttr(matInfo.desc)}" descricaoAcondicionamento="R" descricaoMaterial="${escapeXmlAttr(matInfo.desc.toUpperCase())}" idAcondicionamento="26" idAmostra="0" idAmostraExecutor="${barcode}" idDestino="54" identificacao="" lote="LT0A34873393" material="${escapeXmlAttr(matInfo.code)}" mnemonico="ALP.R.2" sequencia="0" volume="${vMinVal}.0">
+                ${exListXml}
+                <layoutetiqueta>
+                    <layout>${layoutText}</layout>
+                </layoutetiqueta>
+            </amostra>
+        </solicitacao>`;
+    }).join('\n');
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<aol versao="0">
+    <cadastros tempoProcessamento="245.0">
+        <pacientes tempoProcessamento="20.0">
+            <paciente idAlvaro="452072535" idLis="3"/>
+        </pacientes>
+    </cadastros>
+    <solicitacoes tempoProcessamento="1020.0">
+${solXmlNodes}
+    </solicitacoes>
+</aol>`;
+  }
+
+  function processAndRenderAlvaroResponseXml() {
+    const responseTextarea = document.getElementById('alvaro-api-response-text');
+    const inputArea = document.getElementById('xml-response-alvaro-input');
+    const container = document.getElementById('container-etiquetas-alvaro');
+    if (!container) return;
+
+    const xmlStr = (responseTextarea && responseTextarea.value ? responseTextarea.value : (inputArea ? inputArea.value : '')).trim();
+    currentParsedAlvaroLabels = [];
+
+    if (!xmlStr) {
+      container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-500 font-mono text-xs border border-dashed border-slate-800 rounded-2xl">Nenhum Response XML fornecido.</div>`;
+      return;
+    }
+
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+      
+      const solicitacaoNodes = xmlDoc.getElementsByTagName("solicitacao");
+      
+      for (let i = 0; i < solicitacaoNodes.length; i++) {
+        const solNode = solicitacaoNodes[i];
+        const idLis = solNode.getAttribute("idLis") || '000000';
+        const idAlvaro = solNode.getAttribute("idAlvaro") || solNode.getAttribute("baseBarras") || '000000000';
+        
+        const amostraNodes = solNode.getElementsByTagName("amostra");
+        if (amostraNodes && amostraNodes.length > 0) {
+          for (let j = 0; j < amostraNodes.length; j++) {
+            const amNode = amostraNodes[j];
+            const codigoBarras = amNode.getAttribute("codigoBarras") || idAlvaro;
+            const descricaoMaterial = (amNode.getAttribute("descricaoMaterial") || amNode.getAttribute("descricao") || "SORO").toUpperCase();
+            const mnemonico = amNode.getAttribute("mnemonico") || "ALP.R.2";
+            
+            let vol = amNode.getAttribute("volume") || "900.0";
+            let vMin = "V.Min:0.9 ml";
+            if (vol) {
+              const numVol = parseFloat(vol);
+              if (!isNaN(numVol)) {
+                vMin = "V.Min:" + (numVol / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + " ml";
+              }
+            }
+
+            // Extract exams
+            const examNodes = amNode.getElementsByTagName("exame");
+            const exames = [];
+            for (let k = 0; k < examNodes.length; k++) {
+              const exName = examNodes[k].getAttribute("exame");
+              if (exName) exames.push(exName);
+            }
+
+            // Extract layoutetiqueta / layout text
+            let layoutEpl = "";
+            const layoutNode = amNode.getElementsByTagName("layout")[0] || amNode.getElementsByTagName("layoutetiqueta")[0];
+            if (layoutNode) {
+              layoutEpl = layoutNode.textContent.trim();
+            }
+
+            // Parse values inside layoutEpl if available
+            let patientName = "PACIENTE";
+            let patientDN = "";
+            let coletaStr = "";
+            let entidade = "<%= (configAlvaro && configAlvaro.entidade) || '19816' %>";
+
+            if (layoutEpl) {
+              const matchName = layoutEpl.match(/A1,1,0,1,1,1,N,"([^"]+)"/);
+              if (matchName) patientName = matchName[1];
+
+              const matchDN = layoutEpl.match(/A55,12,0,1,1,1,N,"([^"]+)"/);
+              if (matchDN) patientDN = matchDN[1];
+
+              const matchColeta = layoutEpl.match(/A190,12,0,1,1,1,N,"([^"]+)"/);
+              if (matchColeta) coletaStr = matchColeta[1];
+
+              const matchEntidade = layoutEpl.match(/A1,12,0,1,1,1,N,"([^"]+)"/);
+              if (matchEntidade) entidade = matchEntidade[1];
+            }
+
+            currentParsedAlvaroLabels.push({
+              idLis,
+              idAlvaro,
+              codigoBarras,
+              descricaoMaterial,
+              mnemonico,
+              vMin,
+              exames: exames.length > 0 ? exames : ["EXAMES"],
+              layoutEpl,
+              patientName,
+              patientDN,
+              coletaStr,
+              entidade
+            });
+          }
+        } else {
+          // Check if layout node exists directly inside solicitacao
+          let layoutEpl = "";
+          const layoutNode = solNode.getElementsByTagName("layout")[0] || solNode.getElementsByTagName("layoutetiqueta")[0];
+          if (layoutNode) {
+            layoutEpl = layoutNode.textContent.trim();
+          }
+
+          let patientName = "PACIENTE";
+          let patientDN = "";
+          let coletaStr = "";
+          let entidade = "<%= (configAlvaro && configAlvaro.entidade) || '19816' %>";
+
+          if (layoutEpl) {
+            const matchName = layoutEpl.match(/A1,1,0,1,1,1,N,"([^"]+)"/);
+            if (matchName) patientName = matchName[1];
+
+            const matchDN = layoutEpl.match(/A55,12,0,1,1,1,N,"([^"]+)"/);
+            if (matchDN) patientDN = matchDN[1];
+
+            const matchColeta = layoutEpl.match(/A190,12,0,1,1,1,N,"([^"]+)"/);
+            if (matchColeta) coletaStr = matchColeta[1];
+
+            const matchEntidade = layoutEpl.match(/A1,12,0,1,1,1,N,"([^"]+)"/);
+            if (matchEntidade) entidade = matchEntidade[1];
+          }
+
+          if (layoutEpl || idAlvaro) {
+            currentParsedAlvaroLabels.push({
+              idLis,
+              idAlvaro,
+              codigoBarras: idAlvaro,
+              descricaoMaterial: "SORO",
+              mnemonico: "ALP.R.2",
+              vMin: "V.Min: 1.0 ml",
+              exames: ["EXAME"],
+              layoutEpl,
+              patientName,
+              patientDN,
+              coletaStr,
+              entidade
+            });
+          }
+        }
+      }
+
+      // Fallback: If no labels found via DOM parser, search layout/layoutetiqueta via regex
+      if (currentParsedAlvaroLabels.length === 0) {
+        const regexTag = /<(layoutetiqueta|layout)[^>]*>([\s\S]*?)<\/\1>/gi;
+        let match;
+        let idxCounter = 1;
+        while ((match = regexTag.exec(xmlStr)) !== null) {
+          const rawLayout = match[2] ? match[2].trim() : '';
+          if (rawLayout) {
+            let patientName = `PACIENTE #${idxCounter}`;
+            let patientDN = "";
+            let coletaStr = "";
+            let idLis = `${idxCounter}`;
+            let idAlvaro = `${idxCounter}`;
+            let codigoBarras = idAlvaro;
+
+            const matchName = rawLayout.match(/A1,1,0,1,1,1,N,"([^"]+)"/);
+            if (matchName) patientName = matchName[1];
+
+            const matchDN = rawLayout.match(/A55,12,0,1,1,1,N,"([^"]+)"/);
+            if (matchDN) patientDN = matchDN[1];
+
+            const matchColeta = rawLayout.match(/A190,12,0,1,1,1,N,"([^"]+)"/);
+            if (matchColeta) coletaStr = matchColeta[1];
+
+            const matchLis = rawLayout.match(/\|([0-9A-Za-z]+)\r?\n?$/);
+            if (matchLis) idLis = matchLis[1];
+
+            currentParsedAlvaroLabels.push({
+              idLis,
+              idAlvaro,
+              codigoBarras,
+              descricaoMaterial: "SORO",
+              mnemonico: "ALP.R.2",
+              vMin: "V.Min: 1.0 ml",
+              exames: ["EXAME"],
+              layoutEpl: rawLayout,
+              patientName,
+              patientDN,
+              coletaStr,
+              entidade: "<%= (configAlvaro && configAlvaro.entidade) || '19816' %>"
+            });
+            idxCounter++;
+          }
+        }
+      }
+
+      if (currentParsedAlvaroLabels.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-8 text-center text-amber-400 font-mono text-xs border border-dashed border-amber-800/60 rounded-2xl">Nenhuma solicitação ou etiqueta encontrada no XML fornecido.</div>`;
+        return;
+      }
+
+      // Render Cards
+      container.innerHTML = currentParsedAlvaroLabels.map((lbl, idx) => {
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-amber-400 font-mono">Etiqueta #${idx + 1}</span>
+                <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">Req: #${lbl.idLis}</span>
+                <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30">Álvaro: ${lbl.idAlvaro}</span>
+              </div>
+              <button 
+                type="button" 
+                onclick="copySingleEpl('${encodeURIComponent(lbl.layoutEpl)}')" 
+                class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-mono font-bold rounded-lg border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+              >
+                📋 Copiar EPL
+              </button>
+            </div>
+
+            <!-- Sticker Graphic (50x30mm ratio) -->
+            <div class="bg-white rounded-xl p-3 border-2 border-dashed border-slate-400 text-slate-950 font-mono text-xs shadow-md space-y-1 select-none w-full relative">
+              <div class="font-black text-xs sm:text-sm uppercase tracking-tight text-slate-950 truncate border-b border-slate-300 pb-0.5">
+                ${escapeXmlAttr(lbl.patientName)}
+              </div>
+              
+              <div class="flex justify-between items-center text-[10px] font-bold text-slate-800">
+                <span>${escapeXmlAttr(lbl.patientDN)}</span>
+                <span>${escapeXmlAttr(lbl.coletaStr)}</span>
+              </div>
+
+              <div class="text-[10px] font-bold text-slate-900 flex justify-between tracking-tighter">
+                <span>${escapeXmlAttr(lbl.entidade)}</span>
+                <span>${escapeXmlAttr(lbl.codigoBarras)}</span>
+                <span>|${escapeXmlAttr(lbl.idAlvaro)}</span>
+                <span>|${escapeXmlAttr(lbl.idLis)}</span>
+              </div>
+
+              <div class="py-1 flex justify-center items-center bg-white overflow-hidden">
+                <svg id="barcode-svg-${idx}" class="h-10 w-full max-w-[260px]"></svg>
+              </div>
+
+              <div class="font-black text-xs text-slate-950 uppercase truncate">
+                ${escapeXmlAttr(lbl.exames.join(', '))}
+              </div>
+
+              <div class="flex justify-between items-center text-[10px] font-bold border-t border-slate-300 pt-0.5 text-slate-800">
+                <span>${escapeXmlAttr(lbl.descricaoMaterial)}-SORO</span>
+                <span>${escapeXmlAttr(lbl.vMin)}</span>
+                <span class="font-black text-slate-950">${escapeXmlAttr(lbl.mnemonico)}</span>
+              </div>
+            </div>
+
+            <!-- EPL Accordion -->
+            <details class="group">
+              <summary class="text-[11px] text-slate-400 hover:text-amber-400 cursor-pointer font-mono font-bold select-none flex items-center gap-1">
+                <span>▶ Exibir Comando Fonte EPL2 (Impressora)</span>
+              </summary>
+              <pre class="mt-2 p-3 bg-slate-900 border border-slate-800 rounded-xl text-[10.5px] font-mono text-emerald-400 overflow-x-auto whitespace-pre leading-relaxed max-h-40">${escapeXmlAttr(lbl.layoutEpl || 'Sem EPL2 informado')}</pre>
+            </details>
+          </div>
+        `;
+      }).join('');
+
+      // Render Barcodes via JsBarcode
+      setTimeout(() => {
+        currentParsedAlvaroLabels.forEach((lbl, idx) => {
+          try {
+            if (window.JsBarcode) {
+              JsBarcode("#barcode-svg-" + idx, lbl.codigoBarras, {
+                format: "CODE128",
+                width: 1.6,
+                height: 38,
+                displayValue: false,
+                margin: 0
+              });
+            }
+          } catch(e) {
+            console.error('Erro ao renderizar código de barras:', e);
+          }
+        });
+      }, 50);
+
+    } catch(err) {
+      console.error('Erro ao processar Response XML:', err);
+      container.innerHTML = `<div class="col-span-full p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono text-xs rounded-xl">Erro de Sintaxe XML: ${err.message}</div>`;
+    }
+  }
+
+  function formatEplLayoutClient(rawEtiqueta) {
+    if (!rawEtiqueta) return '';
+    let str = String(rawEtiqueta).trim();
+
+    // Remove CDATA or XML wrapper tags if present
+    str = str.replace(/^<!\[CDATA\[/i, '').replace(/\]\]>$/i, '').trim();
+
+    // Unescape XML entities
+    str = str
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+
+    // Convert literal "\r\n" or "\n" sequence strings into real line breaks
+    if (str.includes('\\r') || str.includes('\\n')) {
+      str = str.replace(/\\r\\n/g, '\r\n').replace(/\\r/g, '\r').replace(/\\n/g, '\n');
+    }
+
+    // Split into lines and clean whitespace on each EPL command line
+    const lines = str.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+    // Rejoin with standard CRLF (\r\n) for thermal printer REST API
+    let formatted = lines.join('\r\n');
+    if (formatted && !formatted.endsWith('\r\n')) {
+      formatted += '\r\n';
+    }
+
+    return formatted;
+  }
+
+  function getReceivedXmlLabelLayouts() {
+    const layouts = [];
+
+    // 1. Tentar das etiquetas já extraídas no modal (currentExtractedLayouts)
+    if (typeof currentExtractedLayouts !== 'undefined' && currentExtractedLayouts && currentExtractedLayouts.length > 0) {
+      currentExtractedLayouts.forEach(item => {
+        if (item.content && item.content.trim()) {
+          layouts.push(item.content.trim());
+        }
+      });
+    }
+
+    // 2. Tentar das etiquetas do response XML parseado (currentParsedAlvaroLabels)
+    if (layouts.length === 0 && typeof currentParsedAlvaroLabels !== 'undefined' && currentParsedAlvaroLabels && currentParsedAlvaroLabels.length > 0) {
+      currentParsedAlvaroLabels.forEach(item => {
+        const val = (item.layoutEpl || item.content || item.epl || item.rawEpl || '').trim();
+        if (val) {
+          layouts.push(val);
+        }
+      });
+    }
+
+    // 3. Se ainda não tiver, fazer regex/DOM parse no text contido na textarea do Response XML
+    if (layouts.length === 0) {
+      const respTextarea = document.getElementById('alvaro-api-response-text');
+      const respInput = document.getElementById('xml-response-alvaro-input');
+      const xmlString = (respTextarea && respTextarea.value ? respTextarea.value : (respInput ? respInput.value : '')).trim();
+
+      if (xmlString) {
+        try {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+          const layoutEtiquetaNodes = Array.from(xmlDoc.getElementsByTagName('layoutetiqueta'));
+          const layoutNodes = Array.from(xmlDoc.getElementsByTagName('layout'));
+          const allNodes = [...layoutEtiquetaNodes];
+          layoutNodes.forEach(node => {
+            if (!allNodes.includes(node)) allNodes.push(node);
+          });
+
+          allNodes.forEach(node => {
+            const txt = (node.textContent || '').trim();
+            if (txt) layouts.push(txt);
+          });
+        } catch (e) {
+          console.warn('Erro ao parsear XML para extrair etiquetas:', e);
+        }
+
+        if (layouts.length === 0) {
+          const regexTag = /<(layoutetiqueta|layout)[^>]*>([\s\S]*?)<\/\1>/gi;
+          let match;
+          while ((match = regexTag.exec(xmlString)) !== null) {
+            const content = match[2].trim();
+            if (content) layouts.push(content);
+          }
+        }
+      }
+    }
+
+    return layouts;
+  }
+
+  async function printAlvaroLabels(singleEtiquetaContent = null) {
+    let labelsToPrint = [];
+
+    if (singleEtiquetaContent && typeof singleEtiquetaContent === 'string' && singleEtiquetaContent.trim()) {
+      labelsToPrint = [singleEtiquetaContent.trim()];
+    } else {
+      labelsToPrint = getReceivedXmlLabelLayouts();
+    }
+
+    if (labelsToPrint.length === 0) {
+      showToast('Nenhuma etiqueta (layout) encontrada no XML de resposta do lote.', 'error');
+      return;
+    }
+
+    const impressoraNome = "ZDesigner ZD230-203dpi ZPL";
+    const printIp = "186.237.152.170";
+    const printPorta = "8085";
+
+    showToast(`Enviando ${labelsToPrint.length} etiqueta(s) via REST para ${impressoraNome}...`, 'info');
+
+    let successCount = 0;
+
+    for (let i = 0; i < labelsToPrint.length; i++) {
+      const rawEtiquetaStr = labelsToPrint[i];
+      const etiquetaStr = formatEplLayoutClient(rawEtiquetaStr);
+
+      console.log(`[PRINT REST REQUEST] Impressora: "${impressoraNome}"`);
+      console.log(`[PRINT REST REQUEST] Etiqueta #${i+1} layout retornado (formatado):\n${etiquetaStr}`);
+
+      // 1. Envio REST via Proxy do Servidor
+      try {
+        const res = await fetch('/api/impressoras/imprimir', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            impressora: impressoraNome,
+            etiqueta: etiquetaStr,
+            ip: printIp,
+            porta: printPorta
+          })
+        });
+
+        const data = await res.json();
+        console.log(`[REST PRINT PROXY] Resposta #${i+1}:`, data);
+        if (data && data.success) successCount++;
+      } catch (err) {
+        console.warn(`[REST PRINT PROXY] Erro no servidor:`, err.message);
+      }
+
+      // 2. Envio REST direto no cliente (CURL endpoint http://186.237.152.170:8085/imprimir)
+      try {
+        await fetch(`http://${printIp}:${printPorta}/imprimir`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            impressora: impressoraNome,
+            etiqueta: etiquetaStr
+          })
+        });
+        console.log(`[REST PRINT DIRECT] Sucesso enviando para http://${printIp}:${printPorta}/imprimir`);
+      } catch (directErr) {
+        console.log(`[REST PRINT DIRECT] Tentativa direta client-side:`, directErr.message);
+      }
+    }
+
+    showToast(`Etiqueta(s) enviada(s) para a impressora ${impressoraNome} (${printIp}:${printPorta})!`, 'success');
+  }
+
+  function copySingleEpl(encodedEpl) {
+    const text = decodeURIComponent(encodedEpl);
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Código EPL copiado para a área de transferência!', 'success');
+    }).catch(err => {
+      showToast('Erro ao copiar código EPL.', 'error');
+    });
+  }
+
+  function copyAllAlvaroEpl() {
+    if (!currentParsedAlvaroLabels || currentParsedAlvaroLabels.length === 0) {
+      showToast('Nenhuma etiqueta disponível.', 'error');
+      return;
+    }
+    const concatenated = currentParsedAlvaroLabels.map(l => l.layoutEpl).join('\n\n');
+    navigator.clipboard.writeText(concatenated).then(() => {
+      showToast('Todos os comandos EPL2 copiados!', 'success');
+    }).catch(err => {
+      showToast('Erro ao copiar comandos EPL.', 'error');
+    });
+  }
+
+  function closeXmlAlvaroModal() {
+    const modal = document.getElementById('modal-xml-alvaro');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function copyXmlAlvaroToClipboard() {
+    const xmlToCopy = currentXmlText || document.getElementById('xml-code-alvaro')?.textContent || '';
+    navigator.clipboard.writeText(xmlToCopy).then(() => {
+      showToast('XML copiado para a área de transferência!', 'success');
+    }).catch(err => {
+      console.error('Erro ao copiar XML:', err);
+      showToast('Erro ao copiar XML.', 'error');
+    });
+  }
+
+  function copyCurlAlvaroToClipboard() {
+    const curlEl = document.getElementById('curl-code-alvaro');
+    const curlToCopy = curlEl ? curlEl.value : '';
+    if (!curlToCopy) {
+      showToast('Nenhum comando cURL disponível para copiar.', 'error');
+      return;
+    }
+    navigator.clipboard.writeText(curlToCopy).then(() => {
+      showToast('Comando cURL copiado para a área de transferência!', 'success');
+    }).catch(err => {
+      console.error('Erro ao copiar cURL:', err);
+      showToast('Erro ao copiar cURL.', 'error');
+    });
+  }
+
+  let currentTargetLab = null;
+  let currentSelectedItems = [];
+
+  // Helper para determinar laboratório padrão ou triado de um exame
+  function getExamDestinationLab(ex) {
+    if (ex.triagemDestination) {
+      const dest = String(ex.triagemDestination).toLowerCase();
+      if (dest.includes('alvaro') || dest.includes('álvaro')) return 'alvaro';
+      if (dest.includes('pardini') || dest.includes('hermes') || dest.includes('hpardini')) return 'pardini';
+      if (dest.includes('interno') || dest.includes('proprio') || dest.includes('próprio')) return 'interno';
+    }
+
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const code = String(ex.code || ex.codigo || '').trim().toLowerCase();
+    const name = String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase();
+    
+    const catExam = catalogExams.find(c => {
+      const cCode = String(c.code || c.codigo || '').trim().toLowerCase();
+      const cName = String(c.name || c.nome || c.exame || '').trim().toLowerCase();
+      return (code && cCode && code === cCode) || (name && cName && name === cName);
+    });
+
+    if (catExam && catExam.supportLab) {
+      const labStr = String(catExam.supportLab).toLowerCase();
+      if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+      if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+      if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+    }
+
+    if (ex.supportLab) {
+      const labStr = String(ex.supportLab).toLowerCase();
+      if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+      if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+      if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+    }
+
+    return 'interno';
+  }
+
+  // Obter custos
+  function getExamCost(ex, lab) {
+    let cost = null;
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const code = String(ex.code || ex.codigo || '').trim().toLowerCase();
+    const name = String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase();
+    const catExam = catalogExams.find(c => {
+      const cCode = String(c.code || c.codigo || '').trim().toLowerCase();
+      const cName = String(c.name || c.nome || c.exame || '').trim().toLowerCase();
+      return (code && cCode && code === cCode) || (name && cName && name === cName);
+    });
+
+    if (catExam) {
+      if (lab === 'alvaro') cost = catExam.priceAlvaro || catExam.custoAlvaro;
+      if (lab === 'pardini') cost = catExam.pricePardini || catExam.custoPardini;
+    }
+
+    if (!cost) {
+      if (lab === 'alvaro') cost = ex.custoAlvaro || ex.valorAlvaro;
+      if (lab === 'pardini') cost = ex.custoPardini || ex.valorPardini;
+    }
+
+    return cost ? String(cost).replace('.', ',') : '0,00';
+  }
+
+  // Helper para obter Código e Nome do Exame no Laboratório de Apoio selecionado
+  function getSupportLabExamInfo(ex, lab = 'alvaro') {
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const catExam = catalogExams.find(c => 
+      (c.code && String(c.code).toLowerCase() === String(ex.code || ex.codigo || '').toLowerCase()) ||
+      (c.id && String(c.id) === String(ex.code || ex.id || '')) ||
+      (c.jalisCode && String(c.jalisCode).toLowerCase() === String(ex.code || '').toLowerCase()) ||
+      (c.codigoAlvaro && String(c.codigoAlvaro).toLowerCase() === String(ex.code || '').toLowerCase())
+    );
+
+    let supportCode = ex.codigoAlvaro || ex.codigoApoio || '';
+    let supportName = ex.nomeApoio || ex.exameApoio || '';
+
+    const targetLabKey = (lab || 'alvaro').toLowerCase(); // 'alvaro' or 'pardini'
+
+    if (catExam) {
+      // 1. Check labExternoList inside materiaisColetados
+      if (Array.isArray(catExam.materiaisColetados)) {
+        for (const mat of catExam.materiaisColetados) {
+          if (Array.isArray(mat.labExternoList)) {
+            const item = mat.labExternoList.find(l => l.lab && String(l.lab).toLowerCase().includes(targetLabKey));
+            if (item) {
+              if (item.codigo) supportCode = String(item.codigo).trim();
+              if (item.exame) supportName = String(item.exame).trim();
+              if (supportCode && supportName) break;
+            }
+          }
+        }
+      }
+
+      // 2. Check labExternoList at root of catExam
+      if ((!supportCode || !supportName) && Array.isArray(catExam.labExternoList)) {
+        const item = catExam.labExternoList.find(l => l.lab && String(l.lab).toLowerCase().includes(targetLabKey));
+        if (item) {
+          if (!supportCode && item.codigo) supportCode = String(item.codigo).trim();
+          if (!supportName && item.exame) supportName = String(item.exame).trim();
+        }
+      }
+
+      // 3. Check supportLabsData
+      if ((!supportCode || !supportName) && catExam.supportLabsData && catExam.supportLabsData[targetLabKey]) {
+        const labData = catExam.supportLabsData[targetLabKey];
+        if (!supportCode && labData.code) supportCode = String(labData.code).trim();
+        if (!supportName && labData.name) supportName = String(labData.name).trim();
+      }
+
+      // 4. Check specific fields like codigoAlvaro / codigoPardini
+      if (!supportCode) {
+        if (targetLabKey.includes('alvaro')) {
+          supportCode = catExam.codigoAlvaro || '';
+        } else if (targetLabKey.includes('pardini')) {
+          supportCode = catExam.codigoPardini || '';
+        }
+      }
+    }
+
+    // Fallbacks diretos para exames conhecidos
+    const codeUpper = String(ex.code || ex.codigo || '').toUpperCase();
+    const nameUpper = String(ex.name || ex.nome || (catExam && catExam.name) || '').toUpperCase();
+
+    if (codeUpper === 'UREI12' || nameUpper.includes('URÉIA') || nameUpper.includes('UREIA')) {
+      supportCode = 'UREIA';
+      supportName = 'UREIA';
+    } else if (codeUpper === 'TSH04') {
+      supportCode = supportCode || 'TSH04';
+      supportName = supportName || 'Hormônio Tireoestimulante (TSH)';
+    }
+
+    if (!supportCode) supportCode = ex.code || ex.codigo || 'S/COD';
+    if (!supportName) supportName = ex.name || ex.nome || ex.exame || (catExam && catExam.name) || 'Exame';
+
+    return { code: supportCode, name: supportName };
+  }
+
+  // Helper para obter Código e Descrição do Material do Exame no Cadastro do Exame (Aba Triagem)
+  function getSupportLabMaterialInfo(ex, lab = 'alvaro') {
+    const targetLabKey = (lab || 'alvaro').toLowerCase();
+    const catalogExams = window.CATALOG_EXAMS || [];
+
+    const catExam = catalogExams.find(c => 
+      (c.code && String(c.code).toLowerCase() === String(ex.code || ex.codigo || '').toLowerCase()) ||
+      (c.id && String(c.id) === String(ex.code || ex.id || '')) ||
+      (c.jalisCode && String(c.jalisCode).toLowerCase() === String(ex.code || '').toLowerCase()) ||
+      (c.codigoAlvaro && String(c.codigoAlvaro).toLowerCase() === String(ex.code || '').toLowerCase()) ||
+      (c.name && String(c.name).trim().toLowerCase() === String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase())
+    );
+
+    let matCode = '';
+    let matDesc = '';
+
+    function parseMaterialStr(raw) {
+      if (!raw) return { code: '', desc: '' };
+      const str = String(raw).trim();
+      if (!str) return { code: '', desc: '' };
+
+      if (str.includes('-')) {
+        const parts = str.split('-');
+        const p1 = parts[0].trim();
+        const p2 = parts.slice(1).join('-').trim();
+        if (/^\d+$/.test(p1) || (p1.length <= 6 && /\d/.test(p1))) {
+          return { code: p1, desc: p2 || p1 };
+        } else if (/^\d+$/.test(p2)) {
+          return { code: p2, desc: p1 || p2 };
+        }
+        return { code: p1, desc: p2 || p1 };
+      } else if (str.includes(':')) {
+        const parts = str.split(':');
+        const p1 = parts[0].trim();
+        const p2 = parts.slice(1).join(':').trim();
+        return { code: p1, desc: p2 || p1 };
+      }
+
+      if (/^\d+$/.test(str) || (str.length <= 8 && /\d/.test(str))) {
+        return { code: str, desc: str };
+      }
+
+      return { code: '', desc: str };
+    }
+
+    if (catExam) {
+      let matchingLabItem = null;
+
+      // 1. Verificar em labExternoList na raiz do cadastro do exame (Aba Triagem)
+      if (Array.isArray(catExam.labExternoList)) {
+        matchingLabItem = catExam.labExternoList.find(l => l && l.lab && String(l.lab).toLowerCase().includes(targetLabKey));
+        if (!matchingLabItem && catExam.labExternoList.some(l => l && l.padrao)) {
+          matchingLabItem = catExam.labExternoList.find(l => l && l.padrao);
+        }
+      }
+
+      // 2. Verificar em materiaisColetados -> labExternoList
+      if (!matchingLabItem && Array.isArray(catExam.materiaisColetados)) {
+        for (const mat of catExam.materiaisColetados) {
+          if (Array.isArray(mat.labExternoList)) {
+            matchingLabItem = mat.labExternoList.find(l => l && l.lab && String(l.lab).toLowerCase().includes(targetLabKey));
+            if (matchingLabItem) break;
+          }
+        }
+      }
+
+      if (matchingLabItem) {
+        if (matchingLabItem.materialCode || matchingLabItem.materialCodigo || matchingLabItem.codigoMaterial) {
+          matCode = String(matchingLabItem.materialCode || matchingLabItem.materialCodigo || matchingLabItem.codigoMaterial).trim();
+        }
+        if (matchingLabItem.materialDesc || matchingLabItem.materialApoio || matchingLabItem.descricaoMaterial) {
+          matDesc = String(matchingLabItem.materialDesc || matchingLabItem.materialApoio || matchingLabItem.descricaoMaterial).trim();
+        }
+
+        if ((!matCode || !matDesc) && matchingLabItem.material) {
+          const parsed = parseMaterialStr(matchingLabItem.material);
+          if (!matCode && parsed.code) matCode = parsed.code;
+          if (!matDesc && parsed.desc) matDesc = parsed.desc;
+        }
+      }
+
+      // 3. Verificar em supportLabsData
+      if ((!matCode || !matDesc) && catExam.supportLabsData && catExam.supportLabsData[targetLabKey]) {
+        const sData = catExam.supportLabsData[targetLabKey];
+        if (!matCode) matCode = String(sData.materialCode || sData.materialCodigo || sData.codigoMaterial || '').trim();
+        if (!matDesc) matDesc = String(sData.materialDesc || sData.materialApoio || sData.material || '').trim();
+        if ((!matCode || !matDesc) && sData.material) {
+          const parsed = parseMaterialStr(sData.material);
+          if (!matCode && parsed.code) matCode = parsed.code;
+          if (!matDesc && parsed.desc) matDesc = parsed.desc;
+        }
+      }
+
+      // 4. Campos raiz do catExam
+      if (!matCode) {
+        if (targetLabKey.includes('alvaro')) {
+          matCode = catExam.codigoMaterialAlvaro || catExam.materialAlvaroCode || '';
+        } else if (targetLabKey.includes('pardini')) {
+          matCode = catExam.codigoMaterialPardini || catExam.materialPardiniCode || '';
+        }
+        if (!matCode) matCode = catExam.materialCode || catExam.materialCodigo || catExam.codigoMaterial || '';
+      }
+      if (!matDesc) {
+        if (targetLabKey.includes('alvaro')) {
+          matDesc = catExam.materialAlvaro || '';
+        } else if (targetLabKey.includes('pardini')) {
+          matDesc = catExam.materialPardini || '';
+        }
+        if (!matDesc) matDesc = catExam.materialApoio || catExam.materialDesc || catExam.material || '';
+      }
+    }
+
+    // 5. Verificar objeto de exame na requisição
+    if (!matCode) {
+      matCode = ex.materialCode || ex.materialCodigo || ex.codigoMaterial || '';
+    }
+    if (!matDesc) {
+      matDesc = ex.materialApoio || ex.materialDesc || ex.material || ex.recipiente || '';
+    }
+
+    if (matDesc && !matCode) {
+      const parsed = parseMaterialStr(matDesc);
+      if (parsed.code) matCode = parsed.code;
+      if (parsed.desc && parsed.desc !== matDesc) matDesc = parsed.desc;
+    }
+
+    // Default fallbacks
+    if (!matCode) {
+      matCode = targetLabKey.includes('alvaro') ? '543' : 'SORO';
+    }
+    if (!matDesc) {
+      matDesc = 'Soro';
+    }
+
+    return { code: matCode, desc: matDesc };
+  }
+
+  // Helper para obter o código do setor (2 dígitos) do cadastro de exames (primeira aba / sub-aba Setores)
+  function getExamSetorCode(ex) {
+    const defaultSetor = (window.CONFIG_ALVARO && window.CONFIG_ALVARO.setorPadrao) ? window.CONFIG_ALVARO.setorPadrao : '11';
+    if (!ex) return defaultSetor.padStart(2, '0').slice(-2);
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const allSetores = window.SETORES || [];
+
+    const catExam = catalogExams.find(c => 
+      (c.code && String(c.code).toLowerCase() === String(ex.code || ex.codigo || '').toLowerCase()) ||
+      (c.id && String(c.id) === String(ex.code || ex.id || '')) ||
+      (c.jalisCode && String(c.jalisCode).toLowerCase() === String(ex.code || '').toLowerCase()) ||
+      (c.codigoAlvaro && String(c.codigoAlvaro).toLowerCase() === String(ex.code || '').toLowerCase()) ||
+      (c.name && String(c.name).trim().toLowerCase() === String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase())
+    );
+
+    let rawSetorCod = '';
+    let rawSetorName = '';
+
+    if (catExam) {
+      // 1. Aba 'Setores' do cadastro do exame (sub-aba setores / catExam.setores)
+      if (Array.isArray(catExam.setores) && catExam.setores.length > 0) {
+        const s0 = catExam.setores[0];
+        if (typeof s0 === 'object' && s0 !== null) {
+          if (s0.codigo) rawSetorCod = String(s0.codigo);
+          if (s0.descricao) rawSetorName = String(s0.descricao);
+        } else if (typeof s0 === 'string') {
+          rawSetorName = s0;
+        }
+      }
+
+      // 2. Outros campos no cadastro do exame
+      if (!rawSetorCod && !rawSetorName) {
+        if (catExam.setor) rawSetorName = String(catExam.setor);
+        else if (catExam.category) rawSetorName = String(catExam.category);
+        else if (catExam.setorBancada) rawSetorName = String(catExam.setorBancada);
+      }
+    }
+
+    // 3. Objeto do exame na requisição
+    if (!rawSetorCod && !rawSetorName) {
+      if (ex.setorCode || ex.codigoSetor) rawSetorCod = String(ex.setorCode || ex.codigoSetor);
+      else if (ex.setor) rawSetorName = String(ex.setor);
+    }
+
+    // Se temos nome do setor mas não o código numérico, procura na lista global de setores
+    if ((!rawSetorCod || isNaN(parseInt(rawSetorCod, 10))) && rawSetorName) {
+      const matched = allSetores.find(s => 
+        s.descricao && s.descricao.trim().toLowerCase() === rawSetorName.trim().toLowerCase()
+      ) || allSetores.find(s => 
+        s.descricao && (s.descricao.trim().toLowerCase().includes(rawSetorName.trim().toLowerCase()) || rawSetorName.trim().toLowerCase().includes(s.descricao.trim().toLowerCase()))
+      );
+      if (matched && matched.codigo) {
+        rawSetorCod = String(matched.codigo);
+      }
+    }
+
+    let numericCode = (rawSetorCod || '').replace(/\D/g, '');
+    if (!numericCode) {
+      numericCode = defaultSetor;
+    }
+
+    return numericCode.padStart(2, '0').slice(-2);
+  }
+
+  // Helper para construir o codigolis formatado ("01" + 8 dígitos da req + 2 dígitos do setor)
+  function buildReqCodigolis(req, defaultReqNum = 1017) {
+    const defaultSetor = (window.CONFIG_ALVARO && window.CONFIG_ALVARO.setorPadrao) ? window.CONFIG_ALVARO.setorPadrao : '11';
+    let rawReqCode = String(req ? (req.requisitionCode || req.id || defaultReqNum) : defaultReqNum).trim();
+    let reqDigits = rawReqCode.replace(/\D/g, '');
+    if (!reqDigits) reqDigits = String(defaultReqNum);
+    const reqCodePadded = reqDigits.padStart(8, '0').slice(-8);
+
+    const reqExams = (req && req.exams) ? req.exams : [];
+    const firstEx = reqExams[0] || null;
+    const sectorCodeStr = firstEx ? getExamSetorCode(firstEx) : defaultSetor.padStart(2, '0').slice(-2);
+
+    return '01' + reqCodePadded + sectorCodeStr;
+  }
+
+  // Helper para verificar se a requisição corresponde ao idLis retornado pelo apoio
+  function isMatchingRequisition(r, idLisStr) {
+    if (!r || !idLisStr) return false;
+    const cleanLis = String(idLisStr).trim();
+    const reqId = String(r.id || '').trim();
+    const reqCode = String(r.requisitionCode || '').trim();
+    const reqCodeAlt = String(r.code || '').trim();
+
+    if (reqId === cleanLis || reqCode === cleanLis || reqCodeAlt === cleanLis) return true;
+
+    const lisDigitsOnly = cleanLis.replace(/\D/g, '');
+    let extractedReqNum = lisDigitsOnly;
+    if (lisDigitsOnly.length >= 10 && lisDigitsOnly.startsWith('01')) {
+      extractedReqNum = lisDigitsOnly.slice(2, lisDigitsOnly.length - 2).replace(/^0+/, '');
+    }
+
+    const reqNumOnly = (reqCode || reqId || reqCodeAlt).replace(/\D/g, '').replace(/^0+/, '');
+
+    if (extractedReqNum && reqNumOnly && extractedReqNum === reqNumOnly) return true;
+    if (reqId && cleanLis.includes(reqId)) return true;
+    if (reqCode && cleanLis.includes(reqCode)) return true;
+
+    return false;
+  }
+
+  // Renderizar a tela de Criar Lote
+  function renderCriarLoteScreen() {
+    const requisitions = window.TRIAGEM_REQUISITIONS || [];
+    const alvaroContainer = document.getElementById('container-pacientes-alvaro');
+    const pardiniContainer = document.getElementById('container-pacientes-pardini');
+
+    if (!alvaroContainer || !pardiniContainer) return;
+
+    alvaroContainer.innerHTML = '';
+    pardiniContainer.innerHTML = '';
+
+    let totalTriadosCount = 0;
+    let alvaroPatientsCount = 0;
+    let alvaroExamsCount = 0;
+    let pardiniPatientsCount = 0;
+    let pardiniExamsCount = 0;
+
+    requisitions.forEach(req => {
+      const reqExams = req.exams || [];
+      const reqId = req.requisitionCode || req.id;
+      
+      // Filtrar apenas exames que foram TRIADOS e ainda PENDENTES de criação de lote
+      const isReqTriado = String(req.status || '').trim().toLowerCase().includes('triad') || req.triado === true || String(req.triado) === 'true';
+      const triadosExams = reqExams.filter(e => {
+        const eStatus = String(e.status || '').trim().toLowerCase();
+        const eLoteStatus = String(e.loteStatus || '').trim().toLowerCase();
+        const isTriado = isReqTriado || eStatus.includes('triad') || e.triado === true || String(e.triado) === 'true';
+
+        // Exames com lote já criado ou gerado devem sumir da tela de criação de lote
+        const hasLoteCriado = eStatus === 'lote criado' || 
+                              eLoteStatus === 'lote criado' || 
+                              eLoteStatus === 'gerado' || 
+                              !!e.idLote || 
+                              !!e.loteCode;
+
+        return isTriado && !hasLoteCriado;
+      });
+
+      if (triadosExams.length === 0) return; // Apenas exames pendentes de lote!
+
+      totalTriadosCount++;
+
+      // Separar exames por laboratório
+      const alvaroExams = triadosExams.filter(e => getExamDestinationLab(e) === 'alvaro');
+      const pardiniExams = triadosExams.filter(e => getExamDestinationLab(e) === 'pardini');
+
+      // Se houver exames Álvaro para este paciente
+      if (alvaroExams.length > 0) {
+        alvaroPatientsCount++;
+        alvaroExamsCount += alvaroExams.length;
+        const cardHtml = createPatientColumnCard(req, alvaroExams, 'alvaro');
+        alvaroContainer.insertAdjacentHTML('beforeend', cardHtml);
+      }
+
+      // Se houver exames Pardini para este paciente
+      if (pardiniExams.length > 0) {
+        pardiniPatientsCount++;
+        pardiniExamsCount += pardiniExams.length;
+        const cardHtml = createPatientColumnCard(req, pardiniExams, 'pardini');
+        pardiniContainer.insertAdjacentHTML('beforeend', cardHtml);
+      }
+    });
+
+    // Atualizar métricas e badges
+    document.getElementById('stat-total-pacientes').textContent = totalTriadosCount;
+    document.getElementById('stat-alvaro-pacientes').textContent = alvaroPatientsCount;
+    document.getElementById('stat-alvaro-exames').textContent = alvaroExamsCount;
+    document.getElementById('stat-pardini-pacientes').textContent = pardiniPatientsCount;
+    document.getElementById('stat-pardini-exames').textContent = pardiniExamsCount;
+
+    document.getElementById('badge-count-alvaro').textContent = `${alvaroPatientsCount} ${alvaroPatientsCount === 1 ? 'paciente' : 'pacientes'} (${alvaroExamsCount} exames)`;
+    document.getElementById('badge-count-pardini').textContent = `${pardiniPatientsCount} ${pardiniPatientsCount === 1 ? 'paciente' : 'pacientes'} (${pardiniExamsCount} exames)`;
+
+    // Toggle Empty States
+    document.getElementById('empty-alvaro').classList.toggle('hidden', alvaroPatientsCount > 0);
+    document.getElementById('empty-pardini').classList.toggle('hidden', pardiniPatientsCount > 0);
+
+    // Habilitar / Desabilitar botões de Criar Lote
+    const btnAlvaro = document.getElementById('btn-criar-lote-alvaro');
+    if (btnAlvaro) {
+      if (alvaroPatientsCount === 0 || alvaroExamsCount === 0) {
+        btnAlvaro.disabled = true;
+        btnAlvaro.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btnAlvaro.title = 'Nenhuma requisição para criar o lote do Apoio Álvaro';
+      } else {
+        btnAlvaro.disabled = false;
+        btnAlvaro.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btnAlvaro.title = 'Criar Lote Álvaro';
+      }
+    }
+
+    const btnPardini = document.getElementById('btn-criar-lote-pardini');
+    if (btnPardini) {
+      if (pardiniPatientsCount === 0 || pardiniExamsCount === 0) {
+        btnPardini.disabled = true;
+        btnPardini.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btnPardini.title = 'Nenhuma requisição para criar o lote do Apoio Pardini';
+      } else {
+        btnPardini.disabled = false;
+        btnPardini.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btnPardini.title = 'Gerar Lote Pardini';
+      }
+    }
+
+    filterLotes();
+  }
+
+  // Criar HTML do Card do Paciente (SEM COLLAPSE - Totalmente Aberto)
+  function createPatientColumnCard(req, exams, lab) {
+    const reqId = req.requisitionCode || req.id;
+    const isAlvaro = lab === 'alvaro';
+    const labBadgeClass = isAlvaro 
+      ? 'bg-amber-100 text-amber-900 border-amber-300' 
+      : 'bg-purple-100 text-purple-900 border-purple-300';
+    
+    const cardBgClass = isAlvaro ? 'border-amber-200/90 bg-white' : 'border-purple-200/90 bg-white';
+    const headerBgClass = isAlvaro ? 'bg-amber-50/60 border-amber-100' : 'bg-purple-50/60 border-purple-100';
+
+    let examsListHtml = '';
+
+    exams.forEach((ex, idx) => {
+      const cost = getExamCost(ex, lab);
+      const isLoteGerado = ex.status === 'Lote criado' || ex.loteStatus === 'Lote criado' || ex.loteStatus === 'Gerado' || !!ex.loteCode || !!ex.idLote;
+      const loteDisplayCode = ex.idLote || ex.loteCode || ex.loteId || 'Criado';
+      const supportInfo = getSupportLabExamInfo(ex, lab);
+      const matInfo = getSupportLabMaterialInfo(ex, lab);
+      const matDisplay = (matInfo.code && matInfo.desc && !matInfo.desc.startsWith(matInfo.code))
+        ? `${matInfo.code}-${matInfo.desc}`
+        : (matInfo.desc || matInfo.code || 'Geral');
+      
+      examsListHtml += `
+        <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-white transition-all flex items-center justify-between gap-3 text-xs" data-exam-code="${ex.code || ex.codigo}">
+          <div class="flex items-center gap-2 min-w-0">
+            <input 
+              type="checkbox" 
+              class="exam-lote-checkbox w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer shrink-0" 
+              data-req-id="${reqId}"
+              data-exam-code="${ex.code || ex.codigo}"
+              data-lab="${lab}"
+              ${isLoteGerado ? 'disabled' : 'checked'}
+            >
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-extrabold text-slate-900 font-mono text-[11.5px]">${supportInfo.code} - ${supportInfo.name}</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5 text-[10.5px] text-slate-600 font-mono">
+                <span>Recipiente/Material: <strong class="text-slate-800">${matDisplay}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center gap-1">
+            ${isLoteGerado ? `
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-mono font-bold text-[9.5px] rounded border border-emerald-200" title="Status: Lote criado">
+                Lote: ${loteDisplayCode}
+              </span>
+            ` : `
+              <span class="px-2 py-0.5 ${isAlvaro ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-purple-100 text-purple-800 border-purple-200'} font-mono font-bold text-[9.5px] rounded border">
+                Pendente Lote
+              </span>
+            `}
+          </div>
+        </div>
+      `;
+    });
+
+    const searchStr = `${req.patientName || ''} ${reqId} ${req.patientCpf || ''} ${exams.map(e => {
+      const info = getSupportLabExamInfo(e, lab);
+      return info.name + ' ' + info.code + ' ' + (e.name || '') + ' ' + (e.code || '');
+    }).join(' ')}`.toLowerCase();
+
+    return `
+      <div 
+        class="patient-lote-card rounded-2xl border ${cardBgClass} shadow-2xs overflow-hidden transition-all"
+        data-req-id="${reqId}"
+        data-lab="${lab}"
+        data-search="${searchStr}"
+      >
+        <!-- Header do Paciente -->
+        <div class="p-3.5 ${headerBgClass} border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <input 
+              type="checkbox" 
+              class="patient-lote-checkbox w-4 h-4 rounded text-slate-900 focus:ring-slate-800 cursor-pointer shrink-0" 
+              onchange="togglePatientExamsCheckboxes(this, '${reqId}', '${lab}')"
+              checked
+            >
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-black text-slate-900 text-sm tracking-tight">${req.patientName || 'Paciente Não Identificado'}</h3>
+                <span class="font-mono text-[10.5px] font-bold bg-white text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
+                  #${reqId}
+                </span>
+              </div>
+              <p class="text-[10.5px] text-slate-500 font-mono font-medium mt-0.5">
+                CPF: ${req.patientCpf || 'N/I'} • Setor: ${req.setor || 'Triagem'} • Coleta: ${req.collectedAt ? new Date(req.collectedAt).toLocaleDateString('pt-BR') : 'Hoje'}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="px-2 py-0.5 ${labBadgeClass} font-mono font-extrabold text-[10px] rounded-md border uppercase">
+              ${exams.length} ${exams.length === 1 ? 'exame' : 'exames'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Lista de Exames (SEM COLLAPSE - SEMPRE VISÍVEL) -->
+        <div class="p-3 space-y-2 bg-white">
+          ${examsListHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Toggle Checkboxes do Paciente
+  function togglePatientExamsCheckboxes(patientCb, reqId, lab) {
+    const card = patientCb.closest('.patient-lote-card');
+    if (!card) return;
+    const isChecked = patientCb.checked;
+    const examCbs = card.querySelectorAll(`.exam-lote-checkbox[data-lab="${lab}"]:not([disabled])`);
+    examCbs.forEach(cb => { cb.checked = isChecked; });
+  }
+
+  // Selecionar Todos da Coluna
+  function selectAllColumn(lab) {
+    const container = document.getElementById(`container-pacientes-${lab}`);
+    if (!container) return;
+    const patientCbs = container.querySelectorAll('.patient-lote-checkbox');
+    const examCbs = container.querySelectorAll(`.exam-lote-checkbox[data-lab="${lab}"]:not([disabled])`);
+    
+    // Toggle state: if all are checked, uncheck; otherwise check all
+    const allChecked = Array.from(examCbs).every(cb => cb.checked);
+    patientCbs.forEach(cb => { cb.checked = !allChecked; });
+    examCbs.forEach(cb => { cb.checked = !allChecked; });
+
+    showToast(allChecked ? `Exames do ${lab.toUpperCase()} desmarcados.` : `Todos exames do ${lab.toUpperCase()} selecionados.`, 'info');
+  }
+
+  // Filtrar Lotes por Busca ou Estado
+  function filterLotes() {
+    const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const filterLoteVal = document.getElementById('loteFilterSelect')?.value || 'todos';
+
+    const cards = document.querySelectorAll('.patient-lote-card');
+    cards.forEach(card => {
+      const searchData = card.dataset.search || '';
+      const matchesSearch = query === '' || searchData.includes(query);
+
+      let matchesLoteFilter = true;
+      const examCbs = card.querySelectorAll('.exam-lote-checkbox');
+      const hasDisabled = Array.from(examCbs).some(cb => cb.disabled);
+
+      if (filterLoteVal === 'sem_lote') {
+        matchesLoteFilter = Array.from(examCbs).some(cb => !cb.disabled);
+      } else if (filterLoteVal === 'com_lote') {
+        matchesLoteFilter = hasDisabled;
+      }
+
+      if (matchesSearch && matchesLoteFilter) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Trigger Gerar Lote Modal
+  function triggerGerarLote(lab) {
+    currentTargetLab = lab;
+    currentSelectedItems = [];
+
+    const container = document.getElementById(`container-pacientes-${lab}`);
+    if (!container) return;
+
+    const checkedExams = container.querySelectorAll(`.exam-lote-checkbox[data-lab="${lab}"]:checked:not([disabled])`);
+    
+    if (checkedExams.length === 0) {
+      showAlertDialog('Nenhum Exame Selecionado', `Por favor, selecione ao menos um exame pendente do laboratório ${lab.toUpperCase()} para gerar o lote.`);
+      return;
+    }
+
+    const patientMap = new Map();
+
+    checkedExams.forEach(cb => {
+      const reqId = cb.dataset.reqId;
+      const examCode = cb.dataset.examCode;
+      
+      currentSelectedItems.push({ requisitionId: reqId, examCode: examCode });
+
+      const card = cb.closest('.patient-lote-card');
+      const patientName = card ? (card.querySelector('h3')?.textContent || 'Paciente') : 'Paciente';
+
+      if (!patientMap.has(reqId)) {
+        patientMap.set(reqId, { patientName, reqId, exams: [] });
+      }
+      patientMap.get(reqId).exams.push(examCode);
+    });
+
+    const isAlvaro = lab === 'alvaro';
+    const labName = isAlvaro ? 'Laboratório Álvaro (Apoio External)' : 'Laboratório Pardini (Apoio External)';
+
+    document.getElementById('modal-lote-lab-name').textContent = labName;
+    document.getElementById('modal-lote-pacientes-count').textContent = patientMap.size;
+    document.getElementById('modal-lote-exames-count').textContent = currentSelectedItems.length;
+
+    const itemsListContainer = document.getElementById('modal-lote-items-list');
+    itemsListContainer.innerHTML = '';
+
+    patientMap.forEach(pData => {
+      itemsListContainer.innerHTML += `
+        <div class="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
+          <div>
+            <span class="font-extrabold text-slate-900">${pData.patientName}</span>
+            <span class="text-slate-500 text-[10px]"> (#${pData.reqId})</span>
+          </div>
+          <span class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">
+            ${pData.exams.length} ${pData.exams.length === 1 ? 'exame' : 'exames'} (${pData.exams.join(', ')})
+          </span>
+        </div>
+      `;
+    });
+
+    document.getElementById('modal-gerar-lote').classList.remove('hidden');
+  }
+
+  function closeLoteModal() {
+    document.getElementById('modal-gerar-lote').classList.add('hidden');
+  }
+
+  // Processar Criação do Lote
+  function processGerarLote(andPrint) {
+    if (!currentTargetLab || currentSelectedItems.length === 0) return;
+
+    fetch('/admin/triagem/gerar-lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lab: currentTargetLab,
+        items: currentSelectedItems
+      })
+    })
+    .then(res => res.json())
+    .then(resData => {
+      if (resData.success) {
+        closeLoteModal();
+        showToast(`Lote ${resData.batchCode} gerado com sucesso para ${resData.lab}!`, 'success');
+
+        // Atualizar estado local de exames
+        const requisitions = window.TRIAGEM_REQUISITIONS || [];
+        const affectedReqs = new Set();
+        currentSelectedItems.forEach(item => {
+          const req = requisitions.find(r => (r.requisitionCode || r.id) === item.requisitionId || r.id === item.requisitionId);
+          if (req && Array.isArray(req.exams)) {
+            const ex = req.exams.find(e => (e.code || e.codigo) === item.examCode);
+            if (ex) {
+              ex.idLote = resData.batchCode;
+              ex.loteCode = resData.batchCode;
+              ex.loteStatus = 'Lote criado';
+              ex.status = 'Lote criado';
+            }
+            affectedReqs.add(req);
+          }
+        });
+
+        affectedReqs.forEach(req => {
+          if (req && Array.isArray(req.exams) && req.exams.length > 0) {
+            const allInLote = req.exams.every(e => 
+              e.status === 'Lote criado' || e.loteStatus === 'Lote criado' || e.loteStatus === 'Gerado' || !!e.loteCode || !!e.idLote
+            );
+            if (allInLote) {
+              req.status = 'Lote criado';
+              req.loteStatus = 'Lote criado';
+            }
+          }
+        });
+
+        renderCriarLoteScreen();
+
+        if (andPrint) {
+          printLoteManifest(resData.batchCode, resData.lab, currentSelectedItems);
+        }
+      } else {
+        showToast(resData.message || 'Erro ao gerar lote.', 'error');
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao gerar lote:', err);
+      showToast('Erro ao comunicar com o servidor.', 'error');
+    });
+  }
+
+  // Janela de Impressão do Lote de Envio Externo
+  function printLoteManifest(batchCode, lab, items) {
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) return;
+
+    const requisitions = window.TRIAGEM_REQUISITIONS || [];
+    let itemsRowsHtml = '';
+
+    items.forEach((item, idx) => {
+      const req = requisitions.find(r => (r.requisitionCode || r.id) === item.requisitionId || r.id === item.requisitionId) || {};
+      const ex = (req.exams || []).find(e => (e.code || e.codigo) === item.examCode) || {};
+      const supportInfo = getSupportLabExamInfo(ex, lab);
+      const matInfo = getSupportLabMaterialInfo(ex, lab);
+
+      itemsRowsHtml += `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${idx + 1}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">#${item.requisitionId}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${req.patientName || 'Paciente'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${req.patientCpf || '-'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">${supportInfo.code} - ${supportInfo.name}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${matInfo.code} - ${matInfo.desc}</td>
+        </tr>
+      `;
+    });
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Manifesto de Lote ${batchCode}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #111; font-size: 12px; }
+          .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+          .title { font-size: 18px; font-weight: bold; }
+          .batch-box { background: #f3f4f6; border: 1px solid #ccc; padding: 10px; border-radius: 8px; font-family: monospace; text-align: right; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          th { background: #1e293b; color: white; padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; }
+          .signatures { margin-top: 50px; display: flex; justify-content: space-between; }
+          .sig-box { width: 45%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 11px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">LABORATÓRIO INOVALAB CAMBARÁ</div>
+            <div>MANIFESTO DE ENVIO PARA LABORATÓRIO DE APOIO EXTERNO</div>
+            <div><strong>Laboratório Destino:</strong> APOIO ${lab}</div>
+          </div>
+          <div class="batch-box">
+            Código do Lote: ${batchCode}<br>
+            Data: ${new Date().toLocaleString('pt-BR')}
+          </div>
+        </div>
+
+        <p><strong>Total de Amostras/Exames no Lote:</strong> ${items.length}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Requisição</th>
+              <th>Paciente</th>
+              <th>CPF</th>
+              <th>Exame</th>
+              <th>Material / Recipiente</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRowsHtml}
+          </tbody>
+        </table>
+
+        <div class="signatures">
+          <div class="sig-box">
+            Responsável pela Triagem e Embalagem<br>
+            InovaLab Cambará
+          </div>
+          <div class="sig-box">
+            Assinatura do Portador / Motoboy de Transporte<br>
+            Apoio ${lab}
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() { window.print(); };
+        <\/script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
+  }
+
+  // Toast System
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const bgColors = {
+      success: 'bg-emerald-900 border-emerald-700 text-emerald-100',
+      error: 'bg-red-900 border-red-700 text-red-100',
+      info: 'bg-slate-900 border-slate-700 text-slate-100'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `p-3.5 rounded-xl border shadow-xl text-xs font-bold font-mono transition-all duration-300 transform translate-y-2 pointer-events-auto ${bgColors[type] || bgColors.info}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-4');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  // Functions for 'Ver Etiquetas' Modal
+  let currentExtractedLayouts = [];
+
+  function openVerEtiquetasModal() {
+    const respTextarea = document.getElementById('alvaro-api-response-text');
+    const respInput = document.getElementById('xml-response-alvaro-input');
+    
+    let xmlString = (respTextarea && respTextarea.value) ? respTextarea.value.trim() : '';
+    let sourceLabel = "Response API (Geral)";
+
+    if (!xmlString && respInput && respInput.value) {
+      xmlString = respInput.value.trim();
+      sourceLabel = "Response API (Aba 2)";
+    }
+
+    if (!xmlString) {
+      const selectedReqs = Array.from(document.querySelectorAll('.req-checkbox:checked')).map(cb => cb.value);
+      xmlString = generateDefaultAlvaroResponseXml(selectedReqs);
+      sourceLabel = "Amostra / Preview Local";
+    }
+
+    const container = document.getElementById('ver-etiquetas-container');
+    const badgeCount = document.getElementById('ver-etiquetas-badge-count');
+    const sourceLabelEl = document.getElementById('ver-etiquetas-source-label');
+
+    if (sourceLabelEl) sourceLabelEl.textContent = sourceLabel;
+
+    currentExtractedLayouts = [];
+
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+      // Procurar por todas as tags <layoutetiqueta> e <layout>
+      const layoutEtiquetaNodes = Array.from(xmlDoc.getElementsByTagName('layoutetiqueta'));
+      const layoutNodes = Array.from(xmlDoc.getElementsByTagName('layout'));
+
+      const allLayoutNodes = [...layoutEtiquetaNodes];
+      layoutNodes.forEach(node => {
+        if (!allLayoutNodes.includes(node)) {
+          allLayoutNodes.push(node);
+        }
+      });
+
+      if (allLayoutNodes.length === 0) {
+        // Fallback por Regex se DOMParser não encontrar ou o XML estiver sem namespace limpo
+        const regexTag = /<(layoutetiqueta|layout)[^>]*>([\s\S]*?)<\/\1>/gi;
+        let match;
+        let idx = 1;
+        while ((match = regexTag.exec(xmlString)) !== null) {
+          const rawContent = match[2].trim();
+          if (rawContent) {
+            currentExtractedLayouts.push({
+              index: idx++,
+              tagName: match[1],
+              content: rawContent,
+              idLis: '',
+              idAlvaro: '',
+              barcode: '789123456789',
+              material: 'MATERIAL',
+              patientName: 'PACIENTE'
+            });
+          }
+        }
+      } else {
+        allLayoutNodes.forEach((node, i) => {
+          const rawContent = (node.textContent || '').trim();
+          const tagName = node.tagName.toLowerCase();
+
+          let parentNode = node.parentNode;
+          let idLis = '';
+          let idAlvaro = '';
+          let barcode = '';
+          let material = '';
+          let patientName = '';
+
+          if (parentNode) {
+            const getTagVal = (t) => {
+              const el = parentNode.getElementsByTagName(t)[0];
+              return el ? el.textContent.trim() : '';
+            };
+            const getAttrVal = (attr) => parentNode.getAttribute(attr) || '';
+
+            idLis = getTagVal('id_lis') || getTagVal('idlis') || getAttrVal('id_lis') || getAttrVal('idlis');
+            idAlvaro = getTagVal('id_alvaro') || getTagVal('idalvaro') || getAttrVal('id_alvaro') || getAttrVal('idalvaro');
+            barcode = getTagVal('codigo_barras') || getTagVal('codigobarras') || getAttrVal('codigo_barras') || getAttrVal('codigobarras');
+            material = getTagVal('material') || getTagVal('descricao_material') || getAttrVal('material');
+          }
+
+          if (rawContent) {
+            const matchName = rawContent.match(/A1,1,0,1,1,1,N,"([^"]+)"/);
+            if (matchName) patientName = matchName[1];
+
+            const matchBar = rawContent.match(/B\d+,\d+,\d+,\d+,\d+,\d+,\d+,N,"([^"]+)"/);
+            if (matchBar && !barcode) barcode = matchBar[1];
+          }
+
+          currentExtractedLayouts.push({
+            index: i + 1,
+            tagName,
+            content: rawContent,
+            idLis: idLis || `REQ-${i+1}`,
+            idAlvaro: idAlvaro || `ALV-${i+1}`,
+            barcode: barcode || '789123456789',
+            material: material || 'SORO/MATERIAL',
+            patientName: patientName || 'PACIENTE'
+          });
+        });
+      }
+
+      if (badgeCount) badgeCount.textContent = `${currentExtractedLayouts.length} Encontrada(s)`;
+
+      if (currentExtractedLayouts.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-950 border border-dashed border-slate-800 rounded-2xl space-y-2">
+            <div class="text-3xl">⚠️</div>
+            <p class="text-amber-400 font-bold text-sm">Nenhuma tag &lt;layoutetiqueta&gt; ou &lt;layout&gt; encontrada</p>
+            <p class="text-xs text-slate-400 font-mono">Verifique se o XML de resposta contém as tags de etiqueta do Apoio Álvaro.</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = currentExtractedLayouts.map((item, idx) => `
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-amber-400 font-mono">Etiqueta #${item.index}</span>
+                <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">&lt;${escapeXmlAttr(item.tagName)}&gt;</span>
+                ${item.idLis ? `<span class="text-[10px] font-mono bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md border border-sky-500/30">Req: ${escapeXmlAttr(item.idLis)}</span>` : ''}
+                ${item.idAlvaro ? `<span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30">Álvaro: ${escapeXmlAttr(item.idAlvaro)}</span>` : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  onclick="printAlvaroLabels(currentExtractedLayouts[${idx}].content)" 
+                  class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                  title="Enviar esta etiqueta para impressora ZDesigner ZD230-203dpi ZPL via REST"
+                >
+                  <span>🖨️</span> Imprimir
+                </button>
+                <button 
+                  type="button" 
+                  onclick="copySingleExtractedLayout(${idx})" 
+                  class="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono font-bold rounded-xl border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                >
+                  <span>📋</span> Copiar EPL
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Simulated Label Graphic -->
+              <div class="bg-white rounded-xl p-3 border-2 border-dashed border-slate-400 text-slate-950 font-mono text-xs shadow-md space-y-1.5 select-none flex flex-col justify-between min-h-[130px]">
+                <div class="font-black text-xs sm:text-sm uppercase tracking-tight text-slate-950 truncate border-b border-slate-300 pb-0.5">
+                  ${escapeXmlAttr(item.patientName || 'PACIENTE AVISO')}
+                </div>
+                <div class="py-1 flex justify-center items-center bg-white overflow-hidden">
+                  <svg id="ver-barcode-svg-${idx}" class="h-9 w-full max-w-[240px]"></svg>
+                </div>
+                <div class="flex justify-between items-center text-[10px] font-bold border-t border-slate-300 pt-0.5 text-slate-800">
+                  <span>${escapeXmlAttr(item.material)}</span>
+                  <span class="font-black text-slate-950">${escapeXmlAttr(item.idAlvaro)}</span>
+                </div>
+              </div>
+
+              <!-- EPL Content Textarea -->
+              <div class="space-y-1">
+                <label class="text-[10px] font-mono font-bold text-slate-400 uppercase">Comando EPL2 (&lt;${escapeXmlAttr(item.tagName)}&gt;):</label>
+                <textarea readonly class="w-full h-[120px] p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-[11px] text-emerald-400 focus:outline-none selection:bg-amber-500 selection:text-slate-950 leading-relaxed cursor-text resize-none">${escapeXmlAttr(item.content)}</textarea>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        setTimeout(() => {
+          currentExtractedLayouts.forEach((item, idx) => {
+            try {
+              if (window.JsBarcode) {
+                JsBarcode("#ver-barcode-svg-" + idx, item.barcode || "789123456789", {
+                  format: "CODE128",
+                  width: 1.5,
+                  height: 32,
+                  displayValue: false,
+                  margin: 0
+                });
+              }
+            } catch(e) {
+              console.error('Erro ao renderizar código de barras:', e);
+            }
+          });
+        }, 50);
+      }
+
+    } catch(err) {
+      console.error('Erro ao extrair etiquetas:', err);
+      if (container) {
+        container.innerHTML = `<div class="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono text-xs rounded-xl">Erro ao extrair etiquetas do XML: ${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('modal-ver-etiquetas').classList.remove('hidden');
+  }
+
+  function closeVerEtiquetasModal() {
+    document.getElementById('modal-ver-etiquetas').classList.add('hidden');
+  }
+
+  function copySingleExtractedLayout(idx) {
+    if (currentExtractedLayouts[idx]) {
+      navigator.clipboard.writeText(currentExtractedLayouts[idx].content).then(() => {
+        showToast('Layout da etiqueta #' + (idx + 1) + ' copiado!', 'success');
+      }).catch(err => {
+        showToast('Erro ao copiar layout.', 'error');
+      });
+    }
+  }
+
+  function copyAllExtractedLayouts() {
+    if (!currentExtractedLayouts || currentExtractedLayouts.length === 0) {
+      showToast('Nenhum layout disponível para copiar.', 'error');
+      return;
+    }
+    const fullText = currentExtractedLayouts.map((item, i) => `/* --- ETIQUETA #${i+1} (<${item.tagName}>) --- */\n${item.content}`).join('\n\n');
+    navigator.clipboard.writeText(fullText).then(() => {
+      showToast(`${currentExtractedLayouts.length} layout(s) copiado(s) para a área de transferência!`, 'success');
+    }).catch(err => {
+      showToast('Erro ao copiar layouts.', 'error');
+    });
+  }
+
+  // Modal Alert Dialog
+  function showAlertDialog(title, message) {
+    document.getElementById('alert-dialog-title').textContent = title;
+    document.getElementById('alert-dialog-message').textContent = message;
+    document.getElementById('alert-dialog-modal').classList.remove('hidden');
+  }
+
+  function closeAlertDialog() {
+    document.getElementById('alert-dialog-modal').classList.add('hidden');
+  }
+
+  // Inicializar quando o DOM estiver pronto
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCriarLoteScreen();
+  });
+</script>
+
+<%- include('../../partials/footer') %>

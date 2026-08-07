@@ -1,0 +1,37 @@
+[
+  {
+    "id": "par-001",
+    "codigo": "TSH-P",
+    "descricao": "TSH Ultra Sensível - Pardini",
+    "valor": 26.00,
+    "materiais": ["Soro"]
+  },
+  {
+    "id": "par-002",
+    "codigo": "LIPID",
+    "descricao": "Perfil Lipídico Completo",
+    "valor": 45.00,
+    "materiais": ["Soro", "Plasma Heparinizado"]
+  },
+  {
+    "id": "par-003",
+    "codigo": "PCR-US",
+    "descricao": "Proteína C Reativa Ultra-Sensível",
+    "valor": 22.50,
+    "materiais": ["Soro"]
+  },
+  {
+    "id": "par-004",
+    "codigo": "BHCG",
+    "descricao": "Beta HCG Quantitativo Sérico",
+    "valor": 35.00,
+    "materiais": ["Soro"]
+  },
+  {
+    "id": "par-005",
+    "codigo": "PSA-TL",
+    "descricao": "PSA Total e Livre",
+    "valor": 58.00,
+    "materiais": ["Soro"]
+  }
+]

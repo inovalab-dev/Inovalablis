@@ -1,0 +1,376 @@
+<% if (isAdmin) { %>
+      </main> <!-- Fecha o <main> -->
+      
+      <!-- Rodapé Administrativo Simples -->
+      <footer class="bg-white border-t border-brand-light/10 py-4 px-6 text-center text-xs text-gray-500 font-mono mt-auto flex flex-col sm:flex-row justify-between items-center gap-2 shrink-0">
+        <p>InovaLab Cambará © 2026 • Painel de Controle Seguro</p>
+        <p class="text-[10px] text-gray-400">Ambiente de Operações de Diagnósticos</p>
+      </footer>
+    </div> <!-- Fecha o <div class="flex-1 flex flex-col min-h-screen overflow-x-hidden bg-brand-neutralLight/45"> -->
+  </div> <!-- Fecha o <div class="flex flex-col md:flex-row min-h-screen bg-brand-neutralLight/45"> -->
+
+  <script>
+    // Controle do menu mobile admin
+    const adminMenuBtn = document.getElementById('admin-mobile-menu-btn');
+    const adminDropdown = document.getElementById('admin-mobile-dropdown');
+    
+    if (adminMenuBtn && adminDropdown) {
+      adminMenuBtn.addEventListener('click', () => {
+        adminDropdown.classList.toggle('hidden');
+      });
+    }
+
+    // Máscara global para campos de WhatsApp / Telefone / Celular
+    function applyPhoneMask(input) {
+      if (!input || input.dataset.phoneMaskApplied) return;
+      input.dataset.phoneMaskApplied = 'true';
+      
+      const formatValue = (val) => {
+        if (!val) return '';
+        let value = val.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length > 10) {
+          return `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+        } else if (value.length > 6) {
+          return `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+        } else if (value.length > 2) {
+          return `(${value.slice(0, 2)}) ${value.slice(2)}`;
+        } else if (value.length > 0) {
+          return `(${value}`;
+        }
+        return value;
+      };
+
+      // Intercept setter/getter of .value to handle programmatic updates (e.g. element.value = '...')
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      if (descriptor) {
+        Object.defineProperty(input, 'value', {
+          get: function() {
+            return descriptor.get.call(this);
+          },
+          set: function(val) {
+            const formatted = formatValue(val || '');
+            descriptor.set.call(this, formatted);
+          },
+          configurable: true
+        });
+      }
+
+      // Format initial value if present
+      if (input.value) {
+        input.value = formatValue(input.value);
+      }
+
+      // Format on user input/typing
+      input.addEventListener('input', (e) => {
+        const selectionStart = e.target.selectionStart;
+        const previousLength = e.target.value.length;
+        
+        const formatted = formatValue(e.target.value);
+        e.target.value = formatted;
+        
+        const currentLength = formatted.length;
+        if (selectionStart !== null && previousLength !== currentLength) {
+          const diff = currentLength - previousLength;
+          e.target.setSelectionRange(selectionStart + diff, selectionStart + diff);
+        }
+      });
+
+      // Handle blur and change just to be safe
+      input.addEventListener('blur', (e) => {
+        e.target.value = formatValue(e.target.value);
+      });
+      input.addEventListener('change', (e) => {
+        e.target.value = formatValue(e.target.value);
+      });
+    }
+
+    function initPhoneMasks() {
+      const selectors = [
+        'input[type="tel"]',
+        'input[name="phone"]',
+        'input[name="patientPhone"]',
+        'input[id="patientPhone"]',
+        'input[id="form-phone"]',
+        'input[id="form-prof-phone"]',
+        'input[id="phone-input"]',
+        'input[name*="whatsapp"]',
+        'input[id*="whatsapp"]'
+      ];
+      
+      const inputs = document.querySelectorAll(selectors.join(', '));
+      inputs.forEach(applyPhoneMask);
+    }
+
+    // Inicializar na carga inicial
+    initPhoneMasks();
+
+    // Monitorar mudanças dinâmicas no DOM (modais e elementos gerados dinamicamente)
+    if (typeof MutationObserver !== 'undefined') {
+      const observer = new MutationObserver((mutations) => {
+        let shouldInit = false;
+        mutations.forEach((mutation) => {
+          if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === 1) { // ELEMENT_NODE
+                if (node.matches && node.matches('input') && (node.type === 'tel' || node.name === 'phone' || node.id === 'patientPhone')) {
+                  shouldInit = true;
+                } else if (node.querySelectorAll) {
+                  const selectors = ['input[type="tel"]', 'input[name="phone"]', 'input[name="patientPhone"]', 'input[id="patientPhone"]', 'input[id="form-phone"]', 'input[id="form-prof-phone"]', 'input[id="phone-input"]'];
+                  if (node.querySelectorAll(selectors.join(', ')).length > 0) {
+                    shouldInit = true;
+                  }
+                }
+              }
+            });
+          }
+        });
+        if (shouldInit) {
+          initPhoneMasks();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+  </script>
+ </body>
+ </html>
+<% } else { %>
+  <!-- Rodapé Institucional -->
+  <footer class="bg-brand-neutralDark text-white/95 border-t border-brand-light/10 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8 lg:gap-12">
+        
+        <!-- Coluna 1: Logo e Slogan -->
+        <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-4">
+          <%- include('logo', { layout: 'horizontal', variant: 'dark', showSlogan: true, height: 'h-10' }) %>
+          <p class="text-xs text-white/60 leading-relaxed max-w-xs">
+            Cuidando da sua saúde com <strong class="text-brand-light font-bold">tecnologia</strong>, <strong class="text-brand-light font-bold">qualidade</strong> e <strong class="text-brand-light font-bold">humanização</strong>.
+          </p>
+          <div class="text-[10px] text-white/45 font-mono space-y-1 pt-3 border-t border-white/5 w-full max-w-xs md:max-w-none">
+            <p>Rua Tiradentes, 999 - Centro - Cambará - PR</p>
+            <p>CNPJ: 56.428.462/0001-69</p>
+            <p>Responsável Técnico: CRF 28129</p>
+          </div>
+        </div>
+
+        <!-- Coluna 2: Funcionamento & Contatos -->
+        <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-6">
+          
+          <!-- Horário de Funcionamento -->
+          <div class="space-y-3 w-full">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-brand-light font-mono">Horário de Funcionamento</h4>
+            <div class="text-xs text-white/75 space-y-1">
+              <p class="font-semibold text-white">Segunda a Sexta-feira</p>
+              <p class="text-[11px] text-white/60 font-mono">07h às 12h</p>
+              <p class="text-[11px] text-white/60 font-mono">13h às 17h</p>
+              <p class="font-semibold text-white pt-2">Sábado</p>
+              <p class="text-[11px] text-white/60 font-mono">07h às 11h</p>
+            </div>
+          </div>
+
+          <!-- Nossos Contatos -->
+          <div class="space-y-3 w-full border-t border-white/5 pt-4">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-brand-light font-mono">Nossos Contatos</h4>
+            <div class="flex flex-col items-center md:items-start space-y-2.5 text-xs">
+              <a href="https://wa.me/5543996183406" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-white/75 hover:text-brand-light transition-colors font-mono">
+                <!-- Phone SVG Icon -->
+                <svg class="w-4 h-4 text-brand-light shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                <span class="underline underline-offset-2 decoration-brand-light/35">(43) 99618-3406</span>
+              </a>
+              <a href="mailto:inovalabcambara@gmail.com" class="flex items-center space-x-2 text-white/75 hover:text-brand-light transition-colors font-mono">
+                <!-- Email SVG Icon -->
+                <svg class="w-4 h-4 text-brand-light shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span class="underline underline-offset-2 decoration-brand-light/35">inovalabcambara@gmail.com</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Coluna 3: Horários de Coleta -->
+        <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-widest text-brand-light font-mono">Horários de Coleta</h4>
+          <div class="text-xs text-white/75 space-y-1">
+            <p class="font-semibold text-white">Segunda a Sexta-feira</p>
+            <p class="text-[11px] text-white/60 font-mono">07h às 10:30h</p>
+            <p class="text-[11px] text-white/60 font-mono">13h às 16:30h</p>
+            <p class="font-semibold text-white pt-2">Sábado</p>
+            <p class="text-[11px] text-white/60 font-mono">07h às 10:30h</p>
+          </div>
+        </div>
+
+        <!-- Coluna 4: Acesso Rápido -->
+        <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-widest text-brand-light font-mono">Acesso Rápido</h4>
+          <ul class="space-y-2 text-xs font-semibold text-white/75">
+            <li><a href="/" class="hover:text-brand-light hover:underline transition-colors block">Início</a></li>
+            <li><a href="/servicos" class="hover:text-brand-light hover:underline transition-colors block">Serviços</a></li>
+            <li><a href="/preparo" class="hover:text-brand-light hover:underline transition-colors block">Guia de Exames</a></li>
+            <li><a href="/blog" class="hover:text-brand-light hover:underline transition-colors block">Blog & Dicas</a></li>
+            <li><a href="/sobre" class="hover:text-brand-light hover:underline transition-colors block">Quem somos</a></li>
+            <li><a href="/resultados" class="hover:text-brand-light hover:underline transition-colors block">Resultados</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Barra de Direitos e Créditos -->
+      <div class="border-t border-white/5 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-white/50 font-mono gap-4">
+        <div class="text-center md:text-left space-y-1">
+          <p>Copyright &copy; 2026 Laboratório InovaLab - Todos os direitos reservados.</p>
+          <div class="flex flex-wrap justify-center md:justify-start items-center gap-x-2 text-[10px] text-white/35">
+            <span>Desenvolvido por: Alysson Silva</span>
+            <span>•</span>
+            <a href="/admin" class="hover:text-brand-light hover:underline text-white/45">Área Administrativa</a>
+          </div>
+        </div>
+        
+        <!-- Social Icons with custom styling -->
+        <div class="flex space-x-5 text-white/50">
+          <a href="https://www.facebook.com/profile.php?id=61564734218808&locale=pt_BR" target="_blank" rel="noopener noreferrer" class="hover:text-brand-light hover:scale-110 transition-all duration-200" aria-label="Facebook">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/inovalabcambara?igsh=MXV3ejA5c3RzYXd2cA==" target="_blank" rel="noopener noreferrer" class="hover:text-brand-light hover:scale-110 transition-all duration-200" aria-label="Instagram">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+          </a>
+          <a href="https://wa.me/5543996183406" target="_blank" rel="noopener noreferrer" class="hover:text-brand-light hover:scale-110 transition-all duration-200" aria-label="WhatsApp">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.25 8.477 3.517 2.266 2.268 3.512 5.279 3.51 8.484-.006 6.545-5.34 11.884-11.954 11.884-.001 0-.002 0-.003 0-1.996-.001-3.956-.503-5.69-1.457L0 24zM6.59 17.545l.361.215a9.872 9.872 0 0 0 5.031 1.378H12a9.89 9.89 0 0 0 9.885-9.885A9.832 9.832 0 0 0 19 2.899 9.825 9.825 0 0 0 12.008 1.1c-5.451 0-9.887 4.434-9.89 9.884-.001 2.094.547 4.14 1.588 5.944l.236.375-1.003 3.655 3.743-.982zM17.472 14.38c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Botão Flutuante do WhatsApp -->
+  <a href="https://wa.me/5543996183406" target="_blank" rel="noopener noreferrer" class="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 group flex items-center justify-center border border-white/20" id="whatsapp-floating-btn" aria-label="Fale Conosco no WhatsApp">
+    <span class="absolute right-full mr-3 bg-brand-neutralDark/95 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-brand-light/10 uppercase tracking-wider font-mono">Fale Conosco</span>
+    <svg class="w-6 h-6 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+  </a>
+
+  <!-- Máscara global para campos de WhatsApp / Telefone / Celular (Lado Público) -->
+  <script>
+    (function() {
+      function applyPhoneMask(input) {
+        if (!input || input.dataset.phoneMaskApplied) return;
+        input.dataset.phoneMaskApplied = 'true';
+        
+        const formatValue = (val) => {
+          if (!val) return '';
+          let value = val.replace(/\D/g, '');
+          if (value.length > 11) value = value.slice(0, 11);
+          
+          if (value.length > 10) {
+            return `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+          } else if (value.length > 6) {
+            return `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+          } else if (value.length > 2) {
+            return `(${value.slice(0, 2)}) ${value.slice(2)}`;
+          } else if (value.length > 0) {
+            return `(${value}`;
+          }
+          return value;
+        };
+
+        const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+        if (descriptor) {
+          Object.defineProperty(input, 'value', {
+            get: function() {
+              return descriptor.get.call(this);
+            },
+            set: function(val) {
+              const formatted = formatValue(val || '');
+              descriptor.set.call(this, formatted);
+            },
+            configurable: true
+          });
+        }
+
+        if (input.value) {
+          input.value = formatValue(input.value);
+        }
+
+        input.addEventListener('input', (e) => {
+          const selectionStart = e.target.selectionStart;
+          const previousLength = e.target.value.length;
+          
+          const formatted = formatValue(e.target.value);
+          e.target.value = formatted;
+          
+          const currentLength = formatted.length;
+          if (selectionStart !== null && previousLength !== currentLength) {
+            const diff = currentLength - previousLength;
+            e.target.setSelectionRange(selectionStart + diff, selectionStart + diff);
+          }
+        });
+
+        input.addEventListener('blur', (e) => {
+          e.target.value = formatValue(e.target.value);
+        });
+        input.addEventListener('change', (e) => {
+          e.target.value = formatValue(e.target.value);
+        });
+      }
+
+      function initPhoneMasks() {
+        const selectors = [
+          'input[type="tel"]',
+          'input[name="phone"]',
+          'input[name="patientPhone"]',
+          'input[id="patientPhone"]',
+          'input[id="phone-input"]',
+          'input[name*="whatsapp"]',
+          'input[id*="whatsapp"]'
+        ];
+        const inputs = document.querySelectorAll(selectors.join(', '));
+        inputs.forEach(applyPhoneMask);
+      }
+
+      initPhoneMasks();
+
+      if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver((mutations) => {
+          let shouldInit = false;
+          mutations.forEach((mutation) => {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) {
+                  if (node.matches && node.matches('input') && (node.type === 'tel' || node.name === 'phone' || node.id === 'patientPhone')) {
+                    shouldInit = true;
+                  } else if (node.querySelectorAll) {
+                    const selectors = ['input[type="tel"]', 'input[name="phone"]', 'input[name="patientPhone"]', 'input[id="patientPhone"]', 'input[id="phone-input"]'];
+                    if (node.querySelectorAll(selectors.join(', ')).length > 0) {
+                      shouldInit = true;
+                    }
+                  }
+                }
+              });
+            }
+          });
+          if (shouldInit) {
+            initPhoneMasks();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+    })();
+  </script>
+
+</body>
+</html>
+<% } %>

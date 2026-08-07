@@ -1,0 +1,175 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+  <!-- Cabeçalho Principal -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <span>Recepção LIS</span>
+        <span>•</span>
+        <span class="text-brand-gold font-bold">Agendamentos & Coletas Domiciliares</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-neutralDark flex items-center gap-2">
+        <svg class="w-7 h-7 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Agenda de Coletas & Atendimentos
+      </h1>
+      <p class="text-xs text-brand-neutral/70 mt-1">
+        Agendamento prévio de coletas laboratoriais presenciais, infantis e domiciliares.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="openAppointmentModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-sky-600/20 transition-all active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Novo Agendamento
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Agendamentos -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-gray-50/50">
+      <h2 class="text-xs font-bold font-mono text-gray-700 uppercase tracking-wider">Compromissos Agendados</h2>
+      <div class="text-xs text-gray-500 font-mono">
+        Total: <%= appointments ? appointments.length : 0 %> agendamentos
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider font-mono">
+            <th class="py-3.5 px-4">Data / Hora</th>
+            <th class="py-3.5 px-4">Paciente / Contato</th>
+            <th class="py-3.5 px-4">Tipo de Atendimento</th>
+            <th class="py-3.5 px-4">Exames Agendados</th>
+            <th class="py-3.5 px-4">Status</th>
+            <th class="py-3.5 px-4 text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs text-gray-700 font-medium">
+          <% if (appointments && appointments.length > 0) { %>
+            <% appointments.forEach(apt => { %>
+              <tr class="hover:bg-gray-50/50 transition-colors">
+                <td class="py-3.5 px-4 font-mono font-bold text-sky-900">
+                  <div><%= apt.date %></div>
+                  <div class="text-xs text-sky-600"><%= apt.time %></div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-gray-900"><%= apt.patientName %></div>
+                  <div class="text-[11px] font-mono text-gray-500"><%= apt.phone %></div>
+                  <% if (apt.type === 'Domiciliar') { %>
+                    <div class="text-[10px] text-amber-700 font-medium mt-0.5">📍 <%= apt.address %></div>
+                  <% } %>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-mono <%= apt.type === 'Domiciliar' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800' %>">
+                    <%= apt.type %>
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="text-xs text-gray-800 font-mono"><%= apt.exams %></div>
+                  <% if (apt.notes) { %>
+                    <div class="text-[10px] text-gray-500 italic"><%= apt.notes %></div>
+                  <% } %>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono <%= apt.status === 'Confirmado' ? 'bg-emerald-100 text-emerald-800' : apt.status === 'Realizado' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800' %>">
+                    <%= apt.status %>
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right space-x-1">
+                  <a href="/admin/requisicoes?patientName=<%= encodeURIComponent(apt.patientName) %>&patientPhone=<%= encodeURIComponent(apt.phone) %>" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition-colors inline-block">
+                    Abrir OS
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="py-8 text-center text-gray-400 font-mono text-xs">
+                Nenhum agendamento registrado.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Agendamento -->
+<div id="appointmentModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+    <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+      <h3 class="text-lg font-black text-gray-900">Novo Agendamento</h3>
+      <button onclick="closeAppointmentModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form action="/admin/recepcao/agendamentos/save" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nome do Paciente *</label>
+        <input type="text" name="patientName" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Telefone / WhatsApp *</label>
+          <input type="tel" name="phone" id="patientPhone" required placeholder="(43) 99999-9999" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tipo *</label>
+          <select name="type" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+            <option value="Presencial">Presencial (Unidade)</option>
+            <option value="Domiciliar">Domiciliar / Coleta Externa</option>
+            <option value="Coleta Infantil">Coleta Infantil</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Data *</label>
+          <input type="date" name="date" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Horário *</label>
+          <input type="time" name="time" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Exames Solicitados</label>
+        <input type="text" name="exams" placeholder="Ex: Hemograma, Glicemia, Perfil Lipídico" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Endereço (Caso Domiciliar)</label>
+        <input type="text" name="address" placeholder="Rua, Número, Bairro, Ponto de Ref." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Observações</label>
+        <textarea name="notes" rows="2" placeholder="Jejum necessário, paciente idoso, etc..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+      </div>
+
+      <div class="pt-4 flex justify-end gap-3">
+        <button type="button" onclick="closeAppointmentModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase rounded-xl">Cancelar</button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md">Salvar Agendamento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAppointmentModal() {
+    document.getElementById('appointmentModal').classList.remove('hidden');
+  }
+  function closeAppointmentModal() {
+    document.getElementById('appointmentModal').classList.add('hidden');
+  }
+</script>
+
+<%- include('../../partials/footer') %>

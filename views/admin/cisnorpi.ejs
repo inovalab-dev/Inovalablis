@@ -1,0 +1,806 @@
+<%- include('../partials/header', { page: 'admin-cisnorpi' }) %>
+
+<!-- Importar biblioteca SheetJS para leitura de planilhas Excel/CSV diretamente no navegador -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<main class="min-h-screen bg-brand-neutralLight/45 animate-fadeIn">
+  
+  <!-- HERO BANNER / HEADER -->
+  <section class="bg-white border-b border-brand-light/10 py-8">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+          <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+          <span>&rsaquo;</span>
+          <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Recepção e Tabelas</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight">Tabela Cisnorpi</h1>
+        <p class="text-xs text-gray-500">Cadastre, consulte e gerencie os códigos, correlações e valores dos exames credenciados pela tabela Cisnorpi.</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <a href="#novo-item-form" class="text-xs font-bold bg-[#284701] hover:bg-[#3b661d] text-white px-5 py-3 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Novo Registro</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAINEL CENTRAL -->
+  <section class="py-10">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+
+      <!-- CARD CENTRAL DE ENTRADA (MANUAL / PLANILHA) -->
+      <div id="novo-item-form" class="bg-white rounded-3xl border border-brand-light/15 shadow-sm overflow-hidden">
+        
+        <!-- Header da área de entrada -->
+        <div class="p-6 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-gold font-mono block">Entrada de Dados</span>
+            <h2 class="text-lg font-extrabold text-brand-dark">Adicionar Exames à Tabela</h2>
+            <p class="text-xs text-gray-400">Escolha entre o cadastro manual ou importação de planilhas Excel/CSV.</p>
+          </div>
+
+          <!-- Tabs para alternar entre manual e importação -->
+          <div class="flex bg-gray-100 p-1 rounded-xl self-start sm:self-auto">
+            <button id="tab-manual-btn" onclick="switchTab('manual')" class="px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-[#284701] bg-white shadow-sm transition-all cursor-pointer">
+              Cadastro Manual
+            </button>
+            <button id="tab-import-btn" onclick="switchTab('import')" class="px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-gray-500 hover:text-gray-700 transition-all flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 00-4-4H3m18 0h-2a4 4 0 00-4 4v2m0 0l-3-3m3 3l3-3M9 21h6"/></svg>
+              Importar Planilha
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-8">
+          
+          <!-- TAB CONTENT: CADASTRO MANUAL -->
+          <div id="tab-content-manual" class="space-y-6">
+            <form action="/admin/cisnorpi/add" method="POST" class="space-y-6">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-5">
+                <!-- Cod Jalis -->
+                <div>
+                  <label for="add_codJalis" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Jalis</label>
+                  <input type="text" id="add_codJalis" name="codJalis" placeholder="Ex: 501" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                </div>
+
+                <!-- Cod Cisnorpi -->
+                <div>
+                  <label for="add_codCisnorpi" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Cisnorpi</label>
+                  <input type="text" id="add_codCisnorpi" name="codCisnorpi" placeholder="Ex: 40301" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                </div>
+
+                <!-- Cod Alvaro -->
+                <div>
+                  <label for="add_codAlvaro" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Alvaro</label>
+                  <input type="text" id="add_codAlvaro" name="codAlvaro" placeholder="Ex: HEMO" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                </div>
+
+                <!-- Cod Pardini -->
+                <div>
+                  <label for="add_codPardini" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Pardini</label>
+                  <input type="text" id="add_codPardini" name="codPardini" placeholder="Ex: HEMOG" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                </div>
+
+                <!-- Nome -->
+                <div class="sm:col-span-2 md:col-span-2">
+                  <label for="add_name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Nome <span class="text-rose-500">*</span></label>
+                  <input type="text" id="add_name" name="name" required placeholder="Ex: Hemograma Completo" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-6 gap-5 items-end">
+                <!-- Valor Cisnorpi -->
+                <div class="md:col-span-2">
+                  <label for="add_priceCisnorpi" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Valor Cisnorpi (R$) <span class="text-rose-500">*</span></label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 font-mono">R$</span>
+                    <input type="number" id="add_priceCisnorpi" name="priceCisnorpi" step="0.01" min="0" required placeholder="15.00" class="w-full text-xs pl-9 pr-3 p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+                  </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="md:col-span-4 flex justify-end gap-3">
+                  <button type="reset" class="px-5 py-3 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer">
+                    Limpar Campos
+                  </button>
+                  <button type="submit" class="px-6 py-3 bg-[#284701] hover:bg-[#3b661d] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>Adicionar à Tabela</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB CONTENT: IMPORTAÇÃO DE PLANILHA -->
+          <div id="tab-content-import" class="hidden space-y-6">
+            
+            <!-- DROPZONE -->
+            <div id="import-dropzone" class="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:border-[#284701] hover:bg-green-50/5 transition-all cursor-pointer bg-gray-50/30 flex flex-col items-center justify-center gap-4 group" onclick="document.getElementById('excel-file-input').click()">
+              <input type="file" id="excel-file-input" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)">
+              
+              <div class="p-4 bg-green-50 rounded-full text-green-700 group-hover:scale-110 transition-transform shadow-sm">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              
+              <div class="space-y-1">
+                <p class="text-xs font-extrabold text-gray-700 uppercase tracking-wider">Arraste e solte sua planilha aqui</p>
+                <p class="text-[11px] text-gray-400">Ou clique para navegar em seus arquivos. Suporta formatos .xlsx, .xls e .csv.</p>
+              </div>
+
+              <!-- Dica de Cabeçalhos -->
+              <div class="mt-4 p-3 bg-blue-50/50 rounded-xl text-left max-w-xl border border-blue-100/50">
+                <p class="text-[10px] font-extrabold text-blue-800 uppercase tracking-wider font-mono flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 shrink-0 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Dica de Importação Inteligente
+                </p>
+                <p class="text-[11px] text-blue-700 mt-1 leading-relaxed">O importador irá tentar auto-mapear as colunas da sua planilha de exames pelos nomes (Jalis, Cisnorpi, Alvaro, Pardini, Nome, Valor). Se os cabeçalhos forem diferentes, você poderá relacioná-los manualmente após o upload.</p>
+              </div>
+            </div>
+
+            <!-- PAINEL DE PROCESSAMENTO / MAPEAMENTO (OCULTO POR PADRÃO) -->
+            <div id="import-parser-section" class="hidden space-y-8 animate-fadeIn">
+              
+              <!-- Arquivo Carregado Info -->
+              <div class="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="p-2.5 bg-green-100 text-green-800 rounded-xl font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                  </div>
+                  <div>
+                    <h4 id="import-filename" class="text-xs font-bold text-gray-800 truncate max-w-sm sm:max-w-md">nome-da-planilha.xlsx</h4>
+                    <p id="import-total-rows" class="text-[10px] font-bold text-green-700 font-mono uppercase tracking-wider">0 registros encontrados</p>
+                  </div>
+                </div>
+                <button type="button" onclick="resetImport()" id="cancel-import-btn" class="text-xs font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/60 px-4 py-2.5 rounded-xl transition-all cursor-pointer">
+                  Escolher Outro Arquivo
+                </button>
+              </div>
+
+              <!-- Mapeamento de Colunas -->
+              <div class="space-y-4">
+                <div class="border-b border-gray-100 pb-2">
+                  <h4 class="text-xs font-extrabold text-brand-dark uppercase tracking-wider">Mapeamento de Colunas da Planilha</h4>
+                  <p class="text-[11px] text-gray-400">Verifique se as colunas detectadas correspondem aos campos correspondentes abaixo.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
+                  <!-- Cod Jalis -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Cod. Jalis</label>
+                    <select id="map_codJalis" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-medium text-gray-700"></select>
+                  </div>
+
+                  <!-- Cod Cisnorpi -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Cod. Cisnorpi</label>
+                    <select id="map_codCisnorpi" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-medium text-gray-700"></select>
+                  </div>
+
+                  <!-- Cod Alvaro -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Cod. Alvaro</label>
+                    <select id="map_codAlvaro" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-medium text-gray-700"></select>
+                  </div>
+
+                  <!-- Cod Pardini -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Cod. Pardini</label>
+                    <select id="map_codPardini" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-medium text-gray-700"></select>
+                  </div>
+
+                  <!-- Nome -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Nome <span class="text-rose-500">*</span></label>
+                    <select id="map_name" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-rose-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-semibold text-gray-800"></select>
+                  </div>
+
+                  <!-- Valor -->
+                  <div>
+                    <label class="block text-[10px] font-extrabold text-gray-500 uppercase tracking-wider font-mono mb-1">Valor <span class="text-rose-500">*</span></label>
+                    <select id="map_priceCisnorpi" onchange="updateImportPreview()" class="w-full text-xs p-2.5 border border-rose-200 rounded-xl bg-white focus:outline-none focus:border-[#284701] font-semibold text-gray-800"></select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estratégia de Importação -->
+              <div class="p-4 bg-[#284701]/5 border border-[#284701]/10 rounded-2xl space-y-3">
+                <h5 class="text-xs font-bold text-[#284701]">Qual ação deseja realizar com os dados importados?</h5>
+                
+                <div class="flex flex-col sm:flex-row gap-5">
+                  <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+                    <input type="radio" name="import_strategy" id="strategy-merge" checked class="text-[#284701] focus:ring-[#284701]">
+                    <span>Mesclar: Adicionar novos registros aos já existentes</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+                    <input type="radio" name="import_strategy" id="strategy-replace" class="text-rose-600 focus:ring-rose-500">
+                    <span class="text-rose-700 font-semibold">Substituir: Apagar registros atuais antes de importar</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Pré-visualização da Importação -->
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <h5 class="text-xs font-extrabold text-brand-dark uppercase tracking-wider">Amostra de Pré-visualização (Primeiros 5 registros)</h5>
+                  <span class="text-[10px] text-gray-400 font-mono">Verifique as colunas de exemplo</span>
+                </div>
+                
+                <div class="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-mono text-[9px] font-bold uppercase tracking-wider">
+                          <th class="py-3 px-4">Cod. Jalis</th>
+                          <th class="py-3 px-4">Cod. Cisnorpi</th>
+                          <th class="py-3 px-4">Cod. Alvaro</th>
+                          <th class="py-3 px-4">Cod. Pardini</th>
+                          <th class="py-3 px-4">Nome do Exame</th>
+                          <th class="py-3 px-4 text-right">Valor Cisnorpi</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100 font-medium" id="import-preview-tbody">
+                        <!-- Conteúdo dinâmico inserido por JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botão de Confirmação -->
+              <div class="flex justify-end gap-3 border-t border-gray-100 pt-5">
+                <button type="button" onclick="submitImport()" id="confirm-import-btn" class="px-6 py-3.5 bg-green-700 hover:bg-green-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider font-mono transition-all flex items-center gap-2 cursor-pointer shadow-md">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <span>Confirmar e Importar</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- LISTAGEM E BUSCA -->
+      <div class="bg-white rounded-3xl border border-brand-light/15 shadow-sm overflow-hidden">
+        
+        <!-- Header da Tabela com Busca -->
+        <div class="p-6 sm:p-8 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base font-extrabold text-brand-dark flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#284701] animate-pulse"></span>
+              Exames Cadastrados
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Consulte as correlações abaixo. A pesquisa é em tempo real.</p>
+          </div>
+
+          <!-- Filtro de Pesquisa -->
+          <div class="relative w-full md:w-96">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" id="cisnorpiSearchInput" oninput="filterCisnorpiTable()" placeholder="Pesquisar por nome, Jalis, Cisnorpi, Alvaro ou Pardini..." class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#284701] focus:ring-1 focus:ring-[#284701] bg-white font-medium text-gray-700">
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse" id="cisnorpiTable">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-100 text-gray-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                <th class="py-4 px-6">Cod. Jalis</th>
+                <th class="py-4 px-6">Cod. Cisnorpi</th>
+                <th class="py-4 px-6">Cod. Alvaro</th>
+                <th class="py-4 px-6">Cod. Pardini</th>
+                <th class="py-4 px-6">Nome do Exame</th>
+                <th class="py-4 px-6 text-right">Valor Cisnorpi</th>
+                <th class="py-4 px-6 text-center w-32">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-xs">
+              <% if (items.length === 0) { %>
+                <tr id="empty-row">
+                  <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                      <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <span>Nenhum exame cadastrado na tabela Cisnorpi ainda.</span>
+                    </div>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% items.forEach(item => { %>
+                  <tr class="hover:bg-gray-50/50 transition-colors cisnorpi-row" 
+                      data-id="<%= item.id %>"
+                      data-jalis="<%= item.codJalis %>"
+                      data-cisnorpi="<%= item.codCisnorpi %>"
+                      data-alvaro="<%= item.codAlvaro %>"
+                      data-pardini="<%= item.codPardini %>"
+                      data-name="<%= item.name.toLowerCase() %>">
+                    <td class="py-4 px-6 font-mono text-[11px] font-bold text-gray-600"><%= item.codJalis || '-' %></td>
+                    <td class="py-4 px-6 font-mono text-[11px] font-bold text-brand-dark"><%= item.codCisnorpi || '-' %></td>
+                    <td class="py-4 px-6 font-mono text-[11px] font-medium text-gray-500"><%= item.codAlvaro || '-' %></td>
+                    <td class="py-4 px-6 font-mono text-[11px] font-medium text-gray-500"><%= item.codPardini || '-' %></td>
+                    <td class="py-4 px-6 font-semibold text-gray-800"><%= item.name %></td>
+                    <td class="py-4 px-6 text-right font-mono font-bold text-brand-dark font-mono">
+                      R$ <%= item.priceCisnorpi.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                    </td>
+                    <td class="py-4 px-6">
+                      <div class="flex items-center justify-center gap-2">
+                        <!-- Editar -->
+                        <button onclick="openEditModal('<%= JSON.stringify(item).replace(/'/g, '\\\'') %>')" class="p-1.5 rounded-lg text-gray-500 hover:text-[#284701] hover:bg-brand-softBg transition-all cursor-pointer" title="Editar Exame">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <!-- Excluir -->
+                        <form action="/admin/cisnorpi/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir o item <%= item.name %>?')" class="inline m-0">
+                          <input type="hidden" name="id" value="<%= item.id %>">
+                          <button type="submit" class="p-1.5 rounded-lg text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer" title="Excluir Exame">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+              <!-- Linha informativa para quando não houver resultados da busca -->
+              <tr id="no-search-results" class="hidden">
+                <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
+                  Nenhum registro corresponde aos critérios de pesquisa informados.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- EDIT MODAL -->
+<div id="editCisnorpiModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-2xl overflow-hidden animate-fadeIn">
+    <!-- Header -->
+    <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      <div>
+        <span class="text-[9px] font-extrabold uppercase tracking-widest text-brand-gold font-mono block">Alterar Registro</span>
+        <h3 class="text-base font-extrabold text-brand-dark">Editar Item Tabela Cisnorpi</h3>
+      </div>
+      <button onclick="closeEditModal()" class="text-gray-400 hover:text-rose-600 transition-colors p-1 bg-gray-100 rounded-lg cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form action="/admin/cisnorpi/update" method="POST" class="p-6 space-y-6">
+      <input type="hidden" id="edit_id" name="id">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <!-- Cod Jalis -->
+        <div>
+          <label for="edit_codJalis" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Jalis</label>
+          <input type="text" id="edit_codJalis" name="codJalis" placeholder="Ex: 501" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+        </div>
+
+        <!-- Cod Cisnorpi -->
+        <div>
+          <label for="edit_codCisnorpi" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Cisnorpi</label>
+          <input type="text" id="edit_codCisnorpi" name="codCisnorpi" placeholder="Ex: 40301" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+        </div>
+
+        <!-- Cod Alvaro -->
+        <div>
+          <label for="edit_codAlvaro" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Alvaro</label>
+          <input type="text" id="edit_codAlvaro" name="codAlvaro" placeholder="Ex: HEMO" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+        </div>
+
+        <!-- Cod Pardini -->
+        <div>
+          <label for="edit_codPardini" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Cod. Pardini</label>
+          <input type="text" id="edit_codPardini" name="codPardini" placeholder="Ex: HEMOG" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+        </div>
+
+        <!-- Nome -->
+        <div class="sm:col-span-2">
+          <label for="edit_name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Nome <span class="text-rose-500">*</span></label>
+          <input type="text" id="edit_name" name="name" required placeholder="Ex: Hemograma Completo" class="w-full text-xs p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+        </div>
+
+        <!-- Valor Cisnorpi -->
+        <div class="sm:col-span-2">
+          <label for="edit_priceCisnorpi" class="block text-xs font-bold text-gray-700 uppercase tracking-wider font-mono mb-1.5">Valor Cisnorpi (R$) <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 font-mono">R$</span>
+            <input type="number" id="edit_priceCisnorpi" name="priceCisnorpi" step="0.01" min="0" required placeholder="15.00" class="w-full text-xs pl-9 pr-3 p-3 border border-gray-200 rounded-xl focus:border-[#284701] focus:ring-1 focus:ring-[#284701] focus:outline-none bg-brand-neutralLight font-medium text-gray-800">
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-6 py-2.5 bg-[#284701] hover:bg-[#3b661d] text-white rounded-xl text-xs font-bold uppercase tracking-wider font-mono transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>Salvar Alterações</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Variáveis globais para armazenar os dados importados do Excel
+  let parsedExcelData = null;
+  let excelHeaders = [];
+
+  // Alternar entre as abas Cadastro Manual / Importar Planilha
+  function switchTab(tab) {
+    const tabManualBtn = document.getElementById('tab-manual-btn');
+    const tabImportBtn = document.getElementById('tab-import-btn');
+    const tabContentManual = document.getElementById('tab-content-manual');
+    const tabContentImport = document.getElementById('tab-content-import');
+
+    if (tab === 'manual') {
+      tabManualBtn.className = "px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-[#284701] bg-white shadow-sm transition-all cursor-pointer";
+      tabImportBtn.className = "px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-gray-500 hover:text-gray-700 transition-all flex items-center gap-1.5 cursor-pointer";
+      tabContentManual.classList.remove('hidden');
+      tabContentImport.classList.add('hidden');
+    } else {
+      tabManualBtn.className = "px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-gray-500 hover:text-gray-700 transition-all cursor-pointer";
+      tabImportBtn.className = "px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-lg text-[#284701] bg-white shadow-sm transition-all flex items-center gap-1.5 cursor-pointer";
+      tabContentManual.classList.add('hidden');
+      tabContentImport.classList.remove('hidden');
+      
+      // Registrar ouvintes de Drag & Drop se ainda não registrados
+      initDragAndDrop();
+    }
+  }
+
+  // Inicializar suporte a Drag & Drop no dropzone
+  function initDragAndDrop() {
+    const dropzone = document.getElementById('import-dropzone');
+    if (dropzone && !dropzone.dataset.dragInit) {
+      dropzone.dataset.dragInit = "true";
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, e => {
+          e.preventDefault();
+          dropzone.classList.add('border-[#284701]', 'bg-green-50/20');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, e => {
+          e.preventDefault();
+          dropzone.classList.remove('border-[#284701]', 'bg-green-50/20');
+        }, false);
+      });
+
+      dropzone.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+          document.getElementById('excel-file-input').files = files;
+          handleExcelUpload({ target: { files: files } });
+        }
+      }, false);
+    }
+  }
+
+  // Processar o upload e parsing do Excel/CSV
+  function handleExcelUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Obter dados estruturados como array bidimensional (linhas e colunas)
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        if (jsonData.length < 2) {
+          alert("A planilha parece estar vazia ou não contém dados suficientes.");
+          return;
+        }
+
+        // Cabeçalhos (primeira linha)
+        excelHeaders = jsonData[0].map(h => String(h || '').trim());
+        
+        // Linhas de dados (filtramos vazias)
+        parsedExcelData = jsonData.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''));
+
+        if (parsedExcelData.length === 0) {
+          alert("Planilha não possui registros válidos de exames.");
+          return;
+        }
+
+        document.getElementById('import-filename').innerText = file.name;
+        document.getElementById('import-total-rows').innerText = parsedExcelData.length + " exames encontrados";
+
+        // Preencher seletores de mapeamento das colunas
+        setupMappingDropdowns();
+        
+        // Mostrar seção de processamento e esconder o Dropzone
+        document.getElementById('import-dropzone').classList.add('hidden');
+        document.getElementById('import-parser-section').classList.remove('hidden');
+
+        // Atualizar a visualização prévia da tabela
+        updateImportPreview();
+      } catch (err) {
+        console.error("Erro ao ler arquivo:", err);
+        alert("Ocorreu um erro ao processar esta planilha. Certifique-se de que o arquivo não esteja corrompido.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // Auto-mapear cabeçalhos comuns e preencher seletores dropdown
+  function setupMappingDropdowns() {
+    const mappings = {
+      'map_codJalis': ['jalis', 'cod jalis', 'codigo jalis', 'cod. jalis', 'código jalis', 'codjalis'],
+      'map_codCisnorpi': ['cisnorpi', 'cod cisnorpi', 'codigo cisnorpi', 'cod. cisnorpi', 'código cisnorpi', 'codcisnorpi', 'tabela cisnorpi'],
+      'map_codAlvaro': ['alvaro', 'cod alvaro', 'codigo alvaro', 'cod. alvaro', 'código alvaro', 'codalvaro'],
+      'map_codPardini': ['pardini', 'hermes pardini', 'cod pardini', 'cod. pardini', 'codpardini'],
+      'map_name': ['nome', 'exame', 'descricao', 'descrição', 'procedimento', 'nome do exame', 'nome_exame', 'procedimentos'],
+      'map_priceCisnorpi': ['valor', 'preco', 'preço', 'valor cisnorpi', 'preco cisnorpi', 'preço cisnorpi', 'valores', 'custo']
+    };
+
+    for (const [selectId, keywords] of Object.entries(mappings)) {
+      const select = document.getElementById(selectId);
+      select.innerHTML = '<option value="">-- Ignorar ou Não Consta --</option>';
+      
+      let matchedIndex = -1;
+      excelHeaders.forEach((header, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.innerText = header;
+        select.appendChild(option);
+
+        // Algoritmo de auto-detecção por palavra-chave aproximada
+        const headerLower = header.toLowerCase();
+        if (matchedIndex === -1 && keywords.some(kw => headerLower === kw || headerLower.includes(kw))) {
+          matchedIndex = idx;
+        }
+      });
+
+      // Selecionar por padrão se detectado automaticamente
+      if (matchedIndex !== -1) {
+        select.value = matchedIndex;
+      }
+    }
+  }
+
+  // Atualizar a visualização dinâmica (amostra de 5 linhas)
+  function updateImportPreview() {
+    const mapJalisIdx = document.getElementById('map_codJalis').value;
+    const mapCisnorpiIdx = document.getElementById('map_codCisnorpi').value;
+    const mapAlvaroIdx = document.getElementById('map_codAlvaro').value;
+    const mapPardiniIdx = document.getElementById('map_codPardini').value;
+    const mapNameIdx = document.getElementById('map_name').value;
+    const mapPriceIdx = document.getElementById('map_priceCisnorpi').value;
+
+    const tbody = document.getElementById('import-preview-tbody');
+    tbody.innerHTML = '';
+
+    // Amostra dos primeiros 5 exames
+    const previewRows = parsedExcelData.slice(0, 5);
+    
+    previewRows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.className = "border-b border-gray-100 hover:bg-gray-50/50";
+
+      const valJalis = mapJalisIdx !== "" ? (row[mapJalisIdx] !== undefined ? row[mapJalisIdx] : '') : '-';
+      const valCisnorpi = mapCisnorpiIdx !== "" ? (row[mapCisnorpiIdx] !== undefined ? row[mapCisnorpiIdx] : '') : '-';
+      const valAlvaro = mapAlvaroIdx !== "" ? (row[mapAlvaroIdx] !== undefined ? row[mapAlvaroIdx] : '') : '-';
+      const valPardini = mapPardiniIdx !== "" ? (row[mapPardiniIdx] !== undefined ? row[mapPardiniIdx] : '') : '-';
+      const valName = mapNameIdx !== "" ? (row[mapNameIdx] !== undefined ? row[mapNameIdx] : '') : '-';
+      
+      let valPrice = '-';
+      if (mapPriceIdx !== "") {
+        const rawPrice = row[mapPriceIdx];
+        if (rawPrice !== undefined && rawPrice !== null) {
+          if (typeof rawPrice === 'number') {
+            valPrice = "R$ " + rawPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          } else {
+            valPrice = String(rawPrice);
+          }
+        }
+      }
+
+      tr.innerHTML = `
+        <td class="py-2.5 px-4 font-mono font-bold text-gray-500">${valJalis}</td>
+        <td class="py-2.5 px-4 font-mono font-bold text-brand-dark">${valCisnorpi}</td>
+        <td class="py-2.5 px-4 font-mono text-gray-500">${valAlvaro}</td>
+        <td class="py-2.5 px-4 font-mono text-gray-500">${valPardini}</td>
+        <td class="py-2.5 px-4 font-semibold text-gray-800">${valName}</td>
+        <td class="py-2.5 px-4 text-right font-mono font-bold text-brand-dark">${valPrice}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Cancelar importação atual e voltar ao Dropzone
+  function resetImport() {
+    parsedExcelData = null;
+    excelHeaders = [];
+    document.getElementById('excel-file-input').value = '';
+    document.getElementById('import-dropzone').classList.remove('hidden');
+    document.getElementById('import-parser-section').classList.add('hidden');
+  }
+
+  // Enviar os dados mapeados para o servidor em lote
+  async function submitImport() {
+    const mapJalisIdx = document.getElementById('map_codJalis').value;
+    const mapCisnorpiIdx = document.getElementById('map_codCisnorpi').value;
+    const mapAlvaroIdx = document.getElementById('map_codAlvaro').value;
+    const mapPardiniIdx = document.getElementById('map_codPardini').value;
+    const mapNameIdx = document.getElementById('map_name').value;
+    const mapPriceIdx = document.getElementById('map_priceCisnorpi').value;
+
+    // Nome do Exame e Preço são campos absolutamente obrigatórios
+    if (mapNameIdx === "") {
+      alert("Por favor, selecione qual coluna da planilha corresponde ao 'Nome do Exame'!");
+      return;
+    }
+    if (mapPriceIdx === "") {
+      alert("Por favor, selecione qual coluna da planilha corresponde ao 'Valor Cisnorpi'!");
+      return;
+    }
+
+    const replaceStrategy = document.getElementById('strategy-replace').checked;
+    
+    // Mapeamento final
+    const mappedItems = parsedExcelData.map(row => {
+      return {
+        codJalis: mapJalisIdx !== "" ? row[mapJalisIdx] : "",
+        codCisnorpi: mapCisnorpiIdx !== "" ? row[mapCisnorpiIdx] : "",
+        codAlvaro: mapAlvaroIdx !== "" ? row[mapAlvaroIdx] : "",
+        codPardini: mapPardiniIdx !== "" ? row[mapPardiniIdx] : "",
+        name: mapNameIdx !== "" ? row[mapNameIdx] : "",
+        priceCisnorpi: mapPriceIdx !== "" ? row[mapPriceIdx] : 0
+      };
+    }).filter(item => item.name && String(item.name).trim() !== "");
+
+    if (mappedItems.length === 0) {
+      alert("Não foi encontrado nenhum exame válido (com nome preenchido) na planilha.");
+      return;
+    }
+
+    const confirmMsg = replaceStrategy 
+      ? `ALERTA CRÍTICO: Esta ação excluirá permanentemente todos os registros atuais da Tabela Cisnorpi e importará os novos ${mappedItems.length} registros. Tem certeza que deseja prosseguir?`
+      : `Confirma a importação de ${mappedItems.length} exames para a tabela atual?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const btnSubmit = document.getElementById('confirm-import-btn');
+    const btnCancel = document.getElementById('cancel-import-btn');
+    
+    btnSubmit.disabled = true;
+    btnCancel.disabled = true;
+    btnSubmit.innerText = "Sincronizando com o Servidor...";
+
+    try {
+      const response = await fetch('/admin/cisnorpi/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: mappedItems,
+          replace: replaceStrategy
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(`${result.count} exames importados e catalogados com sucesso!`);
+        window.location.reload();
+      } else {
+        alert("Erro ao realizar importação: " + (result.message || "Erro de resposta desconhecido."));
+        btnSubmit.disabled = false;
+        btnCancel.disabled = false;
+        btnSubmit.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>Confirmar e Importar</span>
+        `;
+      }
+    } catch (err) {
+      console.error("Erro ao enviar dados mapeados:", err);
+      alert("Falha ao comunicar com o servidor. Verifique sua conexão de rede.");
+      btnSubmit.disabled = false;
+      btnCancel.disabled = false;
+      btnSubmit.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span>Confirmar e Importar</span>
+      `;
+    }
+  }
+
+
+  // ==========================================
+  // LISTAGEM, EDICÃO E EXCLUSÃO
+  // ==========================================
+
+  // Filtragem local/instantânea em tempo real na listagem
+  function filterCisnorpiTable() {
+    const searchVal = document.getElementById('cisnorpiSearchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.cisnorpi-row');
+    const emptyRow = document.getElementById('empty-row');
+    const noResultsRow = document.getElementById('no-search-results');
+    
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+      const jalis = (row.dataset.jalis || '').toLowerCase();
+      const cisnorpi = (row.dataset.cisnorpi || '').toLowerCase();
+      const alvaro = (row.dataset.alvaro || '').toLowerCase();
+      const pardini = (row.dataset.pardini || '').toLowerCase();
+      const name = (row.dataset.name || '').toLowerCase();
+      
+      const match = !searchVal || 
+                    jalis.includes(searchVal) || 
+                    cisnorpi.includes(searchVal) || 
+                    alvaro.includes(searchVal) || 
+                    pardini.includes(searchVal) || 
+                    name.includes(searchVal);
+                    
+      if (match) {
+        row.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+
+    if (emptyRow) {
+      return;
+    }
+
+    if (visibleCount === 0) {
+      noResultsRow.classList.remove('hidden');
+    } else {
+      noResultsRow.classList.add('hidden');
+    }
+  }
+
+  // Abrir o Modal de Edição preenchido
+  function openEditModal(itemJsonString) {
+    try {
+      const item = JSON.parse(itemJsonString);
+      
+      document.getElementById('edit_id').value = item.id;
+      document.getElementById('edit_codJalis').value = item.codJalis || '';
+      document.getElementById('edit_codCisnorpi').value = item.codCisnorpi || '';
+      document.getElementById('edit_codAlvaro').value = item.codAlvaro || '';
+      document.getElementById('edit_codPardini').value = item.codPardini || '';
+      document.getElementById('edit_name').value = item.name || '';
+      document.getElementById('edit_priceCisnorpi').value = item.priceCisnorpi || 0;
+      
+      // Mostrar modal removendo class hidden
+      document.getElementById('editCisnorpiModal').classList.remove('hidden');
+    } catch (err) {
+      console.error("Erro ao abrir modal de edição:", err);
+    }
+  }
+
+  // Fechar o Modal de Edição
+  function closeEditModal() {
+    document.getElementById('editCisnorpiModal').classList.add('hidden');
+  }
+</script>
+
+<%- include('../partials/footer') %>

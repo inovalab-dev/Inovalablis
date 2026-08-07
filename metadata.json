@@ -1,0 +1,6 @@
+{
+  "name": "InovaLab Cambara",
+  "description": "Site institucional do InovaLab - Laboratório de Análises Clínicas em Cambará-PR com busca de exames, simulador de exames e portal de resultados.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "IMP-1",
+    "descricao": "ZDesigner ZD230-203dpi ZPL",
+    "ip": "186.237.152.170",
+    "porta": "8085",
+    "createdAt": "2026-07-31T10:00:00.000Z",
+    "updatedAt": "2026-07-31T12:31:08.568Z"
+  },
+  {
+    "id": "IMP-2",
+    "descricao": "Argox OS-214 Plus - Triagem / Coleta",
+    "ip": "192.168.1.151",
+    "porta": "9100",
+    "createdAt": "2026-07-31T10:05:00.000Z"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "REC-4001",
+    "requisitionCode": "REQ-2026-001",
+    "patientName": "João Carlos da Silva",
+    "patientCpf": "234.567.890-11",
+    "sampleType": "Urina Tipo 1 (EAS)",
+    "containerType": "Coletor Universal Estéril",
+    "temperature": "Refrigerado (4°C)",
+    "condition": "Adequada",
+    "receiptDate": "2026-07-26",
+    "receiptTime": "08:10",
+    "receiverName": "Luciana Recepção",
+    "status": "Aceito",
+    "notes": "Amostra de urina de 1ª jato matinal entregue pelo próprio paciente. Frasco identificado e sem vazamentos."
+  },
+  {
+    "id": "REC-4002",
+    "requisitionCode": "REQ-2026-004",
+    "patientName": "Luciana Barbosa Santos",
+    "patientCpf": "567.890.123-44",
+    "sampleType": "Parasitológico de Fezes (EPF)",
+    "containerType": "Frasco com Conservante MIF",
+    "temperature": "Ambiente (22°C)",
+    "condition": "Adequada",
+    "receiptDate": "2026-07-26",
+    "receiptTime": "08:45",
+    "receiverName": "Luciana Recepção",
+    "status": "Aceito",
+    "notes": "Entregue frasco com pás e conservante conforme orientação prévia."
+  },
+  {
+    "id": "REC-4003",
+    "requisitionCode": "REQ-2026-005",
+    "patientName": "Pedro Henrique Lima",
+    "patientCpf": "678.901.234-55",
+    "sampleType": "Urocultura com Antibiograma",
+    "containerType": "Coletor Improvisado (Não Estéril)",
+    "temperature": "Ambiente (>28°C)",
+    "condition": "Inadequada - Frasco Inadequado",
+    "receiptDate": "2026-07-26",
+    "receiptTime": "09:20",
+    "receiverName": "Carlos Recepção",
+    "status": "Rejeitado / Recoleta",
+    "notes": "Urina entregue em frasco doméstico reutilizado não estéril. Orientado sobre risco de contaminação pré-analítica. Entregue frasco estéril para nova coleta matinal."
+  }
+]

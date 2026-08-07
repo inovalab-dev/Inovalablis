@@ -1,0 +1,428 @@
+<%- include('../../partials/header', { page: 'admin-lab-externo-pardini' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Laboratório Externo</span>
+        <span>•</span>
+        <span class="text-cyan-700 font-bold">Exames Pardini</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 shadow-sm flex items-center justify-center shrink-0 relative text-cyan-700 font-black text-xl">
+          🧪
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight flex items-center gap-2">
+            Exames Pardini
+            <span class="text-xs font-mono font-bold bg-cyan-100 text-cyan-800 px-2.5 py-0.5 rounded-full uppercase border border-cyan-200">Apoio Hermes Pardini</span>
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Cadastre e gerencie a lista de exames, valores e materiais disponíveis no Laboratório de Apoio Hermes Pardini
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openExamModal()" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-cyan-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Exame Pardini</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Exames</p>
+        <p id="stat-total-exames" class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= exames.length %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-700 font-bold text-lg">📋</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Média de Valor</p>
+        <% 
+          let totalVal = exames.reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+          let avgVal = exames.length > 0 ? (totalVal / exames.length).toFixed(2) : '0.00';
+        %>
+        <p id="stat-media-valor" class="text-2xl font-black text-emerald-700 font-mono mt-0.5">R$ <%= avgVal.replace('.', ',') %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-lg">💰</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Materiais</p>
+        <% 
+          let allMats = new Set();
+          exames.forEach(e => {
+            if (Array.isArray(e.materiais)) e.materiais.forEach(m => allMats.add(m));
+          });
+        %>
+        <p id="stat-total-materiais" class="text-2xl font-black text-teal-700 font-mono mt-0.5"><%= allMats.size %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 font-bold text-lg">🧫</div>
+    </div>
+  </div>
+
+  <!-- Filtro e Pesquisa -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div class="relative flex-1">
+      <input type="text" id="search-input" oninput="filterExamsTable()" placeholder="Pesquisar por Código ou Descrição do Exame Pardini..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-cyan-500 transition-all">
+      <span class="absolute left-3.5 top-3 text-gray-400 text-sm">🔍</span>
+    </div>
+    <div class="text-xs font-mono font-bold text-gray-500">
+      Mostrando <span id="filtered-count" class="text-slate-800 font-extrabold"><%= exames.length %></span> exames
+    </div>
+  </div>
+
+  <!-- Tabela de Exames -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left font-mono text-xs">
+        <thead class="bg-slate-900 text-white text-[10px] uppercase tracking-wider font-extrabold">
+          <tr>
+            <th class="p-3.5 w-32 text-center">Código</th>
+            <th class="p-3.5">Descrição</th>
+            <th class="p-3.5 w-36 text-right">Valor (R$)</th>
+            <th class="p-3.5">Materiais Disponíveis</th>
+            <th class="p-3.5 w-32 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="examsTableBody" class="divide-y divide-gray-100 bg-white">
+          <!-- Renderizado via JS / EJS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CADASTRAR / EDITAR EXAME PARDINI -->
+<div id="examModal" class="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+    
+    <!-- Header Modal -->
+    <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">🧪</span>
+        <div>
+          <h3 id="modalTitle" class="text-xs font-black uppercase font-mono tracking-wider text-cyan-400">
+            Cadastrar Exame - Pardini
+          </h3>
+          <p class="text-[10px] text-gray-300">Informe os dados do exame e os materiais disponíveis</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeExamModal()" class="text-gray-400 hover:text-white text-2xl font-bold p-1 cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Form Body -->
+    <form id="examForm" onsubmit="saveExamForm(event)" class="p-5 overflow-y-auto space-y-4 font-mono text-xs flex-1">
+      <input type="hidden" id="modal-exam-id" value="">
+
+      <!-- Código -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Código do Exame:</label>
+        <input type="text" id="modal-exam-codigo" required placeholder="Ex: TSH-P, LIPID, PAR-201" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-cyan-500 uppercase">
+      </div>
+
+      <!-- Descrição -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Descrição do Exame:</label>
+        <input type="text" id="modal-exam-descricao" required placeholder="Ex: TSH Ultra Sensível - Pardini" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-cyan-500">
+      </div>
+
+      <!-- Valor -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Valor do Exame (R$):</label>
+        <div class="relative">
+          <span class="absolute left-3 top-2 font-bold text-gray-500">R$</span>
+          <input type="number" step="0.01" min="0" id="modal-exam-valor" required placeholder="0.00" class="w-full pl-10 pr-3 py-2 bg-white border border-gray-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-cyan-500">
+        </div>
+      </div>
+
+      <!-- Lista de Materiais Disponíveis -->
+      <div class="pt-2 border-t border-gray-200">
+        <label class="block font-bold text-slate-700 uppercase mb-1">Materiais Disponíveis:</label>
+        <p class="text-[10px] text-gray-500 mb-2 font-sans">Adicione os tipos de material aceitos para este exame (Ex: Soro, Plasma, Urina)</p>
+        
+        <!-- Tags Atuais -->
+        <div id="materials-container" class="flex flex-wrap gap-1.5 mb-3 p-2 bg-slate-50 border border-gray-200 rounded-xl min-h-[44px]">
+          <!-- Renderizado via JS -->
+        </div>
+
+        <!-- Input para Novo Material -->
+        <div class="flex items-center gap-2">
+          <input type="text" id="modal-new-material-input" placeholder="Digite o nome do material..." class="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-xl font-bold text-xs text-slate-800 outline-none focus:ring-2 focus:ring-cyan-500">
+          <button type="button" onclick="addMaterialTagFromInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all cursor-pointer">
+            + Adicionar
+          </button>
+        </div>
+
+        <!-- Atalhos rápidos de material -->
+        <div class="mt-2.5">
+          <span class="text-[10px] font-bold text-gray-400 block mb-1">Sugestões rápidas:</span>
+          <div class="flex flex-wrap gap-1">
+            <button type="button" onclick="addMaterialTag('Soro')" class="px-2 py-0.5 bg-gray-100 hover:bg-cyan-100 hover:text-cyan-800 text-gray-600 rounded-lg text-[10px] font-bold transition-all border border-gray-200">+ Soro</button>
+            <button type="button" onclick="addMaterialTag('Plasma Heparinizado')" class="px-2 py-0.5 bg-gray-100 hover:bg-cyan-100 hover:text-cyan-800 text-gray-600 rounded-lg text-[10px] font-bold transition-all border border-gray-200">+ Plasma Heparinizado</button>
+            <button type="button" onclick="addMaterialTag('Sangue Total (EDTA)')" class="px-2 py-0.5 bg-gray-100 hover:bg-cyan-100 hover:text-cyan-800 text-gray-600 rounded-lg text-[10px] font-bold transition-all border border-gray-200">+ Sangue Total (EDTA)</button>
+            <button type="button" onclick="addMaterialTag('Urina 24 Horas')" class="px-2 py-0.5 bg-gray-100 hover:bg-cyan-100 hover:text-cyan-800 text-gray-600 rounded-lg text-[10px] font-bold transition-all border border-gray-200">+ Urina 24 Horas</button>
+            <button type="button" onclick="addMaterialTag('Líquido Cefalorraquidiano')" class="px-2 py-0.5 bg-gray-100 hover:bg-cyan-100 hover:text-cyan-800 text-gray-600 rounded-lg text-[10px] font-bold transition-all border border-gray-200">+ Líquido Cefalorraquidiano</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Modal -->
+      <div class="pt-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
+        <button type="button" onclick="closeExamModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer">
+          Salvar Exame
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  let examsData = <%- JSON.stringify(exames) %>;
+  let currentMaterialsList = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    renderExamsTable(examsData);
+  });
+
+  function renderExamsTable(list) {
+    const tbody = document.getElementById('examsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    document.getElementById('filtered-count').innerText = list.length;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="p-8 text-center text-gray-400 font-sans italic">
+            Nenhum exame cadastrado no laboratório Pardini.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    list.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-cyan-50/50 transition-colors';
+
+      const matsBadges = Array.isArray(item.materiais) && item.materiais.length > 0
+        ? item.materiais.map(m => `<span class="inline-block px-2 py-0.5 bg-cyan-100 text-cyan-800 border border-cyan-200 text-[10px] font-bold rounded-lg mr-1 mb-1">${m}</span>`).join('')
+        : '<span class="text-gray-400 text-[10px] italic">Nenhum informado</span>';
+
+      const valorFormatado = typeof item.valor === 'number' 
+        ? item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : 'R$ ' + (parseFloat(item.valor) || 0).toFixed(2).replace('.', ',');
+
+      tr.innerHTML = `
+        <td class="p-3.5 text-center font-bold font-mono text-slate-800 bg-slate-50/50">#${item.codigo}</td>
+        <td class="p-3.5 font-bold text-slate-900">${item.descricao}</td>
+        <td class="p-3.5 text-right font-black text-emerald-700">${valorFormatado}</td>
+        <td class="p-3.5">${matsBadges}</td>
+        <td class="p-3.5 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button type="button" onclick="editExam('${item.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-bold text-[11px] transition-all cursor-pointer" title="Editar Exame">
+              ✏️
+            </button>
+            <button type="button" onclick="deleteExam('${item.id}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer" title="Excluir Exame">
+              🗑️
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterExamsTable() {
+    const input = document.getElementById('search-input');
+    const query = (input ? input.value : '').toLowerCase().trim();
+
+    if (!query) {
+      renderExamsTable(examsData);
+      return;
+    }
+
+    const filtered = examsData.filter(item => {
+      const cod = (item.codigo || '').toLowerCase();
+      const desc = (item.descricao || '').toLowerCase();
+      const mats = Array.isArray(item.materiais) ? item.materiais.join(' ').toLowerCase() : '';
+      return cod.includes(query) || desc.includes(query) || mats.includes(query);
+    });
+
+    renderExamsTable(filtered);
+  }
+
+  function openExamModal(id = '') {
+    document.getElementById('examModal').classList.remove('hidden');
+    document.getElementById('modal-exam-id').value = id;
+
+    if (id) {
+      const exam = examsData.find(e => String(e.id) === String(id));
+      if (exam) {
+        document.getElementById('modalTitle').innerText = 'Editar Exame - Pardini';
+        document.getElementById('modal-exam-codigo').value = exam.codigo || '';
+        document.getElementById('modal-exam-descricao').value = exam.descricao || '';
+        document.getElementById('modal-exam-valor').value = exam.valor || '';
+        currentMaterialsList = Array.isArray(exam.materiais) ? [...exam.materiais] : [];
+      }
+    } else {
+      document.getElementById('modalTitle').innerText = 'Cadastrar Exame - Pardini';
+      document.getElementById('modal-exam-codigo').value = '';
+      document.getElementById('modal-exam-descricao').value = '';
+      document.getElementById('modal-exam-valor').value = '';
+      currentMaterialsList = ['Soro'];
+    }
+
+    renderMaterialsTags();
+    setTimeout(() => document.getElementById('modal-exam-codigo').focus(), 100);
+  }
+
+  function closeExamModal() {
+    document.getElementById('examModal').classList.add('hidden');
+  }
+
+  function renderMaterialsTags() {
+    const container = document.getElementById('materials-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (currentMaterialsList.length === 0) {
+      container.innerHTML = '<span class="text-gray-400 text-[11px] italic">Nenhum material adicionado ainda</span>';
+      return;
+    }
+
+    currentMaterialsList.forEach((mat, idx) => {
+      const tag = document.createElement('span');
+      tag.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan-100 text-cyan-900 border border-cyan-300 text-xs font-bold rounded-lg shadow-2xs';
+      tag.innerHTML = `
+        <span>${mat}</span>
+        <button type="button" onclick="removeMaterialTag(${idx})" class="text-cyan-700 hover:text-rose-600 font-extrabold cursor-pointer text-sm">&times;</button>
+      `;
+      container.appendChild(tag);
+    });
+  }
+
+  function addMaterialTagFromInput() {
+    const input = document.getElementById('modal-new-material-input');
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) {
+      addMaterialTag(val);
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  function addMaterialTag(name) {
+    if (!name) return;
+    if (!currentMaterialsList.includes(name)) {
+      currentMaterialsList.push(name);
+      renderMaterialsTags();
+    }
+  }
+
+  function removeMaterialTag(idx) {
+    if (idx >= 0 && idx < currentMaterialsList.length) {
+      currentMaterialsList.splice(idx, 1);
+      renderMaterialsTags();
+    }
+  }
+
+  async function saveExamForm(event) {
+    event.preventDefault();
+    const id = document.getElementById('modal-exam-id').value;
+    const codigo = document.getElementById('modal-exam-codigo').value.trim();
+    const descricao = document.getElementById('modal-exam-descricao').value.trim();
+    const valor = parseFloat(document.getElementById('modal-exam-valor').value) || 0;
+
+    const payload = {
+      id: id || ('par-' + Date.now()),
+      codigo,
+      descricao,
+      valor,
+      materiais: currentMaterialsList
+    };
+
+    try {
+      const res = await fetch('/api/lab-externo/pardini/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        examsData = data.exames;
+        renderExamsTable(examsData);
+        updateStats(examsData);
+        closeExamModal();
+      } else {
+        alert('Erro ao salvar exame: ' + (data.message || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar exame.');
+    }
+  }
+
+  async function editExam(id) {
+    openExamModal(id);
+  }
+
+  async function deleteExam(id) {
+    if (!confirm('Deseja realmente excluir este exame do Apoio Pardini?')) return;
+    try {
+      const res = await fetch('/api/lab-externo/pardini/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        examsData = data.exames;
+        renderExamsTable(examsData);
+        updateStats(examsData);
+      } else {
+        alert('Erro ao excluir: ' + (data.message || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao excluir exame.');
+    }
+  }
+
+  function updateStats(list) {
+    document.getElementById('stat-total-exames').innerText = list.length;
+    let totalVal = list.reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+    let avgVal = list.length > 0 ? (totalVal / list.length).toFixed(2) : '0.00';
+    document.getElementById('stat-media-valor').innerText = 'R$ ' + avgVal.replace('.', ',');
+
+    let allMats = new Set();
+    list.forEach(e => {
+      if (Array.isArray(e.materiais)) e.materiais.forEach(m => allMats.add(m));
+    });
+    document.getElementById('stat-total-materiais').innerText = allMats.size;
+  }
+</script>
+
+<%- include('../../partials/footer') %>

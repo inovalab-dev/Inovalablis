@@ -1,0 +1,32 @@
+[
+  {
+    "id": "LOC-1",
+    "codigo": "1",
+    "descricao": "Sala Particular"
+  },
+  {
+    "id": "LOC-2",
+    "codigo": "2",
+    "descricao": "Sala SUS"
+  },
+  {
+    "id": "LOC-3",
+    "codigo": "3",
+    "descricao": "Coleta Empresarial"
+  },
+  {
+    "id": "LOC-4",
+    "codigo": "4",
+    "descricao": "Coleta Hospital Municipal"
+  },
+  {
+    "id": "LOC-5",
+    "codigo": "5",
+    "descricao": "Coleta Santa Casa"
+  },
+  {
+    "id": "LOC-6",
+    "codigo": "6",
+    "descricao": "Domiciliar"
+  }
+]

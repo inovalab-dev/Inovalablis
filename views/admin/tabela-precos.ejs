@@ -1,0 +1,745 @@
+<%- include('../partials/header', { page: 'admin-tabela-precos' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab LIS / Pacientes) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Cadastros</span>
+        <span>•</span>
+        <span class="text-emerald-700 font-bold">Tabela de Preços</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Tabela de Preços -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            $
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Cadastro de Tabela de Preços
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Cadastro de tabela de preços de exames vinculadas aos convênios credenciados
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewTableModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Nova Tabela</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo -->
+  <% 
+    const totalTabelas = priceTables.length;
+    let totalPrecificados = 0;
+    priceTables.forEach(t => {
+      if (t.precios) totalPrecificados += t.precios.filter(p => !p.proibir && Number(p.valor) > 0).length;
+    });
+  %>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Tabelas Cadastradas</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalTabelas %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">🏷️</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Convênios Atrelados</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5">
+          <%= priceTables.filter(t => t.convenioId).length %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg">🏥</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Exames Precificados</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5"><%= totalPrecificados %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-lg">💲</div>
+    </div>
+  </div>
+
+  <!-- TABELA PRINCIPAL DE TABELAS DE PREÇO -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Listagem de Tabelas de Preço</span>
+        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+          <%= totalTabelas %> tabelas
+        </span>
+      </div>
+
+      <!-- Campo de Busca -->
+      <div class="relative w-full md:w-80">
+        <input type="text" id="searchTableInput" onkeyup="filterTables()" placeholder="Buscar por código, descrição ou convênio..." class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Tabela de Listagem das Tabelas de Preço -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-100/80 text-slate-700 font-mono uppercase text-[11px] font-bold border-b border-gray-200">
+          <tr>
+            <th class="p-3.5 w-24">Código</th>
+            <th class="p-3.5">Descrição da Tabela</th>
+            <th class="p-3.5">Convênio Vinculado</th>
+            <th class="p-3.5 text-center">Exames Configurados</th>
+            <th class="p-3.5 text-center w-48">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tablesTableBody" class="divide-y divide-gray-100 font-sans">
+          <% priceTables.forEach(t => { %>
+            <tr class="table-row-item hover:bg-emerald-50/40 transition-colors">
+              <td class="p-3.5 font-mono font-bold text-slate-800 text-sm">
+                #<%= t.codigo %>
+              </td>
+              <td class="p-3.5 font-bold text-slate-900 text-sm">
+                <%= t.descricao %>
+              </td>
+              <td class="p-3.5 text-slate-700 font-medium">
+                <% if (t.convenioNome && t.convenioNome !== 'Sem Convênio') { %>
+                  <span class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 inline-flex items-center gap-1.5">
+                    🏥 <%= t.convenioNome %>
+                  </span>
+                <% } else { %>
+                  <span class="px-2.5 py-1 bg-gray-100 text-gray-500 font-medium rounded-lg border border-gray-200 italic">
+                    Geral / Sem Convênio
+                  </span>
+                <% } %>
+              </td>
+              <td class="p-3.5 text-center">
+                <% const qty = t.precios ? t.precios.length : 0; %>
+                <span class="px-2.5 py-1 bg-slate-100 text-slate-700 font-mono font-bold rounded-full text-xs">
+                  <%= qty %> exames
+                </span>
+              </td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <!-- Botão Configurar Preços -->
+                  <button type="button" onclick="openConfigurePricesModal('<%= t.id %>')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer" title="Configurar Preços dos Exames">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/></svg>
+                    <span>Configurar Preços</span>
+                  </button>
+
+                  <!-- Botão Editar Dados da Tabela -->
+                  <button type="button" onclick="editTable('<%= t.id %>')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all cursor-pointer" title="Editar Dados da Tabela">
+                    ✏️
+                  </button>
+
+                  <!-- Botão Excluir -->
+                  <button type="button" onclick="deleteTable('<%= t.id %>', '<%= t.descricao %>')" class="p-1.5 bg-slate-100 hover:bg-rose-600 hover:text-white text-slate-600 rounded-lg transition-all cursor-pointer" title="Excluir Tabela">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+
+          <% if (priceTables.length === 0) { %>
+            <tr>
+              <td colspan="5" class="p-12 text-center text-gray-400 italic">
+                Nenhuma tabela de preço cadastrada. Clique no botão "+ Nova Tabela" para iniciar.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL 1: CADASTRO / EDIÇÃO DE TABELA DE PREÇOS -->
+<div id="tableModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="px-5 py-4 bg-emerald-950 text-white flex items-center justify-between border-b border-emerald-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
+          🏷️
+        </div>
+        <div>
+          <h3 id="tableModalTitle" class="text-sm font-black uppercase font-mono tracking-wider text-white">
+            Nova Tabela de Preços
+          </h3>
+          <p class="text-[11px] text-emerald-200/70">Informe o código, descrição e convênio atrelado</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeTableModal()" class="text-emerald-300 hover:text-white text-lg font-bold transition-colors cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Formulário do Modal -->
+    <form id="tableForm" action="/admin/tabela-precos/save" method="POST" class="p-5 space-y-4">
+      <input type="hidden" name="id" id="table-id" value="">
+
+      <!-- Campo Código (Obrigatório) -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+          Código <span class="text-rose-600">*</span>
+        </label>
+        <input type="text" name="codigo" id="table-codigo" required placeholder="Ex: 1, 002, TAB-PART" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-mono font-bold">
+      </div>
+
+      <!-- Campo Descrição (Obrigatório) -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+          Descrição <span class="text-rose-600">*</span>
+        </label>
+        <input type="text" name="descricao" id="table-descricao" required placeholder="Ex: Particular, Unimed TUSS 2026, Bradesco" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium">
+      </div>
+
+      <!-- Campo Convênio (Interligação) -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+          Convênio Vinculado
+        </label>
+        <select name="convenioId" id="table-convenioId" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium bg-white">
+          <option value="">-- Selecione o Convênio (Opcional) --</option>
+          <% convenios.forEach(c => { %>
+            <option value="<%= c.id %>"><%= c.fantasia || c.razaoSocial %> (Cód: <%= c.codigo %>)</option>
+          <% }) %>
+        </select>
+        <p class="text-[10px] text-gray-500 mt-1">
+          Ao escolher um convênio, essa tabela será aplicada automaticamente na emissão de exames e requisições deste plano.
+        </p>
+      </div>
+
+      <!-- Botões Cancelar e Salvar -->
+      <div class="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeTableModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold uppercase rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer">
+          Salvar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 2: CONFIGURAR PREÇOS DE EXAMES ("Alterar preços de exames") -->
+<div id="configurePricesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs overflow-hidden">
+  <div class="bg-white rounded-2xl border border-gray-200 w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col h-[90vh]">
+    
+    <!-- Cabeçalho do Modal "Alterar preços de exames" -->
+    <div class="px-5 py-3.5 bg-emerald-950 text-white flex items-center justify-between border-b border-emerald-800 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
+          💰
+        </div>
+        <div>
+          <h3 class="text-sm font-black uppercase font-mono tracking-wider text-white flex items-center gap-2">
+            <span>Alterar preços de exames</span>
+            <span id="activeTableNameBadge" class="px-2 py-0.5 bg-emerald-800 text-emerald-200 rounded text-[11px] font-mono normal-case"></span>
+          </h3>
+          <p class="text-[11px] text-emerald-200/70">Ajuste valores, códigos AMB e restrições de exames para esta tabela</p>
+        </div>
+      </div>
+      <button type="button" onclick="closePricesModal()" class="text-emerald-300 hover:text-white text-lg font-bold transition-colors cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Barra de Ferramentas / Ações Rápidas (Proibir todos, Limpar, Aumentar/Diminuir %) -->
+    <div class="p-3 bg-slate-100 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+      
+      <!-- Campo Localizar / Busca Live -->
+      <div class="flex items-center gap-2 w-full sm:w-72">
+        <span class="font-bold text-slate-700 font-mono text-[11px] uppercase">Localizar:</span>
+        <div class="relative flex-1">
+          <input type="text" id="priceSearchInput" onkeyup="filterPricesTable()" placeholder="Código, exame, material ou AMB..." class="w-full pl-7 pr-2 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-medium">
+          <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+
+      <!-- Botões de Lote / Operações Rápidas -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button type="button" onclick="proibirTodosDisplay(true)" class="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-800 font-semibold border border-gray-300 rounded-lg shadow-2xs text-[11px] transition-all cursor-pointer">
+          Proibir todos
+        </button>
+        <button type="button" onclick="proibirTodosDisplay(false)" class="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-800 font-semibold border border-gray-300 rounded-lg shadow-2xs text-[11px] transition-all cursor-pointer">
+          Limpar proibidos
+        </button>
+        <button type="button" onclick="ajustarPercentual(true)" class="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-800 font-semibold border border-emerald-300 rounded-lg shadow-2xs text-[11px] transition-all cursor-pointer">
+          + Aumentar %
+        </button>
+        <button type="button" onclick="ajustarPercentual(false)" class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-800 font-semibold border border-amber-300 rounded-lg shadow-2xs text-[11px] transition-all cursor-pointer">
+          - Diminuir %
+        </button>
+        <button type="button" onclick="limparValores()" class="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-800 font-semibold border border-rose-200 rounded-lg shadow-2xs text-[11px] transition-all cursor-pointer">
+          Limpar Valores
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabela de Preços com Ordenação de Colunas por Clique no Cabeçalho -->
+    <div class="flex-1 overflow-y-auto bg-slate-50/50 p-2 sm:p-4">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-100 text-slate-700 font-mono uppercase text-[11px] font-bold border-b border-gray-200 select-none sticky top-0 z-10 shadow-2xs">
+            <tr>
+              <th onclick="sortPricesBy('examCode')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors w-28">
+                <div class="flex items-center gap-1">
+                  <span>Código</span>
+                  <span id="sortIcon-examCode" class="text-slate-400 text-[10px]">▼</span>
+                </div>
+              </th>
+              <th onclick="sortPricesBy('material')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors w-24">
+                <div class="flex items-center gap-1">
+                  <span>Mat.</span>
+                  <span id="sortIcon-material" class="text-slate-400 text-[10px]">↕</span>
+                </div>
+              </th>
+              <th onclick="sortPricesBy('examName')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors">
+                <div class="flex items-center gap-1">
+                  <span>Exame</span>
+                  <span id="sortIcon-examName" class="text-slate-400 text-[10px]">↕</span>
+                </div>
+              </th>
+              <th onclick="sortPricesBy('amb')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors w-36">
+                <div class="flex items-center gap-1">
+                  <span>AMB</span>
+                  <span id="sortIcon-amb" class="text-slate-400 text-[10px]">↕</span>
+                </div>
+              </th>
+              <th onclick="sortPricesBy('valor')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors w-32 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <span>Valor (R$)</span>
+                  <span id="sortIcon-valor" class="text-slate-400 text-[10px]">↕</span>
+                </div>
+              </th>
+              <th onclick="sortPricesBy('proibir')" class="p-2.5 cursor-pointer hover:bg-slate-200 transition-colors w-20 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <span>Proibir</span>
+                  <span id="sortIcon-proibir" class="text-slate-400 text-[10px]">↕</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="pricesListBody" class="divide-y divide-gray-100 font-sans text-xs">
+            <!-- Linhas geradas dinamicamente via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rodapé com Contador e Botões CANCELAR e SALVAR -->
+    <div class="px-5 py-3 bg-slate-100 border-t border-gray-200 flex items-center justify-between shrink-0">
+      <div class="text-xs text-slate-600 font-mono">
+        <span id="priceCountBadge" class="font-bold text-slate-800">0 exames listados</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="button" onclick="closePricesModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold uppercase rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" onclick="saveConfigurePrices()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+          <span>Salvar</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Dados injetados pelo servidor EJS
+  const rawPriceTables = <%- JSON.stringify(priceTables || []) %>;
+  const rawExams = <%- JSON.stringify(exams || []) %>;
+  const rawConvenios = <%- JSON.stringify(convenios || []) %>;
+
+  let currentEditingTableId = null;
+  let activePricesData = [];
+  let sortColumn = 'examCode';
+  let sortDirection = 'asc'; // 'asc' ou 'desc'
+
+  // --- BUSCA NA TABELA DE PREÇOS (TELA PRINCIPAL) ---
+  function filterTables() {
+    const query = document.getElementById('searchTableInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#tablesTableBody tr.table-row-item');
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      if (text.includes(query)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // --- MODAL 1: CADASTRO / EDIÇÃO DE TABELA ---
+  function openNewTableModal() {
+    document.getElementById('tableModalTitle').innerText = 'Nova Tabela de Preços';
+    document.getElementById('table-id').value = '';
+    document.getElementById('table-codigo').value = '';
+    document.getElementById('table-descricao').value = '';
+    document.getElementById('table-convenioId').value = '';
+    document.getElementById('tableModal').classList.remove('hidden');
+  }
+
+  function editTable(id) {
+    const table = rawPriceTables.find(t => String(t.id) === String(id));
+    if (!table) return;
+    document.getElementById('tableModalTitle').innerText = 'Editar Tabela de Preços';
+    document.getElementById('table-id').value = table.id;
+    document.getElementById('table-codigo').value = table.codigo || '';
+    document.getElementById('table-descricao').value = table.descricao || '';
+    document.getElementById('table-convenioId').value = table.convenioId || '';
+    document.getElementById('tableModal').classList.remove('hidden');
+  }
+
+  function closeTableModal() {
+    document.getElementById('tableModal').classList.add('hidden');
+  }
+
+  function deleteTable(id, name) {
+    if (confirm(`Tem certeza que deseja excluir a tabela "${name}"?`)) {
+      fetch(`/admin/tabela-precos/delete/${id}`, { method: 'POST' })
+        .then(() => window.location.reload())
+        .catch(err => alert('Erro ao excluir tabela.'));
+    }
+  }
+
+  // --- MODAL 2: CONFIGURAR PREÇOS DE EXAMES ---
+  function openConfigurePricesModal(tableId) {
+    currentEditingTableId = tableId;
+    const table = rawPriceTables.find(t => String(t.id) === String(tableId));
+    if (!table) return;
+
+    document.getElementById('activeTableNameBadge').innerText = `${table.descricao} (#${table.codigo})`;
+    document.getElementById('priceSearchInput').value = '';
+
+    // Mapeia preços já salvos para esta tabela por [CODIGO_EXAME + _ + MATERIAL]
+    const savedPricesMap = {};
+    if (table.precios && Array.isArray(table.precios)) {
+      table.precios.forEach(p => {
+        const key = `${p.examCode || ''}_${p.material || ''}`.toUpperCase().trim();
+        savedPricesMap[key] = p;
+      });
+    }
+
+    activePricesData = [];
+    const processedKeys = new Set();
+
+    // 1. Iterar sobre TODOS os exames cadastrados no sistema (rawExams)
+    if (Array.isArray(rawExams) && rawExams.length > 0) {
+      rawExams.forEach(e => {
+        const examCode = (e.code || e.jalisCode || e.mnemonico || e.codigo || String(e.id || '')).trim();
+        const examName = (e.name || e.nome || 'Exame sem nome').trim();
+
+        // Extrair materiais coletados permitidos para este exame
+        let mats = [];
+        if (Array.isArray(e.materiaisColetados) && e.materiaisColetados.length > 0) {
+          mats = e.materiaisColetados;
+        } else if (Array.isArray(e.materiais) && e.materiais.length > 0) {
+          mats = e.materiais;
+        }
+
+        // Se não tiver materiais especificados no cadastro, usa padrão 'SGE'
+        if (mats.length === 0) {
+          mats = [{ mnemotecnico: 'SGE', nome: 'Sangue Total' }];
+        }
+
+        // Criar uma entrada de preço para cada material associado ao exame
+        mats.forEach(m => {
+          let matCode = '';
+          if (typeof m === 'object' && m !== null) {
+            matCode = (m.nome || m.mnemotecnico || m.codigo || m.material || 'SGE').trim();
+          } else {
+            matCode = String(m || 'SGE').trim();
+          }
+
+          const itemKey = `${examCode}_${matCode}`.toUpperCase();
+          processedKeys.add(itemKey);
+
+          // Verificar se já existe valor gravado para este [Exame + Material]
+          const existing = savedPricesMap[itemKey];
+
+          if (existing) {
+            activePricesData.push({
+              examCode: examCode,
+              material: matCode,
+              examName: examName,
+              amb: existing.amb || e.amb || e.tuss || '',
+              valor: parseFloat(existing.valor) || 0.00,
+              proibir: existing.proibir === true || existing.proibir === 'true'
+            });
+          } else {
+            // Se o exame/material for novo ou ainda não tiver preço registrado, exibe zerado (0.00)
+            activePricesData.push({
+              examCode: examCode,
+              material: matCode,
+              examName: examName,
+              amb: e.amb || e.tuss || '',
+              valor: 0.00,
+              proibir: false
+            });
+          }
+        });
+      });
+    }
+
+    // 2. Adicionar quaisquer itens da tabela de preços que não estejam em rawExams (para preservar dados históricos)
+    if (table.precios && Array.isArray(table.precios)) {
+      table.precios.forEach(p => {
+        const itemKey = `${p.examCode || ''}_${p.material || ''}`.toUpperCase().trim();
+        if (!processedKeys.has(itemKey)) {
+          processedKeys.add(itemKey);
+          activePricesData.push({
+            examCode: p.examCode || '',
+            material: p.material || 'SGE',
+            examName: p.examName || '',
+            amb: p.amb || '',
+            valor: parseFloat(p.valor) || 0.00,
+            proibir: p.proibir === true || p.proibir === 'true'
+          });
+        }
+      });
+    }
+
+    sortColumn = 'examCode';
+    sortDirection = 'asc';
+
+    renderPricesTable();
+    document.getElementById('configurePricesModal').classList.remove('hidden');
+  }
+
+  function closePricesModal() {
+    document.getElementById('configurePricesModal').classList.add('hidden');
+  }
+
+  // ORDENAÇÃO AO CLICAR NO CABEÇALHO DA COLUNA
+  function sortPricesBy(column) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = column;
+      sortDirection = 'asc';
+    }
+
+    // Atualizar ícones dos cabeçalhos
+    const columns = ['examCode', 'material', 'examName', 'amb', 'valor', 'proibir'];
+    columns.forEach(col => {
+      const iconEl = document.getElementById(`sortIcon-${col}`);
+      if (iconEl) {
+        if (col === sortColumn) {
+          iconEl.innerText = sortDirection === 'asc' ? '▲' : '▼';
+          iconEl.className = 'text-emerald-700 font-bold text-[10px]';
+        } else {
+          iconEl.innerText = '↕';
+          iconEl.className = 'text-slate-400 text-[10px]';
+        }
+      }
+    });
+
+    renderPricesTable();
+  }
+
+  function renderPricesTable() {
+    const tbody = document.getElementById('pricesListBody');
+    tbody.innerHTML = '';
+
+    const filterQuery = document.getElementById('priceSearchInput').value.toLowerCase().trim();
+
+    // Ordenar a lista activePricesData conforme coluna selecionada
+    const sortedData = [...activePricesData].sort((a, b) => {
+      let valA = a[sortColumn];
+      let valB = b[sortColumn];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    let visibleCount = 0;
+
+    sortedData.forEach((item, index) => {
+      const matchSearch = !filterQuery || 
+        item.examCode.toLowerCase().includes(filterQuery) ||
+        item.material.toLowerCase().includes(filterQuery) ||
+        item.examName.toLowerCase().includes(filterQuery) ||
+        item.amb.toLowerCase().includes(filterQuery);
+
+      if (!matchSearch) return;
+
+      visibleCount++;
+
+      // Encontrar índice real na lista
+      const realIndex = activePricesData.indexOf(item);
+
+      const tr = document.createElement('tr');
+      tr.className = `hover:bg-amber-50/50 transition-colors ${item.proibir ? 'bg-rose-50/40 text-slate-500' : ''}`;
+
+      tr.innerHTML = `
+        <td class="p-2.5 font-mono font-bold ${item.proibir ? 'text-rose-700' : 'text-slate-900'}">
+          ${item.examCode}
+        </td>
+        <td class="p-2.5 font-mono font-semibold text-slate-600">
+          <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px] border border-slate-200">
+            ${item.material || 'SGE'}
+          </span>
+        </td>
+        <td class="p-2.5 font-bold ${item.proibir ? 'line-through text-slate-400' : 'text-slate-800'}">
+          ${item.examName}
+        </td>
+        <td class="p-2.5 font-mono text-slate-600">
+          <input type="text" value="${item.amb || ''}" onchange="updateItemAmb(${realIndex}, this.value)" class="w-full px-2 py-1 text-xs font-mono border border-gray-200 rounded focus:border-emerald-500 focus:outline-none bg-white">
+        </td>
+        <td class="p-2.5 text-right font-mono font-bold">
+          <input type="number" step="0.01" min="0" value="${item.valor.toFixed(2)}" onchange="updateItemValor(${realIndex}, this.value)" class="w-28 px-2 py-1 text-xs text-right font-mono font-bold border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 bg-white">
+        </td>
+        <td class="p-2.5 text-center">
+          <input type="checkbox" ${item.proibir ? 'checked' : ''} onchange="updateItemProibir(${realIndex}, this.checked)" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer">
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('priceCountBadge').innerText = `${visibleCount} de ${activePricesData.length} exames mostrados`;
+
+    if (visibleCount === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-8 text-center text-gray-400 italic">
+            Nenhum exame localizado com o termo "${filterQuery}".
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  function filterPricesTable() {
+    renderPricesTable();
+  }
+
+  function updateItemValor(index, val) {
+    activePricesData[index].valor = parseFloat(val) || 0;
+  }
+
+  function updateItemAmb(index, val) {
+    activePricesData[index].amb = val || '';
+  }
+
+  function updateItemProibir(index, checked) {
+    activePricesData[index].proibir = checked;
+    renderPricesTable();
+  }
+
+  // --- BOTÕES DE AÇÃO EM LOTE ---
+  function proibirTodosDisplay(flag) {
+    const filterQuery = document.getElementById('priceSearchInput').value.toLowerCase().trim();
+    activePricesData.forEach(item => {
+      const matchSearch = !filterQuery || 
+        item.examCode.toLowerCase().includes(filterQuery) ||
+        item.material.toLowerCase().includes(filterQuery) ||
+        item.examName.toLowerCase().includes(filterQuery) ||
+        item.amb.toLowerCase().includes(filterQuery);
+      if (matchSearch) {
+        item.proibir = flag;
+      }
+    });
+    renderPricesTable();
+  }
+
+  function reajustarValores(percent) {
+    const filterQuery = document.getElementById('priceSearchInput').value.toLowerCase().trim();
+    activePricesData.forEach(item => {
+      const matchSearch = !filterQuery || 
+        item.examCode.toLowerCase().includes(filterQuery) ||
+        item.material.toLowerCase().includes(filterQuery) ||
+        item.examName.toLowerCase().includes(filterQuery) ||
+        item.amb.toLowerCase().includes(filterQuery);
+      if (matchSearch && !item.proibir) {
+        item.valor = Math.max(0, parseFloat((item.valor * (1 + percent / 100)).toFixed(2)));
+      }
+    });
+    renderPricesTable();
+  }
+
+  function ajustarPercentual(isIncrease) {
+    const input = prompt(isIncrease ? 'Digite a porcentagem de AUMENTO (%):' : 'Digite a porcentagem de DESCONTO (%):', '10');
+    if (input !== null) {
+      const pct = parseFloat(input);
+      if (!isNaN(pct)) {
+        reajustarValores(isIncrease ? pct : -pct);
+      }
+    }
+  }
+
+  function limparValores() {
+    if (confirm('Deseja realmente zerar os valores de todos os exames filtrados?')) {
+      const filterQuery = document.getElementById('priceSearchInput').value.toLowerCase().trim();
+      activePricesData.forEach(item => {
+        const matchSearch = !filterQuery || 
+          item.examCode.toLowerCase().includes(filterQuery) ||
+          item.material.toLowerCase().includes(filterQuery) ||
+          item.examName.toLowerCase().includes(filterQuery) ||
+          item.amb.toLowerCase().includes(filterQuery);
+        if (matchSearch) {
+          item.valor = 0.00;
+        }
+      });
+      renderPricesTable();
+    }
+  }
+
+  // --- SALVAR PREÇOS NO BACKEND ---
+  function saveConfigurePrices() {
+    if (!currentEditingTableId) return;
+
+    fetch(`/admin/tabela-precos/save-prices/${currentEditingTableId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ precios: activePricesData })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        closePricesModal();
+        window.location.reload();
+      } else {
+        alert(data.message || 'Erro ao salvar preços.');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erro de rede ao salvar os preços.');
+    });
+  }
+</script>
+
+<%- include('../partials/footer') %>

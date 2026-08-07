@@ -1,0 +1,250 @@
+<%- include('partials/header') %>
+
+<main class="flex-grow py-16 bg-[#fafbfa] relative overflow-hidden">
+  <!-- Efeitos de Decoração sutil de fundo -->
+  <div class="absolute right-0 top-10 w-96 h-96 rounded-full bg-[#284701]/5 blur-3xl pointer-events-none"></div>
+  <div class="absolute left-0 bottom-10 w-96 h-96 rounded-full bg-brand-gold/5 blur-3xl pointer-events-none"></div>
+
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 relative z-10">
+    <div class="bg-white rounded-3xl border border-[#e4ebe5] shadow-xl p-8 sm:p-12 text-center space-y-8 animate-fade-in">
+      
+      <!-- Cabeçalho de Avaliação -->
+      <div class="space-y-3">
+        <div class="w-16 h-16 bg-[#284701]/10 text-[#284701] rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.252.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.178 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 10.12c-.773-.559-.374-1.81.588-1.81h4.908a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-dark tracking-tight">Sua Opinião Vale Muito!</h1>
+        <p class="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+          Ajude-nos a manter o padrão de excelência do <span class="font-bold text-[#284701]">InovaLab Cambará</span>. Leva menos de 1 minuto.
+        </p>
+      </div>
+
+      <!-- Área de feedback de sucesso se já tiver avaliado -->
+      <% if (success) { %>
+        <div class="space-y-6 py-6 fade-in">
+          <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-sm leading-relaxed max-w-md mx-auto space-y-4">
+            <h3 class="font-extrabold text-lg text-emerald-900">Avaliação Enviada com Sucesso!</h3>
+            <p>Agradecemos imensamente por compartilhar sua opinião técnica e humana. Sua nota foi registrada em nossa matriz de satisfação.</p>
+            
+            <% if (rating === 5) { %>
+              <div class="bg-white p-4 rounded-xl border border-emerald-200 text-left space-y-3 mt-2">
+                <span class="text-xs font-bold text-[#284701] uppercase tracking-wide block">Compartilhe no Google:</span>
+                <p class="text-xs text-gray-500">Como você avaliou nosso atendimento com nota máxima, que tal nos ajudar recomendando o InovaLab no Google? Isso nos ajuda muito!</p>
+                <a id="google-review-btn" data-eval-id="<%= evaluationId || '' %>" href="https://search.google.com/local/writereview?placeid=ChIJI2YdLwCh6pQRBdF-tOPg4H8" target="_blank" rel="noopener noreferrer" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl text-center shadow transition-all flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887C18.2 15.614 15.645 18 12.24 18c-3.86 0-7-3.14-7-7s3.14-7 7-7c1.74 0 3.3.61 4.5 1.64l2.44-2.44C17.3 1.58 14.9 0 12.24 0c-6.07 0-11 4.93-11 11s4.93 11 11 11c5.54 0 10.3-4 10.3-11 0-.625-.07-1.235-.2-1.715H12.24z"/></svg>
+                  Avaliar 5 Estrelas no Google
+                </a>
+              </div>
+            <% } %>
+          </div>
+          <a href="/" class="inline-block px-6 py-3 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl transition-all shadow">
+            Voltar para a Página Inicial
+          </a>
+        </div>
+
+      <% } else { %>
+        <!-- Formulário Interativo -->
+        <form action="/avaliar" method="POST" id="review-form" class="space-y-6 text-left max-w-md mx-auto">
+          <input type="hidden" name="code" value="<%= code %>">
+          
+          <!-- Seleção Interativa de Estrelas -->
+          <div class="space-y-2 text-center">
+            <label class="block text-xs font-bold text-gray-400 font-mono uppercase tracking-wider">Qual nota você nos dá?</label>
+            <div class="flex items-center justify-center space-x-2 py-2">
+              <% for(let i = 1; i <= 5; i++) { %>
+                <button type="button" data-star="<%= i %>" class="star-btn text-gray-300 hover:text-amber-400 focus:outline-none transition-transform duration-100 hover:scale-110 active:scale-95">
+                  <svg class="w-10 h-10 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                  </svg>
+                </button>
+              <% } %>
+            </div>
+            <!-- Campo oculto com a nota -->
+            <input type="hidden" name="rating" id="rating-input" value="<%= preRating || '' %>" required>
+          </div>
+
+          <!-- Campos Básicos de Identificação -->
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-500 mb-1">Seu Nome (opcional - deixe em branco para Anônimo)</label>
+              <input type="text" name="name" value="<%= name %>" placeholder="Ex: João da Silva ou Anônimo" class="w-full px-4 py-3 rounded-xl border border-[#e4ebe5] focus:outline-none focus:border-brand-dark bg-[#fafbfa] text-xs font-semibold text-gray-800">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-500 mb-1">WhatsApp de Contato (opcional)</label>
+              <input type="tel" name="phone" id="phone-input" placeholder="Ex: (43) 99618-3406" class="w-full px-4 py-3 rounded-xl border border-[#e4ebe5] focus:outline-none focus:border-brand-dark bg-[#fafbfa] text-xs font-semibold text-gray-800">
+            </div>
+          </div>
+
+          <!-- Seções Condicionais de Feedback (Controladas via JavaScript de acordo com as estrelas) -->
+          
+          <!-- Seção 1: Feedback Positivo (4 ou 5 estrelas) -->
+          <div id="positive-feedback" class="hidden space-y-4 p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100 animate-fade-in">
+            <div class="flex items-start space-x-3">
+              <span class="text-xl">🎉</span>
+              <div>
+                <h4 class="text-xs font-bold text-emerald-900">Que excelente notícia!</h4>
+                <p class="text-[11px] text-emerald-700 leading-relaxed mt-0.5">Saber que sua experiência foi excelente motiva muito nossa equipe em Cambará. Você gostaria de deixar um comentário adicional?</p>
+              </div>
+            </div>
+            <div>
+              <textarea name="comment_positive" rows="3" placeholder="Quer destacar o atendimento de alguém ou deixar uma mensagem positiva? (opcional)" class="w-full px-3 py-2.5 rounded-xl border border-emerald-200 focus:outline-none focus:border-[#284701] bg-white text-xs font-medium text-gray-700 font-sans"></textarea>
+            </div>
+          </div>
+
+          <!-- Seção 2: Feedback Construtivo / Negativo (1, 2 ou 3 estrelas) -->
+          <div id="negative-feedback" class="hidden space-y-4 p-5 rounded-2xl bg-rose-50/50 border border-rose-100 animate-fade-in">
+            <div class="flex items-start space-x-3">
+              <span class="text-xl">💬</span>
+              <div>
+                <h4 class="text-xs font-bold text-rose-900">Queremos ouvir você para corrigir!</h4>
+                <p class="text-[11px] text-rose-700 leading-relaxed mt-0.5">Lamentamos profundamente que sua experiência não tenha sido ideal. Por favor, relate o que aconteceu de forma privada para que a nossa gerência possa corrigir diretamente.</p>
+              </div>
+            </div>
+            <div>
+              <textarea name="comment_negative" required id="negative-textarea" rows="3" placeholder="Por favor, relate o ocorrido em detalhes para podermos melhorar..." class="w-full px-3 py-2.5 rounded-xl border border-rose-200 focus:outline-none focus:border-rose-800 bg-white text-xs font-medium text-gray-700 font-sans"></textarea>
+            </div>
+          </div>
+
+          <!-- Botão de Envio Principal -->
+          <button type="submit" id="submit-btn" disabled class="w-full py-4 bg-gray-300 text-gray-500 font-bold rounded-xl text-xs uppercase tracking-wider text-center transition-all shadow-sm cursor-not-allowed">
+            Selecione uma Nota acima
+          </button>
+
+        </form>
+      <% } %>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const stars = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('rating-input');
+    const positiveDiv = document.getElementById('positive-feedback');
+    const negativeDiv = document.getElementById('negative-feedback');
+    const negativeTextarea = document.getElementById('negative-textarea');
+    const submitBtn = document.getElementById('submit-btn');
+    const phoneInput = document.getElementById('phone-input');
+
+    // Máscara de Celular / WhatsApp
+    if (phoneInput) {
+      phoneInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length > 10) {
+          value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+        } else if (value.length > 6) {
+          value = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+        } else if (value.length > 2) {
+          value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+        } else if (value.length > 0) {
+          value = `(${value}`;
+        }
+        e.target.value = value;
+      });
+    }
+
+    // Função para pintar as estrelas selecionadas
+    function highlightStars(rating) {
+      stars.forEach(btn => {
+        const starVal = parseInt(btn.getAttribute('data-star'));
+        if (starVal <= rating) {
+          btn.classList.remove('text-gray-300');
+          btn.classList.add('text-amber-400');
+        } else {
+          btn.classList.remove('text-amber-400');
+          btn.classList.add('text-gray-300');
+        }
+      });
+    }
+
+    // Função para atualizar as seções baseadas no rating
+    function updateSections(rating) {
+      if (!rating) {
+        positiveDiv.classList.add('hidden');
+        negativeDiv.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.className = "w-full py-4 bg-gray-300 text-gray-500 font-bold rounded-xl text-xs uppercase tracking-wider text-center transition-all shadow-sm cursor-not-allowed";
+        submitBtn.innerText = "Selecione uma Nota acima";
+        return;
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.className = "w-full py-4 bg-[#284701] hover:bg-[#3b661d] text-white font-bold rounded-xl text-xs uppercase tracking-wider text-center transition-all shadow-md hover:scale-[1.01] cursor-pointer";
+
+      if (rating === 5) {
+        positiveDiv.classList.remove('hidden');
+        negativeDiv.classList.add('hidden');
+        if (negativeTextarea) negativeTextarea.required = false;
+        submitBtn.innerText = "Enviar";
+      } else if (rating === 4) {
+        positiveDiv.classList.remove('hidden');
+        negativeDiv.classList.add('hidden');
+        if (negativeTextarea) negativeTextarea.required = false;
+        submitBtn.innerText = "Enviar Avaliação";
+      } else {
+        positiveDiv.classList.add('hidden');
+        negativeDiv.classList.remove('hidden');
+        if (negativeTextarea) negativeTextarea.required = true;
+        submitBtn.innerText = "Enviar Mensagem Privada à Gerência";
+      }
+    }
+
+    // Ouvinte para cada clique em estrela
+    stars.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rating = parseInt(btn.getAttribute('data-star'));
+        ratingInput.value = rating;
+        highlightStars(rating);
+        updateSections(rating);
+      });
+
+      // Efeito sutil de hover
+      btn.addEventListener('mouseenter', () => {
+        const rating = parseInt(btn.getAttribute('data-star'));
+        highlightStars(rating);
+      });
+    });
+
+    // Restaurar ao tirar o mouse
+    const container = ratingInput ? ratingInput.parentElement : null;
+    if (container) {
+      container.addEventListener('mouseleave', () => {
+        const rating = parseInt(ratingInput.value) || 0;
+        highlightStars(rating);
+      });
+    }
+
+    // Se já veio com pré-rating da URL
+    const initialRating = parseInt(ratingInput ? ratingInput.value : 0);
+    if (initialRating) {
+      highlightStars(initialRating);
+      updateSections(initialRating);
+    }
+
+    // Registrar clique no botão de avaliação do Google
+    const googleBtn = document.getElementById('google-review-btn');
+    if (googleBtn) {
+      googleBtn.addEventListener('click', () => {
+        const evalId = googleBtn.getAttribute('data-eval-id');
+        if (evalId) {
+          fetch('/api/avaliar/google-click', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ evaluationId: evalId })
+          }).then(response => response.json())
+            .then(data => console.log('Clique registrado:', data))
+            .catch(err => console.error('Erro ao registrar clique no Google:', err));
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

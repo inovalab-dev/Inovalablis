@@ -1,0 +1,1219 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1">
+  <!-- Cabeçalho Principal da Tela (Estilo LIS PEP/Recepção) -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <span>Laboratório LIS</span>
+        <span>•</span>
+        <span class="text-brand-gold font-bold">Triagem & Distribuição de Amostras</span>
+      </div>
+      <h1 class="text-2xl font-black text-[#284701] flex items-center gap-2">
+        <span>🧪</span> Triagem de Amostras
+      </h1>
+      <p class="text-xs text-brand-neutral/70 mt-1">
+        Triagem, conferência e distribuição de amostras para bancadas internas e laboratórios de apoio (Álvaro, Pardini).
+      </p>
+    </div>
+
+    <!-- Global Summary Stats Badges -->
+    <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+      <div class="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs text-center min-w-24">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Pacientes</span>
+        <span id="stat-patients" class="text-base font-black text-[#284701]">0</span>
+      </div>
+      <div class="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs text-center min-w-24">
+        <span class="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">🏥 Internos</span>
+        <span id="stat-internos" class="text-base font-black text-sky-700">0</span>
+      </div>
+      <div class="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs text-center min-w-24">
+        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">🔬 Álvaro</span>
+        <span id="stat-alvaro" class="text-base font-black text-amber-700">0</span>
+      </div>
+      <div class="bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs text-center min-w-24">
+        <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">🧬 Pardini</span>
+        <span id="stat-pardini" class="text-base font-black text-purple-700">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls & Filters Bar -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    
+    <!-- Search Input -->
+    <div class="relative flex-1 w-full">
+      <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input 
+        type="text" 
+        id="searchInput" 
+        oninput="filterTriagem()"
+        placeholder="Buscar por paciente, código de requisição (#0000...), CPF ou exame..." 
+        class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#284701] focus:bg-white transition-all shadow-2xs"
+      />
+    </div>
+
+    <!-- Quick Action Controls -->
+    <div class="flex flex-wrap items-center gap-2">
+      <select id="statusFilter" onchange="filterTriagem()" class="bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-3 py-2.5 text-xs font-bold focus:ring-2 focus:ring-[#284701] focus:outline-none cursor-pointer">
+        <option value="nao_triados" selected>⏳ Apenas Pacientes Não Triados</option>
+        <option value="triados">✅ Apenas Pacientes Triados</option>
+        <option value="todos">📋 Todos os Pacientes</option>
+      </select>
+
+      <button 
+        type="button" 
+        onclick="toggleAllAccordions(true)" 
+        class="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+        title="Expandir todas as requisições"
+      >
+        <span>📂</span> Expandir Todos
+      </button>
+
+      <button 
+        type="button" 
+        onclick="toggleAllAccordions(false)" 
+        class="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+        title="Recolher todas as requisições"
+      >
+        <span>📁</span> Recolher Todos
+      </button>
+    </div>
+
+  </div>
+
+    <!-- Patients List with Collapsible Cards & 3 Columns inside -->
+    <div id="triagem-list-container" class="space-y-4">
+      <% 
+        // Process requisitions to format properly
+        let totalColetados = 0;
+      %>
+
+      <% if (!requisitions || requisitions.length === 0) { %>
+        <div class="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm">
+          <span class="text-4xl block mb-3">🧪</span>
+          <h3 class="text-lg font-bold text-slate-800">Nenhuma requisição encontrada</h3>
+          <p class="text-xs text-slate-500 mt-1">Nenhum exame coletado está pendente de triagem no momento.</p>
+        </div>
+      <% } else { %>
+
+        <% requisitions.forEach(function(req, reqIdx) { %>
+          <% 
+            const reqExams = req.exams || [];
+            const isExamLoteCriado = function(e) {
+              if (!e) return false;
+              const st = String(e.status || '').trim().toLowerCase();
+              const lst = String(e.loteStatus || '').trim().toLowerCase();
+              return st === 'lote criado' || lst === 'lote criado' || lst === 'gerado' || !!e.loteCode || !!e.idLote;
+            };
+
+            const pendingExams = reqExams.filter(e => !isExamLoteCriado(e));
+            const isReqLoteCriado = String(req.status || '').trim().toLowerCase() === 'lote criado' || (reqExams.length > 0 && pendingExams.length === 0);
+
+            const isTriado = !isReqLoteCriado && (req.status === 'Triado' || req.triado === true || (pendingExams.length > 0 && pendingExams.every(e => e.status === 'Triado' || e.triado === true)));
+            const coletadosExams = pendingExams.filter(e => e.status === 'Coletado' || req.status === 'Coletado' || e.status === 'Triado' || e.triado === true);
+            const hasColetados = pendingExams.length > 0 && (coletadosExams.length > 0 || req.status === 'Coletado' || isTriado);
+            
+            if (hasColetados && !isReqLoteCriado) {
+              totalColetados++;
+            }
+          %>
+
+          <div 
+            class="patient-triagem-card bg-white rounded-2xl border border-slate-200/90 shadow-sm transition-all overflow-hidden"
+            data-req-id="<%= req.id || req.requisitionCode %>"
+            data-triado="<%= isTriado ? 'true' : 'false' %>"
+            data-lote-criado="<%= isReqLoteCriado ? 'true' : 'false' %>"
+            data-has-coletados="<%= hasColetados ? 'true' : 'false' %>"
+            data-search="<%= (req.patientName || '') + ' ' + (req.requisitionCode || '') + ' ' + (req.patientCpf || '') + ' ' + reqExams.map(e => e.name + ' ' + e.code).join(' ') %>"
+          >
+            <!-- Accordion Header -->
+            <div 
+              onclick="toggleAccordion('<%= req.id || req.requisitionCode %>')"
+              class="patient-accordion-header px-4 sm:px-6 py-4 bg-white hover:bg-slate-50/80 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 transition-colors select-none"
+            >
+              <!-- Left Side: Patient & Requisition Info -->
+              <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-700 flex items-center justify-center font-black text-sm shrink-0">
+                  <%= (req.patientName || 'P').charAt(0).toUpperCase() %>
+                </div>
+
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-bold text-slate-900 text-sm sm:text-base tracking-tight truncate">
+                      <%= req.patientName || 'Paciente Não Identificado' %>
+                    </h3>
+                    <span class="font-mono text-xs font-black px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md border border-slate-200">
+                      #<%= req.requisitionCode || req.id %>
+                    </span>
+                    <% if (req.convenio) { %>
+                      <span class="text-[10px] font-bold px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md">
+                        <%= req.convenio %>
+                      </span>
+                    <% } %>
+                  </div>
+
+                  <div class="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap font-medium">
+                    <% if (req.createdAt) { %>
+                      <span class="flex items-center gap-1">
+                        <span>📅</span> <%= req.createdAt %>
+                      </span>
+                    <% } %>
+                    <% if (req.patientAge) { %>
+                      <span>• <%= req.patientAge %></span>
+                    <% } %>
+                    <% if (req.patientCpf) { %>
+                      <span>• CPF: <%= req.patientCpf %></span>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Side: Column Counters & Accordion Toggle Icon -->
+              <div class="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                
+                <!-- Counter Badges per Patient -->
+                <div class="flex items-center gap-1.5 text-xs font-bold font-mono">
+                  <span class="badge-patient-interno px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg flex items-center gap-1" title="Exames na Coluna Interna">
+                    <span>🏥</span> <span class="patient-cnt-interno">0</span>
+                  </span>
+                  <span class="badge-patient-alvaro px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg flex items-center gap-1" title="Exames na Coluna Álvaro">
+                    <span>🔬</span> <span class="patient-cnt-alvaro">0</span>
+                  </span>
+                  <span class="badge-patient-pardini px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg flex items-center gap-1" title="Exames na Coluna Pardini">
+                    <span>🧬</span> <span class="patient-cnt-pardini">0</span>
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="badge-status-triado font-black text-[11px] px-2.5 py-1 rounded-lg border flex items-center gap-1 shrink-0 <%= isTriado ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200' %>">
+                    <%= isTriado ? '✅ Triado' : '⏳ Pendente' %>
+                  </span>
+
+                  <span class="px-2.5 py-1 bg-slate-100 text-slate-800 text-[11px] font-black rounded-lg border border-slate-200">
+                    <%= reqExams.length %> <%= reqExams.length === 1 ? 'exame' : 'exames' %>
+                  </span>
+
+                  <button type="button" class="chevron-icon text-slate-400 hover:text-slate-600 transition-transform duration-200">
+                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Accordion Body: 3 Columns Layout -->
+            <div 
+              id="accordion-body-<%= req.id || req.requisitionCode %>" 
+              class="patient-accordion-body p-4 sm:p-6 bg-slate-50/70 border-t border-slate-100 hidden"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- QUADRANTE 1: EXAMES INTERNOS -->
+                <div class="triagem-column-box bg-slate-100/80 rounded-2xl p-3.5 border border-slate-200 flex flex-col min-h-[180px]">
+                  <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200/80">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-700 border border-sky-500/30 flex items-center justify-center text-xs font-bold">🏥</span>
+                      <h4 class="font-black text-xs uppercase tracking-wider text-slate-800">Exames Internos</h4>
+                    </div>
+                    <span class="col-count-interno px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full font-mono text-[11px] font-black border border-sky-200">
+                      0
+                    </span>
+                  </div>
+
+                  <!-- Drop Zone 1 -->
+                  <div 
+                    class="dropzone dropzone-interno flex-1 space-y-2.5 p-1 rounded-xl transition-all"
+                    data-req-id="<%= req.id || req.requisitionCode %>"
+                    data-destination="interno"
+                    ondragover="handleDragOver(event)"
+                    ondragleave="handleDragLeave(event)"
+                    ondrop="handleDrop(event, '<%= req.id || req.requisitionCode %>', 'interno')"
+                  >
+                    <!-- Exam cards loaded via JavaScript or standard server rendering -->
+                  </div>
+                </div>
+
+                <!-- QUADRANTE 2: EXAMES ÁLVARO -->
+                <div class="triagem-column-box bg-amber-50/50 rounded-2xl p-3.5 border border-amber-200/80 flex flex-col min-h-[180px]">
+                  <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-amber-200/80">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-700 border border-amber-500/30 flex items-center justify-center text-xs font-bold">🔬</span>
+                      <h4 class="font-black text-xs uppercase tracking-wider text-amber-900">Exames Álvaro</h4>
+                    </div>
+                    <span class="col-count-alvaro px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-mono text-[11px] font-black border border-amber-200">
+                      0
+                    </span>
+                  </div>
+
+                  <!-- Drop Zone 2 -->
+                  <div 
+                    class="dropzone dropzone-alvaro flex-1 space-y-2.5 p-1 rounded-xl transition-all"
+                    data-req-id="<%= req.id || req.requisitionCode %>"
+                    data-destination="alvaro"
+                    ondragover="handleDragOver(event)"
+                    ondragleave="handleDragLeave(event)"
+                    ondrop="handleDrop(event, '<%= req.id || req.requisitionCode %>', 'alvaro')"
+                  >
+                    <!-- Exam cards -->
+                  </div>
+                </div>
+
+                <!-- QUADRANTE 3: EXAMES PARDINI -->
+                <div class="triagem-column-box bg-purple-50/50 rounded-2xl p-3.5 border border-purple-200/80 flex flex-col min-h-[180px]">
+                  <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-purple-200/80">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-700 border border-purple-500/30 flex items-center justify-center text-xs font-bold">🧬</span>
+                      <h4 class="font-black text-xs uppercase tracking-wider text-purple-900">Exames Pardini</h4>
+                    </div>
+                    <span class="col-count-pardini px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full font-mono text-[11px] font-black border border-purple-200">
+                      0
+                    </span>
+                  </div>
+
+                  <!-- Drop Zone 3 -->
+                  <div 
+                    class="dropzone dropzone-pardini flex-1 space-y-2.5 p-1 rounded-xl transition-all"
+                    data-req-id="<%= req.id || req.requisitionCode %>"
+                    data-destination="pardini"
+                    ondragover="handleDragOver(event)"
+                    ondragleave="handleDragLeave(event)"
+                    ondrop="handleDrop(event, '<%= req.id || req.requisitionCode %>', 'pardini')"
+                  >
+                    <!-- Exam cards -->
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Action Bar Below Columns -->
+              <div class="mt-4 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                  <span class="text-slate-400">💡</span>
+                  <span>Arraste os exames para a coluna desejada e confirme a triagem.</span>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <button 
+                    type="button" 
+                    id="btn-confirm-triagem-<%= req.id || req.requisitionCode %>"
+                    onclick="confirmTriagem('<%= req.id || req.requisitionCode %>')" 
+                    class="btn-confirm-triagem px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-xs rounded-xl shadow-xs hover:shadow transition-all cursor-pointer flex items-center gap-2 <%= isTriado ? 'hidden' : '' %>"
+                  >
+                    <span>✅</span> Confirmar Triagem
+                  </button>
+
+                  <button 
+                    type="button" 
+                    id="btn-cancel-triagem-<%= req.id || req.requisitionCode %>"
+                    onclick="cancelTriagem('<%= req.id || req.requisitionCode %>')" 
+                    class="btn-cancel-triagem px-4 py-2.5 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 <%= isTriado ? '' : 'hidden' %>"
+                  >
+                    <span>❌</span> Cancelar Triagem
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        <% }); %>
+
+      <% } %>
+    </div>
+
+    <!-- Empty search result alert -->
+    <div id="no-search-results" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm my-6">
+      <span class="text-3xl block mb-2">🔍</span>
+      <h3 class="text-base font-bold text-slate-800">Nenhum paciente encontrado para esta busca</h3>
+      <p class="text-xs text-slate-500 mt-1">Tente pesquisar por outro nome, código ou CPF.</p>
+    </div>
+
+  </div>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- Modal Alert Dialog for restricted lab movement -->
+<div id="alert-dialog-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in" onclick="if(event.target === this) closeAlertDialog()">
+  <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden transform transition-all" onclick="event.stopPropagation()">
+    <div class="p-6 text-center">
+      <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner border border-amber-200">
+        ⚠️
+      </div>
+      <h3 id="alert-dialog-title" class="text-base font-bold text-slate-900 mb-2">Laboratório Não Permitido</h3>
+      <p id="alert-dialog-message" class="text-xs text-slate-600 leading-relaxed"></p>
+    </div>
+    <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-100 flex justify-center">
+      <button 
+        type="button" 
+        onclick="closeAlertDialog()" 
+        class="px-6 py-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer hover:shadow-md active:scale-95"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Data injection for Client-side JS -->
+<script>
+  window.TRIAGEM_REQUISITIONS = <%- JSON.stringify(requisitions || []) %>;
+  window.CATALOG_EXAMS = <%- JSON.stringify(exams || []) %>;
+</script>
+
+<style>
+  .dropzone-dragover {
+    background-color: rgba(20, 184, 166, 0.08) !important;
+    border: 2px dashed #0d9488 !important;
+  }
+  .exam-card-dragging {
+    opacity: 0.4 !important;
+    transform: scale(0.98);
+  }
+  .patient-accordion-body.open {
+    display: block !important;
+  }
+</style>
+
+<script>
+  // Initial setup when DOM loads
+  document.addEventListener('DOMContentLoaded', () => {
+    initTriagemCards();
+    filterTriagem();
+    updateGlobalStats();
+  });
+
+  // Obter lista de laboratórios permitidos/configurados para o exame/material
+  function getExamAllowedLabs(ex) {
+    const allowed = new Set();
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const code = String(ex.code || ex.codigo || '').trim().toLowerCase();
+    const name = String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase();
+    const exMaterial = String(ex.material || ex.materialColetado || ex.recipiente || ex.materialNome || ex.materialColetadoNome || ex.amostra || '').trim().toLowerCase();
+
+    const catExam = catalogExams.find(c => {
+      const cCode = String(c.code || c.codigo || c.id || '').trim().toLowerCase();
+      const cName = String(c.name || c.nome || c.descricao || '').trim().toLowerCase();
+      return (code && cCode === code) || (name && cName === name);
+    });
+
+    if (catExam) {
+      if (Array.isArray(catExam.materiaisColetados) && catExam.materiaisColetados.length > 0) {
+        let matchedMat = null;
+        if (exMaterial) {
+          matchedMat = catExam.materiaisColetados.find(m => {
+            const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+            return mName && (mName === exMaterial || exMaterial === mName);
+          });
+          if (!matchedMat) {
+            matchedMat = catExam.materiaisColetados.find(m => {
+              const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+              return mName && (exMaterial.includes(mName) || mName.includes(exMaterial));
+            });
+          }
+        }
+
+        const matsToCheck = matchedMat ? [matchedMat] : catExam.materiaisColetados;
+
+        for (const mat of matsToCheck) {
+          if (Array.isArray(mat.labExternoList) && mat.labExternoList.length > 0) {
+            mat.labExternoList.forEach(i => {
+              if (!i.bloq && i.lab) {
+                const labStr = String(i.lab).toLowerCase();
+                if (labStr.includes('alvaro') || labStr.includes('álvaro')) allowed.add('alvaro');
+                if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) allowed.add('pardini');
+                if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) allowed.add('interno');
+              }
+            });
+          }
+          if (mat.labApoio) {
+            const labStr = String(mat.labApoio).toLowerCase();
+            if (labStr.includes('alvaro') || labStr.includes('álvaro')) allowed.add('alvaro');
+            if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) allowed.add('pardini');
+            if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) allowed.add('interno');
+          }
+        }
+      }
+
+      if (catExam.supportLab) {
+        const labStr = String(catExam.supportLab).toLowerCase();
+        if (labStr.includes('alvaro') || labStr.includes('álvaro')) allowed.add('alvaro');
+        if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) allowed.add('pardini');
+        if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) allowed.add('interno');
+      }
+    }
+
+    if (allowed.size === 0) {
+      allowed.add('interno');
+    }
+
+    return Array.from(allowed);
+  }
+
+  // Obter o laboratório padrão configurado para o exame/material no cadastro
+  function getExamConfiguredDefaultLab(ex) {
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const code = String(ex.code || ex.codigo || '').trim().toLowerCase();
+    const name = String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase();
+    const exMaterial = String(ex.material || ex.materialColetado || ex.recipiente || ex.materialNome || ex.materialColetadoNome || ex.amostra || '').trim().toLowerCase();
+
+    const catExam = catalogExams.find(c => {
+      const cCode = String(c.code || c.codigo || c.id || '').trim().toLowerCase();
+      const cName = String(c.name || c.nome || c.descricao || '').trim().toLowerCase();
+      return (code && cCode === code) || (name && cName === name);
+    });
+
+    if (catExam) {
+      if (Array.isArray(catExam.materiaisColetados) && catExam.materiaisColetados.length > 0) {
+        // 1. Procurar o material específico do exame na lista de materiais do catálogo
+        let matchedMat = null;
+        if (exMaterial) {
+          matchedMat = catExam.materiaisColetados.find(m => {
+            const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+            return mName && (mName === exMaterial || exMaterial === mName);
+          });
+          if (!matchedMat) {
+            matchedMat = catExam.materiaisColetados.find(m => {
+              const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+              return mName && (exMaterial.includes(mName) || mName.includes(exMaterial));
+            });
+          }
+        }
+
+        // Se encontrou o material correspondente ao exame da requisição, verifica o laboratório padrão dele
+        if (matchedMat) {
+          if (Array.isArray(matchedMat.labExternoList) && matchedMat.labExternoList.length > 0) {
+            const padraoItem = matchedMat.labExternoList.find(i => i.padrao && !i.bloq);
+            if (padraoItem && padraoItem.lab) {
+              const labStr = String(padraoItem.lab).toLowerCase();
+              if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+              if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+              if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+            }
+          }
+          if (matchedMat.labApoio) {
+            const labStr = String(matchedMat.labApoio).toLowerCase();
+            if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+            if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+            if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+          }
+        }
+
+        // Se o exame não especificou material ou o material encontrado não tem padrão definido, procura em todos os materiais
+        if (!matchedMat || !exMaterial) {
+          for (const mat of catExam.materiaisColetados) {
+            if (Array.isArray(mat.labExternoList)) {
+              const padraoItem = mat.labExternoList.find(i => i.padrao && !i.bloq);
+              if (padraoItem && padraoItem.lab) {
+                const labStr = String(padraoItem.lab).toLowerCase();
+                if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+                if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+                if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+              }
+            }
+            if (mat.labApoio) {
+              const labStr = String(mat.labApoio).toLowerCase();
+              if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+              if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+              if (labStr.includes('interno') || labStr.includes('proprio') || labStr.includes('próprio')) return 'interno';
+            }
+          }
+        }
+      }
+
+      if (catExam.supportLab) {
+        const labStr = String(catExam.supportLab).toLowerCase();
+        if (labStr.includes('alvaro') || labStr.includes('álvaro')) return 'alvaro';
+        if (labStr.includes('pardini') || labStr.includes('hermes') || labStr.includes('hpardini')) return 'pardini';
+      }
+    }
+
+    return 'interno';
+  }
+
+  // Obter o destino do exame (posição atual ou padrão)
+  function getExamDefaultDestination(ex) {
+    if (ex.triagemDestination && String(ex.triagemDestination).trim() !== '') {
+      return String(ex.triagemDestination).toLowerCase();
+    }
+    return getExamConfiguredDefaultLab(ex);
+  }
+
+  // Obter custos para exibição do exame de acordo com o material do exame e laboratório de apoio
+  function getExamCosts(ex) {
+    let costAlvaro = ex.custoAlvaro || null;
+    let costPardini = ex.custoPardini || null;
+    let costInterno = ex.custoInterno || null;
+
+    const catalogExams = window.CATALOG_EXAMS || [];
+    const code = String(ex.code || ex.codigo || '').trim().toLowerCase();
+    const name = String(ex.name || ex.nome || ex.exame || '').trim().toLowerCase();
+    const exMaterial = String(ex.material || ex.materialColetado || ex.recipiente || ex.materialNome || ex.materialColetadoNome || ex.amostra || '').trim().toLowerCase();
+
+    const catExam = catalogExams.find(c => {
+      const cCode = String(c.code || c.codigo || c.id || '').trim().toLowerCase();
+      const cName = String(c.name || c.nome || c.descricao || '').trim().toLowerCase();
+      return (code && cCode === code) || (name && cName === name);
+    });
+
+    if (catExam) {
+      if (Array.isArray(catExam.materiaisColetados) && catExam.materiaisColetados.length > 0) {
+        let matchedMat = null;
+        if (exMaterial) {
+          matchedMat = catExam.materiaisColetados.find(m => {
+            const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+            return mName && (mName === exMaterial || exMaterial === mName);
+          });
+          if (!matchedMat) {
+            matchedMat = catExam.materiaisColetados.find(m => {
+              const mName = String(m.nome || m.material || m.abrev || m.descricao || '').trim().toLowerCase();
+              return mName && (exMaterial.includes(mName) || mName.includes(exMaterial));
+            });
+          }
+        }
+
+        if (matchedMat && Array.isArray(matchedMat.labExternoList)) {
+          const alvItem = matchedMat.labExternoList.find(i => String(i.lab).toLowerCase().includes('alvaro') || String(i.lab).toLowerCase().includes('álvaro'));
+          if (alvItem && alvItem.valor) costAlvaro = alvItem.valor;
+
+          const parItem = matchedMat.labExternoList.find(i => String(i.lab).toLowerCase().includes('pardini') || String(i.lab).toLowerCase().includes('hpardini'));
+          if (parItem && parItem.valor) costPardini = parItem.valor;
+
+          const intItem = matchedMat.labExternoList.find(i => {
+            const l = String(i.lab).toLowerCase();
+            return l.includes('interno') || l.includes('proprio') || l.includes('próprio');
+          });
+          if (intItem && intItem.valor) costInterno = intItem.valor;
+        }
+
+        if (!costAlvaro || !costPardini || !costInterno) {
+          for (const mat of catExam.materiaisColetados) {
+            if (Array.isArray(mat.labExternoList)) {
+              if (!costAlvaro) {
+                const alvItem = mat.labExternoList.find(i => String(i.lab).toLowerCase().includes('alvaro') || String(i.lab).toLowerCase().includes('álvaro'));
+                if (alvItem && alvItem.valor) costAlvaro = alvItem.valor;
+              }
+              if (!costPardini) {
+                const parItem = mat.labExternoList.find(i => String(i.lab).toLowerCase().includes('pardini') || String(i.lab).toLowerCase().includes('hpardini'));
+                if (parItem && parItem.valor) costPardini = parItem.valor;
+              }
+              if (!costInterno) {
+                const intItem = mat.labExternoList.find(i => {
+                  const l = String(i.lab).toLowerCase();
+                  return l.includes('interno') || l.includes('proprio') || l.includes('próprio');
+                });
+                if (intItem && intItem.valor) costInterno = intItem.valor;
+              }
+            }
+          }
+        }
+      }
+      if (!costAlvaro && catExam.priceAlvaro) costAlvaro = catExam.priceAlvaro;
+      if (!costPardini && catExam.pricePardini) costPardini = catExam.pricePardini;
+      if (!costInterno && (catExam.costInterno || catExam.custoInterno)) costInterno = catExam.costInterno || catExam.custoInterno;
+    }
+
+    return {
+      alvaro: costAlvaro ? String(costAlvaro).replace('.', ',') : '0,00',
+      pardini: costPardini ? String(costPardini).replace('.', ',') : '0,00',
+      interno: costInterno ? String(costInterno).replace('.', ',') : '0,00'
+    };
+  }
+
+  // Render exam cards into the 3 columns for each patient
+  function initTriagemCards() {
+    const requisitions = window.TRIAGEM_REQUISITIONS || [];
+
+    requisitions.forEach(req => {
+      const reqId = req.id || req.requisitionCode;
+      const exams = req.exams || [];
+
+      const dropzoneInterno = document.querySelector(`.dropzone-interno[data-req-id="${reqId}"]`);
+      const dropzoneAlvaro = document.querySelector(`.dropzone-alvaro[data-req-id="${reqId}"]`);
+      const dropzonePardini = document.querySelector(`.dropzone-pardini[data-req-id="${reqId}"]`);
+
+      if (!dropzoneInterno || !dropzoneAlvaro || !dropzonePardini) return;
+
+      // Clear existing
+      dropzoneInterno.innerHTML = '';
+      dropzoneAlvaro.innerHTML = '';
+      dropzonePardini.innerHTML = '';
+
+      exams.forEach((ex, exIdx) => {
+        const exStatus = String(ex.status || '').trim().toLowerCase();
+        const exLoteStatus = String(ex.loteStatus || '').trim().toLowerCase();
+        const isLote = exStatus === 'lote criado' || exLoteStatus === 'lote criado' || exLoteStatus === 'gerado' || !!ex.loteCode || !!ex.idLote;
+
+        if (isLote) return; // Se o lote já foi criado, não exibe mais na tela de triagem
+
+        // Se tiver laboratório padrão definido no material do exame, posiciona na coluna correta, senão vai para 'interno'
+        const dest = getExamDefaultDestination(ex);
+        const cardHtml = createExamCardHtml(reqId, ex, exIdx, dest);
+
+        if (dest === 'alvaro') {
+          dropzoneAlvaro.insertAdjacentHTML('beforeend', cardHtml);
+        } else if (dest === 'pardini') {
+          dropzonePardini.insertAdjacentHTML('beforeend', cardHtml);
+        } else {
+          dropzoneInterno.insertAdjacentHTML('beforeend', cardHtml);
+        }
+      });
+
+      updatePatientCounters(reqId);
+    });
+  }
+
+  // HTML Template for a single Drag-and-Drop Exam Card (Compact Layout)
+  function createExamCardHtml(reqId, exam, exIdx, dest) {
+    const codeStr = exam.code || 'EXAME';
+    const nameStr = exam.name || 'Nome do Exame';
+    const materialStr = exam.material || exam.recipiente || 'Sangue Total';
+
+    const costs = getExamCosts(exam);
+    const costAlvaro = costs.alvaro;
+    const costPardini = costs.pardini;
+    const costInterno = costs.interno;
+
+    const defaultLab = getExamConfiguredDefaultLab(exam);
+    const allowedLabs = getExamAllowedLabs(exam);
+    const hasAlvaro = allowedLabs.includes('alvaro');
+    const hasPardini = allowedLabs.includes('pardini');
+    const hasInterno = allowedLabs.includes('interno');
+
+    let labBadgeHtml = '';
+    if (defaultLab === 'alvaro') {
+      labBadgeHtml = '<span class="px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded font-extrabold text-[9px] inline-flex items-center gap-0.5 shrink-0" title="Laboratório Padrão: Álvaro">🔬 Álvaro</span>';
+    } else if (defaultLab === 'pardini') {
+      labBadgeHtml = '<span class="px-1.5 py-0.5 bg-purple-50 text-purple-800 border border-purple-200/80 rounded font-extrabold text-[9px] inline-flex items-center gap-0.5 shrink-0" title="Laboratório Padrão: Pardini">🧬 Pardini</span>';
+    } else {
+      labBadgeHtml = '<span class="px-1.5 py-0.5 bg-sky-50 text-sky-800 border border-sky-200/80 rounded font-extrabold text-[9px] inline-flex items-center gap-0.5 shrink-0" title="Laboratório Padrão: Interno">🏥 Interno</span>';
+    }
+
+    let costsContainerHtml = '';
+    if (hasAlvaro || hasPardini || hasInterno) {
+      let badges = [];
+
+      if (hasInterno) {
+        badges.push(`
+          <span class="px-1.5 py-0.5 bg-sky-50/80 text-sky-900 rounded border border-sky-200/60 text-[9.5px]">
+            <span class="font-sans font-bold text-sky-700">Custo Interno:</span> R$ ${costInterno}
+          </span>
+        `);
+      }
+
+      if (hasAlvaro) {
+        badges.push(`
+          <span class="px-1.5 py-0.5 bg-amber-50/80 text-amber-900 rounded border border-amber-200/60 text-[9.5px]">
+            <span class="font-sans font-bold text-amber-700">Custo Álvaro:</span> R$ ${costAlvaro}
+          </span>
+        `);
+      }
+
+      if (hasPardini) {
+        badges.push(`
+          <span class="px-1.5 py-0.5 bg-purple-50/80 text-purple-900 rounded border border-purple-200/60 text-[9.5px]">
+            <span class="font-sans font-bold text-purple-700">Custo Pardini:</span> R$ ${costPardini}
+          </span>
+        `);
+      }
+
+      if (badges.length > 0) {
+        costsContainerHtml = `
+          <div class="mt-1.5 pt-1 border-t border-slate-100 flex items-center justify-between flex-wrap gap-1 text-[10px] font-mono">
+            ${badges.join('')}
+          </div>
+        `;
+      }
+    }
+
+    return `
+      <div 
+        id="exam-card-${reqId}-${exIdx}"
+        class="exam-card bg-white rounded-xl p-2.5 border border-slate-200/90 shadow-2xs hover:border-teal-400 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing select-none group"
+        draggable="true"
+        data-req-id="${reqId}"
+        data-exam-index="${exIdx}"
+        data-exam-code="${codeStr}"
+        data-current-dest="${dest}"
+        ondragstart="handleDragStart(event)"
+        ondragend="handleDragEnd(event)"
+      >
+        <!-- Linha 1: Código - Nome do Exame (largura total para maior clareza) -->
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="text-slate-300 group-hover:text-slate-500 text-[10px] cursor-grab shrink-0">⋮⋮</span>
+          <h5 class="text-[11.5px] font-bold text-slate-900 truncate leading-snug w-full" title="${codeStr} - ${nameStr}">
+            <span class="font-mono font-black text-teal-700">${codeStr}</span> - ${nameStr}
+          </h5>
+        </div>
+
+        <!-- Linha 2: Material e Label do Laboratório Padrão na mesma linha -->
+        <div class="flex items-center justify-between gap-1.5 mt-1 pl-3 text-[9.5px]">
+          <div class="truncate text-slate-500 font-semibold" title="Material: ${materialStr}">
+            <span class="text-slate-400 font-bold">Material:</span> ${materialStr}
+          </div>
+          <div class="shrink-0">
+            ${labBadgeHtml}
+          </div>
+        </div>
+
+        <!-- Linha 3: Valor Custo dos laboratórios permitidos para o material -->
+        ${costsContainerHtml}
+      </div>
+    `;
+  }
+
+  // HTML5 Drag and Drop Handlers
+  let draggedCard = null;
+
+  function handleDragStart(e) {
+    draggedCard = e.currentTarget;
+    e.currentTarget.classList.add('exam-card-dragging');
+
+    const data = {
+      reqId: e.currentTarget.dataset.reqId,
+      examIndex: e.currentTarget.dataset.examIndex,
+      examCode: e.currentTarget.dataset.examCode,
+      currentDest: e.currentTarget.dataset.currentDest
+    };
+
+    e.dataTransfer.setData('text/plain', JSON.stringify(data));
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragEnd(e) {
+    e.currentTarget.classList.remove('exam-card-dragging');
+    document.querySelectorAll('.dropzone').forEach(dz => dz.classList.remove('dropzone-dragover'));
+    draggedCard = null;
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('dropzone-dragover');
+  }
+
+  function handleDragLeave(e) {
+    e.currentTarget.classList.remove('dropzone-dragover');
+  }
+
+  function handleDrop(e, reqId, newDest) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dropzone-dragover');
+
+    try {
+      const rawData = e.dataTransfer.getData('text/plain');
+      if (!rawData) return;
+      const data = JSON.parse(rawData);
+
+      if (data.reqId !== reqId) {
+        showToast('Não é permitido mover exames entre pacientes diferentes.', 'error');
+        return;
+      }
+
+      if (data.currentDest === newDest) return;
+
+      executeExamMove(reqId, parseInt(data.examIndex, 10), data.examCode, newDest);
+    } catch (err) {
+      console.error('Erro ao processar soltura:', err);
+    }
+  }
+
+  // Direct move button action
+  function moveExamDirectly(reqId, exIdx, newDest) {
+    executeExamMove(reqId, exIdx, null, newDest);
+  }
+
+  // Core logic to move exam card DOM, update data structures, and call backend API
+  function executeExamMove(reqId, exIdx, examCode, newDest) {
+    const cardEl = document.getElementById(`exam-card-${reqId}-${exIdx}`);
+    const targetDropzone = document.querySelector(`.dropzone-${newDest}[data-req-id="${reqId}"]`);
+
+    if (!targetDropzone) return;
+
+    // Update memory cache
+    const requisitions = window.TRIAGEM_REQUISITIONS || [];
+    const targetReq = requisitions.find(r => (r.id || r.requisitionCode) === reqId);
+    let examObj = targetReq && targetReq.exams ? targetReq.exams[exIdx] : null;
+
+    // Verificar se o laboratório de destino está configurado e permitido para o material deste exame
+    if (examObj) {
+      const allowedLabs = getExamAllowedLabs(examObj);
+      if (!allowedLabs.includes(newDest)) {
+        const labNames = { alvaro: 'Álvaro', pardini: 'Pardini', interno: 'Interno' };
+        const labLabel = labNames[newDest] || newDest;
+        const matLabel = examObj.material || examObj.recipiente || 'selecionado';
+        showAlertDialog(
+          'Laboratório Não Permitido',
+          `Este exame com material "${matLabel}" não possui o laboratório ${labLabel} configurado. Não é permitido mover para este laboratório.`
+        );
+        return;
+      }
+      examObj.triagemDestination = newDest;
+    }
+
+    // Re-render exam card HTML into new column dropzone
+    if (cardEl) {
+      cardEl.remove();
+    }
+
+    if (examObj) {
+      const newCardHtml = createExamCardHtml(reqId, examObj, exIdx, newDest);
+      targetDropzone.insertAdjacentHTML('beforeend', newCardHtml);
+    }
+
+    // Update patient counters & page global stats
+    updatePatientCounters(reqId);
+    updateGlobalStats();
+
+    // Destination names mapping
+    const destNames = {
+      interno: 'Exames Internos',
+      alvaro: 'Exames Álvaro',
+      pardini: 'Exames Pardini'
+    };
+
+    const examName = examObj ? examObj.name : 'Exame';
+    showToast(`"${examName}" movido para ${destNames[newDest] || newDest}.`, 'success');
+
+    // Save to Server via AJAX
+    fetch('/admin/triagem/update-exam-destination', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requisitionId: reqId,
+        examIndex: exIdx,
+        examCode: examCode || (examObj ? examObj.code : ''),
+        destination: newDest
+      })
+    })
+    .then(res => res.json())
+    .then(resData => {
+      if (!resData.success) {
+        showToast('Aviso: erro ao salvar triagem no servidor.', 'error');
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao salvar triagem:', err);
+    });
+  }
+
+  // Update counters per patient
+  function updatePatientCounters(reqId) {
+    const dzInterno = document.querySelector(`.dropzone-interno[data-req-id="${reqId}"]`);
+    const dzAlvaro = document.querySelector(`.dropzone-alvaro[data-req-id="${reqId}"]`);
+    const dzPardini = document.querySelector(`.dropzone-pardini[data-req-id="${reqId}"]`);
+
+    const cntInterno = dzInterno ? dzInterno.children.length : 0;
+    const cntAlvaro = dzAlvaro ? dzAlvaro.children.length : 0;
+    const cntPardini = dzPardini ? dzPardini.children.length : 0;
+
+    // Update column box titles
+    const parent = dzInterno ? dzInterno.closest('.patient-accordion-body') : null;
+    if (parent) {
+      const colCntInt = parent.querySelector('.col-count-interno');
+      const colCntAlv = parent.querySelector('.col-count-alvaro');
+      const colCntPar = parent.querySelector('.col-count-pardini');
+
+      if (colCntInt) colCntInt.textContent = cntInterno;
+      if (colCntAlv) colCntAlv.textContent = cntAlvaro;
+      if (colCntPar) colCntPar.textContent = cntPardini;
+    }
+
+    // Update accordion header badges
+    const cardContainer = document.querySelector(`.patient-triagem-card[data-req-id="${reqId}"]`);
+    if (cardContainer) {
+      const badgeInt = cardContainer.querySelector('.patient-cnt-interno');
+      const badgeAlv = cardContainer.querySelector('.patient-cnt-alvaro');
+      const badgePar = cardContainer.querySelector('.patient-cnt-pardini');
+
+      if (badgeInt) badgeInt.textContent = cntInterno;
+      if (badgeAlv) badgeAlv.textContent = cntAlvaro;
+      if (badgePar) badgePar.textContent = cntPardini;
+    }
+  }
+
+  // Update Page Global Stats Counters
+  function updateGlobalStats() {
+    let totPatients = 0;
+    let totInterno = 0;
+    let totAlvaro = 0;
+    let totPardini = 0;
+
+    document.querySelectorAll('.patient-triagem-card').forEach(card => {
+      if (card.style.display !== 'none') {
+        totPatients++;
+        const intCnt = parseInt(card.querySelector('.patient-cnt-interno')?.textContent || '0', 10);
+        const alvCnt = parseInt(card.querySelector('.patient-cnt-alvaro')?.textContent || '0', 10);
+        const parCnt = parseInt(card.querySelector('.patient-cnt-pardini')?.textContent || '0', 10);
+
+        totInterno += intCnt;
+        totAlvaro += alvCnt;
+        totPardini += parCnt;
+      }
+    });
+
+    const statP = document.getElementById('stat-patients');
+    const statI = document.getElementById('stat-internos');
+    const statA = document.getElementById('stat-alvaro');
+    const statPar = document.getElementById('stat-pardini');
+
+    if (statP) statP.textContent = totPatients;
+    if (statI) statI.textContent = totInterno;
+    if (statA) statA.textContent = totAlvaro;
+    if (statPar) statPar.textContent = totPardini;
+  }
+
+  // Toggle Accordion open/close
+  function toggleAccordion(reqId) {
+    const body = document.getElementById(`accordion-body-${reqId}`);
+    const card = document.querySelector(`.patient-triagem-card[data-req-id="${reqId}"]`);
+    if (!body || !card) return;
+
+    const chevron = card.querySelector('.chevron-icon svg');
+
+    if (body.classList.contains('hidden')) {
+      body.classList.remove('hidden');
+      body.classList.add('open');
+      if (chevron) chevron.classList.add('rotate-180');
+    } else {
+      body.classList.add('hidden');
+      body.classList.remove('open');
+      if (chevron) chevron.classList.remove('rotate-180');
+    }
+  }
+
+  // Expand / Collapse All Accordions
+  function toggleAllAccordions(open) {
+    document.querySelectorAll('.patient-accordion-body').forEach(body => {
+      const card = body.closest('.patient-triagem-card');
+      const chevron = card ? card.querySelector('.chevron-icon svg') : null;
+
+      if (open) {
+        body.classList.remove('hidden');
+        body.classList.add('open');
+        if (chevron) chevron.classList.add('rotate-180');
+      } else {
+        body.classList.add('hidden');
+        body.classList.remove('open');
+        if (chevron) chevron.classList.remove('rotate-180');
+      }
+    });
+  }
+
+  // Filter patients list by search text & status option
+  function filterTriagem() {
+    const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const statusVal = document.getElementById('statusFilter')?.value || 'nao_triados';
+
+    let visibleCount = 0;
+
+    document.querySelectorAll('.patient-triagem-card').forEach(card => {
+      const searchData = (card.dataset.search || '').toLowerCase();
+      const isTriado = card.dataset.triado === 'true';
+      const isLoteCriado = card.dataset.loteCriado === 'true';
+
+      if (isLoteCriado) {
+        card.style.display = 'none';
+        return;
+      }
+
+      const matchesSearch = query === '' || searchData.includes(query);
+      let matchesStatus = true;
+
+      if (statusVal === 'nao_triados' || statusVal === 'coletado') {
+        matchesStatus = !isTriado;
+      } else if (statusVal === 'triados') {
+        matchesStatus = isTriado;
+      } else if (statusVal === 'todos') {
+        matchesStatus = true;
+      }
+
+      if (matchesSearch && matchesStatus) {
+        card.style.display = '';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    const noResults = document.getElementById('no-search-results');
+    if (noResults) {
+      if (visibleCount === 0) {
+        noResults.classList.remove('hidden');
+      } else {
+        noResults.classList.add('hidden');
+      }
+    }
+
+    updateGlobalStats();
+  }
+
+  // Confirmar Triagem de Paciente
+  function confirmTriagem(reqId) {
+    const card = document.querySelector(`.patient-triagem-card[data-req-id="${reqId}"]`);
+    if (!card) return;
+
+    const destinations = [];
+    const dzs = card.querySelectorAll('.dropzone');
+    dzs.forEach(dz => {
+      const dest = dz.dataset.destination;
+      dz.querySelectorAll('.exam-card').forEach(ec => {
+        const exIdx = parseInt(ec.dataset.examIndex, 10);
+        const exCode = ec.dataset.examCode;
+        destinations.push({ examIndex: exIdx, examCode: exCode, destination: dest });
+      });
+    });
+
+    fetch('/admin/triagem/confirm-triagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requisitionId: reqId, destinations: destinations })
+    })
+    .then(res => res.json())
+    .then(resData => {
+      if (resData.success) {
+        const requisitions = window.TRIAGEM_REQUISITIONS || [];
+        const targetReq = requisitions.find(r => (r.id || r.requisitionCode) === reqId);
+        if (targetReq) {
+          targetReq.status = 'Triado';
+          targetReq.triado = true;
+          if (Array.isArray(targetReq.exams)) {
+            targetReq.exams.forEach(ex => { ex.status = 'Triado'; ex.triado = true; });
+          }
+        }
+
+        card.dataset.triado = 'true';
+
+        const badgeTriado = card.querySelector('.badge-status-triado');
+        if (badgeTriado) {
+          badgeTriado.className = 'badge-status-triado font-black text-[11px] px-2.5 py-1 rounded-lg border flex items-center gap-1 shrink-0 bg-emerald-100 text-emerald-800 border-emerald-200';
+          badgeTriado.innerHTML = '✅ Triado';
+        }
+
+        const btnConfirm = document.getElementById(`btn-confirm-triagem-${reqId}`);
+        const btnCancel = document.getElementById(`btn-cancel-triagem-${reqId}`);
+        if (btnConfirm) btnConfirm.classList.add('hidden');
+        if (btnCancel) btnCancel.classList.remove('hidden');
+
+        showToast(`Triagem do paciente #${reqId} confirmada com sucesso!`, 'success');
+
+        filterTriagem();
+      } else {
+        showToast(resData.message || 'Erro ao confirmar triagem.', 'error');
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao confirmar triagem:', err);
+      showToast('Erro de comunicação com o servidor.', 'error');
+    });
+  }
+
+  // Cancelar Triagem de Paciente
+  function cancelTriagem(reqId) {
+    const card = document.querySelector(`.patient-triagem-card[data-req-id="${reqId}"]`);
+    if (!card) return;
+
+    fetch('/admin/triagem/cancel-triagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requisitionId: reqId })
+    })
+    .then(res => res.json())
+    .then(resData => {
+      if (resData.success) {
+        const requisitions = window.TRIAGEM_REQUISITIONS || [];
+        const targetReq = requisitions.find(r => (r.id || r.requisitionCode) === reqId);
+        if (targetReq) {
+          targetReq.status = 'Coletado';
+          targetReq.triado = false;
+          if (Array.isArray(targetReq.exams)) {
+            targetReq.exams.forEach(ex => { ex.status = 'Coletado'; ex.triado = false; });
+          }
+        }
+
+        card.dataset.triado = 'false';
+
+        const badgeTriado = card.querySelector('.badge-status-triado');
+        if (badgeTriado) {
+          badgeTriado.className = 'badge-status-triado font-black text-[11px] px-2.5 py-1 rounded-lg border flex items-center gap-1 shrink-0 bg-amber-100 text-amber-800 border-amber-200';
+          badgeTriado.innerHTML = '⏳ Pendente';
+        }
+
+        const btnConfirm = document.getElementById(`btn-confirm-triagem-${reqId}`);
+        const btnCancel = document.getElementById(`btn-cancel-triagem-${reqId}`);
+        if (btnConfirm) btnConfirm.classList.remove('hidden');
+        if (btnCancel) btnCancel.classList.add('hidden');
+
+        showToast(`Triagem cancelada. Paciente retornado para Não Triados.`, 'info');
+
+        filterTriagem();
+      } else {
+        showToast(resData.message || 'Erro ao cancelar triagem.', 'error');
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao cancelar triagem:', err);
+      showToast('Erro de comunicação com o servidor.', 'error');
+    });
+  }
+
+  // Modal Alert Dialog System
+  function showAlertDialog(title, message) {
+    const modal = document.getElementById('alert-dialog-modal');
+    const titleEl = document.getElementById('alert-dialog-title');
+    const messageEl = document.getElementById('alert-dialog-message');
+    if (modal && titleEl && messageEl) {
+      titleEl.textContent = title || 'Aviso';
+      messageEl.textContent = message;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    } else {
+      alert(`${title ? title + '\n\n' : ''}${message}`);
+    }
+  }
+
+  function closeAlertDialog() {
+    const modal = document.getElementById('alert-dialog-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAlertDialog();
+    }
+  });
+
+  // Toast notification system
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const bgClass = type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white border border-slate-700';
+
+    toast.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${bgClass}`;
+    toast.innerHTML = `
+      <span>${type === 'error' ? '⚠️' : '✅'}</span>
+      <span>${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    });
+
+    setTimeout(() => {
+      toast.classList.add('translate-y-2', 'opacity-0');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+</script>
+
+<%- include('../../partials/footer') %>

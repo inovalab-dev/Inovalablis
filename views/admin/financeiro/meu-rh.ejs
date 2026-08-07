@@ -1,0 +1,519 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Cabeçalho do Colaborador -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-full bg-brand-dark/10 text-brand-dark flex items-center justify-center font-bold text-lg font-mono">
+        <%= professional.name.charAt(0) %>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-black text-brand-dark tracking-tight font-sans">Olá, <%= professional.name %>!</h1>
+          <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 rounded border border-emerald-100">Área do Colaborador</span>
+        </div>
+        <p class="text-xs text-gray-500 mt-1"><%= professional.role %> • Setor: <%= professional.sector || 'N/A' %> • <%= (professional.salaryData && professional.salaryData.type) || 'Mensalista' %></p>
+      </div>
+    </div>
+    
+    <% if (simulation) { %>
+      <div class="px-4 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-mono font-bold rounded-xl flex items-center gap-2">
+        <span>⚠️ Modo de Simulação do Administrador</span>
+        <a href="/admin/financeiro/rh?profId=<%= professional.id %>" class="underline text-amber-900 hover:text-amber-950 font-black">Sair da Simulação</a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Alertas de Feedback -->
+  <% if (success) { %>
+    <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 rounded-xl text-xs font-mono">
+      🎉 Ponto registrado com sucesso! <%= success %>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-800 rounded-xl text-xs font-mono">
+      ⚠️ Erro: <%= error %>
+    </div>
+  <% } %>
+
+  <!-- Grelha em Menu Lateral + Conteúdo Ativo -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    
+    <!-- Menu de Navegação Lateral -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-1">
+        <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-3 block mb-2 font-mono">Menu do Colaborador</span>
+        
+        <button onclick="switchColabMenu('menu-ponto-bater')" id="btn-menu-ponto-bater" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+          ⏱️ Registrar Ponto
+        </button>
+
+        <button onclick="switchColabMenu('menu-banco-horas')" id="btn-menu-banco-horas" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          📊 Banco de Horas
+        </button>
+
+        <button onclick="switchColabMenu('menu-holerites')" id="btn-menu-holerites" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          🧾 Meus Holerites
+        </button>
+
+        <button onclick="switchColabMenu('menu-plantoes')" id="btn-menu-plantoes" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+          📅 Meus Plantões
+        </button>
+
+        <button onclick="switchColabMenu('menu-eventos')" id="btn-menu-eventos" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2" /></svg>
+          💵 Eventos Financeiros
+        </button>
+
+        <button onclick="switchColabMenu('menu-ferias')" id="btn-menu-ferias" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          🏖️ Férias & Afastamentos
+        </button>
+
+        <button onclick="switchColabMenu('menu-salario')" id="btn-menu-salario" class="colab-menu-btn w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-600 hover:bg-gray-50 hover:text-brand-dark">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1"/></svg>
+          💰 Dados Salariais
+        </button>
+      </div>
+    </div>
+
+    <!-- Conteúdo do Menu Selecionado -->
+    <div class="lg:col-span-3 space-y-6">
+      
+      <!-- SEÇÃO: REGISTRAR PONTO -->
+      <div id="section-menu-ponto-bater" class="colab-menu-section hidden bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+        <div class="border-b pb-4">
+          <h3 class="text-base font-black text-brand-dark uppercase font-mono tracking-wider flex items-center gap-2">⏱️ Registro Eletrônico de Ponto</h3>
+          <p class="text-xs text-gray-400 mt-1">Registre suas batidas de ponto eletrônico diárias para cálculo do banco de horas.</p>
+        </div>
+        
+        <!-- Relógio em Tempo Real Centralizado -->
+        <div class="p-6 bg-gray-50/50 rounded-2xl text-center border border-gray-100 max-w-md mx-auto space-y-2">
+          <span class="text-[10px] font-bold text-gray-400 font-mono block uppercase tracking-widest">Horário Oficial de Brasília</span>
+          <span id="realtime-clock" class="text-4xl font-black font-mono text-brand-dark tracking-tight block py-2">00:00:00</span>
+          <span class="px-3 py-1 bg-white border border-gray-200 text-xs text-brand-dark font-mono rounded-lg inline-block shadow-sm">
+            <%= new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+          </span>
+        </div>
+
+        <form action="/admin/meu-rh/bater-ponto" method="POST" class="max-w-md mx-auto space-y-4">
+          <input type="hidden" name="profId" value="<%= professional.id %>">
+          
+          <div>
+            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Tipo de Registro de Ponto</label>
+            <select name="punchType" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1" required>
+              <option value="entry">Entrada (Início de Jornada)</option>
+              <option value="breakStart">Início do Intervalo (Almoço/Café)</option>
+              <option value="breakEnd">Fim do Intervalo (Retorno)</option>
+              <option value="exit">Saída (Fim de Jornada)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full py-4 bg-emerald-950 hover:bg-emerald-900 text-white text-xs font-bold font-mono uppercase tracking-widest rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            Registrar Batida de Ponto
+          </button>
+        </form>
+      </div>
+
+      <!-- SEÇÃO: BANCO DE HORAS (EXTRATO) -->
+      <div id="section-menu-banco-horas" class="colab-menu-section hidden space-y-6">
+        <!-- Saldo Geral Consolidação -->
+        <% 
+          let consolidatedBalance = 0;
+          if (professional.timesheet && professional.timesheet.length > 0) {
+            professional.timesheet.forEach(ts => { consolidatedBalance += (Number(ts.balance) || 0); });
+          }
+        %>
+        <div class="bg-gradient-to-br from-emerald-950 to-brand-dark text-white p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between border border-emerald-900 gap-4">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-300 uppercase font-mono block tracking-wider">Saldo Acumulado no Banco de Horas</span>
+            <span class="text-3xl font-black text-brand-gold tracking-tight font-mono block mt-1">
+              <%= consolidatedBalance >= 0 ? '+' : '' %><%= Math.floor(consolidatedBalance / 60) %>h <%= Math.abs(consolidatedBalance % 60) %>m
+            </span>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl font-mono text-[10px] uppercase font-black tracking-widest bg-white/10 text-brand-gold">
+            <%= consolidatedBalance >= 0 ? '✓ Saldo Credor' : '⚠️ Saldo Devedor' %>
+          </span>
+        </div>
+
+        <!-- Tabela de Registros Realizados -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Histórico de Registros de Ponto (Este Mês)</h3>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse font-mono">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-bold">
+                  <th class="p-2.5">Data</th>
+                  <th class="p-2.5">Entrada</th>
+                  <th class="p-2.5">Início Almoço</th>
+                  <th class="p-2.5">Fim Almoço</th>
+                  <th class="p-2.5">Saída</th>
+                  <th class="p-2.5">Horas Trab.</th>
+                  <th class="p-2.5 text-right">Saldo do Dia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (professional.timesheet && professional.timesheet.length > 0) { %>
+                  <% professional.timesheet.slice().reverse().forEach(ts => { %>
+                    <tr class="hover:bg-gray-50/50">
+                      <td class="p-2.5 text-gray-600"><%= ts.date %></td>
+                      <td class="p-2.5 font-bold text-gray-700"><%= ts.entry || '-' %></td>
+                      <td class="p-2.5 text-gray-400"><%= ts.breakStart || '-' %></td>
+                      <td class="p-2.5 text-gray-400"><%= ts.breakEnd || '-' %></td>
+                      <td class="p-2.5 font-bold text-gray-700"><%= ts.exit || '-' %></td>
+                      <td class="p-2.5 font-bold text-brand-dark"><%= ts.totalHours || '-' %></td>
+                      <td class="p-2.5 text-right font-black <%= ts.balance >= 0 ? 'text-emerald-700' : 'text-rose-600' %>">
+                        <%= ts.balance >= 0 ? '+' : '' %><%= Math.floor(ts.balance / 60) %>h <%= Math.abs(ts.balance % 60) %>m
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="p-8 text-center text-gray-400 italic font-sans">Nenhum registro de ponto cadastrado no seu histórico ainda.</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: MEUS HOLERITES -->
+      <div id="section-menu-holerites" class="colab-menu-section hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">🧾 Meus Holerites & Recibos de Pagamento</h3>
+        <p class="text-xs text-gray-400">Consulte seus holerites de pagamento disponibilizados pelo setor de DP e realize sua assinatura eletrônica de recebimento.</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                <th class="p-2.5">Competência</th>
+                <th class="p-2.5">Previsão Pagamento</th>
+                <th class="p-2.5">Status</th>
+                <th class="p-2.5">Assinatura do Colaborador</th>
+                <th class="p-2.5 text-right">Arquivo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono">
+              <% if (professional.paystubs && professional.paystubs.length > 0) { %>
+                <% professional.paystubs.forEach((stub, idx) => { %>
+                  <tr class="hover:bg-gray-50/50">
+                    <td class="p-2.5 text-brand-dark font-bold"><%= stub.month %></td>
+                    <td class="p-2.5"><%= (stub.payDate && typeof stub.payDate === 'string') ? stub.payDate.split('-').reverse().join('/') : (stub.payDate || '') %></td>
+                    <td class="p-2.5">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold <%= stub.status === 'Pago' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' %>">
+                        <%= stub.status %>
+                      </span>
+                    </td>
+                    <td class="p-2.5 font-sans">
+                      <% if (stub.signed) { %>
+                        <span class="text-emerald-700 font-bold font-mono text-[11px] flex items-center gap-1">
+                          ✓ Assinado eletronicamente em <%= new Date(stub.signedAt).toLocaleDateString('pt-BR') %>
+                        </span>
+                      <% } else { %>
+                        <form action="/admin/meu-rh/sign-paystub" method="POST" class="inline">
+                          <input type="hidden" name="profId" value="<%= professional.id %>">
+                          <input type="hidden" name="stubIdx" value="<%= idx %>">
+                          <button type="submit" class="px-2.5 py-1 bg-brand-gold text-white hover:bg-yellow-600 text-[10px] font-bold font-mono uppercase tracking-widest rounded transition-colors">
+                            Assinar Recibo
+                          </button>
+                        </form>
+                      <% } %>
+                    </td>
+                    <td class="p-2.5 text-right font-sans">
+                      <button class="text-brand-dark hover:text-emerald-800 font-mono text-[10px] font-bold uppercase underline">
+                        Visualizar PDF
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-gray-400 italic font-sans">Nenhum holerite arquivado pelo departamento pessoal ainda.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: MEUS PLANTÕES -->
+      <div id="section-menu-plantoes" class="colab-menu-section hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">📅 Minha Escala de Plantões Selecionados</h3>
+        <p class="text-xs text-gray-500">Acompanhe seus plantões e escalas individuais que foram designados para o seu cronograma.</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                <th class="p-2.5">Data do Plantão</th>
+                <th class="p-2.5">Tipo do Turno</th>
+                <th class="p-2.5">Descrição Administrativa</th>
+                <th class="p-2.5 text-right">Situação</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono">
+              <% let hasMyShifts = false; %>
+              <% if (professional.shifts && professional.shifts.length > 0) { %>
+                <% professional.shifts.forEach(sh => { %>
+                  <% hasMyShifts = true; %>
+                  <tr class="hover:bg-gray-50/50">
+                    <td class="p-2.5 font-bold text-gray-700"><%= (sh.date && typeof sh.date === 'string') ? sh.date.split('-').reverse().join('/') : (sh.date || '') %></td>
+                    <td class="p-2.5">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100">
+                        <%= sh.type %>
+                      </span>
+                    </td>
+                    <td class="p-2.5 font-sans text-gray-500 italic"><%= sh.description || 'Responsável por rotinas internas do setor' %></td>
+                    <td class="p-2.5 text-right font-sans">
+                      <span class="text-emerald-700 font-bold font-mono text-[10px]">Escalado</span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+              <% if (!hasMyShifts) { %>
+                <tr>
+                  <td colspan="4" class="p-6 text-center text-gray-400 italic font-sans">Você não possui nenhum plantão agendado para o período atual.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: EVENTOS FINANCEIROS -->
+      <div id="section-menu-eventos" class="colab-menu-section hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">💵 Eventos Lançados Ativos (Variáveis)</h3>
+        <p class="text-xs text-gray-400">Proventos e descontos variáveis programados para sua folha de pagamento na competência vigente:</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-mono font-bold">
+                <th class="p-2.5">Competência</th>
+                <th class="p-2.5">Categoria</th>
+                <th class="p-2.5">Descrição Justificada</th>
+                <th class="p-2.5">Tipo</th>
+                <th class="p-2.5 text-right">Valor Lançado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono">
+              <% if (professional.financialEvents && professional.financialEvents.length > 0) { %>
+                <% professional.financialEvents.forEach(evt => { %>
+                  <tr class="hover:bg-gray-50/50">
+                    <td class="p-2.5 text-gray-500 font-bold"><%= evt.month %></td>
+                    <td class="p-2.5 font-bold"><%= evt.category %></td>
+                    <td class="p-2.5 font-sans text-gray-600"><%= evt.description %></td>
+                    <td class="p-2.5">
+                      <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase <%= evt.type === 'provento' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' %>">
+                        <%= evt.type %>
+                      </span>
+                    </td>
+                    <td class="p-2.5 text-right font-bold <%= evt.type === 'provento' ? 'text-emerald-700' : 'text-rose-700' %>">
+                      <%= evt.type === 'provento' ? '+' : '-' %> R$ <%= Number(evt.value).toLocaleString('pt-BR') %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-gray-400 italic font-sans">Nenhum provento ou desconto variável lançado para você.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: FÉRIAS & AFASTAMENTOS -->
+      <div id="section-menu-ferias" class="colab-menu-section hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">🏖️ Histórico de Férias Coletivas ou Individuais</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse font-mono">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-bold">
+                <th class="p-2.5">Período Aquisitivo</th>
+                <th class="p-2.5">Período Concessivo</th>
+                <th class="p-2.5">Datas de Gozo</th>
+                <th class="p-2.5">Abono</th>
+                <th class="p-2.5 text-right">Situação</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% if (professional.vacations && professional.vacations.length > 0) { %>
+                <% professional.vacations.forEach(vac => { %>
+                  <tr class="hover:bg-gray-50/50">
+                    <td class="p-2.5 text-brand-dark font-bold font-sans"><%= vac.aquisitivePeriod %></td>
+                    <td class="p-2.5 text-gray-500 font-sans"><%= vac.concessivePeriod %></td>
+                    <td class="p-2.5">
+                      <%= (vac.startDate && typeof vac.startDate === 'string') ? vac.startDate.split('-').reverse().join('/') : (vac.startDate || '') %> a <%= (vac.endDate && typeof vac.endDate === 'string') ? vac.endDate.split('-').reverse().join('/') : (vac.endDate || '') %>
+                    </td>
+                    <td class="p-2.5 font-sans"><%= vac.abono %></td>
+                    <td class="p-2.5 text-right">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold <%= vac.status === 'Gozadas' ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700' %>">
+                        <%= vac.status %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-gray-400 italic font-sans">Nenhuma férias registrada ou gozada.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest pt-4 border-t border-gray-100">🤒 Histórico de Afastamentos Médicos Registrados</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse font-mono">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-bold">
+                <th class="p-2.5">Tipo de Ausência</th>
+                <th class="p-2.5">Início do Afastamento</th>
+                <th class="p-2.5">Fim do Afastamento</th>
+                <th class="p-2.5">Motivo Administrativo (Sigilo de Saúde)</th>
+                <th class="p-2.5 text-right">Situação</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% if (professional.leaves && professional.leaves.length > 0) { %>
+                <% professional.leaves.forEach(lv => { %>
+                  <tr class="hover:bg-gray-50/50">
+                    <td class="p-2.5 font-bold font-sans"><%= lv.type %></td>
+                    <td class="p-2.5"><%= (lv.startDate && typeof lv.startDate === 'string') ? lv.startDate.split('-').reverse().join('/') : (lv.startDate || '') %></td>
+                    <td class="p-2.5"><%= (lv.endDate && typeof lv.endDate === 'string') ? lv.endDate.split('-').reverse().join('/') : (lv.endDate || '') %></td>
+                    <td class="p-2.5 text-gray-600 font-sans"><%= lv.adminReason %></td>
+                    <td class="p-2.5 text-right">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
+                        <%= lv.status %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="p-6 text-center text-gray-400 italic font-sans">Nenhum afastamento médico registrado na sua ficha.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: DADOS SALARIAIS (Fixo & PIX) -->
+      <div id="section-menu-salario" class="colab-menu-section hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest border-b pb-2">💰 Meus Dados Salariais & Informações Fixas</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <!-- Bloco Salário & Categoria -->
+          <div class="space-y-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+            <h4 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-mono">Remuneração & Categoria</h4>
+            
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Salário Base</span>
+              <span class="font-black text-brand-dark font-mono">
+                R$ <%= (professional.salaryData && professional.salaryData.baseSalary) ? Number(professional.salaryData.baseSalary).toLocaleString('pt-BR') : 'Não cadastrado' %>
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Piso da Categoria</span>
+              <span class="font-bold text-gray-700 font-mono">
+                R$ <%= (professional.salaryData && professional.salaryData.categoryFloor) ? Number(professional.salaryData.categoryFloor).toLocaleString('pt-BR') : 'N/A' %>
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Tipo Remuneração</span>
+              <span class="font-bold text-gray-700 font-mono"><%= (professional.salaryData && professional.salaryData.type) || 'CLT Mensalista' %></span>
+            </div>
+          </div>
+
+          <!-- Bloco Dados Bancários -->
+          <div class="space-y-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+            <h4 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 font-mono">Dados Bancários para Crédito</h4>
+
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Banco</span>
+              <span class="font-bold text-brand-dark font-mono"><%= (professional.salaryData && professional.salaryData.bank) || 'Não informado' %></span>
+            </div>
+
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Agência</span>
+              <span class="font-bold text-gray-700 font-mono"><%= (professional.salaryData && professional.salaryData.agency) || 'Não informado' %></span>
+            </div>
+
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Conta</span>
+              <span class="font-bold text-gray-700 font-mono"><%= (professional.salaryData && professional.salaryData.account) || 'Não informado' %></span>
+            </div>
+
+            <% if (professional.salaryData && professional.salaryData.pixKey) { %>
+              <div class="flex justify-between items-center text-xs pt-2 border-t">
+                <span class="font-bold text-gray-400 uppercase font-mono text-[10px]">Chave PIX</span>
+                <span class="font-bold text-emerald-800 font-mono"><%= professional.salaryData.pixKey %></span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Relógio em Tempo Real
+  function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('pt-BR', { hour12: false });
+    const clockEl = document.getElementById('realtime-clock');
+    if (clockEl) {
+      clockEl.textContent = timeString;
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Alternar menus do colaborador
+  function switchColabMenu(menuId) {
+    const cleanId = menuId.replace('menu-', '');
+    
+    // Ocultar todas as seções
+    document.querySelectorAll('.colab-menu-section').forEach(sec => {
+      sec.classList.add('hidden');
+    });
+    
+    // Desativar estilo ativo de todos os botões de menu
+    document.querySelectorAll('.colab-menu-btn').forEach(btn => {
+      btn.classList.remove('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-brand-gold', 'pl-2');
+      btn.classList.add('text-gray-600');
+    });
+
+    // Ativar seção correspondente
+    const secEl = document.getElementById('section-menu-' + cleanId);
+    const btnEl = document.getElementById('btn-menu-' + cleanId);
+    
+    if (secEl) {
+      secEl.classList.remove('hidden');
+    }
+    if (btnEl) {
+      btnEl.classList.add('bg-emerald-50', 'text-emerald-800', 'border-l-4', 'border-brand-gold', 'pl-2');
+      btnEl.classList.remove('text-gray-600');
+    }
+  }
+
+  // Inicializar primeiro menu (Registrar Ponto) no carregamento
+  window.addEventListener('DOMContentLoaded', () => {
+    switchColabMenu('menu-ponto-bater');
+  });
+</script>
+
+<%- include('../../partials/footer') %>

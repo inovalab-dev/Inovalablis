@@ -1,0 +1,35 @@
+{
+  "year": 2026,
+  "months": [
+    3,
+    4
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "name": "Dra. Monara Natana Idem",
+      "phone": "(43) 99914-9958",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "g2",
+      "name": "Thaís / Gustavo",
+      "phone": "(43) 98487-6964 / (43) 99183-0607",
+      "color": "#22c55e"
+    },
+    {
+      "id": "g3",
+      "name": "Maria Gabriela / Renan",
+      "phone": "(43) 99610-5992 / (43) 99115-1584",
+      "color": "#eab308"
+    }
+  ],
+  "assignments": {},
+  "notices": [
+    "07:00h às 17:00h Segunda à Sexta Ligar no número do laboratório (43) 99618-3406",
+    "Aos sábados das 07:00h ao 11:00h (43) 99618-3406",
+    "Aos feriados ligação direta para a plantonista",
+    "Após as 17:00h ligar nos números abaixo:",
+    "OBS. POR FAVOR, GOSTARIAMOS QUE FIZESSE SOMENTE LIGAÇÃO"
+  ]
+}

@@ -1,0 +1,280 @@
+<%- include('partials/header') %>
+
+<!-- Banner Superior -->
+<section class="bg-gradient-to-b from-brand-softBg/60 to-white py-12 border-b border-brand-light/10 animate-fade-in">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+    <span class="text-xs font-bold tracking-widest text-brand-gold uppercase font-mono block">Informativo & Saúde</span>
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-brand-dark tracking-tight">Blog InovaLab</h1>
+    <div class="w-12 h-1 bg-brand-gold mx-auto rounded-full"></div>
+    <p class="text-sm text-gray-500 max-w-2xl mx-auto">Dicas semanais, orientações de especialistas e artigos informativos para você cuidar bem de quem você ama.</p>
+  </div>
+</section>
+
+<!-- Conteúdo Principal do Blog -->
+<section class="py-12 bg-brand-neutralLight/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    
+    <!-- Filtros de Categorias & Barra de Pesquisa -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-3xl border border-brand-light/15 shadow-sm">
+      <div class="flex flex-wrap gap-2 justify-center md:justify-start" id="blog-category-filters">
+        <button onclick="filterBlogCategory('all')" class="cat-btn active px-4 py-2 rounded-full text-xs font-bold transition-all bg-brand-dark text-white cursor-pointer" data-cat="all">Todas as Publicações</button>
+        <button onclick="filterBlogCategory('Prevenção')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white cursor-pointer" data-cat="Prevenção">Prevenção</button>
+        <button onclick="filterBlogCategory('Preparo')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white cursor-pointer" data-cat="Preparo">Preparo de Exames</button>
+        <button onclick="filterBlogCategory('Curiosidades')" class="cat-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white cursor-pointer" data-cat="Curiosidades">Curiosidades</button>
+      </div>
+
+      <div class="relative w-full md:w-80">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-brand-dark/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="text" id="blog-search" oninput="searchBlog()" placeholder="Buscar artigos..." class="w-full pl-9 pr-4 py-2.5 rounded-2xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark text-xs bg-brand-neutralLight font-medium">
+      </div>
+    </div>
+
+    <% if (posts && posts.length > 0) { %>
+      <!-- Post em Destaque (Se houver artigos, exibe o primeiro no topo maior) -->
+      <% const featuredPost = posts[0]; %>
+      <div class="featured-post bg-white rounded-3xl border border-brand-light/20 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden grid grid-cols-1 lg:grid-cols-12" data-category="<%= featuredPost.category %>" data-title="<%= featuredPost.title.toLowerCase() %>" data-excerpt="<%= featuredPost.excerpt.toLowerCase() %>">
+        
+        <!-- Imagem do Destaque -->
+        <div class="lg:col-span-6 min-h-[250px] lg:min-h-[380px] bg-gradient-to-br from-brand-dark to-brand-neutralDark flex items-center justify-center p-8 relative">
+          <!-- Ilustração Abstrata ou Fallback -->
+          <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#8da673_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div class="text-center space-y-4 relative z-10">
+            <span class="inline-block bg-brand-gold/20 text-brand-gold font-bold font-mono text-[10px] px-3.5 py-1.5 rounded-full uppercase tracking-wider">Publicação de Destaque</span>
+            <h2 class="text-white text-3xl font-extrabold max-w-md leading-tight tracking-tight"><%= featuredPost.title %></h2>
+          </div>
+        </div>
+
+        <!-- Conteúdo do Destaque -->
+        <div class="lg:col-span-6 p-6 sm:p-10 flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <div class="flex items-center space-x-3 text-xs text-brand-gold font-bold uppercase font-mono">
+              <span class="bg-brand-softBg text-brand-dark px-2.5 py-1 rounded-full text-[10px]"><%= featuredPost.category %></span>
+              <span>•</span>
+              <span><%= featuredPost.readTime %></span>
+            </div>
+            
+            <h3 class="text-xl sm:text-2xl font-extrabold text-brand-dark leading-snug"><%= featuredPost.title %></h3>
+            <p class="text-gray-500 text-sm leading-relaxed"><%= featuredPost.excerpt %></p>
+          </div>
+
+          <div class="pt-6 border-t border-brand-light/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full bg-brand-light/30 flex items-center justify-center font-bold text-brand-dark text-xs uppercase">
+                <%= featuredPost.author.split(' ').map(n => n[0]).join('') %>
+              </div>
+              <div class="text-left">
+                <p class="text-xs font-bold text-brand-dark"><%= featuredPost.author %></p>
+                <p class="text-[10px] text-gray-400 font-mono"><%= featuredPost.date %></p>
+              </div>
+            </div>
+
+            <a href="/blog/<%= featuredPost.id %>" class="inline-flex items-center justify-center bg-brand-dark hover:bg-brand-light text-white font-bold text-xs px-5 py-3 rounded-xl transition-all hover:-translate-y-0.5 shadow-sm hover:shadow">
+              Ler Artigo Completo
+              <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outros Artigos -->
+      <div class="space-y-6">
+        <h2 class="text-lg font-bold text-brand-dark font-mono uppercase tracking-wider" id="blog-grid-header">Todas as Matérias</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="blog-grid">
+          <% posts.forEach((post, index) => { %>
+            <!-- Ignora o primeiro post no grid, pois já está no destaque -->
+            <div class="blog-card bg-white rounded-3xl border border-brand-light/15 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between <%= index === 0 ? 'hidden md:flex' : '' %>" data-category="<%= post.category %>" data-title="<%= post.title.toLowerCase() %>" data-excerpt="<%= post.excerpt.toLowerCase() %>">
+              
+              <!-- Imagem do card -->
+              <div class="h-44 bg-gradient-to-br from-brand-neutralDark/90 to-brand-dark/95 flex flex-col justify-between p-5 relative text-white">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fafbfa_1px,transparent_1px)] [background-size:12px_12px]"></div>
+                
+                <span class="self-start bg-white/20 text-white font-bold text-[9px] px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">
+                  <%= post.category %>
+                </span>
+                
+                <p class="text-xs font-semibold text-brand-light/90 font-mono"><%= post.readTime %></p>
+              </div>
+
+              <!-- Conteúdo do card -->
+              <div class="p-6 space-y-4 flex-grow flex flex-col justify-between">
+                <div class="space-y-2">
+                  <h3 class="text-base font-bold text-brand-dark tracking-tight leading-snug line-clamp-2 hover:text-brand-light transition-colors">
+                    <a href="/blog/<%= post.id %>"><%= post.title %></a>
+                  </h3>
+                  <p class="text-xs text-gray-400 font-mono"><%= post.date %> • Por <%= post.author %></p>
+                  <p class="text-xs text-gray-500 leading-relaxed line-clamp-3"><%= post.excerpt %></p>
+                </div>
+
+                <div class="pt-4 border-t border-brand-light/10 flex items-center justify-end">
+                  <a href="/blog/<%= post.id %>" class="text-xs font-bold text-brand-dark hover:text-brand-light flex items-center">
+                    Ler mais <span class="ml-1 text-sm font-light">&rsaquo;</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+    <% } else { %>
+      <!-- Sem Posts -->
+      <div class="text-center py-16 space-y-4 bg-white rounded-3xl border border-brand-light/15 p-8">
+        <div class="w-16 h-16 bg-brand-softBg/60 rounded-full flex items-center justify-center mx-auto text-brand-dark">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M9 9h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-lg font-bold text-brand-dark">Nenhuma matéria publicada ainda</p>
+          <p class="text-xs text-gray-400">Inscreva-se em nossas redes sociais para receber as atualizações quando forem publicadas!</p>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Mensagem de "Nenhum resultado de pesquisa encontrado" -->
+    <div id="blog-no-results" class="hidden text-center py-16 space-y-4 bg-white rounded-3xl border border-brand-light/15 p-8">
+      <div class="w-16 h-16 bg-brand-softBg/60 rounded-full flex items-center justify-center mx-auto text-brand-dark">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <p class="text-lg font-bold text-brand-dark">Nenhum artigo encontrado</p>
+        <p class="text-xs text-gray-400">Tente buscar por termos diferentes como "jejum", "anemia", "fígado" ou "preventivo".</p>
+      </div>
+    </div>
+
+    <!-- CTA de Redes Sociais e Engajamento -->
+    <div class="bg-brand-dark rounded-3xl text-white p-8 sm:p-12 border border-brand-light/10 shadow-lg text-center space-y-6 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-5 bg-[radial-gradient(#fafbfa_1px,transparent_1px)] [background-size:16px_16px]"></div>
+      <div class="max-w-2xl mx-auto space-y-4 relative z-10">
+        <span class="text-xs font-bold tracking-widest text-brand-light uppercase font-mono">Conexão & Saúde</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Siga o InovaLab Cambará nas Redes Sociais!</h2>
+        <p class="text-sm text-brand-softBg/80 leading-relaxed">Nós postamos atualizações semanais de saúde, informativos e esclarecemos dúvidas. Faça parte da nossa comunidade digital.</p>
+        
+        <div class="pt-4 flex flex-wrap justify-center gap-4">
+          <a href="https://wa.me/5543996183406" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all flex items-center space-x-2 shadow-md">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.25 8.477 3.517 2.266 2.268 3.512 5.279 3.51 8.484-.006 6.545-5.34 11.884-11.954 11.884-.001 0-.002 0-.003 0-1.996-.001-3.956-.503-5.69-1.457L0 24zM6.59 17.545l.361.215a9.872 9.872 0 0 0 5.031 1.378H12a9.89 9.89 0 0 0 9.885-9.885A9.832 9.832 0 0 0 19 2.899 9.825 9.825 0 0 0 12.008 1.1c-5.451 0-9.887 4.434-9.89 9.884-.001 2.094.547 4.14 1.588 5.944l.236.375-1.003 3.655 3.743-.982zM17.472 14.38c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
+            </svg>
+            <span>Dúvidas no WhatsApp</span>
+          </a>
+          <a href="#" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition-all flex items-center space-x-2 shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+            <span>Nosso Instagram</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Lógica JS para Filtro e Pesquisa de Artigos no Frontend -->
+<script>
+  let activeBlogCategory = 'all';
+  let blogSearchTerm = '';
+
+  function filterBlogCategory(cat) {
+    const btns = document.querySelectorAll('#blog-category-filters .cat-btn');
+    btns.forEach(btn => {
+      if (btn.getAttribute('data-cat') === cat) {
+        btn.classList.add('active', 'bg-brand-dark', 'text-white');
+        btn.classList.remove('bg-brand-softBg', 'text-brand-dark');
+      } else {
+        btn.classList.remove('active', 'bg-brand-dark', 'text-white');
+        btn.classList.add('bg-brand-softBg', 'text-brand-dark');
+      }
+    });
+
+    activeBlogCategory = cat;
+    applyBlogFilters();
+  }
+
+  function searchBlog() {
+    blogSearchTerm = document.getElementById('blog-search').value.toLowerCase().trim();
+    applyBlogFilters();
+  }
+
+  function applyBlogFilters() {
+    const cards = document.querySelectorAll('.blog-card');
+    const featuredCard = document.querySelector('.featured-post');
+    const noResults = document.getElementById('blog-no-results');
+    const gridHeader = document.getElementById('blog-grid-header');
+    
+    let visibleCount = 0;
+
+    // Filtra o post em destaque
+    if (featuredCard) {
+      const cardCat = featuredCard.getAttribute('data-category');
+      const cardTitle = featuredCard.getAttribute('data-title');
+      const cardExcerpt = featuredCard.getAttribute('data-excerpt');
+
+      const matchesSearch = cardTitle.includes(blogSearchTerm) || cardExcerpt.includes(blogSearchTerm);
+      const matchesCategory = activeBlogCategory === 'all' || cardCat === activeBlogCategory;
+
+      if (matchesSearch && matchesCategory) {
+        featuredCard.classList.remove('hidden');
+        featuredCard.classList.add('grid');
+        visibleCount++;
+      } else {
+        featuredCard.classList.add('hidden');
+        featuredCard.classList.remove('grid');
+      }
+    }
+
+    // Filtra os cards normais
+    cards.forEach((card, index) => {
+      const cardCat = card.getAttribute('data-category');
+      const cardTitle = card.getAttribute('data-title');
+      const cardExcerpt = card.getAttribute('data-excerpt');
+
+      const matchesSearch = cardTitle.includes(blogSearchTerm) || cardExcerpt.includes(blogSearchTerm);
+      const matchesCategory = activeBlogCategory === 'all' || cardCat === activeBlogCategory;
+
+      if (matchesSearch && matchesCategory) {
+        // Se a busca/filtro está ativa e combina, mostramos.
+        // Se for o primeiro card, ele costumava se esconder em desktop por causa do destaque.
+        // Mas se o destaque sumir na busca ou tiver filtro ativo, ele DEVE aparecer.
+        if (index === 0) {
+          if (blogSearchTerm !== '' || activeBlogCategory !== 'all') {
+            card.classList.remove('hidden', 'md:hidden');
+            card.classList.add('flex');
+          } else {
+            // Volta ao estado original
+            card.classList.add('hidden', 'md:hidden');
+            card.classList.remove('flex');
+          }
+        } else {
+          card.classList.remove('hidden');
+          card.classList.add('flex');
+        }
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+      }
+    });
+
+    // Toggle seções vazias
+    if (visibleCount === 0) {
+      noResults.classList.remove('hidden');
+      if (gridHeader) gridHeader.classList.add('hidden');
+    } else {
+      noResults.classList.add('hidden');
+      if (gridHeader) gridHeader.classList.remove('hidden');
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>

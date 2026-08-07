@@ -1,0 +1,74 @@
+[
+  {
+    "id": "SET-1",
+    "codigo": "1",
+    "descricao": "Hematologia",
+    "sigla": "HEM"
+  },
+  {
+    "id": "SET-2",
+    "codigo": "2",
+    "descricao": "Bioquimica",
+    "sigla": "BIO"
+  },
+  {
+    "id": "SET-3",
+    "codigo": "3",
+    "descricao": "Imunologia",
+    "sigla": "IMU"
+  },
+  {
+    "id": "SET-4",
+    "codigo": "4",
+    "descricao": "Endocrinologia",
+    "sigla": "END"
+  },
+  {
+    "id": "SET-5",
+    "codigo": "5",
+    "descricao": "Bacteriologia",
+    "sigla": "BAC"
+  },
+  {
+    "id": "SET-6",
+    "codigo": "6",
+    "descricao": "Toxicologia",
+    "sigla": "TOX"
+  },
+  {
+    "id": "SET-7",
+    "codigo": "7",
+    "descricao": "Citologia",
+    "sigla": "CIT"
+  },
+  {
+    "id": "SET-8",
+    "codigo": "8",
+    "descricao": "Seminal",
+    "sigla": "SEM"
+  },
+  {
+    "id": "SET-9",
+    "codigo": "9",
+    "descricao": "Uroanálise",
+    "sigla": "URO"
+  },
+  {
+    "id": "SET-10",
+    "codigo": "10",
+    "descricao": "Parasitologia",
+    "sigla": "PAR"
+  },
+  {
+    "id": "SET-11",
+    "codigo": "11",
+    "descricao": "Externo",
+    "sigla": "EXT"
+  },
+  {
+    "id": "SET-12",
+    "codigo": "12",
+    "descricao": "Coagulação",
+    "sigla": ""
+  }
+]

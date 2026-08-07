@@ -1,0 +1,124 @@
+[
+  {
+    "id": "NC-000145",
+    "status": "Aguardando Validação",
+    "dateOccurrence": "2026-07-18",
+    "timeOccurrence": "14:30",
+    "dateRegistration": "2026-07-18",
+    "responsibleRegistration": "Dra. Sandra Regina Mendes",
+    "unit": "Unidade Cambará - Central",
+    "sector": "Hematologia",
+    "process": "Fase Analítica",
+    "subprocess": "Processamento de Amostra",
+    "category": "Desvio de Equipamento",
+    "type": "Erro de Calibração",
+    "origin": "Auditoria Interna de Rotina",
+    "severity": "Alta",
+    "priority": "Alta",
+    "description": "Foi identificada uma flutuação fora do padrão aceitável nas dosagens de hemoglobina do equipamento de hematologia automatizada (Sysmex XN-1000). O problema foi notado durante o processamento do lote de controle interno e afetou a reprodutibilidade dos resultados de hemogramas de rotina. Suspeita-se de contaminação ou envelhecimento do calibrador comercial utilizado no início do turno.",
+    "patientName": "Maria de Lurdes",
+    "patientCode": "123456",
+    "convenio": "Unimed",
+    "requisitionCode": "REQ887",
+    "exam": "Hemograma Completo",
+    "material": "Sangue Total (EDTA)",
+    "lot": "L2026-X8",
+    "reagent": "Calibrador Hemoglobin 5V",
+    "equipment": "Sysmex XN-1000",
+    "pop": "POP-HEM-01",
+    "supplier": "Roche Diagnostics",
+    "affected": ["Paciente", "Prazo", "Qualidade"],
+    "impactDescription": "Atraso no prazo acordado (TAT) para liberação de 3 laudos de hemograma críticos, com necessidade de retenção de amostras e reconvocação de 1 paciente devido ao volume de amostra insuficiente após as repetições de teste.",
+    "evidences": [
+      {
+        "name": "grafico_calibracao_alterado.jpg",
+        "size": "450 KB",
+        "type": "image/jpeg",
+        "date": "18/07/2026 14:35"
+      },
+      {
+        "name": "log_erro_sysmex_145.txt",
+        "size": "45 KB",
+        "type": "text/plain",
+        "date": "18/07/2026 14:38"
+      }
+    ],
+    "causeAnalysisMethod": "5 Porquês",
+    "causeAnalysisRoot": "Por que ocorreu a flutuação? O calibrador comercial não obteve leitura correta.\nPor que o calibrador não obteve leitura correta? O calibrador estava degradado.\nPor que o calibrador estava degradado? Ele sofreu variação térmica de armazenamento.\nPor que sofreu variação térmica? A porta do refrigerador de reagentes ficou entreaberta por tempo excessivo durante o inventário.\nPor que ficou entreaberta? Não há sinal sonoro de alerta de porta aberta no refrigerador nº 4.",
+    "actionPlan": [
+      {
+        "id": "act_1",
+        "type": "Correção",
+        "description": "Recalibrar o equipamento Sysmex XN-1000 utilizando um novo lote de calibrador fechado e conservado adequadamente.",
+        "responsible": "João da Silva (Técnico)",
+        "deadline": "2026-07-19",
+        "status": "Concluída",
+        "dateConclusion": "2026-07-18"
+      },
+      {
+        "id": "act_2",
+        "type": "Preventiva",
+        "description": "Instalar alarmes sonoros magnéticos de porta aberta em todos os refrigeradores de reagentes e calibradores da hematologia.",
+        "responsible": "Marcos Antônio (Manutenção)",
+        "deadline": "2026-07-25",
+        "status": "Em Execução",
+        "dateConclusion": ""
+      },
+      {
+        "id": "act_3",
+        "type": "Preventiva",
+        "description": "Realizar reciclagem de treinamento com a equipe sobre a importância do controle rigoroso da cadeia de frio e tempo limite de abertura dos refrigeradores.",
+        "responsible": "Dra. Sandra Regina Mendes",
+        "deadline": "2026-07-30",
+        "status": "Aberta",
+        "dateConclusion": ""
+      }
+    ],
+    "effectivenessResolved": "Parcialmente",
+    "effectivenessRecurred": "Não",
+    "effectivenessDescription": "A recalibração com o novo calibrador restabeleceu os níveis aceitáveis dos controles internos de hematologia, demonstrando estabilidade do sistema físico. A eficácia preventiva final será avaliada após a instalação dos alarmes de porta e término do período de observação de 30 dias.",
+    "effectivenessResponsible": "Dra. Sandra Regina Mendes",
+    "effectivenessDate": "2026-07-19",
+    "closureResponsible": "Dr. Carlos Eduardo Lima (Diretor Técnico)",
+    "closureDate": "2026-07-20",
+    "closureParecer": "Não conformidade validada e em vias de encerramento. Os planos imediatos foram eficazes e o equipamento está operando com total fidedignidade e precisão de resultados. Aguardamos o fechamento do plano educativo da equipe.",
+    "closureSignature": "Carlos Eduardo Lima - Diretor Técnico - CRBM/PR 4452",
+    "history": [
+      {
+        "user": "Dra. Sandra Regina Mendes",
+        "date": "18/07/2026 14:45",
+        "action": "Abertura da Não Conformidade",
+        "comments": "Identificada flutuação durante calibração diária na hematologia."
+      },
+      {
+        "user": "João da Silva",
+        "date": "18/07/2026 15:30",
+        "action": "Execução de Ação Imediata",
+        "comments": "Calibração refeita com reagente reserva. Controles estão aceitáveis."
+      },
+      {
+        "user": "Dra. Sandra Regina Mendes",
+        "date": "19/07/2026 09:15",
+        "action": "Análise de Causa Concluída",
+        "comments": "Causa raiz identificada através do método dos 5 Porquês."
+      }
+    ],
+    "comments": [
+      {
+        "user": "Dr. Carlos Eduardo Lima",
+        "date": "18/07/2026 15:02",
+        "text": "Excelente ação imediata, Sandra. Por favor, garanta que todas as amostras processadas hoje de manhã e que deram alteração de hemoglobina sejam repassadas no equipamento recalibrado antes da liberação final do laudo."
+      },
+      {
+        "user": "Dra. Sandra Regina Mendes",
+        "date": "18/07/2026 15:10",
+        "text": "Perfeito, Dr. Carlos. Já separamos todos os tubos do período da manhã e estamos repassando neste momento. Todos os laudos estão retidos em fila de verificação para garantir a segurança."
+      }
+    ],
+    "version": 2,
+    "createdBy": "Dra. Sandra Regina Mendes",
+    "createdAt": "18/07/2026 14:45",
+    "updatedBy": "Dr. Carlos Eduardo Lima",
+    "updatedAt": "20/07/2026 11:30"
+  }
+]

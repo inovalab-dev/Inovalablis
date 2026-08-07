@@ -1,0 +1,32 @@
+[
+  {
+    "id": "mat-alv-1",
+    "codigo": "SORO",
+    "descricao": "Soro (Tubo Gel Separador / Amarelo ou Vermelho)"
+  },
+  {
+    "id": "mat-alv-2",
+    "codigo": "SANGUE_TOTAL_EDTA",
+    "descricao": "Sangue Total EDTA (Tubo Roxo)"
+  },
+  {
+    "id": "mat-alv-3",
+    "codigo": "PLASMA_CITRATO",
+    "descricao": "Plasma em Citrato de Sódio (Tubo Azul)"
+  },
+  {
+    "id": "mat-alv-4",
+    "codigo": "URINA_AMPOSTRA_ISOLADA",
+    "descricao": "Urina - Amostra Isolada / Jato Médio"
+  },
+  {
+    "id": "mat-alv-5",
+    "codigo": "URINA_24H",
+    "descricao": "Urina 24 Horas"
+  },
+  {
+    "id": "mat-alv-6",
+    "codigo": "FEZES",
+    "descricao": "Fezes (Coletor Universal)"
+  }
+]

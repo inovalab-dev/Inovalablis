@@ -1,0 +1,1175 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Cabeçalho Principal -->
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm no-print">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-black text-brand-dark tracking-tight font-sans">Montador de Escala (Pronto Socorro)</h1>
+        <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider bg-amber-50 text-amber-700 rounded border border-amber-100">Escala de Plantão</span>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Gere e configure a escala de plantão mensal para envio ao Pronto Socorro. Formato horizontal otimizado para impressão e PDF.</p>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <!-- Auto Save Status Indicator -->
+      <div id="auto-save-indicator" class="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="text-emerald-700">Sistema Pronto</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="imprimirEscala()" class="px-4 py-2 bg-brand-gold hover:bg-brand-gold/90 text-brand-dark text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.615 0-1.101-.476-1.12-1.091L5.87 18m11.79 0c.081-.833-.27-1.675-.92-2.224l-.008-.007a4.902 4.902 0 00-6.002 0l-.008.007a2.917 2.917 0 01-1.92.576" /></svg>
+          Imprimir / Gerar PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Elementos de controle mantidos ocultos no DOM para compatibilidade com o JS existente -->
+  <div class="hidden">
+    <select id="escala-year" onchange="updateCalendars()">
+      <option value="2025">2025</option>
+      <option value="2026" selected>2026</option>
+      <option value="2027">2027</option>
+      <option value="2028">2028</option>
+    </select>
+    <select id="escala-month-1" onchange="updateCalendars()">
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3" selected>Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
+    <select id="escala-month-2" onchange="updateCalendars()">
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4" selected>Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
+  </div>
+
+
+
+
+  <!-- CONTAINER DE VISUALIZAÇÃO E IMPRESSÃO (O MODELO DO PRONTO SOCORRO) -->
+  <div id="print-area" class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 sm:p-8 space-y-6">
+    <!-- Cabeçalho de Impressão -->
+    <div class="bg-[#224215] text-white py-4 px-6 rounded-xl text-center font-black tracking-wider uppercase font-sans border-2 border-[#b09868]/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <button onclick="shiftMonths(-1)" class="no-print w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm border border-white/10">
+        ◀ Voltar Mês
+      </button>
+
+      <div class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div class="shrink-0 bg-white/10 p-1.5 rounded-lg border border-white/10 no-print">
+          <%- include('../../partials/logo', { layout: 'icon-only', variant: 'dark', height: 'h-8' }) %>
+        </div>
+        <div class="text-center sm:text-left">
+          <h2 class="text-lg sm:text-xl font-black tracking-tight text-white">ESCALA PLANTÃO LABORATÓRIO INOVALAB</h2>
+          <span class="text-xs sm:text-sm font-bold font-mono text-[#dfc293] mt-0.5 block" id="print-header-dates">MARÇO / ABRIL - 2026</span>
+        </div>
+      </div>
+
+      <button onclick="shiftMonths(1)" class="no-print w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm border border-white/10">
+        Avançar Mês ▶
+      </button>
+    </div>
+
+    <!-- Calendários Lado a Lado -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+      <!-- Calendário da Esquerda -->
+      <div class="space-y-4">
+        <div class="text-center font-black text-lg text-brand-dark font-sans uppercase border-b-2 border-brand-dark pb-1" id="calendar-1-title">
+          MARÇO
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center font-mono text-xs font-bold bg-gray-100 p-2 rounded-lg" id="calendar-1-header">
+          <div class="text-rose-600">D</div>
+          <div>S</div>
+          <div>T</div>
+          <div>Q</div>
+          <div>Q</div>
+          <div>S</div>
+          <div class="text-blue-600">S</div>
+        </div>
+        <!-- Grid de dias -->
+        <div class="grid grid-cols-7 gap-1" id="calendar-1-days">
+          <!-- Gerado via JS -->
+        </div>
+      </div>
+
+      <!-- Calendário da Direita -->
+      <div class="space-y-4">
+        <div class="text-center font-black text-lg text-brand-dark font-sans uppercase border-b-2 border-brand-dark pb-1" id="calendar-2-title">
+          ABRIL
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center font-mono text-xs font-bold bg-gray-100 p-2 rounded-lg" id="calendar-2-header">
+          <div class="text-rose-600">D</div>
+          <div>S</div>
+          <div>T</div>
+          <div>Q</div>
+          <div>Q</div>
+          <div>S</div>
+          <div class="text-blue-600">S</div>
+        </div>
+        <!-- Grid de dias -->
+        <div class="grid grid-cols-7 gap-1" id="calendar-2-days">
+          <!-- Gerado via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Configurações Globais da Escala (Pincel & Dicas) abaixo do Calendário -->
+    <div class="bg-gray-50 rounded-2xl border border-gray-100 shadow-inner no-print my-6">
+      <!-- Cabeçalho Colapsável -->
+      <button onclick="toggleBrushSection()" class="w-full flex items-center justify-between p-4 focus:outline-none select-none text-left">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🎨</span>
+          <div>
+            <h4 class="text-xs font-black text-brand-dark uppercase tracking-wider font-mono">Pincel de Marcação Ativo & Dicas</h4>
+            <p class="text-[10px] text-gray-500 font-mono">Selecione uma cor para pintar os dias no calendário</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="brush-section-indicator" class="text-[10px] bg-brand-gold/20 text-brand-dark font-mono font-bold px-2 py-0.5 rounded-md">FECHADO</span>
+          <svg id="brush-section-arrow" class="w-4 h-4 text-gray-500 transform transition-transform duration-200 rotate-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+
+      <!-- Conteúdo Colapsável (Escondido por padrão) -->
+      <div id="brush-section-content" class="hidden border-t border-gray-200/60 p-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+          <!-- Painel de Pincéis -->
+          <div class="lg:col-span-2 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2 border-gray-200">
+              <label class="block text-xs font-black text-brand-dark uppercase tracking-wider font-mono">Pincel de Marcação Ativo:</label>
+              <button onclick="toggleColorSelection()" class="py-1 px-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 text-[10px] font-bold font-mono uppercase tracking-wider rounded-xl transition-colors shadow-sm">
+                Alternar Legenda
+              </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+              <!-- G1 -->
+              <label class="flex items-center gap-2.5 p-3 rounded-xl border border-blue-200 bg-blue-50/40 cursor-pointer hover:bg-blue-50/80 transition-all shadow-sm">
+                <input type="radio" name="active-brush" value="g1" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                <span class="w-4 h-4 rounded bg-blue-500 border border-blue-600 shrink-0"></span>
+                <span id="brush-g1-label" class="text-[10px] font-black font-mono text-blue-900 uppercase truncate">G1</span>
+              </label>
+              <!-- G2 -->
+              <label class="flex items-center gap-2.5 p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 cursor-pointer hover:bg-emerald-50/80 transition-all shadow-sm">
+                <input type="radio" name="active-brush" value="g2" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                <span class="w-4 h-4 rounded bg-emerald-500 border border-emerald-600 shrink-0"></span>
+                <span id="brush-g2-label" class="text-[10px] font-black font-mono text-emerald-900 uppercase truncate">G2</span>
+              </label>
+              <!-- G3 -->
+              <label class="flex items-center gap-2.5 p-3 rounded-xl border border-yellow-200 bg-yellow-50/40 cursor-pointer hover:bg-yellow-50/80 transition-all shadow-sm">
+                <input type="radio" name="active-brush" value="g3" class="w-4 h-4 text-yellow-600 focus:ring-yellow-500 border-gray-300">
+                <span class="w-4 h-4 rounded bg-yellow-500 border border-yellow-600 shrink-0"></span>
+                <span id="brush-g3-label" class="text-[10px] font-black font-mono text-yellow-900 uppercase truncate">G3</span>
+              </label>
+              <!-- Borracha -->
+              <label class="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 bg-gray-50/80 cursor-pointer hover:bg-gray-100 transition-all shadow-sm">
+                <input type="radio" name="active-brush" value="" class="w-4 h-4 text-gray-600 focus:ring-gray-500 border-gray-300">
+                <span class="w-4 h-4 rounded bg-white border border-gray-300 shrink-0 flex items-center justify-center font-mono font-black text-[10px] text-gray-400">✖</span>
+                <span class="text-[10px] font-black font-mono text-gray-600 uppercase">Borracha</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Dica de Uso -->
+          <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl shadow-sm">
+            <span class="text-[10px] text-amber-800 font-mono block font-bold leading-none">💡 DICA DE MARCAÇÃO:</span>
+            <span class="text-[10px] text-amber-700 font-mono block leading-relaxed mt-1.5">Selecione um <b>Pincel Ativo</b> acima e clique em qualquer dia no calendário para pintá-lo. Clicar em um dia já marcado com o mesmo pincel o limpa automaticamente!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Notas e Legendas (Replicando o Modelo da Planilha do Pronto Socorro) -->
+    <div class="border-t-2 border-brand-dark pt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Avisos Importantes (Ligar no Lab, etc) -->
+      <div class="lg:col-span-1 space-y-3">
+        <div class="p-3 border-2 border-rose-600 bg-rose-50 text-rose-800 rounded-xl space-y-1" id="print-warning-box-1">
+          <span class="text-xs font-black block font-sans" id="print-notice-0">07:00h às 17:00h Segunda à Sexta Ligar no número do laboratório (43) 99618-3406</span>
+        </div>
+        <div class="p-3 border-2 border-rose-600 bg-rose-50 text-rose-800 rounded-xl space-y-1" id="print-warning-box-2">
+          <span class="text-xs font-black block font-sans" id="print-notice-1">Aos sábados das 07:00h ao 11:00h (43) 99618-3406</span>
+        </div>
+        <div class="p-3 border-2 border-rose-600 bg-rose-50 text-rose-800 rounded-xl space-y-1" id="print-warning-box-3">
+          <span class="text-xs font-black block font-sans" id="print-notice-2">Aos feriados ligação direta para a plantonista</span>
+        </div>
+      </div>
+
+      <!-- Contatos de Plantão com Cores de Fundo (Exatamente igual ao rodapé do Pronto Socorro) -->
+      <div class="lg:col-span-2 space-y-3">
+        <div class="font-black text-xs text-brand-dark uppercase tracking-wider font-sans mb-1" id="print-notice-3">
+          Após as 17:00h ligar nos números abaixo:
+        </div>
+        
+        <div class="space-y-2">
+          <!-- Contato 1 -->
+          <div class="flex items-center gap-3 p-2 bg-blue-50 border border-blue-200 rounded-xl">
+            <span class="w-6 h-6 rounded bg-blue-500 border border-blue-600 block shrink-0 flex items-center justify-center font-mono font-black text-white text-[10px]">1</span>
+            <div class="text-xs font-bold font-mono">
+              <span class="text-blue-800 font-black uppercase font-sans" id="print-g1-name">MONARA</span> - 
+              <span class="text-gray-600" id="print-g1-phone">(43) 99914-9958</span>
+            </div>
+          </div>
+
+          <!-- Contato 2 -->
+          <div class="flex items-center gap-3 p-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <span class="w-6 h-6 rounded bg-emerald-500 border border-emerald-600 block shrink-0 flex items-center justify-center font-mono font-black text-white text-[10px]">2</span>
+            <div class="text-xs font-bold font-mono">
+              <span class="text-emerald-800 font-black uppercase font-sans" id="print-g2-name">THAÍS / GUSTAVO</span> - 
+              <span class="text-gray-600" id="print-g2-phone">(43) 98487-6964 / (43) 99183-0607</span>
+            </div>
+          </div>
+
+          <!-- Contato 3 -->
+          <div class="flex items-center gap-3 p-2 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <span class="w-6 h-6 rounded bg-yellow-500 border border-yellow-600 block shrink-0 flex items-center justify-center font-mono font-black text-white text-[10px]">3</span>
+            <div class="text-xs font-bold font-mono">
+              <span class="text-yellow-800 font-black uppercase font-sans" id="print-g3-name">MARIA GABRIELA / RENAN</span> - 
+              <span class="text-gray-600" id="print-g3-phone">(43) 99610-5992 / (43) 99115-1584</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observação Extra (LIGAÇÃO SOMENTE) -->
+        <div class="p-3 border-4 border-dashed border-rose-600 rounded-xl text-center bg-rose-50/50 mt-4">
+          <span class="text-rose-700 font-black text-xs block font-sans uppercase tracking-wide" id="print-notice-4">
+            OBS. POR FAVOR, GOSTARIAMOS QUE FIZESSE SOMENTE LIGAÇÃO
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configurar Grupos de Plantonistas (Cores & Contatos) Colapsável e Fechado por Padrão -->
+  <details class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm no-print transition-all duration-200">
+    <summary class="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none">
+      <div class="flex items-center gap-3">
+        <span class="text-xl shrink-0 group-open:scale-110 transition-transform">👥</span>
+        <div>
+          <span class="text-xs font-black text-brand-dark uppercase font-mono tracking-wider block">Configurar Grupos de Plantonistas (Cores & Contatos)</span>
+          <p class="text-[10px] text-gray-400 font-mono mt-0.5 group-open:hidden">Clique para expandir e configurar os grupos de plantão</p>
+          <p class="text-[10px] text-amber-600 font-mono mt-0.5 hidden group-open:block">As alterações nos grupos são sincronizadas em tempo real e salvas automaticamente.</p>
+        </div>
+      </div>
+      <span class="text-gray-400 transition-transform duration-300 group-open:rotate-180 p-1.5 hover:bg-gray-50 rounded-xl">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </summary>
+    
+    <div class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Grupo 1 -->
+      <div class="p-4 rounded-xl border border-blue-100 bg-blue-50/50 space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-4 h-4 rounded bg-blue-500 border border-blue-600 block shrink-0"></span>
+          <span class="text-[10px] font-black font-mono text-blue-800 uppercase tracking-wider">GRUPO 1 (AZUL)</span>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Puxar do Cadastro</label>
+          <select id="g1-prof-select" onchange="applyProfessionalSelection('g1')" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono mt-0.5 focus:ring-2 focus:ring-blue-100 outline-none">
+            <option value="">-- Escolher Técnico --</option>
+            <% professionals.forEach(p => { %>
+              <option value="<%= p.id %>" data-name="<%= p.name %>" data-phone="<%= (p.salaryData && p.salaryData.pixKey && p.salaryData.pixKey.includes('@')) ? '' : ((p.salaryData && p.salaryData.pixKey) ? p.salaryData.pixKey : '') %>"><%= p.name %> (<%= p.role %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome(s)</label>
+          <input type="text" id="g1-name" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-blue-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome curto</label>
+          <input type="text" id="g1-short" oninput="syncGroupDetails(); updateCalendars();" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Ex: Monara">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Telefone(s)</label>
+          <input type="text" id="g1-phone" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-blue-100 outline-none">
+        </div>
+      </div>
+
+      <!-- Grupo 2 -->
+      <div class="p-4 rounded-xl border border-emerald-100 bg-emerald-50/50 space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-4 h-4 rounded bg-emerald-500 border border-emerald-600 block shrink-0"></span>
+          <span class="text-[10px] font-black font-mono text-emerald-800 uppercase tracking-wider">GRUPO 2 (VERDE)</span>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Puxar do Cadastro</label>
+          <select id="g2-prof-select" onchange="applyProfessionalSelection('g2')" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono mt-0.5 focus:ring-2 focus:ring-emerald-100 outline-none">
+            <option value="">-- Escolher Técnico --</option>
+            <% professionals.forEach(p => { %>
+              <option value="<%= p.id %>" data-name="<%= p.name %>" data-phone="<%= (p.salaryData && p.salaryData.pixKey && p.salaryData.pixKey.includes('@')) ? '' : ((p.salaryData && p.salaryData.pixKey) ? p.salaryData.pixKey : '') %>"><%= p.name %> (<%= p.role %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome(s)</label>
+          <input type="text" id="g2-name" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-emerald-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome curto</label>
+          <input type="text" id="g2-short" oninput="syncGroupDetails(); updateCalendars();" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-emerald-100 outline-none" placeholder="Ex: Thais">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Telefone(s)</label>
+          <input type="text" id="g2-phone" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-emerald-100 outline-none">
+        </div>
+      </div>
+
+      <!-- Grupo 3 -->
+      <div class="p-4 rounded-xl border border-yellow-200 bg-yellow-50/50 space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-4 h-4 rounded bg-yellow-500 border border-yellow-600 block shrink-0"></span>
+          <span class="text-[10px] font-black font-mono text-yellow-800 uppercase tracking-wider">GRUPO 3 (AMARELO)</span>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Puxar do Cadastro</label>
+          <select id="g3-prof-select" onchange="applyProfessionalSelection('g3')" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono mt-0.5 focus:ring-2 focus:ring-yellow-100 outline-none">
+            <option value="">-- Escolher Técnico --</option>
+            <% professionals.forEach(p => { %>
+              <option value="<%= p.id %>" data-name="<%= p.name %>" data-phone="<%= (p.salaryData && p.salaryData.pixKey && p.salaryData.pixKey.includes('@')) ? '' : ((p.salaryData && p.salaryData.pixKey) ? p.salaryData.pixKey : '') %>"><%= p.name %> (<%= p.role %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome(s)</label>
+          <input type="text" id="g3-name" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-yellow-100 outline-none">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nome curto</label>
+          <input type="text" id="g3-short" oninput="syncGroupDetails(); updateCalendars();" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-yellow-100 outline-none" placeholder="Ex: Maria G.">
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Telefone(s)</label>
+          <input type="text" id="g3-phone" oninput="syncGroupDetails()" class="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-mono mt-0.5 focus:ring-2 focus:ring-yellow-100 outline-none">
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Observações e Textos Auxiliares (Avisos & Horários) Colapsável e no Final -->
+  <details class="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm no-print transition-all duration-200">
+    <summary class="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none">
+      <div class="flex items-center gap-3">
+        <span class="text-xl shrink-0 group-open:scale-110 transition-transform">📝</span>
+        <div>
+          <span class="text-xs font-black text-brand-dark uppercase font-mono tracking-wider block">Avisos & Horários (Impressos no PDF)</span>
+          <p class="text-[10px] text-gray-400 font-mono mt-0.5 group-open:hidden">Clique para abrir e editar os avisos, notas e horários do PDF</p>
+          <p class="text-[10px] text-amber-600 font-mono mt-0.5 hidden group-open:block">Edite os campos abaixo. As alterações são sincronizadas em tempo real com o modelo de impressão.</p>
+        </div>
+      </div>
+      <span class="text-gray-400 transition-transform duration-300 group-open:rotate-180 p-1.5 hover:bg-gray-50 rounded-xl">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </summary>
+    <div class="mt-5 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider font-mono">Aviso 1 (Segunda a Sexta)</label>
+        <textarea id="notice-0" oninput="syncNotices()" rows="2" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1 focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider font-mono">Aviso 2 (Sábados)</label>
+        <textarea id="notice-1" oninput="syncNotices()" rows="2" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1 focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider font-mono">Aviso 3 (Feriados)</label>
+        <textarea id="notice-2" oninput="syncNotices()" rows="2" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1 focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider font-mono">Aviso 4 (Após as 17h)</label>
+        <textarea id="notice-3" oninput="syncNotices()" rows="2" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1 focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold outline-none"></textarea>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider font-mono">Nota de Rodapé Vermelha (Observações)</label>
+        <textarea id="notice-4" oninput="syncNotices()" rows="2" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono mt-1 text-rose-700 font-bold focus:ring-2 focus:ring-rose-200 focus:border-rose-400 outline-none"></textarea>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- Estilo Personalizado para Impressão Horizontal em Escala Paisagem -->
+<style>
+  @media print {
+    /* Ocultar absolutamente todos os elementos de layout global e controles */
+    header, aside, footer, #admin-mobile-dropdown, #admin-mobile-menu-btn, .no-print, 
+    button, select, input, textarea, .nav-container, .breadcrumbs, 
+    .bg-white.p-6.rounded-2xl.border.border-gray-100.shadow-sm.no-print,
+    .no-print, #iframe-print-modal {
+      display: none !important;
+    }
+
+    /* Garantir que o body e os containers pais fluam perfeitamente sem margens ou alturas mínimas */
+    html, body {
+      background-color: white !important;
+      color: black !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+    }
+
+    /* Desativar sombras, bordas e fundos escuros do layout global do admin */
+    .min-h-screen, .flex-1, main, div.p-4.sm\:p-6.max-w-7xl.mx-auto.space-y-6 {
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      display: block !important;
+    }
+
+    /* Área de impressão: ocupa 100% sem posicionamento absoluto problemático */
+    #print-area {
+      display: block !important;
+      position: relative !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0.375rem !important; /* Encolhido para caber em 1 página */
+      border: none !important;
+      box-shadow: none !important;
+      background-color: white !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* Oculte elementos marcados com .no-print mesmo dentro do #print-area */
+    .no-print, .no-print *, #print-area .no-print, #print-area .no-print * {
+      display: none !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    @page {
+      size: landscape;
+      margin: 5mm 8mm 5mm 8mm !important;
+    }
+
+    /* Forçar colunas lado a lado nos calendários em modo impressão de forma rígida */
+    #print-area .grid-cols-1.md\:grid-cols-2 {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 1rem !important;
+    }
+
+    /* Forçar colunas lado a lado na seção de rodapé de forma rígida */
+    #print-area .grid-cols-1.lg\:grid-cols-3 {
+      display: grid !important;
+      grid-template-columns: 1fr 2fr !important;
+      gap: 1rem !important;
+    }
+
+    /* Reduzir o tamanho dos dias do calendário para que caibam em 1 página verticalmente */
+    #print-area .h-14 {
+      height: 2.25rem !important; /* Reduz de 56px para 36px */
+      padding: 0.125rem !important;
+    }
+
+    #print-area .h-14 span {
+      font-size: 9px !important;
+    }
+
+    #print-area .h-14 .text-\[9px\] {
+      font-size: 8px !important;
+      margin-top: 0.125rem !important;
+      padding: 0px 2px !important;
+      line-height: 1.1 !important;
+    }
+
+    /* Otimizar espaçamentos internos para garantir encaixe perfeito em 1 folha A4 */
+    #print-area .p-6, #print-area .p-8 {
+      padding: 0.375rem !important;
+    }
+
+    #print-area .my-6 {
+      margin-top: 0.375rem !important;
+      margin-bottom: 0.375rem !important;
+    }
+
+    #print-area .gap-8, #print-area .gap-12, #print-area .gap-6 {
+      gap: 0.5rem !important;
+    }
+
+    #print-area .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+      --tw-space-y-reverse: 0;
+      margin-top: 0.375rem !important;
+      margin-bottom: 0 !important;
+    }
+
+    #print-area .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+      --tw-space-y-reverse: 0;
+      margin-top: 0.5rem !important;
+      margin-bottom: 0 !important;
+    }
+
+    #print-area .pt-6 {
+      padding-top: 0.5rem !important;
+    }
+
+    /* Encolher textos e caixas para economizar espaço de folha única */
+    #print-area h2 {
+      font-size: 13px !important;
+      line-height: 1.2 !important;
+    }
+
+    #print-area #print-header-dates {
+      font-size: 11px !important;
+      margin-top: 0.125rem !important;
+    }
+
+    #calendar-1-title, #calendar-2-title {
+      font-size: 11px !important;
+      padding-bottom: 0.125rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+
+    #calendar-1-header, #calendar-2-header {
+      padding: 0.25rem !important;
+      font-size: 9px !important;
+      gap: 2px !important;
+    }
+
+    #calendar-1-days, #calendar-2-days {
+      gap: 2px !important;
+    }
+
+    /* Caixas de avisos e contatos no rodapé */
+    #print-area #print-warning-box-1, 
+    #print-area #print-warning-box-2, 
+    #print-area #print-warning-box-3 {
+      padding: 4px 6px !important;
+      border-width: 1px !important;
+    }
+
+    #print-area #print-notice-0, 
+    #print-area #print-notice-1, 
+    #print-area #print-notice-2 {
+      font-size: 9px !important;
+      line-height: 1.15 !important;
+    }
+
+    #print-area #print-notice-3 {
+      font-size: 9px !important;
+      margin-bottom: 0.25rem !important;
+    }
+
+    #print-area .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+      margin-top: 0.25rem !important;
+    }
+
+    #print-area .bg-blue-50, 
+    #print-area .bg-emerald-50, 
+    #print-area .bg-yellow-50 {
+      padding: 3px 5px !important;
+      border-width: 1px !important;
+    }
+
+    #print-area .w-6.h-6 {
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+      font-size: 8px !important;
+    }
+
+    #print-area #print-g1-name,
+    #print-area #print-g2-name,
+    #print-area #print-g3-name {
+      font-size: 10px !important;
+    }
+
+    #print-area #print-g1-phone,
+    #print-area #print-g2-phone,
+    #print-area #print-g3-phone {
+      font-size: 9px !important;
+    }
+
+    #print-area #print-notice-4 {
+      font-size: 9px !important;
+    }
+
+    #print-area .border-dashed {
+      border-width: 1.5px !important;
+      padding: 3px !important;
+      margin-top: 0.375rem !important;
+    }
+
+    /* Forçar cores de fundo em navegadores (especialmente o banner azul e os quadrados coloridos) */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+
+  /* Efeitos de cursor interativo para edição */
+  .day-editable {
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+  }
+  .day-editable:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 10;
+  }
+</style>
+
+<script>
+  // Obter escala inicial do backend
+  const escalaData = <%- JSON.stringify(escala) %>;
+  let isInitialized = false;
+  let autoSaveTimeout = null;
+
+  // Função Debounced para Salvar Automaticamente
+  function triggerAutoSave() {
+    if (!isInitialized) return;
+    
+    const indicator = document.getElementById("auto-save-indicator");
+    if (indicator) {
+      indicator.className = "flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0";
+      indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span><span class="text-amber-700">Salvando em breve...</span>`;
+    }
+
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+
+    autoSaveTimeout = setTimeout(async () => {
+      if (indicator) {
+        indicator.className = "flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0";
+        indicator.innerHTML = `<span class="w-2.5 h-2.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span><span class="text-blue-700">Salvando...</span>`;
+      }
+      try {
+        const response = await fetch('/admin/financeiro/escala-plantao/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(escalaData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          if (indicator) {
+            indicator.className = "flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0";
+            indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-700">Salvo automaticamente</span>`;
+          }
+        } else {
+          if (indicator) {
+            indicator.className = "flex items-center gap-2 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0";
+            indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="text-rose-700">Erro ao salvar</span>`;
+          }
+          console.error("Erro no auto-save:", result.error);
+        }
+      } catch (error) {
+        if (indicator) {
+          indicator.className = "flex items-center gap-2 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold shrink-0";
+          indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="text-rose-700">Erro de conexão</span>`;
+        }
+        console.error("Erro de rede no auto-save:", error);
+      }
+    }, 1200); // 1.2 segundos após a última edição
+  }
+  
+  // Dicionário de meses
+  const NOME_MESES = {
+    1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+    7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+  };
+
+  // Carregar dados nos inputs do editor
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth1 = today.getMonth() + 1; // 1-12
+    let currentMonth2 = currentMonth1 + 1;
+    if (currentMonth2 > 12) {
+      currentMonth2 = 1;
+    }
+
+    // Garantir que o ano atual exista no select do ano
+    const yearSelect = document.getElementById("escala-year");
+    let optionExists = false;
+    for (let i = 0; i < yearSelect.options.length; i++) {
+      if (parseInt(yearSelect.options[i].value) === currentYear) {
+        optionExists = true;
+        break;
+      }
+    }
+    if (!optionExists) {
+      const newOpt = document.createElement("option");
+      newOpt.value = currentYear;
+      newOpt.text = currentYear;
+      yearSelect.add(newOpt);
+    }
+
+    yearSelect.value = currentYear;
+    document.getElementById("escala-month-1").value = currentMonth1;
+    document.getElementById("escala-month-2").value = currentMonth2;
+
+    // Configurar grupos
+    if (escalaData.groups && escalaData.groups.length >= 3) {
+      document.getElementById("g1-name").value = escalaData.groups[0].name || "";
+      document.getElementById("g1-phone").value = escalaData.groups[0].phone || "";
+      document.getElementById("g1-short").value = escalaData.groups[0].shortName || "";
+      
+      document.getElementById("g2-name").value = escalaData.groups[1].name || "";
+      document.getElementById("g2-phone").value = escalaData.groups[1].phone || "";
+      document.getElementById("g2-short").value = escalaData.groups[1].shortName || "";
+      
+      document.getElementById("g3-name").value = escalaData.groups[2].name || "";
+      document.getElementById("g3-phone").value = escalaData.groups[2].phone || "";
+      document.getElementById("g3-short").value = escalaData.groups[2].shortName || "";
+    }
+
+    // Configurar avisos
+    if (escalaData.notices && escalaData.notices.length > 0) {
+      for (let i = 0; i < 5; i++) {
+        const txtEl = document.getElementById(`notice-${i}`);
+        if (txtEl) txtEl.value = escalaData.notices[i] || "";
+      }
+    }
+
+    // Sincronizar todos os textos de pré-visualização e desenhar os calendários
+    syncGroupDetails();
+    syncNotices();
+    updateCalendars();
+    
+    // Marcar inicialização como concluída
+    isInitialized = true;
+  });
+
+  // Função para preencher automaticamente com base na seleção de profissional cadastrado
+  function applyProfessionalSelection(groupId) {
+    const select = document.getElementById(`${groupId}-prof-select`);
+    const selectedOption = select.options[select.selectedIndex];
+    if (!selectedOption || !selectedOption.value) return;
+
+    const name = selectedOption.getAttribute("data-name");
+    const phone = selectedOption.getAttribute("data-phone");
+
+    document.getElementById(`${groupId}-name`).value = name;
+    if (phone) {
+      document.getElementById(`${groupId}-phone`).value = phone;
+    } else {
+      document.getElementById(`${groupId}-phone`).value = "";
+    }
+
+    // Gerar um nome curto padrão inteligente (primeiro nome ou Dr/Dra. PrimeiroNome)
+    let parts = name.split(" ");
+    let shortName = parts[0];
+    if ((parts[0].toLowerCase().startsWith("dr") || parts[0].toLowerCase() === "dra.") && parts.length > 1) {
+      shortName = parts[0] + " " + parts[1]; // Ex: "Dra. Camila" ou "Dra. Monara"
+    }
+    document.getElementById(`${groupId}-short`).value = shortName;
+
+    // Forçar sincronização e redesenho
+    syncGroupDetails();
+    updateCalendars();
+  }
+
+  // Sincronizar grupos de plantonistas do editor para a tela impressa
+  function syncGroupDetails() {
+    const g1Name = document.getElementById("g1-name").value;
+    const g1Phone = document.getElementById("g1-phone").value;
+    const g1Short = document.getElementById("g1-short").value;
+    const g2Name = document.getElementById("g2-name").value;
+    const g2Phone = document.getElementById("g2-phone").value;
+    const g2Short = document.getElementById("g2-short").value;
+    const g3Name = document.getElementById("g3-name").value;
+    const g3Phone = document.getElementById("g3-phone").value;
+    const g3Short = document.getElementById("g3-short").value;
+
+    document.getElementById("print-g1-name").innerText = g1Name.toUpperCase();
+    document.getElementById("print-g1-phone").innerText = g1Phone;
+    document.getElementById("print-g2-name").innerText = g2Name.toUpperCase();
+    document.getElementById("print-g2-phone").innerText = g2Phone;
+    document.getElementById("print-g3-name").innerText = g3Name.toUpperCase();
+    document.getElementById("print-g3-phone").innerText = g3Phone;
+
+    // Atualizar labels dos pincéis no editor (mostrando apenas o nome curto)
+    const brushG1 = document.getElementById("brush-g1-label");
+    const brushG2 = document.getElementById("brush-g2-label");
+    const brushG3 = document.getElementById("brush-g3-label");
+    if (brushG1) brushG1.innerText = g1Short || g1Name || 'G1';
+    if (brushG2) brushG2.innerText = g2Short || g2Name || 'G2';
+    if (brushG3) brushG3.innerText = g3Short || g3Name || 'G3';
+
+    // Atualizar dados da escalaData
+    if (escalaData.groups && escalaData.groups.length >= 3) {
+      escalaData.groups[0].name = g1Name;
+      escalaData.groups[0].phone = g1Phone;
+      escalaData.groups[0].shortName = g1Short;
+      
+      escalaData.groups[1].name = g2Name;
+      escalaData.groups[1].phone = g2Phone;
+      escalaData.groups[1].shortName = g2Short;
+      
+      escalaData.groups[2].name = g3Name;
+      escalaData.groups[2].phone = g3Phone;
+      escalaData.groups[2].shortName = g3Short;
+    }
+    
+    // Disparar salvamento automático se já inicializado
+    if (isInitialized) {
+      triggerAutoSave();
+    }
+  }
+
+  // Sincronizar avisos do editor para a tela impressa
+  function syncNotices() {
+    for (let i = 0; i < 5; i++) {
+      const val = document.getElementById(`notice-${i}`).value;
+      const printEl = document.getElementById(`print-notice-${i}`);
+      if (printEl) printEl.innerText = val;
+      escalaData.notices[i] = val;
+    }
+    
+    // Disparar salvamento automático se já inicializado
+    if (isInitialized) {
+      triggerAutoSave();
+    }
+  }
+
+  // Função para mudar/avançar meses com pulos inteligentes de ano
+  function shiftMonths(delta) {
+    let year = parseInt(document.getElementById("escala-year").value);
+    let m1 = parseInt(document.getElementById("escala-month-1").value);
+    let m2 = parseInt(document.getElementById("escala-month-2").value);
+
+    m1 += delta;
+    m2 += delta;
+
+    // Lógica de rotação de meses e anos
+    while (m1 < 1) {
+      m1 += 12;
+      year--;
+    }
+    while (m1 > 12) {
+      m1 -= 12;
+      year++;
+    }
+
+    while (m2 < 1) {
+      m2 += 12;
+      year--;
+    }
+    while (m2 > 12) {
+      m2 -= 12;
+      year++;
+    }
+
+    // Atualizar selects de ano e mês
+    const yearSelect = document.getElementById("escala-year");
+    if (yearSelect) {
+      // Garantir que o ano exista no select, se não, adicionar temporariamente
+      let optionExists = false;
+      for (let i = 0; i < yearSelect.options.length; i++) {
+        if (parseInt(yearSelect.options[i].value) === year) {
+          optionExists = true;
+          break;
+        }
+      }
+      if (!optionExists) {
+        const newOpt = document.createElement("option");
+        newOpt.value = year;
+        newOpt.text = year;
+        yearSelect.add(newOpt);
+      }
+      yearSelect.value = year;
+    }
+
+    const month1Select = document.getElementById("escala-month-1");
+    if (month1Select) month1Select.value = m1;
+
+    const month2Select = document.getElementById("escala-month-2");
+    if (month2Select) month2Select.value = m2;
+
+    updateCalendars();
+  }
+
+  // Atualizar calendários e cabeçalhos de impressão ao trocar ano/mês
+  function updateCalendars() {
+    const year = parseInt(document.getElementById("escala-year").value);
+    const m1 = parseInt(document.getElementById("escala-month-1").value);
+    const m2 = parseInt(document.getElementById("escala-month-2").value);
+
+    escalaData.year = year;
+    escalaData.months = [m1, m2];
+
+    // Atualizar cabeçalho
+    const headerText = `${NOME_MESES[m1].toUpperCase()} / ${NOME_MESES[m2].toUpperCase()} - ${year}`;
+    document.getElementById("print-header-dates").innerText = headerText;
+
+    // Títulos de seção dos calendários
+    document.getElementById("calendar-1-title").innerText = NOME_MESES[m1].toUpperCase();
+    document.getElementById("calendar-2-title").innerText = NOME_MESES[m2].toUpperCase();
+
+    // Renderizar grids de dias
+    renderMonthDays(year, m1, "calendar-1-days");
+    renderMonthDays(year, m2, "calendar-2-days");
+  }
+
+  // Renderizar os quadradinhos de cada dia para o mês selecionado
+  function renderMonthDays(year, month, targetContainerId) {
+    const container = document.getElementById(targetContainerId);
+    container.innerHTML = "";
+
+    // JS Date usa mês 0-11
+    const firstDayIndex = new Date(year, month - 1, 1).getDay(); 
+    const totalDays = new Date(year, month, 0).getDate(); 
+
+    // Espaços em branco antes do primeiro dia do mês
+    for (let i = 0; i < firstDayIndex; i++) {
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className = "h-14 border border-gray-100 rounded-lg bg-gray-50/20";
+      container.appendChild(emptyDiv);
+    }
+
+    // Dias reais
+    for (let day = 1; day <= totalDays; day++) {
+      const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dayOfWeek = new Date(year, month - 1, day).getDay(); // 0 = Domingo, 6 = Sábado
+      
+      const dayBtn = document.createElement("div");
+      dayBtn.className = "day-editable h-14 border border-gray-200 rounded-lg flex flex-col justify-between p-1 font-mono text-xs font-bold relative bg-white select-none cursor-pointer transition-all";
+      dayBtn.dataset.date = dateString;
+      
+      // Número do dia
+      const numSpan = document.createElement("span");
+      numSpan.innerText = day;
+      
+      // Aplicar cor para finais de semana
+      if (dayOfWeek === 0) {
+        numSpan.className = "text-rose-600 font-extrabold text-xs";
+      } else if (dayOfWeek === 6) {
+        numSpan.className = "text-blue-600 font-extrabold text-xs";
+      } else {
+        numSpan.className = "text-gray-500 text-xs";
+      }
+      dayBtn.appendChild(numSpan);
+
+      // Nome abreviado do plantonista se houver
+      const activeGroup = escalaData.assignments[dateString] || "";
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "text-[9px] text-center uppercase tracking-tight rounded-md px-1 py-0.5 block w-full mt-1 truncate";
+      
+      // Definir cores de fundo
+      applyDayColor(dayBtn, labelSpan, activeGroup);
+      dayBtn.appendChild(labelSpan);
+
+      // Clique no botão para marcar ou desmarcar o dia com base no pincel ativo
+      dayBtn.addEventListener("click", () => {
+        // Obter o pincel/grupo ativo selecionado nos radio buttons
+        const selectedBrushInput = document.querySelector('input[name="active-brush"]:checked');
+        const selectedBrush = selectedBrushInput ? selectedBrushInput.value : "g1";
+
+        let nextGroup = "";
+        // Se clicar em um dia que já possui esse mesmo grupo ativo, desmarque-o (limpe o dia)
+        if (activeGroup === selectedBrush) {
+          nextGroup = "";
+        } else {
+          nextGroup = selectedBrush;
+        }
+
+        // Salvar
+        escalaData.assignments[dateString] = nextGroup;
+        // Re-colorir imediatamente
+        applyDayColor(dayBtn, labelSpan, nextGroup);
+        // Atualizar atributo para referências futuras
+        dayBtn.dataset.group = nextGroup;
+        
+        // Re-renderizar este bloco de calendário para consistência nos escopos do event listener
+        renderMonthDays(year, month, targetContainerId);
+
+        // Disparar salvamento automático se já inicializado
+        if (isInitialized) {
+          triggerAutoSave();
+        }
+      });
+
+      container.appendChild(dayBtn);
+    }
+  }
+
+  let showNamesInCalendar = true;
+
+  function toggleColorSelection() {
+    showNamesInCalendar = !showNamesInCalendar;
+    updateCalendars();
+  }
+
+  // Helper para definir as cores dos dias com base no grupo
+  function applyDayColor(element, labelSpan, group) {
+    // Limpar classes antigas
+    element.className = "day-editable h-14 border border-gray-200 rounded-lg flex flex-col justify-between p-1 font-mono text-xs font-bold relative select-none cursor-pointer transition-all";
+    labelSpan.innerText = "";
+    
+    if (group === "g1") {
+      element.className += " bg-blue-50/70 border-blue-200 text-blue-900 hover:bg-blue-100/70";
+      labelSpan.className = "text-[9px] text-center uppercase font-black tracking-tight rounded px-1 py-0.5 block w-full text-white bg-blue-600 shadow-sm truncate mb-0.5";
+      const shortVal = document.getElementById("g1-short").value || document.getElementById("g1-name").value.split(" ")[0] || "G1";
+      labelSpan.innerText = showNamesInCalendar ? shortVal : "G1";
+    } else if (group === "g2") {
+      element.className += " bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70";
+      labelSpan.className = "text-[9px] text-center uppercase font-black tracking-tight rounded px-1 py-0.5 block w-full text-white bg-emerald-600 shadow-sm truncate mb-0.5";
+      const shortVal = document.getElementById("g2-short").value || document.getElementById("g2-name").value.split(" ")[0] || "G2";
+      labelSpan.innerText = showNamesInCalendar ? shortVal : "G2";
+    } else if (group === "g3") {
+      element.className += " bg-yellow-50/70 border-yellow-200 text-yellow-900 hover:bg-yellow-100/70";
+      labelSpan.className = "text-[9px] text-center uppercase font-black tracking-tight rounded px-1 py-0.5 block w-full text-yellow-950 bg-yellow-500 shadow-sm truncate mb-0.5";
+      const shortVal = document.getElementById("g3-short").value || document.getElementById("g3-name").value.split(" ")[0] || "G3";
+      labelSpan.innerText = showNamesInCalendar ? shortVal : "G3";
+    } else {
+      element.className += " bg-white text-gray-800 hover:bg-gray-50 border-gray-200";
+    }
+  }
+
+  // Salvar a escala de plantão completa via API POST
+  async function saveEscala() {
+    try {
+      const response = await fetch('/admin/financeiro/escala-plantao/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(escalaData)
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert("🎉 Escala de plantão salva com sucesso no servidor!");
+      } else {
+        alert("⚠️ Erro ao salvar escala: " + result.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("⚠️ Erro de rede ao tentar salvar a escala.");
+    }
+  }
+
+  // Disparar o diálogo de impressão do navegador (com CSS horizontal de landscape automático)
+  function imprimirEscala() {
+    try {
+      const inIframe = window.self !== window.top;
+      if (inIframe) {
+        showIframePrintModal();
+      } else {
+        window.print();
+      }
+    } catch (e) {
+      window.print();
+    }
+  }
+
+  function showIframePrintModal() {
+    const modal = document.getElementById("iframe-print-modal");
+    const card = document.getElementById("iframe-modal-card");
+    if (modal && card) {
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        card.classList.remove("scale-95", "opacity-0");
+        card.classList.add("scale-100", "opacity-100");
+      }, 50);
+    }
+  }
+
+  function closeIframePrintModal() {
+    const modal = document.getElementById("iframe-print-modal");
+    const card = document.getElementById("iframe-modal-card");
+    if (modal && card) {
+      card.classList.remove("scale-100", "opacity-100");
+      card.classList.add("scale-95", "opacity-0");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 300);
+    }
+  }
+
+  function toggleBrushSection() {
+    const content = document.getElementById("brush-section-content");
+    const indicator = document.getElementById("brush-section-indicator");
+    const arrow = document.getElementById("brush-section-arrow");
+    if (content && indicator && arrow) {
+      if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        indicator.innerText = "ABERTO";
+        indicator.className = "text-[10px] bg-emerald-100 text-emerald-800 font-mono font-bold px-2 py-0.5 rounded-md";
+        arrow.classList.add("rotate-180");
+      } else {
+        content.classList.add("hidden");
+        indicator.innerText = "FECHADO";
+        indicator.className = "text-[10px] bg-brand-gold/20 text-brand-dark font-mono font-bold px-2 py-0.5 rounded-md";
+        arrow.classList.remove("rotate-180");
+      }
+    }
+  }
+</script>
+
+<!-- Modal de Aviso para Impressão em Iframe (Oculto por padrão) -->
+<div id="iframe-print-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="bg-white rounded-2xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="iframe-modal-card">
+    <!-- Header -->
+    <div class="bg-[#224215] text-white p-5 flex items-center gap-3">
+      <div class="bg-white/10 p-2 rounded-lg text-[#dfc293]">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="font-black text-xs uppercase font-sans tracking-wide">Impressão no AI Studio</h3>
+        <p class="text-[9px] text-emerald-200 font-mono">Restrição de segurança do navegador</p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-4">
+      <p class="text-xs text-gray-600 leading-relaxed">
+        Detectamos que você está visualizando esta página dentro do painel do <strong>AI Studio</strong>. Por motivos de segurança e isolamento (iframe sandboxing), os navegadores barram a abertura da tela de impressão nesta área.
+      </p>
+      
+      <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2">
+        <span class="text-[10px] font-black text-amber-800 font-mono block">💡 COMO RESOLVER EM 2 PASSOS:</span>
+        <ol class="text-xs text-amber-900 font-mono space-y-1.5 list-decimal pl-4">
+          <li>Clique no botão <strong class="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-sans font-bold">"Abrir em nova aba"</strong> (o ícone de quadrado com seta no canto superior direito do painel de pré-visualização).</li>
+          <li>Na aba inteira que se abrirá, clique no botão <strong class="bg-[#224215] text-white px-1.5 py-0.5 rounded font-sans font-bold">Imprimir / Gerar PDF</strong> normalmente.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100">
+      <button onclick="closeIframePrintModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-700 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm">
+        Entendi, Fechar
+      </button>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,71 @@
+[
+  {
+    "id": "AGD-2026-001",
+    "code": "AGD-001",
+    "patientId": "PAC-1004",
+    "patientName": "Roberto Rodrigues de Oliveira",
+    "patientPhone": "(43) 99654-1122",
+    "type": "Coleta Domiciliar",
+    "date": "2026-07-27",
+    "timeSlot": "07:30",
+    "address": "Rua Genaro Resende, 310 - Centro, Cambará - PR",
+    "neighborhood": "Centro",
+    "city": "Cambará",
+    "status": "Confirmado",
+    "collectorName": "Carlos Flebotomista",
+    "fastingMinutes": "12 horas",
+    "exams": [
+      { "code": "HEMO", "name": "Hemograma Completo" },
+      { "code": "GLIC", "name": "Glicemia em Jejum" },
+      { "code": "LIPID", "name": "Perfil Lipídico" },
+      { "code": "EAS", "name": "Urina Tipo 1" }
+    ],
+    "notes": "Coleta domiciliar no Centro. Tocar campainha no portão branco.",
+    "createdAt": "2026-07-25T14:00:00.000Z"
+  },
+  {
+    "id": "AGD-2026-002",
+    "code": "AGD-002",
+    "patientId": "PAC-1001",
+    "patientName": "Maria Eduarda Ferreira",
+    "patientPhone": "(43) 99812-3456",
+    "type": "Atendimento Presencial",
+    "date": "2026-07-27",
+    "timeSlot": "08:00",
+    "address": "Atendimento na Sede InovaLab Cambará",
+    "neighborhood": "Centro",
+    "city": "Cambará",
+    "status": "Agendado",
+    "collectorName": "Maria Flebotomista",
+    "fastingMinutes": "8 horas",
+    "exams": [
+      { "code": "TSH", "name": "Hormônio Tireoestimulante (TSH)" },
+      { "code": "T4F", "name": "T4 Livre" },
+      { "code": "VITD", "name": "25-Hidroxi Vitamina D" }
+    ],
+    "notes": "Paciente relatou dificuldade venosa. Utilizar garrote de silicone macio e agulha borboleta 23G.",
+    "createdAt": "2026-07-26T09:30:00.000Z"
+  },
+  {
+    "id": "AGD-2026-003",
+    "code": "AGD-003",
+    "patientId": "PAC-1003",
+    "patientName": "Ana Paula Mendes",
+    "patientPhone": "(43) 99123-8899",
+    "type": "Atendimento Presencial",
+    "date": "2026-07-27",
+    "timeSlot": "08:30",
+    "address": "Atendimento na Sede InovaLab Cambará",
+    "neighborhood": "Jardim Paraíso",
+    "city": "Cambará",
+    "status": "Confirmado",
+    "collectorName": "Ana Coletora",
+    "fastingMinutes": "8 horas",
+    "exams": [
+      { "code": "TOTG", "name": "Teste de Tolerância Oral à Glicose 75g (Curva Glicêmica Gestacional)" },
+      { "code": "HEMO", "name": "Hemograma Completo" }
+    ],
+    "notes": "Gestante. Curva de Glicose com permanência no laboratório por 2 horas.",
+    "createdAt": "2026-07-26T11:00:00.000Z"
+  }
+]

@@ -1761,6 +1761,56 @@
     const currentModelo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
     setVal('f-modelo-laudo', currentModelo);
 
+    // Se o modelo for "Modelo Hemograma Completo", carregar a estrutura com os campos abertos para digitação dos resultados
+    if (currentModelo === 'Modelo Hemograma Completo' || currentModelo === 'Modelo Hematologia em Colunas') {
+      const resInput = document.getElementById('f-result');
+      if (resInput && (!resInput.value || !resInput.value.trim())) {
+        resInput.value = 
+`=== ERITROGRAMA (SÉRIE VERMELHA) ===
+HEMÁCIAS..........: 
+HEMOGLOBINA.......: 
+HEMATÓCRITO.......: 
+VCM...............: 
+HCM...............: 
+CHCM..............: 
+RDW...............: 
+
+=== LEUCOGRAMA (SÉRIE BRANCA) ===
+LEUCÓCITOS TOTAIS.: 
+MIELÓCITOS........: 0 % (0 /mm³)
+METAMIELÓCITOS....: 0 % (0 /mm³)
+BASTONETES........: 
+SEGMENTADOS.......: 
+EOSINÓFILOS.......: 
+BASÓFILOS.........: 
+LINFÓCITOS........: 
+MONÓCITOS.........: 
+
+=== PLAQUETAS (SÉRIE PLAQUETÁRIA) ===
+CONTAGEM DE PLAQUETAS: 
+VMP..................: `;
+        resInput.rows = 18;
+      }
+
+      const refInput = document.getElementById('f-ref-value');
+      if (refInput && (!refInput.value || !refInput.value.trim())) {
+        refInput.value = (catEx && catEx.valorReferenciaLaudo) || 
+`ERITROGRAMA: Hemácias: 4.30-5.90 M/mm³ (H) / 4.00-5.20 (M) | Hb: 13.5-17.5 g/dL (H) / 12.0-15.5 (M) | Ht: 39-52% (H) / 35-47% (M)
+VCM: 80-98 fL | HCM: 27-33 pg | CHCM: 32-36 g/dL | RDW: 11.5-14.5 %
+LEUCOGRAMA: Leucócitos: 4.000-11.000 /mm³ | Bastonetes: 1-5% (40-550) | Segmentados: 40-70% (1.600-7.700)
+Eosinófilos: 1-5% (40-500) | Basófilos: 0-1% (0-100) | Linfócitos: 20-45% (800-4.000) | Monócitos: 2-10% (80-1.000)
+PLAQUETAS: 150.000 a 450.000 /mm³ | VMP: 7.0 a 11.0 fL`;
+      }
+
+      if (materialVal === 'Soro' || !materialVal) {
+        const matInput = document.getElementById('f-material');
+        if (matInput) {
+          matInput.value = 'Sangue Total (EDTA)';
+          setTxt('m-active-material-header', 'Sangue Total (EDTA)');
+        }
+      }
+    }
+
     // Aplicar Modo de Visualização e Botões de Ação conforme Status
     updateExamActionButtonsAndStatus(ex.status || 'Pendente');
 

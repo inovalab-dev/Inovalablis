@@ -147,6 +147,17 @@
                     ⚠️ Sem Tabela Vinculada
                   </span>
                 <% } %>
+                <div class="mt-1">
+                  <% if (c.tipoCobranca === 'balcao') { %>
+                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-800 font-bold font-mono text-[10px] rounded border border-indigo-200 inline-flex items-center gap-1" title="Cobrança realizada diretamente no balcão">
+                      🏪 Cobrança Balcão
+                    </span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-800 font-bold font-mono text-[10px] rounded border border-blue-200 inline-flex items-center gap-1" title="Cobrança realizada via faturamento de lote">
+                      🏢 Faturamento
+                    </span>
+                  <% } %>
+                </div>
               </td>
               <td class="p-3 font-mono text-gray-600"><%= c.cnpj || '-' %></td>
               <td class="p-3 text-gray-600"><%= c.cidade || 'Cambará - PR' %></td>
@@ -228,11 +239,11 @@
       <button type="button" onclick="switchConvenioTab('dados-cadastrais')" id="tab-btn-dados-cadastrais" class="convenio-tab-btn px-4 py-2 text-xs font-bold font-sans rounded-t-lg transition-all border-t-2 border-x border-emerald-600 bg-white text-emerald-950 shadow-2xs">
         Dados Cadastrais
       </button>
-      <button type="button" onclick="switchConvenioTab('parametros')" id="tab-btn-parametros" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
-        Parâmetros
-      </button>
       <button type="button" onclick="switchConvenioTab('cobranca')" id="tab-btn-cobranca" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
         Cobrança
+      </button>
+      <button type="button" onclick="switchConvenioTab('parametros')" id="tab-btn-parametros" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
+        Parâmetros
       </button>
       <button type="button" onclick="switchConvenioTab('adicionais')" id="tab-btn-adicionais" class="convenio-tab-btn px-4 py-2 text-xs font-medium font-sans rounded-t-lg transition-all border-t border-x border-transparent hover:bg-white/80 text-slate-600">
         Adicionais
@@ -526,9 +537,80 @@
         <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Configuração de prazos para faturamento de guias, tabelas de cobrança AMB/CBHPM/TUSS e regras de carência automática.</p>
       </div>
 
-      <div id="tab-panel-cobranca" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-        <p class="text-xs font-bold text-slate-800 uppercase font-mono">💵 Dados de Cobrança e Glosas</p>
-        <p class="text-xs text-gray-500 mt-1 max-w-md mx-auto">Vencimento mensal das faturas, contas bancárias para crédito TISS e margem de glosa permitida.</p>
+      <div id="tab-panel-cobranca" class="convenio-tab-panel hidden space-y-5">
+        <input type="hidden" name="tipoCobranca" id="conv-tipoCobranca" value="faturamento">
+
+        <!-- CARD 1: MODELO E FLAG DE COBRANÇA -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center text-sm border border-emerald-200">
+              💵
+            </div>
+            <div>
+              <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Modelo de Cobrança do Convênio</h4>
+              <p class="text-[11px] text-gray-500">Selecione se os atendimentos deste convênio serão faturados ou cobrados diretamente no balcão</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Opção 1: Faturamento -->
+            <div id="cardCobrancaFaturamento" onclick="selectTipoCobranca('faturamento')" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-start gap-3 bg-emerald-50/60 border-emerald-600 shadow-2xs">
+              <div class="mt-0.5 w-5 h-5 rounded-full border-2 border-emerald-600 flex items-center justify-center shrink-0 bg-white">
+                <div id="dotCobrancaFaturamento" class="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">🏢</span>
+                  <span class="text-xs font-extrabold text-emerald-950 uppercase tracking-wider">Cobrança por Faturamento</span>
+                </div>
+                <p class="text-[11px] text-emerald-900/80 leading-relaxed">
+                  As requisições e guias deste convênio entram no lote de faturamento (TISS/XML) para cobrança periódica enviada à operadora ou empresa parceira.
+                </p>
+              </div>
+            </div>
+
+            <!-- Opção 2: Balcão -->
+            <div id="cardCobrancaBalcao" onclick="selectTipoCobranca('balcao')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all flex items-start gap-3 bg-gray-50/50">
+              <div class="mt-0.5 w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center shrink-0 bg-white">
+                <div id="dotCobrancaBalcao" class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">🏪</span>
+                  <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Cobrança no Balcão</span>
+                </div>
+                <p class="text-[11px] text-gray-600 leading-relaxed">
+                  O valor dos exames deve ser cobrado e pago diretamente ao caixa da recepção no momento do cadastro do atendimento pelo paciente.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: PARÂMETROS FINANCEIROS COMPLEMENTARES -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 font-bold flex items-center justify-center text-sm border border-blue-200">
+              ⚙️
+            </div>
+            <div>
+              <h4 class="text-xs font-black uppercase font-mono tracking-wider text-slate-800">Parâmetros Complementares de Cobrança</h4>
+              <p class="text-[11px] text-gray-500">Prazos de faturas e limite para envio de guias</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label for="conv-diaVencimento" class="block text-xs font-bold text-slate-700">Dia de Vencimento da Fatura (1 a 31):</label>
+              <input type="number" min="1" max="31" name="diaVencimento" id="conv-diaVencimento" placeholder="Ex: 10" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="space-y-1">
+              <label for="conv-prazoEnvio" class="block text-xs font-bold text-slate-700">Prazo de Envio de Guias (Dias):</label>
+              <input type="number" min="1" max="180" name="prazoEnvio" id="conv-prazoEnvio" placeholder="Ex: 30" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="tab-panel-adicionais" class="convenio-tab-panel hidden p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
@@ -613,6 +695,29 @@
     if (activePanel) activePanel.classList.remove('hidden');
   }
 
+  function selectTipoCobranca(tipo) {
+    const val = tipo === 'balcao' ? 'balcao' : 'faturamento';
+    const input = document.getElementById('conv-tipoCobranca');
+    if (input) input.value = val;
+
+    const cardFat = document.getElementById('cardCobrancaFaturamento');
+    const dotFat = document.getElementById('dotCobrancaFaturamento');
+    const cardBal = document.getElementById('cardCobrancaBalcao');
+    const dotBal = document.getElementById('dotCobrancaBalcao');
+
+    if (val === 'faturamento') {
+      if (cardFat) cardFat.className = 'cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-start gap-3 bg-emerald-50/60 border-emerald-600 shadow-2xs';
+      if (dotFat) dotFat.className = 'w-2.5 h-2.5 rounded-full bg-emerald-600';
+      if (cardBal) cardBal.className = 'cursor-pointer p-4 rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all flex items-start gap-3 bg-gray-50/50';
+      if (dotBal) dotBal.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
+    } else {
+      if (cardBal) cardBal.className = 'cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-start gap-3 bg-emerald-50/60 border-emerald-600 shadow-2xs';
+      if (dotBal) dotBal.className = 'w-2.5 h-2.5 rounded-full bg-emerald-600';
+      if (cardFat) cardFat.className = 'cursor-pointer p-4 rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all flex items-start gap-3 bg-gray-50/50';
+      if (dotFat) dotFat.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
+    }
+  }
+
   function resetConvenioForm() {
     document.getElementById('convenioForm').reset();
     document.getElementById('conv-id').value = '';
@@ -630,6 +735,10 @@
     document.getElementById('conv-ativo').checked = true;
     document.getElementById('conv-proibido').checked = false;
     document.getElementById('conv-bloquearWeb').checked = false;
+
+    selectTipoCobranca('faturamento');
+    setVal('conv-diaVencimento', '');
+    setVal('conv-prazoEnvio', '');
     
     switchConvenioTab('dados-cadastrais');
   }
@@ -674,6 +783,10 @@
     setVal('conv-site', c.site);
     setVal('conv-observacao', c.observacao);
     setVal('conv-senhaWeb', c.senhaWeb);
+
+    selectTipoCobranca(c.tipoCobranca || 'faturamento');
+    setVal('conv-diaVencimento', c.diaVencimento);
+    setVal('conv-prazoEnvio', c.prazoEnvio);
 
     setChecked('conv-proibido', c.proibido);
     setChecked('conv-bloquearWeb', c.bloquearWeb);

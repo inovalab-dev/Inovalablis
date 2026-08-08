@@ -916,6 +916,77 @@ async function initializeFirebaseCaches() {
       updatedSettings = true;
     }
 
+    if (!financeSettingsCache.paymentMethods) {
+      financeSettingsCache.paymentMethods = [
+        {
+          id: "1",
+          name: "Dinheiro",
+          discountType: "percent",
+          discountValue: 5,
+          active: true,
+          conditions: [
+            { id: "101", description: "À Vista", installments: 1, discountType: "percent", discountValue: 5, active: true }
+          ]
+        },
+        {
+          id: "2",
+          name: "PIX",
+          discountType: "percent",
+          discountValue: 5,
+          active: true,
+          conditions: [
+            { id: "201", description: "À Vista (PIX)", installments: 1, discountType: "percent", discountValue: 5, active: true }
+          ]
+        },
+        {
+          id: "3",
+          name: "Cartão de Débito",
+          discountType: "percent",
+          discountValue: 0,
+          active: true,
+          conditions: [
+            { id: "301", description: "À Vista (Débito)", installments: 1, discountType: "percent", discountValue: 0, active: true }
+          ]
+        },
+        {
+          id: "4",
+          name: "Cartão de Crédito",
+          discountType: "percent",
+          discountValue: 0,
+          active: true,
+          conditions: [
+            { id: "401", description: "À Vista (Crédito)", installments: 1, discountType: "percent", discountValue: 0, active: true },
+            { id: "402", description: "Parcelado 2x", installments: 2, discountType: "percent", discountValue: 0, active: true },
+            { id: "403", description: "Parcelado 3x", installments: 3, discountType: "percent", discountValue: 0, active: true },
+            { id: "404", description: "Parcelado 6x", installments: 6, discountType: "percent", discountValue: 0, active: true }
+          ]
+        },
+        {
+          id: "5",
+          name: "Cheque / Boleto",
+          discountType: "percent",
+          discountValue: 0,
+          active: true,
+          conditions: [
+            { id: "501", description: "À Vista", installments: 1, discountType: "percent", discountValue: 0, active: true },
+            { id: "502", description: "Faturado 30 dias", installments: 1, discountType: "percent", discountValue: 0, active: true },
+            { id: "503", description: "Faturado 30/60 dias", installments: 2, discountType: "percent", discountValue: 0, active: true }
+          ]
+        },
+        {
+          id: "6",
+          name: "Faturado Convênio",
+          discountType: "percent",
+          discountValue: 0,
+          active: true,
+          conditions: [
+            { id: "601", description: "Faturado 30 dias", installments: 1, discountType: "percent", discountValue: 0, active: true }
+          ]
+        }
+      ];
+      updatedSettings = true;
+    }
+
     if (updatedSettings || !savedSettings || Array.isArray(savedSettings) || typeof savedSettings !== 'object' || Object.keys(savedSettings).length === 0) {
       try {
         saveJsonFile(FINANCE_SETTINGS_FILE, JSON.stringify(financeSettingsCache, null, 2), 'utf-8');
@@ -8727,6 +8798,7 @@ app.get('/admin/requisicoes', requireAdmin, (req, res) => {
     nextReqCode,
     messageTemplates: loadMessageTemplates(),
     requisitionShortcuts: loadRequisitionShortcuts(),
+    paymentMethods: loadFinanceSettings().paymentMethods || [],
     page: 'admin-requisitions'
   });
 });
@@ -10389,7 +10461,8 @@ const saveRequisitionHandler = (req, res) => {
       notifyWhatsapp,
       separateLabel,
       fastingHours,
-      payments
+      payments,
+      faturadoAmount
     } = req.body;
     
     const requisitions = loadRequisitions();
@@ -10644,6 +10717,7 @@ const saveRequisitionHandler = (req, res) => {
       paymentMethod: paymentMethod || 'Particular - Dinheiro',
       paymentCondition: paymentCondition || 'À Vista',
       paidAmount: parseFloat(paidAmount) || 0,
+      faturadoAmount: faturadoAmount !== undefined ? parseFloat(faturadoAmount) : (matchedConv && matchedConv.tipoCobranca === 'faturamento' ? (parseFloat(totalAmount) || 0) : 0),
       financialStatus: financialStatus || 'Pendente',
       payments: payments ? (typeof payments === 'string' ? JSON.parse(payments) : payments) : [],
       deliveryDate: deliveryDate || '',
@@ -13392,7 +13466,8 @@ app.post('/admin/convenios/save', requireAdmin, (req, res) => {
       id, codigo, pessoa, razaoSocial, fantasia, cnpj, inscEstadual, cei,
       inscMunicipal, cidade, tipoEndereco, endereco, numero, complemento,
       ans, bairro, cep, fone, fax, contato, email1, email2, site,
-      observacao, proibido, bloquearWeb, ativo, senhaWeb, tabelaPrecoId
+      observacao, proibido, bloquearWeb, ativo, senhaWeb, tabelaPrecoId,
+      tipoCobranca, diaVencimento, prazoEnvio
     } = req.body;
 
     if (!tabelaPrecoId || !tabelaPrecoId.trim()) {
@@ -13444,6 +13519,9 @@ app.post('/admin/convenios/save', requireAdmin, (req, res) => {
       senhaWeb: (senhaWeb || '').trim(),
       tabelaPrecoId: (tabelaPrecoId || '').trim(),
       tabelaPrecoNome: tabelaPrecoNome,
+      tipoCobranca: (tipoCobranca || 'faturamento').trim(),
+      diaVencimento: (diaVencimento || '').trim(),
+      prazoEnvio: (prazoEnvio || '').trim(),
       proibido: proibido === 'true' || proibido === true,
       bloquearWeb: bloquearWeb === 'true' || bloquearWeb === true,
       ativo: ativo !== 'false' && ativo !== false
@@ -15169,11 +15247,150 @@ app.get('/admin/financeiro/configuracoes', requireAdmin, (req, res) => {
     documentTypes: settings.documentTypes || [],
     accountCategories: settings.accountCategories || [],
     chartOfAccountsTree: settings.chartOfAccountsTree || [],
+    paymentMethods: settings.paymentMethods || [],
     page: 'admin-financeiro-configuracoes',
     currentTab,
+    selectedMethodId: req.query.selectedMethod || null,
     success_msg: req.query.success,
     error_msg: req.query.error
   });
+});
+
+// --- FORMAS E CONDIÇÕES DE PAGAMENTO ---
+app.get('/admin/financeiro/pagamentos', requireAdmin, (req, res) => {
+  res.redirect('/admin/financeiro/configuracoes?tab=pagamentos');
+});
+
+app.get('/api/finance/payment-methods', (req, res) => {
+  const settings = loadFinanceSettings();
+  res.json({
+    success: true,
+    paymentMethods: settings.paymentMethods || []
+  });
+});
+
+// Adicionar Forma de Pagamento
+app.post('/admin/financeiro/pagamentos/metodo/add', requireAdmin, (req, res) => {
+  const { name, discountType, discountValue, active } = req.body;
+  if (!name || !name.trim()) {
+    return res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=O+nome+da+forma+de+pagamento+é+obrigatório.');
+  }
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+
+  const maxId = settings.paymentMethods.reduce((max, curr) => Math.max(max, parseInt(curr.id) || 0), 0);
+  const newId = String(maxId + 1);
+
+  settings.paymentMethods.push({
+    id: newId,
+    name: name.trim(),
+    discountType: discountType === 'currency' ? 'currency' : 'percent',
+    discountValue: parseFloat(discountValue) || 0,
+    active: active === 'false' || active === false ? false : true,
+    conditions: []
+  });
+
+  saveFinanceSettings(settings);
+  res.redirect(`/admin/financeiro/configuracoes?tab=pagamentos&selectedMethod=${newId}&success=Forma+de+pagamento+cadastrada+com+sucesso.`);
+});
+
+// Editar Forma de Pagamento
+app.post('/admin/financeiro/pagamentos/metodo/edit', requireAdmin, (req, res) => {
+  const { id, name, discountType, discountValue, active } = req.body;
+  if (!id || !name || !name.trim()) {
+    return res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Dados+inválidos+para+a+forma+de+pagamento.');
+  }
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+  const method = settings.paymentMethods.find(m => String(m.id) === String(id));
+  if (method) {
+    method.name = name.trim();
+    method.discountType = discountType === 'currency' ? 'currency' : 'percent';
+    method.discountValue = parseFloat(discountValue) || 0;
+    method.active = active === 'false' || active === false ? false : true;
+    saveFinanceSettings(settings);
+    res.redirect(`/admin/financeiro/configuracoes?tab=pagamentos&selectedMethod=${id}&success=Forma+de+pagamento+atualizada+com+sucesso.`);
+  } else {
+    res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Forma+de+pagamento+não+encontrada.');
+  }
+});
+
+// Excluir Forma de Pagamento
+app.get('/admin/financeiro/pagamentos/metodo/delete/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+  settings.paymentMethods = settings.paymentMethods.filter(m => String(m.id) !== String(id));
+  saveFinanceSettings(settings);
+  res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&success=Forma+de+pagamento+excluída+com+sucesso.');
+});
+
+// Adicionar Condição de Pagamento
+app.post('/admin/financeiro/pagamentos/condicao/add', requireAdmin, (req, res) => {
+  const { methodId, description, installments, discountType, discountValue, active } = req.body;
+  if (!methodId || !description || !description.trim()) {
+    return res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Preencha+a+descrição+da+condição+de+pagamento.');
+  }
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+  const method = settings.paymentMethods.find(m => String(m.id) === String(methodId));
+  if (!method) {
+    return res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Forma+de+pagamento+não+encontrada.');
+  }
+
+  method.conditions = method.conditions || [];
+  const maxCondId = method.conditions.reduce((max, curr) => Math.max(max, parseInt(curr.id) || 0), parseInt(methodId) * 100);
+  const newCondId = String(maxCondId + 1);
+
+  method.conditions.push({
+    id: newCondId,
+    description: description.trim(),
+    installments: parseInt(installments) || 1,
+    discountType: discountType === 'currency' ? 'currency' : 'percent',
+    discountValue: parseFloat(discountValue) || 0,
+    active: active === 'false' || active === false ? false : true
+  });
+
+  saveFinanceSettings(settings);
+  res.redirect(`/admin/financeiro/configuracoes?tab=pagamentos&selectedMethod=${methodId}&success=Condição+de+pagamento+adicionada+com+sucesso.`);
+});
+
+// Editar Condição de Pagamento
+app.post('/admin/financeiro/pagamentos/condicao/edit', requireAdmin, (req, res) => {
+  const { methodId, conditionId, description, installments, discountType, discountValue, active } = req.body;
+  if (!methodId || !conditionId || !description || !description.trim()) {
+    return res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Dados+inválidos+para+a+condição+de+pagamento.');
+  }
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+  const method = settings.paymentMethods.find(m => String(m.id) === String(methodId));
+  if (method && method.conditions) {
+    const condition = method.conditions.find(c => String(c.id) === String(conditionId));
+    if (condition) {
+      condition.description = description.trim();
+      condition.installments = parseInt(installments) || 1;
+      condition.discountType = discountType === 'currency' ? 'currency' : 'percent';
+      condition.discountValue = parseFloat(discountValue) || 0;
+      condition.active = active === 'false' || active === false ? false : true;
+      saveFinanceSettings(settings);
+      return res.redirect(`/admin/financeiro/configuracoes?tab=pagamentos&selectedMethod=${methodId}&success=Condição+de+pagamento+atualizada+com+sucesso.`);
+    }
+  }
+  res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Condição+de+pagamento+não+encontrada.');
+});
+
+// Excluir Condição de Pagamento
+app.get('/admin/financeiro/pagamentos/condicao/delete/:methodId/:conditionId', requireAdmin, (req, res) => {
+  const { methodId, conditionId } = req.params;
+  const settings = loadFinanceSettings();
+  settings.paymentMethods = settings.paymentMethods || [];
+  const method = settings.paymentMethods.find(m => String(m.id) === String(methodId));
+  if (method && method.conditions) {
+    method.conditions = method.conditions.filter(c => String(c.id) !== String(conditionId));
+    saveFinanceSettings(settings);
+    return res.redirect(`/admin/financeiro/configuracoes?tab=pagamentos&selectedMethod=${methodId}&success=Condição+de+pagamento+removida+com+sucesso.`);
+  }
+  res.redirect('/admin/financeiro/configuracoes?tab=pagamentos&error=Condição+de+pagamento+não+encontrada.');
 });
 
 // --- CONTAS BANCÁRIAS ---

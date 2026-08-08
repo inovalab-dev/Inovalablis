@@ -164,6 +164,27 @@
                 timePart = `${tParts[0]}:${tParts[1]}`;
               }
 
+              const reqConvName = (req.convenio || 'Particular').trim();
+              const reqConvCode = (req.convenioCode || '').trim();
+              const reqConvId = (req.convenioId || '').trim();
+
+              let isFat = false;
+              if (reqConvName.toLowerCase() !== 'particular' && reqConvName !== '') {
+                isFat = true;
+                if (locals.convenios && Array.isArray(locals.convenios)) {
+                  const convObj = locals.convenios.find(c =>
+                    (reqConvId && String(c.id) === String(reqConvId)) ||
+                    (reqConvCode && String(c.codigo) === String(reqConvCode)) ||
+                    (c.fantasia && c.fantasia.toLowerCase() === reqConvName.toLowerCase()) ||
+                    (c.razaoSocial && c.razaoSocial.toLowerCase() === reqConvName.toLowerCase())
+                  );
+                  if (convObj) {
+                    if (convObj.tipoCobranca === 'balcao') isFat = false;
+                    else if (convObj.tipoCobranca === 'faturamento') isFat = true;
+                  }
+                }
+              }
+
               const finSt = String(req.financialStatus || '').toLowerCase();
               const pm = String(req.paymentMethod || '').toLowerCase();
               const paidVal = parseFloat(req.paidAmount || 0);
@@ -179,6 +200,13 @@
               } else if (totVal === 0 && (finSt.includes('pago') || finSt.includes('cortesia'))) {
                 isRowPago = true;
               }
+
+              let fatAmtVal = req.faturadoAmount !== undefined && req.faturadoAmount !== null && req.faturadoAmount !== ''
+                ? parseFloat(req.faturadoAmount)
+                : (isFat ? totVal : 0);
+              let balcaoDevidoVal = Math.max(0, totVal - fatAmtVal);
+              let balcaoPendingVal = Math.max(0, balcaoDevidoVal - paidVal);
+              let isBalcaoQuitado = balcaoDevidoVal > 0 ? (paidVal >= balcaoDevidoVal) : (fatAmtVal > 0 || isRowPago);
 
               let pendingVal = isRowPago ? 0 : Math.max(0, totVal - paidVal);
 
@@ -233,9 +261,24 @@
                 R$ <%= totVal.toFixed(2).replace('.', ',') %>
               </td>
 
-              <!-- 8. Valor Pendente -->
+              <!-- 8. Valor Pendente (Suporte a Multiguias) -->
               <td class="py-1.5 px-2.5 font-mono text-xs font-bold text-right whitespace-nowrap">
-                <% if (pendingVal > 0 && !isRowPago) { %>
+                <% if (fatAmtVal >= totVal && totVal > 0) { %>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono bg-blue-100 text-blue-900 border border-blue-300/80 shadow-2xs">
+                    Faturamento
+                  </span>
+                <% } else if (fatAmtVal > 0 && balcaoDevidoVal > 0) { %>
+                  <% if (balcaoPendingVal > 0) { %>
+                    <div class="flex flex-col items-end leading-tight">
+                      <span class="text-rose-600 font-bold">R$ <%= balcaoPendingVal.toFixed(2).replace('.', ',') %></span>
+                      <span class="text-[9px] text-blue-800 bg-blue-50 border border-blue-200 px-1 rounded">Fat R$ <%= fatAmtVal.toFixed(2).replace('.', ',') %></span>
+                    </div>
+                  <% } else { %>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                      Fat + Quitado
+                    </span>
+                  <% } %>
+                <% } else if (pendingVal > 0 && !isRowPago) { %>
                   <span class="text-rose-600">R$ <%= pendingVal.toFixed(2).replace('.', ',') %></span>
                 <% } else { %>
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
@@ -275,13 +318,14 @@
                 </span>
               </td>
 
-              <!-- 9. Ações (Resumo [Olho] / Caixa [$] / Visualizar Laudo [se Pronto & Pago] / Editar [Lápis] / Cancelar [Ícone]) -->
+              <!-- 9. Ações (Resumo [Olho] / Caixa [$] / Visualizar Laudo [se Pronto & (Pago ou Faturamento)] / Editar [Lápis] / Cancelar [Ícone]) -->
               <td class="py-1.5 px-3 text-center whitespace-nowrap" onclick="event.stopPropagation()">
                 <% 
                   const reqStatusLower = String(req.status || '').toLowerCase();
                   const isCancelado = reqStatusLower.includes('cancel');
                   const isPronto = reqStatusLower.includes('pronto') || reqStatusLower.includes('liberado') || reqStatusLower.includes('conferido');
-                  const canPrintPdf = isPronto && isRowPago;
+                  const canPrintPdf = isPronto && (isRowPago || isFat || fatAmtVal > 0 || isBalcaoQuitado);
+                  const showCashierBtn = balcaoDevidoVal > 0 || (!isFat && fatAmtVal < totVal);
                 %>
                 <div class="flex items-center justify-center gap-1">
                   <!-- Botão de Olho: Visualização Rápida de Detalhes -->
@@ -292,25 +336,27 @@
                     </svg>
                   </button>
 
-                  <!-- Botão $ (Cifrão / Caixa) -->
-                  <% if (isRowPago) { %>
-                    <button type="button" onclick="openPaymentCashierModal('<%= req.id %>')" class="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0 font-black font-mono leading-none text-xs" title="Pagamento Confirmado (Pago) - Clique para abrir o Caixa">
-                      $
-                    </button>
-                  <% } else { %>
-                    <button type="button" onclick="openPaymentCashierModal('<%= req.id %>')" class="p-1.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0 font-black font-mono leading-none text-xs animate-pulse hover:animate-none" title="Pagamento Pendente - Clique para dar baixa no Caixa">
-                      $
-                    </button>
+                  <!-- Botão $ (Cifrão / Caixa) - Exibido quando houver saldo/copagamento balcão -->
+                  <% if (showCashierBtn) { %>
+                    <% if (balcaoPendingVal <= 0 && (paidVal > 0 || balcaoDevidoVal === 0)) { %>
+                      <button type="button" onclick="openPaymentCashierModal('<%= req.id %>')" class="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0 font-black font-mono leading-none text-xs" title="Pagamento Balcão Confirmado - Clique para abrir o Caixa">
+                        $
+                      </button>
+                    <% } else { %>
+                      <button type="button" onclick="openPaymentCashierModal('<%= req.id %>')" class="p-1.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0 font-black font-mono leading-none text-xs animate-pulse hover:animate-none" title="Pagamento Balcão Pendente - Clique para dar baixa no Caixa">
+                        $
+                      </button>
+                    <% } %>
                   <% } %>
 
                   <% if (canPrintPdf) { %>
-                    <a href="/api/laudo/pdf?requisicao=<%= req.requisitionCode || req.id %>" target="_blank" class="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0" title="Visualizar / Imprimir Laudo (Pronto e Pago)">
+                    <a href="/api/laudo/pdf?requisicao=<%= req.requisitionCode || req.id %>" target="_blank" class="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200/80 rounded-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center shrink-0" title="Visualizar / Imprimir Laudo (Pronto)">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231a1.125 1.125 0 01-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-19.126 0C1.081 7.441.312 8.375.312 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M6 9h12V4.5A1.5 1.5 0 0016.5 3h-9A1.5 1.5 0 006 4.5V9z"/>
                       </svg>
                     </a>
                   <% } else { %>
-                    <span class="p-1.5 bg-gray-100 text-gray-400 border border-gray-200/80 rounded-lg opacity-60 cursor-not-allowed flex items-center justify-center shrink-0" title="<%= !isRowPago ? 'Laudo bloqueado - Aguardando Pagamento' : 'Laudo Indisponível (Exame não concluído)' %>">
+                    <span class="p-1.5 bg-gray-100 text-gray-400 border border-gray-200/80 rounded-lg opacity-60 cursor-not-allowed flex items-center justify-center shrink-0" title="<%= !isRowPago && !isFat ? 'Laudo bloqueado - Aguardando Pagamento' : 'Laudo Indisponível (Exame não concluído)' %>">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231a1.125 1.125 0 01-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-19.126 0C1.081 7.441.312 8.375.312 9.456V15.75a2.25 2.25 0 002.25 2.25h1.091M6 9h12V4.5A1.5 1.5 0 0016.5 3h-9A1.5 1.5 0 006 4.5V9z"/>
                       </svg>
@@ -392,18 +438,19 @@
       </div>
 
       <!-- BOTÕES DE ABAS / STEPPER DO MODAL -->
-      <div class="flex items-center gap-1.5 bg-gray-200/80 p-1 rounded-2xl border border-gray-300/60 shadow-inner">
-        <button type="button" onclick="switchRequisitionStep(1)" id="stepTabBtn1" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer">
+      <div class="flex items-center gap-1.5 bg-gray-200/80 p-1 rounded-2xl border border-gray-300/60 shadow-inner overflow-x-auto">
+        <button type="button" onclick="switchRequisitionStep(1)" id="stepTabBtn1" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer shrink-0">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>1. Paciente & Dados Clínicos</span>
+          <span>1. Geral</span>
         </button>
-        <button type="button" onclick="switchRequisitionStep(2)" id="stepTabBtn2" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer">
+        <button type="button" onclick="switchRequisitionStep(2)" id="stepTabBtn2" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer shrink-0">
           <span class="w-2 h-2 rounded-full bg-gray-400"></span>
-          <span>2. Lançamento de Exames</span>
-          <span id="stepTabExamsBadge" class="bg-emerald-100 text-emerald-900 text-[10px] font-mono px-2 py-0.5 rounded-full font-extrabold border border-emerald-300/80">
-            0 exames (R$ 0,00)
-          </span>
+          <span>2. Lançamentos de Exames</span>
         </button>
+        <button type="button" onclick="switchRequisitionStep(3)" id="stepTabBtn3" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer shrink-0">
+          <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+          <span>3. Pagamento</span>
+            </button>
       </div>
 
       <button onclick="closeRequisitionFormModal()" type="button" class="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer" title="Fechar (ESC)">
@@ -656,6 +703,37 @@
                     <button type="button" onclick="openSearchModal('empresa')" class="absolute right-1 w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200/80 flex items-center justify-center transition-all cursor-pointer shadow-2xs" title="Pesquisar Empresa">
                       <svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Flag Multiguias / Cobrança Mista -->
+                <div class="pt-2 border-t border-slate-100">
+                  <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-xs text-blue-900 bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors shadow-2xs w-full justify-between">
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" name="isMultiguia" id="req-isMultiguia" onchange="toggleMultiguiaMode()" class="w-4 h-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                      <span>📑 Requisição Multiguias / Cobrança Mista</span>
+                    </div>
+                    <span class="text-[10px] text-blue-700 font-mono font-normal">(Faturamento + Balcão)</span>
+                  </label>
+
+                  <!-- Live Summary breakdown for Step 1 -->
+                  <div id="step1MultiguiaSummary" class="hidden mt-2 p-2.5 bg-blue-50/90 border border-blue-200 rounded-xl text-xs space-y-1.5 shadow-2xs">
+                    <div class="flex items-center justify-between font-mono text-[11px]">
+                      <span class="font-bold text-blue-900 flex items-center gap-1">
+                        <span>🏢</span> Faturamento Convênio:
+                      </span>
+                      <span id="step1ConvenioVal" class="font-black text-blue-950">R$ 0,00</span>
+                    </div>
+                    <div class="flex items-center justify-between font-mono text-[11px]">
+                      <span class="font-bold text-amber-900 flex items-center gap-1">
+                        <span>💳</span> Cobrança Balcão:
+                      </span>
+                      <span id="step1ParticularVal" class="font-black text-amber-950">R$ 0,00</span>
+                    </div>
+                    <div class="flex items-center justify-between font-mono text-[11px] pt-1 border-t border-blue-200/80 font-black">
+                      <span class="text-slate-700">Total Previsto:</span>
+                      <span id="step1TotalVal" class="text-emerald-800">R$ 0,00</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -939,7 +1017,7 @@
               </select>
             </div>
 
-            <div class="md:col-span-1">
+            <div class="md:col-span-1" id="req-examPriceContainer">
               <label class="block font-bold text-[11px] text-slate-700 mb-1">Valor R$</label>
               <input type="number" step="0.01" id="req-examPrice" placeholder="0.00" readonly class="w-full px-2 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono font-bold text-emerald-800 outline-none cursor-not-allowed select-none">
             </div>
@@ -999,6 +1077,30 @@
             </div>
           </div>
 
+          <!-- RESUMO DE CATEGORIZAÇÃO DE COBRANÇA DE EXAMES (CONVÊNIO x PARTICULAR) -->
+          <div id="examSummaryBanner" class="px-3 py-2 bg-slate-100/90 border-y border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono hidden">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">Tipo de Cobrança:</span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs">
+                🏢 Convênio: <strong id="examSummaryConvenioVal" class="ml-1">0 exames (R$ 0,00)</strong>
+              </span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                💳 Particular: <strong id="examSummaryParticularVal" class="ml-1">0 exames (R$ 0,00)</strong>
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setAllExamsBillingCategory('convenio')" class="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded text-[10px] font-bold transition-all cursor-pointer" title="Marcar todos os exames como Convênio">
+                Todos Convênio
+              </button>
+              <button type="button" onclick="setAllExamsBillingCategory('particular')" class="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded text-[10px] font-bold transition-all cursor-pointer" title="Marcar todos os exames como Particular">
+                Todos Particular
+              </button>
+              <button type="button" onclick="syncFaturadoFromExams()" class="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 rounded text-[10px] font-bold transition-all cursor-pointer" title="Sincronizar valor faturado com a soma dos exames do convênio">
+                ⚡ Sincronizar Faturamento
+              </button>
+            </div>
+          </div>
+
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 text-slate-500 font-mono text-[10px] uppercase border-b border-gray-200">
@@ -1007,16 +1109,17 @@
                   <th class="px-3 py-2">Código</th>
                   <th class="px-3 py-2">Nome do Exame</th>
                   <th class="px-3 py-2">Material</th>
+                  <th class="px-3 py-2 text-center">Cobrança</th>
                   <th class="px-3 py-2">Jejum</th>
                   <th class="px-3 py-2">Prazo</th>
-                  <th class="px-3 py-2 text-right">Valor R$</th>
+                  <th class="px-3 py-2 text-right exam-table-price-col">Valor R$</th>
                   <th class="px-3 py-2 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody id="addedExamsTbody" class="divide-y divide-gray-100">
                 <!-- Preenchido dinamicamente via JS -->
                 <tr id="addedExamsEmptyRow">
-                  <td colspan="8" class="px-4 py-8 text-center text-gray-400 italic">
+                  <td colspan="9" class="px-4 py-8 text-center text-gray-400 italic">
                     <div class="flex flex-col items-center justify-center gap-1">
                       <span class="text-2xl">🧪</span>
                       <span class="font-bold text-gray-600 text-xs">Nenhum exame adicionado a esta requisição</span>
@@ -1025,9 +1128,9 @@
                   </td>
                 </tr>
               </tbody>
-              <tfoot class="bg-emerald-50/50 border-t border-emerald-100 font-bold text-xs">
+              <tfoot id="addedExamsTfoot" class="bg-emerald-50/50 border-t border-emerald-100 font-bold text-xs">
                 <tr>
-                  <td colspan="6" class="px-3 py-2.5 text-right font-mono uppercase text-emerald-900">Subtotal dos Exames:</td>
+                  <td colspan="7" class="px-3 py-2.5 text-right font-mono uppercase text-emerald-900">Subtotal dos Exames:</td>
                   <td id="tableSubtotalVal" class="px-3 py-2.5 text-right font-mono font-black text-emerald-800 text-sm">R$ 0,00</td>
                   <td></td>
                 </tr>
@@ -1037,7 +1140,7 @@
         </div>
 
           <!-- RESUMO FINANCEIRO DOS EXAMES (DESCONTO R$/% E VALOR TOTAL A PAGAR) -->
-          <div class="bg-gradient-to-r from-emerald-50/80 via-emerald-50/40 to-slate-50 p-4 rounded-2xl border border-emerald-200/80 shadow-2xs space-y-3">
+          <div id="req-step2FinancialSummary" class="bg-gradient-to-r from-emerald-50/80 via-emerald-50/40 to-slate-50 p-4 rounded-2xl border border-emerald-200/80 shadow-2xs space-y-3">
             <div class="flex flex-col sm:flex-row items-center justify-end gap-3 w-full">
               <!-- Label e Campo de Valor de Desconto (Alinhados à Direita) -->
               <div class="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-2 w-full sm:w-auto ml-auto">
@@ -1151,26 +1254,273 @@
         </div>
 
         <!-- BARRA DE NAVEGAÇÃO DA ETAPA 2 -->
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
-          <button type="button" onclick="cancelRequisitionForm()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
-            <span>Cancelar</span>
-            <span class="text-[10px] text-gray-400 font-normal ml-1">(ESC)</span>
-          </button>
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-3 shrink-0 rounded-b-2xl flex-wrap">
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="cancelRequisitionForm()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+              <span>Cancelar</span>
+              <span class="text-[10px] text-gray-400 font-normal ml-1">(ESC)</span>
+            </button>
+            <button type="button" onclick="switchRequisitionStep(1)" class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Voltar</span>
+              <span class="text-[10px] text-gray-500 font-mono">(Alt + ←)</span>
+            </button>
+          </div>
           
-          <button type="button" onclick="switchRequisitionStep(1)" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            <span>Voltar</span>
-            <span class="text-[10px] text-gray-500 font-mono">(Alt + ←)</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="submit" id="req-btnFinalizeDirect" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5" title="Salvar requisição sem informar pagamento agora">
+              <span>Finalizar sem Pagamento</span>
+            </button>
+            <button type="button" id="req-btnNextToPayment" onclick="switchRequisitionStep(3)" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+              <span>Avançar para Pagamento</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div> <!-- Fim de requisitionStep2 -->
+
+      <!-- ========================================================= -->
+      <!-- ETAPA 3: LANÇAMENTO DE PAGAMENTO (MÚLTIPLOS LANÇAMENTOS)  -->
+      <!-- ========================================================= -->
+      <div id="requisitionStep3" class="hidden space-y-4">
+
+        <!-- CARD 1: RESUMO FINANCEIRO DA REQUISIÇÃO -->
+        <div class="bg-gradient-to-br from-emerald-50/90 via-emerald-50/50 to-teal-50/80 p-4 sm:p-5 rounded-2xl border border-emerald-200/90 text-gray-800 shadow-2xs space-y-3">
+          <div class="flex items-center justify-between pb-3 border-b border-emerald-200/80 flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 12v-2m0 0e1.11 0 2.08-.402 2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="text-xs font-black uppercase tracking-wider text-emerald-950">Resumo Financeiro & Totais da Requisição</h3>
+                <p class="text-[11px] text-emerald-900/80 font-medium">Balanço atual e status do acerto de contas</p>
+              </div>
+            </div>
+            <div id="step3StatusBadge" class="px-3 py-1 rounded-xl text-xs font-mono font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">
+              PENDENTE
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-200/80 shadow-2xs">
+              <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtotal Exames</span>
+              <span id="step3SubtotalDisplay" class="text-sm font-extrabold font-mono text-gray-900">R$ 0,00</span>
+            </div>
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-200/80 shadow-2xs">
+              <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Desconto Aplicado</span>
+              <span id="step3DiscountDisplay" class="text-sm font-extrabold font-mono text-rose-600">R$ 0,00</span>
+            </div>
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-200/80 shadow-2xs">
+              <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Líquido</span>
+              <span id="step3TotalDisplay" class="text-sm font-extrabold font-mono text-emerald-700">R$ 0,00</span>
+            </div>
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-200/80 shadow-2xs">
+              <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Já Pago</span>
+              <span id="step3PaidDisplay" class="text-sm font-extrabold font-mono text-sky-700">R$ 0,00</span>
+            </div>
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-200/80 shadow-2xs col-span-2 sm:col-span-1">
+              <span id="step3RemainingLabel" class="block text-[10px] font-bold text-amber-700 uppercase tracking-wider">Saldo Devedor</span>
+              <span id="step3RemainingDisplay" class="text-sm font-extrabold font-mono text-amber-700">R$ 0,00</span>
+            </div>
+          </div>
+
+          <!-- APLICAR / AJUSTAR DESCONTO DA REQUISIÇÃO NA TELA DE PAGAMENTO -->
+          <div class="pt-3 border-t border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🏷️</span>
+              <div>
+                <span class="font-bold text-emerald-950 block text-xs">Desconto Geral da Requisição:</span>
+                <span class="text-[10px] text-gray-600">Aplica desconto no total dos exames</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+              <div class="relative flex items-center w-full sm:w-36">
+                <span id="req-discountPrefixStep3" class="absolute left-3 text-xs font-bold text-emerald-700 font-mono">R$</span>
+                <input type="number" step="0.01" min="0" id="req-discountValInputStep3" value="0.00" oninput="onDiscountInputChange('step3')" class="w-full pl-9 pr-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none shadow-2xs">
+                <span id="req-discountSuffixStep3" class="hidden absolute right-3 text-xs font-bold text-emerald-700 font-mono">%</span>
+              </div>
+
+              <!-- Seletor de Tipo de Desconto: [ R$ ] e [ % ] -->
+              <div class="flex items-center bg-emerald-100/90 p-0.5 rounded-xl border border-emerald-300 shrink-0">
+                <button type="button" id="btnDiscountModeRealStep3" onclick="setDiscountMode('currency')" class="px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer bg-emerald-700 text-white shadow-xs" title="Desconto em Reais (R$)">
+                  R$
+                </button>
+                <button type="button" id="btnDiscountModePercentStep3" onclick="setDiscountMode('percent')" class="px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer text-emerald-900 hover:text-emerald-950 hover:bg-emerald-200/60" title="Desconto em Porcentagem (%)">
+                  %
+                </button>
+              </div>
+
+              <!-- Badge com o valor do desconto calculado -->
+              <div id="req-discountSummaryBadgeStep3" class="flex items-center gap-1.5 bg-emerald-100/90 px-3 py-1 rounded-xl border border-emerald-300 text-xs font-mono font-bold text-emerald-900 shrink-0 shadow-2xs">
+                <span id="req-discountValRealLabelStep3" class="text-emerald-950 font-black">R$ 0,00</span>
+                <span class="text-emerald-400 font-normal">|</span>
+                <span id="req-discountValPercentLabelStep3" class="text-emerald-950 font-black">0,0%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAINEL DE MULTIGUIAS / DIVISÃO DE COBRANÇA (CONVÊNIO x BALCÃO) -->
+          <div id="multiguiasPanel" class="pt-3 border-t border-emerald-200/80 space-y-2.5 hidden">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-base">📑</span>
+                <div>
+                  <span class="font-bold text-emerald-950 block text-xs uppercase tracking-wider">Divisão de Cobrança / Multiguias</span>
+                  <span class="text-[10px] text-emerald-800 font-medium">Divisão entre Faturamento no Convênio e Copagamento/Balcão do Paciente</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="setMultiguiaFullFaturamento()" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 border border-blue-300 rounded-lg text-[11px] font-bold cursor-pointer transition-all active:scale-95 shadow-2xs" title="Faturar 100% no Convênio">
+                  100% Convênio
+                </button>
+                <button type="button" onclick="setMultiguiaFullBalcao()" class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-bold cursor-pointer transition-all active:scale-95 shadow-2xs" title="Cobrar 100% no Balcão">
+                  100% Balcão
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div class="bg-white/90 p-2.5 rounded-xl border border-blue-200 shadow-2xs">
+                <label class="block text-[10px] font-extrabold text-blue-900 uppercase tracking-wider mb-1">Faturar ao Convênio (R$)</label>
+                <div class="relative flex items-center">
+                  <span class="absolute left-2.5 text-xs font-bold text-blue-700 font-mono">R$</span>
+                  <input type="number" step="0.01" min="0" name="faturadoAmount" id="req-faturadoValInput" value="0.00" oninput="this.dataset.userTouched='true'; calcFinancials();" class="w-full pl-8 pr-2 py-1 bg-blue-50/50 border border-blue-300 rounded-lg text-xs font-mono font-black text-blue-950 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+              </div>
+
+              <div class="bg-white/90 p-2.5 rounded-xl border border-amber-200 shadow-2xs">
+                <span class="block text-[10px] font-extrabold text-amber-900 uppercase tracking-wider mb-1">Devido no Balcão (Copagamento)</span>
+                <span id="step3BalcaoDevidoDisplay" class="text-sm font-extrabold font-mono text-amber-900 block pt-0.5">R$ 0,00</span>
+              </div>
+
+              <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200 shadow-2xs">
+                <span class="block text-[10px] font-extrabold text-emerald-900 uppercase tracking-wider mb-1">Saldo Devedor Balcão</span>
+                <span id="step3BalcaoRemainingDisplay" class="text-sm font-extrabold font-mono text-emerald-800 block pt-0.5">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: ADICIONAR NOVO LANÇAMENTO DE PAGAMENTO -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3.5">
+          <div class="flex items-center justify-between pb-2.5 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+              <span class="text-base">💳</span>
+              <div>
+                <h4 class="font-black text-gray-800 uppercase tracking-wider text-xs">Novo Lançamento de Pagamento</h4>
+                <p class="text-[11px] text-gray-500 font-medium">Permite dividir o pagamento em múltiplas formas (Dinheiro, Cartão, PIX, etc.)</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
+            <!-- Forma de Pagamento -->
+            <div class="sm:col-span-3">
+              <label class="block font-bold text-[11px] text-gray-700 mb-1">Forma de Pagamento</label>
+              <select id="reqPayMethodSelect" onchange="onReqPayMethodChange()" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              </select>
+            </div>
+
+            <!-- Condição / Parcelamento -->
+            <div class="sm:col-span-3">
+              <label class="block font-bold text-[11px] text-gray-700 mb-1">Condição de Pagamento</label>
+              <select id="reqPayConditionSelect" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              </select>
+            </div>
+
+            <!-- Valor (R$) -->
+            <div class="sm:col-span-3">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-[11px] text-gray-700">Valor Pago (R$)</label>
+                <button type="button" onclick="fillRemainingPayAmount()" class="text-[10px] font-black text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer">
+                  Preencher Restante
+                </button>
+              </div>
+              <input type="number" step="0.01" id="reqPayAmountInput" placeholder="0.00" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-300 rounded-xl text-xs font-mono font-black text-emerald-950 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <!-- Data / Hora -->
+            <div class="sm:col-span-3">
+              <label class="block font-bold text-[11px] text-gray-700 mb-1">Data e Hora do Pagamento</label>
+              <input type="datetime-local" id="reqPayDateInput" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <!-- Observação / Comprovante -->
+            <div class="sm:col-span-9">
+              <label class="block font-bold text-[11px] text-gray-700 mb-1">Observação / NSU / Comprovante (Opcional)</label>
+              <input type="text" id="reqPayObsInput" placeholder="Ex: Chave PIX, NSU 48291, Pago em espécie em mãos" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <!-- Botão Adicionar -->
+            <div class="sm:col-span-3">
+              <button type="button" onclick="addPaymentToRequisitionList()" class="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs transition-all shadow-xs active:scale-95 cursor-pointer flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>+ Adicionar Lançamento</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: TABELA DE LANÇAMENTOS DE PAGAMENTO -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+              <span class="text-base">📋</span>
+              <h4 class="font-black text-gray-800 uppercase tracking-wider text-xs">Pagamentos Registrados nesta Requisição</h4>
+            </div>
+            <span id="reqPayCountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              0 lançamento(s)
+            </span>
+          </div>
+
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-100 text-gray-700 font-extrabold uppercase text-[10px] tracking-wider border-b border-gray-200">
+                <tr>
+                  <th class="px-3.5 py-2.5">Forma de Pagamento</th>
+                  <th class="px-3.5 py-2.5">Condição</th>
+                  <th class="px-3.5 py-2.5 text-right">Valor Pago</th>
+                  <th class="px-3.5 py-2.5">Data / Hora</th>
+                  <th class="px-3.5 py-2.5">Observação</th>
+                  <th class="px-3.5 py-2.5 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="reqPaymentsTableBody" class="divide-y divide-gray-100 font-medium text-gray-800">
+                <tr>
+                  <td colspan="6" class="px-4 py-8 text-center text-gray-400 italic">
+                    Nenhum pagamento lançado. O status permanecerá como Pendente.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hidden input holding JSON stringified array of payments -->
+        <input type="hidden" name="payments" id="req-paymentsJson" value="[]">
+
+        <!-- BARRA DE NAVEGAÇÃO DA ETAPA 3 -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-3 shrink-0 rounded-b-2xl">
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="cancelRequisitionForm()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer">
+              <span>Cancelar (ESC)</span>
+            </button>
+            <button type="button" onclick="switchRequisitionStep(2)" class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Voltar Exames (Alt + ←)</span>
+            </button>
+          </div>
           
           <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            <span>Finalizar requisição</span>
+            <span>Finalizar Requisição</span>
             <span class="text-[10px] opacity-80 font-mono">(Ctrl + Enter)</span>
           </button>
         </div>
 
-      </div> <!-- Fim de requisitionStep2 -->
+      </div> <!-- Fim de requisitionStep3 -->
 
     </form>
   </div>
@@ -1672,24 +2022,24 @@
   <div class="bg-white rounded-3xl border border-gray-200 w-full max-w-4xl max-h-[92vh] shadow-2xl overflow-hidden font-sans flex flex-col my-auto">
     
     <!-- Cabeçalho -->
-    <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
+    <div class="px-6 py-4 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white flex items-center justify-between shrink-0 shadow-md">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center justify-center font-black text-xl">
+        <div class="w-10 h-10 rounded-2xl bg-white/20 text-white border border-white/30 flex items-center justify-center font-black text-xl">
           👁️
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="text-base font-black text-white tracking-tight">Requisição <span id="qv-reqCode" class="font-mono text-emerald-400">#---</span></h3>
+            <h3 class="text-base font-black text-white tracking-tight">Requisição <span id="qv-reqCode" class="font-mono text-emerald-200">#---</span></h3>
             <span id="qv-reqStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border">Status</span>
           </div>
-          <p class="text-xs text-slate-300 font-mono mt-0.5 flex items-center gap-2">
+          <p class="text-xs text-emerald-100 font-mono mt-0.5 flex items-center gap-2">
             <span>📅 <span id="qv-reqDate">--/--/----</span></span>
             <span>•</span>
             <span>📍 <span id="qv-reqColeta">Central</span></span>
           </p>
         </div>
       </div>
-      <button onclick="closeQuickViewModal()" type="button" class="text-gray-300 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-all cursor-pointer" title="Fechar (ESC)">
+      <button onclick="closeQuickViewModal()" type="button" class="text-emerald-100 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-all cursor-pointer" title="Fechar (ESC)">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
@@ -1778,11 +2128,11 @@
       </div>
 
       <!-- SEÇÃO 3: INFORMAÇÕES DE PAGAMENTO E FINANCEIRO -->
-      <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white rounded-2xl p-4 shadow-md border border-slate-700">
-        <div class="flex items-center justify-between border-b border-slate-700 pb-2.5 mb-3">
+      <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/80 text-emerald-950 rounded-2xl p-4 shadow-2xs border border-emerald-200">
+        <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2.5 mb-3">
           <div class="flex items-center gap-2">
             <span class="text-base">💳</span>
-            <h4 class="text-xs font-black uppercase font-mono tracking-wider text-emerald-300">Informações de Pagamento & Financeiro</h4>
+            <h4 class="text-xs font-black uppercase font-mono tracking-wider text-emerald-950">Informações de Pagamento & Financeiro</h4>
           </div>
           <span id="qv-finStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border">
             Pendente
@@ -1790,30 +2140,30 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-xs font-mono">
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Subtotal Exames</span>
-            <span id="qv-finSubtotal" class="font-extrabold text-white text-xs">R$ 0,00</span>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-gray-500 block mb-0.5">Subtotal Exames</span>
+            <span id="qv-finSubtotal" class="font-extrabold text-gray-900 text-xs">R$ 0,00</span>
           </div>
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-rose-300 block mb-0.5">Desconto</span>
-            <span id="qv-finDiscount" class="font-extrabold text-rose-300 text-xs">R$ 0,00</span>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-rose-600 block mb-0.5">Desconto</span>
+            <span id="qv-finDiscount" class="font-extrabold text-rose-600 text-xs">R$ 0,00</span>
           </div>
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-emerald-300 block mb-0.5">Valor Total</span>
-            <span id="qv-finTotal" class="font-black text-emerald-300 text-sm">R$ 0,00</span>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-emerald-800 block mb-0.5">Valor Total</span>
+            <span id="qv-finTotal" class="font-black text-emerald-950 text-sm">R$ 0,00</span>
           </div>
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-emerald-400 block mb-0.5">Valor Pago</span>
-            <span id="qv-finPaid" class="font-bold text-emerald-400 text-xs">R$ 0,00</span>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-emerald-700 block mb-0.5">Valor Pago</span>
+            <span id="qv-finPaid" class="font-extrabold text-emerald-700 text-xs">R$ 0,00</span>
           </div>
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-amber-300 block mb-0.5">Saldo Restante</span>
-            <span id="qv-finBalance" class="font-bold text-amber-300 text-xs">R$ 0,00</span>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-amber-800 block mb-0.5">Saldo Restante</span>
+            <span id="qv-finBalance" class="font-bold text-amber-800 text-xs">R$ 0,00</span>
           </div>
-          <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-            <span class="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Forma / Condição</span>
-            <div id="qv-finMethod" class="font-bold text-slate-200 text-[10px] truncate">Particular - Dinheiro</div>
-            <div id="qv-finCondition" class="text-[9px] text-slate-400 truncate">À Vista</div>
+          <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+            <span class="text-[9px] uppercase font-bold text-gray-500 block mb-0.5">Forma / Condição</span>
+            <div id="qv-finMethod" class="font-bold text-gray-800 text-[10px] truncate">Particular - Dinheiro</div>
+            <div id="qv-finCondition" class="text-[9px] text-gray-500 truncate">À Vista</div>
           </div>
         </div>
       </div>
@@ -1837,13 +2187,13 @@
           <span>Visualizar Laudo (PDF)</span>
         </a>
 
-        <button type="button" onclick="openPaymentCashierFromQuickView()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95" title="Dar Baixa no Caixa / Pagamento">
+        <button id="qv-cashierBtn" type="button" onclick="openPaymentCashierFromQuickView()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95" title="Dar Baixa no Caixa / Pagamento">
           <span>💰</span>
           <span>Dar Baixa no Caixa</span>
         </button>
       </div>
 
-      <button onclick="closeQuickViewModal()" type="button" class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer">
+      <button onclick="closeQuickViewModal()" type="button" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer">
         Fechar
       </button>
     </div>
@@ -1854,19 +2204,19 @@
 <!-- ========================================================= -->
 <!-- MODAL POPUP: CAIXA / BAIXA DE PAGAMENTO DA REQUISIÇÃO      -->
 <!-- ========================================================= -->
-<div id="modalPaymentCashier" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/80 backdrop-blur-md animate-fadeIn">
-  <div class="bg-white rounded-3xl border border-gray-200 w-full max-w-xl shadow-2xl overflow-hidden font-sans flex flex-col my-auto">
+<div id="modalPaymentCashier" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
+  <div class="bg-white rounded-3xl border border-emerald-200 w-full max-w-xl shadow-2xl overflow-hidden font-sans flex flex-col my-auto">
     
     <!-- Cabeçalho do Caixa -->
-    <div class="px-6 py-4 bg-gradient-to-r from-emerald-900 via-slate-900 to-emerald-950 text-white flex items-center justify-between shrink-0 shadow-md">
+    <div class="px-6 py-4 bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white flex items-center justify-between shrink-0 shadow-md">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-xl shadow-inner">
+        <div class="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-xl shadow-inner">
           💰
         </div>
         <div>
           <div class="flex items-center gap-2">
             <h3 class="font-extrabold text-base tracking-tight text-white">Caixa - Baixa no Pagamento</h3>
-            <span id="cashier-reqCode" class="px-2 py-0.5 rounded-full text-[11px] font-extrabold font-mono bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">#000000</span>
+            <span id="cashier-reqCode" class="px-2 py-0.5 rounded-full text-[11px] font-extrabold font-mono bg-emerald-700/80 text-emerald-100 border border-emerald-500/50">#000000</span>
           </div>
           <p id="cashier-patientName" class="text-xs text-emerald-100 font-medium truncate max-w-xs">Paciente</p>
         </div>
@@ -1880,19 +2230,19 @@
     <div class="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
       
       <!-- Card de Resumo Financeiro da Requisição -->
-      <div class="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 shadow-md">
-        <div class="grid grid-cols-3 gap-3 text-center divide-x divide-slate-800">
+      <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/80 text-emerald-950 rounded-2xl p-4 border border-emerald-200 shadow-2xs">
+        <div class="grid grid-cols-3 gap-3 text-center divide-x divide-emerald-200">
           <div>
-            <span class="block text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Valor Total</span>
-            <span id="cashier-totalVal" class="text-base font-extrabold font-mono text-white">R$ 0,00</span>
+            <span class="block text-[10px] uppercase font-mono tracking-wider text-emerald-800 font-bold">Valor Total</span>
+            <span id="cashier-totalVal" class="text-base font-extrabold font-mono text-emerald-950">R$ 0,00</span>
           </div>
           <div>
-            <span class="block text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Já Pago</span>
-            <span id="cashier-paidVal" class="text-base font-extrabold font-mono text-emerald-400">R$ 0,00</span>
+            <span class="block text-[10px] uppercase font-mono tracking-wider text-emerald-800 font-bold">Já Pago</span>
+            <span id="cashier-paidVal" class="text-base font-extrabold font-mono text-emerald-700">R$ 0,00</span>
           </div>
           <div>
-            <span class="block text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Saldo Devedor</span>
-            <span id="cashier-balanceVal" class="text-base font-extrabold font-mono text-rose-400">R$ 0,00</span>
+            <span class="block text-[10px] uppercase font-mono tracking-wider text-amber-800 font-bold">Saldo Devedor</span>
+            <span id="cashier-balanceVal" class="text-base font-extrabold font-mono text-amber-700">R$ 0,00</span>
           </div>
         </div>
       </div>
@@ -1925,15 +2275,15 @@
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">Valor a Receber (R$) <span class="text-rose-500">*</span></label>
             <div class="relative">
-              <span class="absolute left-3 top-2.5 text-xs font-bold text-gray-400 font-mono">R$</span>
-              <input type="number" step="0.01" min="0" id="cashier-amountInput" name="amount" class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-gray-300 rounded-xl text-sm font-mono font-extrabold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0.00" required />
+              <span class="absolute left-3 top-2.5 text-xs font-bold text-emerald-700 font-mono">R$</span>
+              <input type="number" step="0.01" min="0" id="cashier-amountInput" name="amount" class="w-full pl-9 pr-3 py-2 bg-emerald-50/50 border border-emerald-300 rounded-xl text-sm font-mono font-extrabold text-emerald-950 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0.00" required />
             </div>
           </div>
 
           <!-- Forma de Pagamento -->
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">Forma de Pagamento <span class="text-rose-500">*</span></label>
-            <select id="cashier-methodSelect" name="paymentMethod" class="w-full px-3 py-2 bg-slate-50 border border-gray-300 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <select id="cashier-methodSelect" name="paymentMethod" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
               <option value="Particular - Dinheiro">💵 Particular - Dinheiro</option>
               <option value="Particular - Pix">⚡ Particular - Pix</option>
               <option value="Particular - Cartão de Crédito">💳 Particular - Cartão de Crédito</option>
@@ -1949,7 +2299,7 @@
           <!-- Condição de Pagamento -->
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">Condição de Pagamento</label>
-            <select id="cashier-conditionSelect" name="paymentCondition" class="w-full px-3 py-2 bg-slate-50 border border-gray-300 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <select id="cashier-conditionSelect" name="paymentCondition" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
               <option value="À Vista">À Vista</option>
               <option value="Parcelado 2x">Parcelado 2x</option>
               <option value="Parcelado 3x">Parcelado 3x</option>
@@ -1960,7 +2310,7 @@
           <!-- Novo Status Financeiro -->
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">Status Financeiro Final</label>
-            <select id="cashier-statusSelect" name="financialStatus" class="w-full px-3 py-2 bg-emerald-900 border border-emerald-600 rounded-xl text-xs font-extrabold text-emerald-100 focus:ring-2 focus:ring-emerald-400 outline-none">
+            <select id="cashier-statusSelect" name="financialStatus" class="w-full px-3 py-2 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-extrabold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none">
               <option value="Pago">✅ Pago (Quitado)</option>
               <option value="Parcial">⏳ Pago Parcialmente</option>
               <option value="Pendente">❌ Pendente</option>
@@ -1971,15 +2321,15 @@
         <!-- Observações do Pagamento / Comprovante -->
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">Observações do Recebimento / Comprovante</label>
-          <input type="text" id="cashier-obsInput" name="paymentObs" class="w-full px-3 py-2 bg-slate-50 border border-gray-300 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: NSU Transação 123456 / Comprovante no WhatsApp" />
+          <input type="text" id="cashier-obsInput" name="paymentObs" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ex: NSU Transação 123456 / Comprovante no WhatsApp" />
         </div>
 
         <!-- Rodapé do Modal -->
         <div class="pt-3 flex items-center justify-end gap-3 border-t border-gray-100">
-          <button type="button" onclick="closePaymentCashierModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+          <button type="button" onclick="closePaymentCashierModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
             Cancelar
           </button>
-          <button type="submit" id="cashier-submitBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer">
+          <button type="submit" id="cashier-submitBtn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer">
             <span>💾</span>
             <span>Confirmar e Dar Baixa no Pagamento</span>
           </button>
@@ -2145,9 +2495,92 @@
     }
   }
 
-  // Alternar entre Etapa 1 e Etapa 2 no Modal
+  function isConvenioFaturamento(convenioNameOrCode) {
+    const currentConvName = (convenioNameOrCode || document.getElementById('req-convenio')?.value || 'Particular').trim();
+    const currentConvCode = document.getElementById('req-convenioCode')?.value?.trim();
+    const currentConvId = document.getElementById('req-convenioId')?.value?.trim();
+
+    if (!currentConvName || currentConvName.toLowerCase() === 'particular') {
+      return false; // Particular is always paid at counter
+    }
+
+    if (typeof conveniosListFromDb !== 'undefined' && Array.isArray(conveniosListFromDb)) {
+      let conv = conveniosListFromDb.find(c => 
+        (currentConvId && String(c.id) === String(currentConvId)) ||
+        (currentConvCode && String(c.codigo) === String(currentConvCode)) ||
+        (c.fantasia && c.fantasia.toLowerCase() === currentConvName.toLowerCase()) ||
+        (c.razaoSocial && c.razaoSocial.toLowerCase() === currentConvName.toLowerCase())
+      );
+
+      if (conv) {
+        if (conv.tipoCobranca === 'balcao') return false;
+        if (conv.tipoCobranca === 'faturamento') return true;
+      }
+    }
+
+    return true; // Default for non-Particular convenios
+  }
+
+  function updateConvenioUI() {
+    const isFat = isConvenioFaturamento();
+
+    // 1. Tab de Pagamento (Step 3) - SEMPRE VISÍVEL para permitir Multiguias / Cobrança Mista
+    const step3Tab = document.getElementById('stepTabBtn3');
+    if (step3Tab) {
+      step3Tab.style.display = '';
+    }
+
+    // 2. Campo de Valor R$ na inserção rápida do exame - SEMPRE VISÍVEL
+    const priceContainer = document.getElementById('req-examPriceContainer');
+    if (priceContainer) {
+      priceContainer.classList.remove('hidden');
+    }
+
+    // 3. Coluna de Valor na Tabela de Exames - SEMPRE VISÍVEL
+    document.querySelectorAll('.exam-table-price-col').forEach(el => {
+      el.classList.remove('hidden');
+    });
+    const tfoot = document.getElementById('addedExamsTfoot');
+    if (tfoot) {
+      tfoot.classList.remove('hidden');
+    }
+
+    // 4. Resumo Financeiro em Step 2 - SEMPRE VISÍVEL
+    const finSummary = document.getElementById('req-step2FinancialSummary');
+    if (finSummary) {
+      finSummary.classList.remove('hidden');
+    }
+
+    // 5. Botões de ação no footer do Step 2
+    const btnNextPayment = document.getElementById('req-btnNextToPayment');
+    if (btnNextPayment) {
+      btnNextPayment.classList.remove('hidden');
+      if (isFat) {
+        btnNextPayment.innerHTML = `<span>Avançar para Pagamento / Balcão</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      } else {
+        btnNextPayment.innerHTML = `<span>Avançar para Pagamento</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+    }
+
+    const btnFinalizeDirect = document.getElementById('req-btnFinalizeDirect');
+    if (btnFinalizeDirect) {
+      if (isFat) {
+        btnFinalizeDirect.innerHTML = `<span>Finalizar (100% Faturamento)</span>`;
+        btnFinalizeDirect.className = "px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5";
+        btnFinalizeDirect.title = "Finalizar e salvar requisição faturando 100% no Convênio";
+      } else {
+        btnFinalizeDirect.innerHTML = `<span>Finalizar sem Pagamento</span>`;
+        btnFinalizeDirect.className = "px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5";
+        btnFinalizeDirect.title = "Salvar requisição sem informar pagamento agora";
+      }
+    }
+  }
+
+  // Alternar entre Etapa 1, Etapa 2 e Etapa 3 no Modal
   function switchRequisitionStep(step, force = false) {
-    if (step === 2 && !force) {
+    if ((step === 2 || step === 3) && !force) {
       const validation = validateStep1();
       if (!validation.isValid) {
         showStep1ValidationError(validation.errors, validation.firstMissing);
@@ -2161,38 +2594,47 @@
 
     const step1 = document.getElementById('requisitionStep1');
     const step2 = document.getElementById('requisitionStep2');
+    const step3 = document.getElementById('requisitionStep3');
     const btn1 = document.getElementById('stepTabBtn1');
     const btn2 = document.getElementById('stepTabBtn2');
+    const btn3 = document.getElementById('stepTabBtn3');
 
-    if (step === 1) {
-      if (step1) step1.classList.remove('hidden');
-      if (step2) step2.classList.add('hidden');
+    if (step1) step1.classList.toggle('hidden', step !== 1);
+    if (step2) step2.classList.toggle('hidden', step !== 2);
+    if (step3) step3.classList.toggle('hidden', step !== 3);
 
-      if (btn1) {
-        btn1.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer";
-        const dot = btn1.querySelector('span');
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-      }
-      if (btn2) {
-        btn2.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer";
-        const dot = btn2.querySelector('span');
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-gray-400";
-      }
-    } else {
-      if (step1) step1.classList.add('hidden');
-      if (step2) step2.classList.remove('hidden');
+    const tabs = [
+      { btn: btn1, isCurrent: step === 1 },
+      { btn: btn2, isCurrent: step === 2 },
+      { btn: btn3, isCurrent: step === 3 }
+    ];
 
-      if (btn2) {
-        btn2.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer";
-        const dot = btn2.querySelector('span');
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+    tabs.forEach(item => {
+      if (item.btn) {
+        if (item.isCurrent) {
+          item.btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 bg-white text-emerald-950 shadow-xs cursor-pointer shrink-0";
+          const dot = item.btn.querySelector('span');
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        } else {
+          item.btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer shrink-0";
+          const dot = item.btn.querySelector('span');
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-gray-400";
+        }
       }
-      if (btn1) {
-        btn1.className = "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer";
-        const dot = btn1.querySelector('span');
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-gray-400";
+    });
+
+    if (step === 3) {
+      initReqPayMethodsSelect();
+      fillRemainingPayAmount();
+      const dateInput = document.getElementById('reqPayDateInput');
+      if (dateInput && !dateInput.value) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dateInput.value = now.toISOString().slice(0, 16);
       }
     }
+
+    updateConvenioUI();
   }
 
   // --- GERENCIAMENTO DE EXAMES DA REQUISIÇÃO ---
@@ -2308,6 +2750,9 @@
       return false;
     }
 
+    const isFat = isConvenioFaturamento();
+    const defaultBilling = exam.billingCategory || (isFat ? 'convenio' : 'particular');
+
     currentRequisitionExams.push({
       code: exam.code || 'EX' + (currentRequisitionExams.length + 1),
       name: exam.name || 'Exame Personalizado',
@@ -2317,7 +2762,8 @@
       fasting: exam.fasting || 'Não informado',
       timeframe: exam.timeframe || '24 horas',
       instructions: exam.instructions || 'Procedimento padrão do laboratório.',
-      status: exam.status || 'A Coletar'
+      status: exam.status || 'A Coletar',
+      billingCategory: defaultBilling
     });
 
     renderExamsTable();
@@ -2546,11 +2992,69 @@
     });
   }
 
+  function isMultiguiaActive() {
+    const chk = document.getElementById('req-isMultiguia');
+    return chk ? chk.checked : false;
+  }
+
+  function toggleMultiguiaMode() {
+    const active = isMultiguiaActive();
+    const summaryBanner = document.getElementById('examSummaryBanner');
+    if (summaryBanner) {
+      if (active) {
+        summaryBanner.classList.remove('hidden');
+      } else {
+        summaryBanner.classList.add('hidden');
+      }
+    }
+
+    const mgPanel = document.getElementById('multiguiasPanel');
+    if (mgPanel) {
+      if (active) {
+        mgPanel.classList.remove('hidden');
+      } else {
+        mgPanel.classList.add('hidden');
+      }
+    }
+
+    renderExamsTable();
+    calcFinancials();
+  }
+
+  function toggleExamBillingCategory(idx) {
+    if (idx < 0 || idx >= currentRequisitionExams.length) return;
+    const isFat = isConvenioFaturamento();
+    const currentCat = currentRequisitionExams[idx].billingCategory || (isFat ? 'convenio' : 'particular');
+    currentRequisitionExams[idx].billingCategory = (currentCat === 'particular') ? 'convenio' : 'particular';
+    
+    syncFaturadoFromExams();
+  }
+
+  function setAllExamsBillingCategory(cat) {
+    if (!currentRequisitionExams || currentRequisitionExams.length === 0) return;
+    currentRequisitionExams.forEach(e => {
+      e.billingCategory = cat;
+    });
+    syncFaturadoFromExams();
+  }
+
+  function syncFaturadoFromExams() {
+    const fatInput = document.getElementById('req-faturadoValInput');
+    if (fatInput) {
+      fatInput.dataset.userTouched = 'false';
+    }
+
+    renderExamsTable();
+    calcFinancials();
+  }
+
   function renderExamsTable() {
     const tbody = document.getElementById('addedExamsTbody');
     const countBadge = document.getElementById('examsCountBadge');
     const stepBadge = document.getElementById('stepTabExamsBadge');
     const jsonInput = document.getElementById('req-examsJson');
+    const isFat = isConvenioFaturamento();
+    const isMG = isMultiguiaActive();
 
     if (jsonInput) jsonInput.value = JSON.stringify(currentRequisitionExams);
 
@@ -2559,7 +3063,7 @@
     if (currentRequisitionExams.length === 0) {
       tbody.innerHTML = `
         <tr id="addedExamsEmptyRow">
-          <td colspan="8" class="px-4 py-8 text-center text-gray-400 italic">
+          <td colspan="9" class="px-4 py-8 text-center text-gray-400 italic">
             <div class="flex flex-col items-center justify-center gap-1">
               <span class="text-2xl">🧪</span>
               <span class="font-bold text-gray-600 text-xs">Nenhum exame adicionado a esta requisição</span>
@@ -2569,8 +3073,9 @@
         </tr>
       `;
       if (countBadge) countBadge.textContent = '0 Exames';
-      if (stepBadge) stepBadge.textContent = '0 exames (R$ 0,00)';
+      if (stepBadge) stepBadge.textContent = isFat ? '0 exames' : '0 exames (R$ 0,00)';
       updatePrepInfoCard();
+      updateConvenioUI();
       return;
     }
 
@@ -2580,6 +3085,20 @@
     currentRequisitionExams.forEach((e, idx) => {
       const price = parseFloat(e.price) || 0;
       subtotal += price;
+
+      const billingCat = e.billingCategory || (isFat ? 'convenio' : 'particular');
+      let billingBadge = '';
+      if (isMG) {
+        billingBadge = window.isCurrentReqReadOnly 
+          ? (billingCat === 'particular'
+            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-amber-100 text-amber-900 border border-amber-300">💳 Particular</span>`
+            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-blue-100 text-blue-900 border border-blue-300">🏢 Convênio</span>`)
+          : (billingCat === 'particular'
+            ? `<button type="button" onclick="event.stopPropagation(); toggleExamBillingCategory(${idx})" class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-all cursor-pointer shadow-2xs" title="Exame cobrado no Balcão/Particular. Clique para alternar para Convênio">💳 Particular</button>`
+            : `<button type="button" onclick="event.stopPropagation(); toggleExamBillingCategory(${idx})" class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-blue-100 text-blue-900 border border-blue-300 hover:bg-blue-200 transition-all cursor-pointer shadow-2xs" title="Exame faturado no Convênio. Clique para alternar para Particular">🏢 Convênio</button>`);
+      } else {
+        billingBadge = `<span class="text-slate-400 font-mono text-[10px]">—</span>`;
+      }
 
       html += `
         <tr class="hover:bg-emerald-50/60 cursor-grab active:cursor-grabbing transition-colors text-xs" 
@@ -2595,9 +3114,10 @@
           <td class="px-3 py-2 font-mono font-bold text-emerald-800">${e.code}</td>
           <td class="px-3 py-2 font-black text-gray-900">${e.name}</td>
           <td class="px-3 py-2"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-mono text-[10px]">${e.material || e.category || 'Sangue'}</span></td>
+          <td class="px-3 py-2 text-center" onclick="event.stopPropagation()">${billingBadge}</td>
           <td class="px-3 py-2 font-mono text-[11px] font-bold text-amber-800"><span class="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded font-mono text-[10px]">${e.fasting || 'Sem jejum'}</span></td>
           <td class="px-3 py-2 font-mono text-[11px] text-gray-500">${e.timeframe || '24h'}</td>
-          <td class="px-3 py-2 text-right font-mono font-bold text-emerald-900">R$ ${price.toFixed(2).replace('.', ',')}</td>
+          <td class="px-3 py-2 text-right font-mono font-bold text-emerald-900 exam-table-price-col ${isFat ? 'hidden' : ''}">R$ ${price.toFixed(2).replace('.', ',')}</td>
           <td class="px-3 py-2 text-center" onclick="event.stopPropagation()">
             ${window.isCurrentReqReadOnly ? '<span class="text-gray-300 text-[10px] font-mono" title="Somente leitura">🔒</span>' : `
               <button type="button" onclick="removeExamFromRequisition(${idx})" class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Remover Exame">
@@ -2610,11 +3130,10 @@
     });
 
     tbody.innerHTML = html;
-
     if (countBadge) countBadge.textContent = currentRequisitionExams.length + ' Exame(s)';
-    if (stepBadge) stepBadge.textContent = `${currentRequisitionExams.length} exame(s) (R$ ${subtotal.toFixed(2).replace('.', ',')})`;
-
+    if (stepBadge) stepBadge.textContent = isFat ? `${currentRequisitionExams.length} exame(s)` : `${currentRequisitionExams.length} exame(s) (R$ ${subtotal.toFixed(2).replace('.', ',')})`;
     updatePrepInfoCard();
+    updateConvenioUI();
   }
 
   function updatePrepInfoCard() {
@@ -2724,11 +3243,11 @@
     const stLower = st.toLowerCase();
     if (statusBadge) {
       if (stLower.includes('pronto') || stLower.includes('liberado') || stLower.includes('conferido')) {
-        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-emerald-500/20 text-emerald-300 border-emerald-400/40';
+        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-emerald-700/80 text-white border-emerald-400/60';
       } else if (stLower.includes('cancel')) {
-        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-rose-500/20 text-rose-300 border-rose-400/40';
+        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-rose-600/80 text-white border-rose-400/60';
       } else {
-        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-amber-500/20 text-amber-300 border-amber-400/40';
+        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold font-mono border bg-amber-600/80 text-white border-amber-300/60';
       }
       statusBadge.textContent = st;
     }
@@ -2842,11 +3361,19 @@
             exBg = 'bg-amber-100 text-amber-900 border-amber-300';
           }
 
+          const exBillingCat = ex.billingCategory || (isQvFat ? 'convenio' : 'particular');
+          const billingTag = exBillingCat === 'particular'
+            ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-black font-mono bg-amber-100 text-amber-900 border border-amber-300">💳 Particular</span>`
+            : `<span class="px-2 py-0.5 rounded-full text-[9px] font-black font-mono bg-blue-100 text-blue-900 border border-blue-300">🏢 Convênio</span>`;
+
           html += `
-            <tr class="hover:bg-slate-50 transition-colors">
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
               <td class="px-3 py-2 text-center font-mono font-bold text-slate-400">${idx + 1}</td>
               <td class="px-3 py-2 font-mono font-extrabold text-emerald-800">${ex.code || ex.examCode || 'EX'}</td>
-              <td class="px-3 py-2 font-bold text-slate-900">${ex.name || ex.examName || 'Exame'}</td>
+              <td class="px-3 py-2 font-bold text-slate-900 flex items-center justify-between gap-1">
+                <span>${ex.name || ex.examName || 'Exame'}</span>
+                ${billingTag}
+              </td>
               <td class="px-3 py-2 font-mono text-slate-600">${ex.material || ex.category || 'Sangue'}</td>
               <td class="px-3 py-2 font-mono text-slate-500">${ex.fasting || '4h'} / ${ex.timeframe || '24h'}</td>
               <td class="px-3 py-2 text-center">
@@ -2865,11 +3392,18 @@
     }
 
     // Informações Financeiras e Pagamento
+    const isQvFat = isConvenioFaturamento(req.convenio, req.convenioCode, req.convenioId);
     const subtotal = parseFloat(req.subtotal || 0);
     const discount = parseFloat(req.discount || 0);
     const total = parseFloat(req.totalAmount || (subtotal - discount));
     const paid = parseFloat(req.paidAmount || 0);
     const balance = Math.max(0, total - paid);
+
+    const fatVal = req.faturadoAmount !== undefined && req.faturadoAmount !== null && req.faturadoAmount !== ''
+      ? parseFloat(req.faturadoAmount)
+      : (isQvFat ? total : 0);
+    const balcaoDevido = Math.max(0, total - fatVal);
+    const balcaoRemaining = Math.max(0, balcaoDevido - paid);
 
     const finSubElem = document.getElementById('qv-finSubtotal');
     if (finSubElem) finSubElem.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
@@ -2884,34 +3418,51 @@
     if (finPaidElem) finPaidElem.textContent = `R$ ${paid.toFixed(2).replace('.', ',')}`;
 
     const finBalElem = document.getElementById('qv-finBalance');
-    if (finBalElem) finBalElem.textContent = `R$ ${balance.toFixed(2).replace('.', ',')}`;
+    if (finBalElem) {
+      if (fatVal >= total && total > 0) {
+        finBalElem.textContent = 'Faturamento';
+      } else if (fatVal > 0 && balcaoDevido > 0) {
+        if (balcaoRemaining <= 0) {
+          finBalElem.textContent = `R$ 0,00 (Fat R$ ${fatVal.toFixed(2).replace('.', ',')})`;
+        } else {
+          finBalElem.textContent = `R$ ${balcaoRemaining.toFixed(2).replace('.', ',')} (Fat R$ ${fatVal.toFixed(2).replace('.', ',')})`;
+        }
+      } else {
+        finBalElem.textContent = `R$ ${balance.toFixed(2).replace('.', ',')}`;
+      }
+    }
 
     const finMethodElem = document.getElementById('qv-finMethod');
-    if (finMethodElem) finMethodElem.textContent = req.paymentMethod || 'Particular - Dinheiro';
+    if (finMethodElem) finMethodElem.textContent = req.paymentMethod || (isQvFat ? 'Faturamento' : 'Particular - Dinheiro');
 
     const finCondElem = document.getElementById('qv-finCondition');
-    if (finCondElem) finCondElem.textContent = req.paymentCondition || 'À Vista';
+    if (finCondElem) finCondElem.textContent = req.paymentCondition || (isQvFat ? 'Faturamento' : 'À Vista');
 
     // Status Financeiro Badge
     const finBadge = document.getElementById('qv-finStatusBadge');
     if (finBadge) {
-      const finSt = req.financialStatus || (paid >= total && total > 0 ? 'Pago' : (paid > 0 ? 'Parcial' : 'Pendente'));
-      const finStLower = finSt.toLowerCase();
-      if (finStLower.includes('pago') || finStLower.includes('faturado') || finStLower.includes('cortesia')) {
-        finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-emerald-500/20 text-emerald-300 border-emerald-400/40';
-      } else if (finStLower.includes('parcial')) {
-        finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-blue-500/20 text-blue-300 border-blue-400/40';
+      if (fatVal >= total && total > 0) {
+        finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-blue-100 text-blue-900 border-blue-300';
+        finBadge.textContent = 'Faturamento';
       } else {
-        finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-amber-500/20 text-amber-300 border-amber-400/40';
+        const finSt = req.financialStatus || (paid >= total && total > 0 ? 'Pago' : (paid > 0 ? 'Parcial' : 'Pendente'));
+        const finStLower = finSt.toLowerCase();
+        if (finStLower.includes('pago') || finStLower.includes('faturado') || finStLower.includes('cortesia')) {
+          finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-emerald-100 text-emerald-900 border-emerald-300';
+        } else if (finStLower.includes('parcial')) {
+          finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-blue-100 text-blue-900 border-blue-300';
+        } else {
+          finBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase border bg-amber-100 text-amber-900 border-amber-300';
+        }
+        finBadge.textContent = finSt;
       }
-      finBadge.textContent = finSt;
     }
 
-    // Botão Laudo PDF (Requer Exame Pronto e Pagamento Pago)
+    // Botão Laudo PDF (Requer Exame Pronto e Pagamento Pago ou Faturamento)
     const isPronto = stLower.includes('pronto') || stLower.includes('liberado') || stLower.includes('conferido');
     const finStLower = (req.financialStatus || '').toLowerCase();
     const pmLower = (req.paymentMethod || '').toLowerCase();
-    const isQvPago = (finStLower.includes('pago') || finStLower.includes('faturado') || finStLower.includes('cortesia') || pmLower.includes('convênio') || pmLower.includes('cortesia') || (total > 0 && paid >= total) || total === 0);
+    const isQvPago = isQvFat || fatVal > 0 || (finStLower.includes('pago') || finStLower.includes('faturado') || finStLower.includes('cortesia') || pmLower.includes('convênio') || pmLower.includes('cortesia') || (total > 0 && paid >= total) || total === 0);
 
     const qvPdfBtn = document.getElementById('qv-viewPdfBtn');
     if (qvPdfBtn) {
@@ -2920,6 +3471,15 @@
         qvPdfBtn.classList.remove('hidden');
       } else {
         qvPdfBtn.classList.add('hidden');
+      }
+    }
+
+    const qvCashierBtn = document.getElementById('qv-cashierBtn');
+    if (qvCashierBtn) {
+      if (fatVal >= total && total > 0) {
+        qvCashierBtn.classList.add('hidden');
+      } else {
+        qvCashierBtn.classList.remove('hidden');
       }
     }
 
@@ -2944,69 +3504,7 @@
   let activeCashierReq = null;
 
   function openPaymentCashierModal(reqId) {
-    const req = requisitionsData.find(r => String(r.id) === String(reqId) || String(r.requisitionCode) === String(reqId));
-    if (!req) return;
-
-    activeCashierReqId = req.id;
-    activeCashierReq = req;
-
-    // Preencher código e paciente
-    const codeElem = document.getElementById('cashier-reqCode');
-    if (codeElem) codeElem.textContent = '#' + (req.requisitionCode || req.id || '---');
-
-    const patElem = document.getElementById('cashier-patientName');
-    if (patElem) patElem.textContent = (req.patientName || 'Paciente') + (req.convenio ? (' • Convênio: ' + req.convenio) : '');
-
-    const reqIdInput = document.getElementById('cashier-reqId');
-    if (reqIdInput) reqIdInput.value = req.id;
-
-    // Valores Financeiros
-    let subtotal = parseFloat(req.subtotal || 0);
-    if (!subtotal && Array.isArray(req.exams)) {
-      req.exams.forEach(ex => { subtotal += parseFloat(ex.price || 0); });
-    }
-    const discount = parseFloat(req.discount || 0);
-    const total = parseFloat(req.totalAmount || (subtotal - discount));
-    const paid = parseFloat(req.paidAmount || 0);
-    const balance = Math.max(0, total - paid);
-
-    const totElem = document.getElementById('cashier-totalVal');
-    if (totElem) totElem.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-
-    const paidElem = document.getElementById('cashier-paidVal');
-    if (paidElem) paidElem.textContent = 'R$ ' + paid.toFixed(2).replace('.', ',');
-
-    const balElem = document.getElementById('cashier-balanceVal');
-    if (balElem) balElem.textContent = 'R$ ' + balance.toFixed(2).replace('.', ',');
-
-    // Valor padrão a receber
-    const amountInput = document.getElementById('cashier-amountInput');
-    if (amountInput) {
-      amountInput.value = balance > 0 ? balance.toFixed(2) : total.toFixed(2);
-    }
-
-    // Método e Condição
-    const methodSelect = document.getElementById('cashier-methodSelect');
-    if (methodSelect && req.paymentMethod) {
-      methodSelect.value = req.paymentMethod;
-    }
-
-    const conditionSelect = document.getElementById('cashier-conditionSelect');
-    if (conditionSelect && req.paymentCondition) {
-      conditionSelect.value = req.paymentCondition;
-    }
-
-    // Status Financeiro
-    const statusSelect = document.getElementById('cashier-statusSelect');
-    if (statusSelect) {
-      statusSelect.value = 'Pago';
-    }
-
-    const obsInput = document.getElementById('cashier-obsInput');
-    if (obsInput) obsInput.value = req.paymentObs || '';
-
-    const modal = document.getElementById('modalPaymentCashier');
-    if (modal) modal.classList.remove('hidden');
+    selectRequisitionToForm(reqId, 3);
   }
 
   function openPaymentCashierFromQuickView() {
@@ -3251,9 +3749,14 @@
     currentDiscountMode = mode;
     const btnReal = document.getElementById('btnDiscountModeReal');
     const btnPercent = document.getElementById('btnDiscountModePercent');
+    const btnRealStep3 = document.getElementById('btnDiscountModeRealStep3');
+    const btnPercentStep3 = document.getElementById('btnDiscountModePercentStep3');
     const prefix = document.getElementById('req-discountPrefix');
     const suffix = document.getElementById('req-discountSuffix');
+    const prefixStep3 = document.getElementById('req-discountPrefixStep3');
+    const suffixStep3 = document.getElementById('req-discountSuffixStep3');
     const valInput = document.getElementById('req-discountValInput');
+    const valInputStep3 = document.getElementById('req-discountValInputStep3');
     const hiddenDisc = document.getElementById('req-discount');
     const hiddenDiscPct = document.getElementById('req-discountPercent');
 
@@ -3264,14 +3767,30 @@
       if (btnPercent) {
         btnPercent.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer text-emerald-900 hover:text-emerald-950 hover:bg-emerald-200/60';
       }
+      if (btnRealStep3) {
+        btnRealStep3.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer bg-emerald-700 text-white shadow-xs';
+      }
+      if (btnPercentStep3) {
+        btnPercentStep3.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer text-emerald-900 hover:text-emerald-950 hover:bg-emerald-200/60';
+      }
+
       if (prefix) prefix.classList.remove('hidden');
       if (suffix) suffix.classList.add('hidden');
+      if (prefixStep3) prefixStep3.classList.remove('hidden');
+      if (suffixStep3) suffixStep3.classList.add('hidden');
+
+      const dVal = hiddenDisc ? (parseFloat(hiddenDisc.value) || 0) : 0;
       if (valInput) {
         valInput.className = 'w-full pl-9 pr-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none shadow-2xs';
         valInput.step = '0.01';
         valInput.removeAttribute('max');
-        const dVal = hiddenDisc ? (parseFloat(hiddenDisc.value) || 0) : 0;
         valInput.value = dVal.toFixed(2);
+      }
+      if (valInputStep3) {
+        valInputStep3.className = 'w-full pl-9 pr-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none shadow-2xs';
+        valInputStep3.step = '0.01';
+        valInputStep3.removeAttribute('max');
+        valInputStep3.value = dVal.toFixed(2);
       }
     } else { // 'percent'
       if (btnPercent) {
@@ -3280,30 +3799,54 @@
       if (btnReal) {
         btnReal.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer text-emerald-900 hover:text-emerald-950 hover:bg-emerald-200/60';
       }
+      if (btnPercentStep3) {
+        btnPercentStep3.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer bg-emerald-700 text-white shadow-xs';
+      }
+      if (btnRealStep3) {
+        btnRealStep3.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer text-emerald-900 hover:text-emerald-950 hover:bg-emerald-200/60';
+      }
+
       if (prefix) prefix.classList.add('hidden');
       if (suffix) suffix.classList.remove('hidden');
+      if (prefixStep3) prefixStep3.classList.add('hidden');
+      if (suffixStep3) suffixStep3.classList.remove('hidden');
+
+      const pVal = hiddenDiscPct ? (parseFloat(hiddenDiscPct.value) || 0) : 0;
       if (valInput) {
         valInput.className = 'w-full pl-3 pr-8 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none shadow-2xs';
         valInput.step = '0.1';
         valInput.max = '100';
-        const pVal = hiddenDiscPct ? (parseFloat(hiddenDiscPct.value) || 0) : 0;
         valInput.value = pVal.toString();
+      }
+      if (valInputStep3) {
+        valInputStep3.className = 'w-full pl-3 pr-8 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-mono font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-500 outline-none shadow-2xs';
+        valInputStep3.step = '0.1';
+        valInputStep3.max = '100';
+        valInputStep3.value = pVal.toString();
       }
     }
     onDiscountInputChange();
   }
 
-  function onDiscountInputChange() {
+  function onDiscountInputChange(callerSource) {
     let subtotal = 0;
     (currentRequisitionExams || []).forEach(e => {
       subtotal += parseFloat(e.price) || 0;
     });
 
     const valInput = document.getElementById('req-discountValInput');
+    const valInputStep3 = document.getElementById('req-discountValInputStep3');
     const hiddenDisc = document.getElementById('req-discount');
     const hiddenDiscPct = document.getElementById('req-discountPercent');
 
-    let rawVal = valInput ? (parseFloat(valInput.value) || 0) : 0;
+    let activeInput = valInput;
+    if (callerSource === 'step3' && valInputStep3) {
+      activeInput = valInputStep3;
+    } else if (!valInput && valInputStep3) {
+      activeInput = valInputStep3;
+    }
+
+    let rawVal = activeInput ? (parseFloat(activeInput.value) || 0) : 0;
     if (rawVal < 0) rawVal = 0;
 
     if (currentDiscountMode === 'currency') {
@@ -3312,19 +3855,229 @@
 
       if (hiddenDisc) hiddenDisc.value = discountVal.toFixed(2);
       if (hiddenDiscPct) hiddenDiscPct.value = pctVal.toFixed(1);
+
+      if (callerSource === 'step3' && valInput) {
+        valInput.value = discountVal.toFixed(2);
+      } else if (callerSource !== 'step3' && valInputStep3) {
+        valInputStep3.value = discountVal.toFixed(2);
+      }
     } else { // percent
       let pctVal = rawVal;
       if (pctVal > 100) {
         pctVal = 100;
-        if (valInput) valInput.value = '100';
+        if (activeInput) activeInput.value = '100';
       }
       let discountVal = (subtotal * pctVal) / 100;
 
       if (hiddenDisc) hiddenDisc.value = discountVal.toFixed(2);
       if (hiddenDiscPct) hiddenDiscPct.value = pctVal.toFixed(1);
+
+      if (callerSource === 'step3' && valInput) {
+        valInput.value = pctVal.toString();
+      } else if (callerSource !== 'step3' && valInputStep3) {
+        valInputStep3.value = pctVal.toString();
+      }
     }
 
     calcFinancials();
+  }
+
+  // --- GERENCIAMENTO DE LANÇAMENTOS MÚLTIPLOS DE PAGAMENTO ---
+  let currentRequisitionPayments = [];
+
+  const allPaymentMethodsData = <%- JSON.stringify(typeof paymentMethods !== 'undefined' && paymentMethods.length > 0 ? paymentMethods : [
+    { id: 'dinheiro', name: 'Dinheiro', active: true, conditions: [{ id: 'a_vista', description: 'À Vista', installments: 1, active: true }] },
+    { id: 'pix', name: 'PIX', active: true, conditions: [{ id: 'a_vista', description: 'À Vista', installments: 1, active: true }] },
+    { id: 'cartao_credito', name: 'Cartão de Crédito', active: true, conditions: [{ id: 'a_vista', description: 'À Vista', installments: 1, active: true }, { id: '2x', description: 'Parcelado 2x', installments: 2, active: true }, { id: '3x', description: 'Parcelado 3x', installments: 3, active: true }] },
+    { id: 'cartao_debito', name: 'Cartão de Débito', active: true, conditions: [{ id: 'a_vista', description: 'À Vista', installments: 1, active: true }] },
+    { id: 'boleto', name: 'Boleto Bancário', active: true, conditions: [{ id: 'a_vista', description: 'À Vista', installments: 1, active: true }] }
+  ]) %>;
+
+  function initReqPayMethodsSelect() {
+    const methodSelect = document.getElementById('reqPayMethodSelect');
+    if (!methodSelect) return;
+
+    const currVal = methodSelect.value;
+    methodSelect.innerHTML = '';
+    allPaymentMethodsData.forEach(m => {
+      if (m.active !== false) {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        methodSelect.appendChild(opt);
+      }
+    });
+
+    if (currVal && Array.from(methodSelect.options).some(o => o.value === currVal)) {
+      methodSelect.value = currVal;
+    }
+
+    onReqPayMethodChange();
+  }
+
+  function onReqPayMethodChange() {
+    const methodSelect = document.getElementById('reqPayMethodSelect');
+    const condSelect = document.getElementById('reqPayConditionSelect');
+    if (!methodSelect || !condSelect) return;
+
+    const selectedMethodId = methodSelect.value;
+    const methodObj = allPaymentMethodsData.find(m => String(m.id) === String(selectedMethodId));
+
+    condSelect.innerHTML = '';
+    if (methodObj && Array.isArray(methodObj.conditions) && methodObj.conditions.length > 0) {
+      methodObj.conditions.forEach(c => {
+        if (c.active !== false) {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.description + (c.installments > 1 ? ` (${c.installments}x)` : '');
+          condSelect.appendChild(opt);
+        }
+      });
+    } else {
+      const opt = document.createElement('option');
+      opt.value = 'a_vista';
+      opt.textContent = 'À Vista';
+      condSelect.appendChild(opt);
+    }
+  }
+
+  function fillRemainingPayAmount() {
+    const subtotal = (currentRequisitionExams || []).reduce((acc, e) => acc + (parseFloat(e.price) || 0), 0);
+    const hiddenDisc = document.getElementById('req-discount');
+    const discount = hiddenDisc ? (parseFloat(hiddenDisc.value) || 0) : 0;
+    let total = subtotal - discount;
+    if (total < 0) total = 0;
+
+    const fatInput = document.getElementById('req-faturadoValInput');
+    const fatVal = fatInput ? (parseFloat(fatInput.value) || 0) : 0;
+    const balcaoDevido = Math.max(0, total - fatVal);
+
+    const currentPaid = (currentRequisitionPayments || []).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+    const remaining = balcaoDevido - currentPaid;
+
+    const amountInput = document.getElementById('reqPayAmountInput');
+    if (amountInput) {
+      amountInput.value = remaining > 0 ? remaining.toFixed(2) : '0.00';
+    }
+  }
+
+  function setMultiguiaFullFaturamento() {
+    setAllExamsBillingCategory('convenio');
+    fillRemainingPayAmount();
+  }
+
+  function setMultiguiaFullBalcao() {
+    setAllExamsBillingCategory('particular');
+    fillRemainingPayAmount();
+  }
+
+  function addPaymentToRequisitionList() {
+    const methodSelect = document.getElementById('reqPayMethodSelect');
+    const condSelect = document.getElementById('reqPayConditionSelect');
+    const amountInput = document.getElementById('reqPayAmountInput');
+    const dateInput = document.getElementById('reqPayDateInput');
+    const obsInput = document.getElementById('reqPayObsInput');
+
+    if (!methodSelect || !amountInput) return;
+
+    const val = parseFloat(amountInput.value) || 0;
+    if (val <= 0) {
+      alert('Por favor, informe um valor de pagamento válido maior que zero.');
+      amountInput.focus();
+      return;
+    }
+
+    const selectedMethodId = methodSelect.value;
+    const methodObj = allPaymentMethodsData.find(m => String(m.id) === String(selectedMethodId));
+    const methodName = methodObj ? methodObj.name : (methodSelect.options[methodSelect.selectedIndex]?.text || 'Dinheiro');
+
+    const condText = condSelect && condSelect.selectedIndex >= 0 ? condSelect.options[condSelect.selectedIndex].text : 'À Vista';
+
+    let dateVal = dateInput && dateInput.value ? dateInput.value : '';
+    if (!dateVal) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      dateVal = now.toISOString().slice(0, 16);
+    }
+
+    const obsVal = obsInput ? obsInput.value.trim() : '';
+
+    const newPayment = {
+      id: 'pay_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+      methodId: selectedMethodId,
+      methodName: methodName,
+      conditionName: condText,
+      amount: val,
+      date: dateVal,
+      obs: obsVal
+    };
+
+    currentRequisitionPayments.push(newPayment);
+
+    // Limpar campos
+    amountInput.value = '';
+    if (obsInput) obsInput.value = '';
+
+    renderRequisitionPaymentsTable();
+    calcFinancials();
+    fillRemainingPayAmount();
+  }
+
+  function removePaymentFromRequisitionList(index) {
+    if (index >= 0 && index < currentRequisitionPayments.length) {
+      currentRequisitionPayments.splice(index, 1);
+      renderRequisitionPaymentsTable();
+      calcFinancials();
+      fillRemainingPayAmount();
+    }
+  }
+
+  function renderRequisitionPaymentsTable() {
+    const tbody = document.getElementById('reqPaymentsTableBody');
+    const countBadge = document.getElementById('reqPayCountBadge');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    if (countBadge) countBadge.textContent = `${currentRequisitionPayments.length} lançamento(s)`;
+
+    if (currentRequisitionPayments.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-400 italic">
+            Nenhum pagamento lançado. O status permanecerá como Pendente.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    currentRequisitionPayments.forEach((p, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-slate-50 transition-all border-b border-gray-100";
+
+      let formattedDate = '---';
+      if (p.date) {
+        try {
+          formattedDate = new Date(p.date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        } catch(e) {
+          formattedDate = p.date;
+        }
+      }
+
+      tr.innerHTML = `
+        <td class="px-3.5 py-3 font-bold text-slate-900">${p.methodName}</td>
+        <td class="px-3.5 py-3 font-bold text-slate-600">${p.conditionName || 'À Vista'}</td>
+        <td class="px-3.5 py-3 text-right font-mono font-black text-emerald-700">R$ ${Number(p.amount).toFixed(2).replace('.', ',')}</td>
+        <td class="px-3.5 py-3 font-mono text-slate-600 text-[11px]">${formattedDate}</td>
+        <td class="px-3.5 py-3 text-slate-500 text-[11px] max-w-xs truncate">${p.obs || '---'}</td>
+        <td class="px-3.5 py-3 text-center">
+          <button type="button" onclick="removePaymentFromRequisitionList(${idx})" class="p-1.5 hover:bg-rose-100 text-rose-600 rounded-lg transition-all cursor-pointer" title="Remover Pagamento">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
 
   function calcFinancials() {
@@ -3360,8 +4113,96 @@
     let total = subtotal - discount;
     if (total < 0) total = 0;
 
+    // Multiguias / Faturamento
+    const isFat = isConvenioFaturamento();
+    const isMG = isMultiguiaActive();
+
+    let convenioCount = 0;
+    let convenioSum = 0;
+    let particularCount = 0;
+    let particularSum = 0;
+
+    (currentRequisitionExams || []).forEach(e => {
+      const p = parseFloat(e.price) || 0;
+      const cat = e.billingCategory || (isFat ? 'convenio' : 'particular');
+      if (cat === 'particular') {
+        particularCount++;
+        particularSum += p;
+      } else {
+        convenioCount++;
+        convenioSum += p;
+      }
+    });
+
+    const convSumElem = document.getElementById('examSummaryConvenioVal');
+    if (convSumElem) convSumElem.textContent = `${convenioCount} (${convenioCount === 1 ? '1 exame' : convenioCount + ' exames'}) - R$ ${convenioSum.toFixed(2).replace('.', ',')}`;
+
+    const partSumElem = document.getElementById('examSummaryParticularVal');
+    if (partSumElem) partSumElem.textContent = `${particularCount} (${particularCount === 1 ? '1 exame' : particularCount + ' exames'}) - R$ ${particularSum.toFixed(2).replace('.', ',')}`;
+
+    const fatInput = document.getElementById('req-faturadoValInput');
+    let faturadoVal = 0;
+    if (fatInput) {
+      if (fatInput.dataset.userTouched !== 'true') {
+        faturadoVal = isMG ? Math.min(total, convenioSum) : (isFat ? total : 0);
+        fatInput.value = faturadoVal.toFixed(2);
+      } else {
+        faturadoVal = parseFloat(fatInput.value) || 0;
+      }
+    } else {
+      faturadoVal = isMG ? Math.min(total, convenioSum) : (isFat ? total : 0);
+    }
+
+    const balcaoDevido = Math.max(0, total - faturadoVal);
+
+    // Atualizar resumo do Step 1 (quando a flag de Multiguias estiver ativa)
+    const st1Conv = document.getElementById('step1ConvenioVal');
+    if (st1Conv) st1Conv.textContent = 'R$ ' + (isMG ? convenioSum : (isFat ? total : 0)).toFixed(2).replace('.', ',');
+
+    const st1Part = document.getElementById('step1ParticularVal');
+    if (st1Part) st1Part.textContent = 'R$ ' + (isMG ? balcaoDevido : (isFat ? 0 : total)).toFixed(2).replace('.', ',');
+
+    const st1Tot = document.getElementById('step1TotalVal');
+    if (st1Tot) st1Tot.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+
+    // Calcular soma dos pagamentos da lista
+    const paidSum = (currentRequisitionPayments || []).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+
     const paidInput = document.getElementById('req-paidAmount');
-    const paid = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
+    if (paidInput) paidInput.value = paidSum.toFixed(2);
+    const paid = paidSum;
+
+    const balcaoRemaining = balcaoDevido - paid;
+
+    // Atualizar displays do Painel de Multiguias
+    const balcaoDevidoDisplay = document.getElementById('step3BalcaoDevidoDisplay');
+    if (balcaoDevidoDisplay) {
+      balcaoDevidoDisplay.textContent = 'R$ ' + balcaoDevido.toFixed(2).replace('.', ',');
+    }
+
+    const balcaoRemainingDisplay = document.getElementById('step3BalcaoRemainingDisplay');
+    if (balcaoRemainingDisplay) {
+      if (balcaoRemaining <= 0) {
+        balcaoRemainingDisplay.textContent = 'R$ 0,00 (QUITADO)';
+        balcaoRemainingDisplay.className = 'text-sm font-extrabold font-mono text-emerald-700 block pt-0.5';
+      } else {
+        balcaoRemainingDisplay.textContent = 'R$ ' + balcaoRemaining.toFixed(2).replace('.', ',');
+        balcaoRemainingDisplay.className = 'text-sm font-extrabold font-mono text-amber-700 block pt-0.5';
+      }
+    }
+
+    // Atualizar JSON oculto dos pagamentos
+    const paymentsJsonElem = document.getElementById('req-paymentsJson');
+    if (paymentsJsonElem) paymentsJsonElem.value = JSON.stringify(currentRequisitionPayments || []);
+
+    if (currentRequisitionPayments && currentRequisitionPayments.length > 0) {
+      const uniqueMethods = [...new Set(currentRequisitionPayments.map(p => p.methodName).filter(Boolean))];
+      const uniqueConds = [...new Set(currentRequisitionPayments.map(p => p.conditionName).filter(Boolean))];
+      const reqMethodElem = document.getElementById('req-paymentMethod');
+      const reqCondElem = document.getElementById('req-paymentCondition');
+      if (reqMethodElem) reqMethodElem.value = uniqueMethods.join(' + ');
+      if (reqCondElem) reqCondElem.value = uniqueConds.join(' + ');
+    }
 
     const remaining = total - paid;
 
@@ -3395,37 +4236,96 @@
     if (totalInput) totalInput.value = total.toFixed(2);
 
     if (remainingDisplay && remainingLabel) {
-      if (remaining <= 0) {
-        remainingLabel.textContent = 'Troco / Quitado:';
+      if (balcaoRemaining <= 0) {
+        remainingLabel.textContent = 'Balcão Quitado:';
         remainingLabel.className = 'text-emerald-400 font-bold';
-        remainingDisplay.textContent = 'R$ ' + Math.abs(remaining).toFixed(2).replace('.', ',');
+        remainingDisplay.textContent = 'R$ ' + Math.abs(balcaoRemaining).toFixed(2).replace('.', ',');
         remainingDisplay.className = 'text-emerald-300 font-black';
       } else {
-        remainingLabel.textContent = 'Saldo Devedor:';
+        remainingLabel.textContent = 'Balcão Devedor:';
         remainingLabel.className = 'text-amber-400 font-bold';
-        remainingDisplay.textContent = 'R$ ' + remaining.toFixed(2).replace('.', ',');
+        remainingDisplay.textContent = 'R$ ' + balcaoRemaining.toFixed(2).replace('.', ',');
         remainingDisplay.className = 'text-amber-300 font-black';
       }
     }
 
-    if (statusSelect) {
-      const pm = document.getElementById('req-paymentMethod')?.value || '';
-      if (pm.includes('Convênio')) {
-        statusSelect.value = 'Faturado Convênio';
-      } else if (pm.includes('Cortesia')) {
-        statusSelect.value = 'Cortesia';
-      } else if (paid >= total && total > 0) {
-        statusSelect.value = 'Pago';
-      } else if (paid > 0 && paid < total) {
-        statusSelect.value = 'Parcial';
-      } else if (paid === 0) {
-        statusSelect.value = 'Pendente';
+    let calculatedStatus = 'Pendente';
+    if (faturadoVal >= total && total > 0) {
+      calculatedStatus = 'Faturado Convênio';
+    } else if (faturadoVal > 0 && balcaoDevido > 0) {
+      if (paid >= balcaoDevido) {
+        calculatedStatus = 'Faturado + Quitado';
+      } else {
+        calculatedStatus = 'Parcial';
+      }
+    } else if (paid >= total && total > 0) {
+      calculatedStatus = 'Pago';
+    } else if (paid > 0 && paid < total) {
+      calculatedStatus = 'Parcial';
+    } else if (paid === 0) {
+      calculatedStatus = 'Pendente';
+    }
+
+    if (statusSelect) statusSelect.value = calculatedStatus;
+
+    // Atualizar displays da Etapa 3 (Resumo de Pagamentos)
+    const st3Subtotal = document.getElementById('step3SubtotalDisplay');
+    const st3Discount = document.getElementById('step3DiscountDisplay');
+    const st3Total = document.getElementById('step3TotalDisplay');
+    const st3Paid = document.getElementById('step3PaidDisplay');
+    const st3Remaining = document.getElementById('step3RemainingDisplay');
+    const st3RemainingLabel = document.getElementById('step3RemainingLabel');
+    const st3StatusBadge = document.getElementById('step3StatusBadge');
+
+    if (st3Subtotal) st3Subtotal.textContent = formattedSub;
+    if (st3Discount) st3Discount.textContent = 'R$ ' + discount.toFixed(2).replace('.', ',');
+    if (st3Total) st3Total.textContent = formattedTot;
+    if (st3Paid) st3Paid.textContent = 'R$ ' + paid.toFixed(2).replace('.', ',');
+
+    if (st3Remaining && st3RemainingLabel) {
+      if (balcaoRemaining <= 0) {
+        st3RemainingLabel.textContent = 'BALCÃO QUITADO';
+        st3RemainingLabel.className = 'block text-[10px] font-bold text-emerald-700 uppercase tracking-wider';
+        st3Remaining.textContent = 'R$ ' + Math.abs(balcaoRemaining).toFixed(2).replace('.', ',');
+        st3Remaining.className = 'text-sm font-extrabold font-mono text-emerald-700';
+      } else {
+        st3RemainingLabel.textContent = 'SALDO DEVEDOR BALCÃO';
+        st3RemainingLabel.className = 'block text-[10px] font-bold text-amber-700 uppercase tracking-wider';
+        st3Remaining.textContent = 'R$ ' + balcaoRemaining.toFixed(2).replace('.', ',');
+        st3Remaining.className = 'text-sm font-extrabold font-mono text-amber-700';
+      }
+    }
+
+    if (st3StatusBadge) {
+      if (calculatedStatus === 'Pago' || calculatedStatus === 'Faturado Convênio' || calculatedStatus === 'Cortesia' || calculatedStatus === 'Faturado + Quitado') {
+        st3StatusBadge.className = "px-3 py-1 rounded-xl text-xs font-mono font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300";
+        st3StatusBadge.textContent = "QUITADO (" + calculatedStatus + ")";
+      } else if (calculatedStatus === 'Parcial') {
+        st3StatusBadge.className = "px-3 py-1 rounded-xl text-xs font-mono font-black uppercase bg-sky-100 text-sky-900 border border-sky-300";
+        st3StatusBadge.textContent = "PARCIAL";
+      } else {
+        st3StatusBadge.className = "px-3 py-1 rounded-xl text-xs font-mono font-black uppercase bg-amber-100 text-amber-900 border border-amber-300";
+        st3StatusBadge.textContent = "PENDENTE";
       }
     }
 
     const stepBadge = document.getElementById('stepTabExamsBadge');
     if (stepBadge) {
       stepBadge.textContent = `${currentRequisitionExams.length} exame(s) (${formattedTot})`;
+    }
+
+    const payTabBadge = document.getElementById('stepTabPaymentsBadge');
+    if (payTabBadge) {
+      if (paid >= total && total > 0) {
+        payTabBadge.className = "bg-emerald-100 text-emerald-900 text-[10px] font-mono px-2 py-0.5 rounded-full font-extrabold border border-emerald-300/80";
+        payTabBadge.textContent = `Quitado (R$ ${paid.toFixed(2).replace('.', ',')})`;
+      } else if (paid > 0) {
+        payTabBadge.className = "bg-sky-100 text-sky-900 text-[10px] font-mono px-2 py-0.5 rounded-full font-extrabold border border-sky-300/80";
+        payTabBadge.textContent = `Parcial (R$ ${paid.toFixed(2).replace('.', ',')})`;
+      } else {
+        payTabBadge.className = "bg-amber-100 text-amber-900 text-[10px] font-mono px-2 py-0.5 rounded-full font-extrabold border border-amber-300/80";
+        payTabBadge.textContent = `Pendente (R$ 0,00)`;
+      }
     }
   }
 
@@ -3744,8 +4644,10 @@
     document.getElementById('requisitionMainForm').reset();
     document.getElementById('req-id').value = '';
     currentRequisitionExams = [];
+    currentRequisitionPayments = [];
     switchRequisitionStep(1);
     renderExamsTable();
+    renderRequisitionPaymentsTable();
     calcFinancials();
     
     // Esconder o Card de Identificador da Requisição no cadastro de nova requisição
@@ -3770,7 +4672,16 @@
       onDeliveryDaysInput();
     }
 
-    // Reset do desconto e modo R$ / %
+    // Reset do desconto, multiguias e modo R$ / %
+    const chkMG = document.getElementById('req-isMultiguia');
+    if (chkMG) chkMG.checked = false;
+    toggleMultiguiaMode();
+
+    const fatInput = document.getElementById('req-faturadoValInput');
+    if (fatInput) {
+      fatInput.value = '0.00';
+      delete fatInput.dataset.userTouched;
+    }
     if (document.getElementById('req-discountValInput')) document.getElementById('req-discountValInput').value = '0.00';
     if (document.getElementById('req-discount')) document.getElementById('req-discount').value = '0.00';
     if (document.getElementById('req-discountPercent')) document.getElementById('req-discountPercent').value = '0';
@@ -4111,6 +5022,15 @@
   // --- SUBMETER FORMULÁRIO PRINCIPAL ---
   async function handleFormSubmit(e) {
     e.preventDefault();
+
+    // Se o usuário preencheu um valor no campo temporário de lançamento de pagamento, incluir automaticamente na lista
+    const tempPayAmount = parseFloat(document.getElementById('reqPayAmountInput')?.value || 0);
+    if (tempPayAmount > 0) {
+      addPaymentToRequisitionList();
+    } else {
+      calcFinancials();
+    }
+
     const form = document.getElementById('requisitionMainForm');
     
     // Atualizar campo oculto de exames com o estado atual
@@ -4268,8 +5188,8 @@
     renderExamsTable();
   }
 
-  function selectRequisitionToForm(reqId) {
-    const req = requisitionsData.find(r => r.id === reqId);
+  function selectRequisitionToForm(reqId, targetStep = 1) {
+    const req = requisitionsData.find(r => String(r.id) === String(reqId) || String(r.requisitionCode) === String(reqId));
     if (!req) return;
 
     const isCancelado = String(req.status || '').toLowerCase().includes('cancel');
@@ -4358,6 +5278,16 @@
       currentRequisitionExams = [];
     }
 
+    const fatInput = document.getElementById('req-faturadoValInput');
+    if (fatInput) {
+      if (req.faturadoAmount !== undefined && req.faturadoAmount !== null && req.faturadoAmount !== '') {
+        fatInput.value = parseFloat(req.faturadoAmount).toFixed(2);
+        fatInput.dataset.userTouched = 'true';
+      } else {
+        delete fatInput.dataset.userTouched;
+      }
+    }
+
     if (document.getElementById('req-discount')) document.getElementById('req-discount').value = req.discount || '0.00';
     if (document.getElementById('req-discountPercent')) document.getElementById('req-discountPercent').value = req.discountPercent || '0';
     if (document.getElementById('req-discountValInput')) document.getElementById('req-discountValInput').value = req.discount || '0.00';
@@ -4387,8 +5317,40 @@
     if (document.getElementById('req-notifyWhatsapp')) document.getElementById('req-notifyWhatsapp').checked = req.notifyWhatsapp !== false;
     if (document.getElementById('req-separateLabel')) document.getElementById('req-separateLabel').checked = !!req.separateLabel;
 
-    switchRequisitionStep(1);
+    // Carregar dados de Pagamentos
+    if (Array.isArray(req.payments) && req.payments.length > 0) {
+      currentRequisitionPayments = [...req.payments];
+    } else if (typeof req.payments === 'string' && req.payments.trim().startsWith('[')) {
+      try {
+        currentRequisitionPayments = JSON.parse(req.payments);
+      } catch(e) {
+        currentRequisitionPayments = [];
+      }
+    } else if (parseFloat(req.paidAmount) > 0) {
+      currentRequisitionPayments = [{
+        id: 'pay_legacy_1',
+        methodName: req.paymentMethod || 'Dinheiro',
+        conditionName: req.paymentCondition || 'À Vista',
+        amount: parseFloat(req.paidAmount),
+        date: req.fatura ? (req.fatura + 'T12:00') : new Date().toISOString().slice(0, 16),
+        obs: 'Lançamento do cadastro'
+      }];
+    } else {
+      currentRequisitionPayments = [];
+    }
+
+    // Atualizar estado da flag Multiguias
+    const chkMG = document.getElementById('req-isMultiguia');
+    if (chkMG) {
+      const hasFatVal = req.faturadoAmount !== undefined && req.faturadoAmount !== null && parseFloat(req.faturadoAmount) > 0;
+      const hasMixedExams = currentRequisitionExams.some(e => e.billingCategory === 'particular') && currentRequisitionExams.some(e => e.billingCategory === 'convenio');
+      chkMG.checked = !!(req.isMultiguia || hasFatVal || hasMixedExams);
+    }
+    toggleMultiguiaMode();
+
+    switchRequisitionStep(targetStep, true);
     renderExamsTable();
+    renderRequisitionPaymentsTable();
     calcFinancials();
 
     // Atualizar o card visual de dados do paciente
@@ -4646,13 +5608,17 @@
   }
 
   function recalculateRequisitionExamPrices() {
-    if (!currentRequisitionExams || currentRequisitionExams.length === 0) return;
+    if (!currentRequisitionExams || currentRequisitionExams.length === 0) {
+      updateConvenioUI();
+      return;
+    }
     currentRequisitionExams.forEach(item => {
       const foundInAvailable = availableExamsList.find(e => (e.code && e.code.toLowerCase() === (item.code || '').toLowerCase()) || (e.name && e.name.toLowerCase() === (item.name || '').toLowerCase()));
       item.price = getExamPriceForConvenio(foundInAvailable || item);
     });
     renderExamsTable();
     calcFinancials();
+    updateConvenioUI();
   }
 
   let currentGenericItemsList = [];
@@ -5107,12 +6073,24 @@
     if (isReqModalOpen && e.altKey) {
       if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        switchRequisitionStep(1);
+        const step2 = document.getElementById('requisitionStep2');
+        const step3 = document.getElementById('requisitionStep3');
+        if (step3 && !step3.classList.contains('hidden')) {
+          switchRequisitionStep(2);
+        } else {
+          switchRequisitionStep(1);
+        }
         return;
       }
       if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'p') {
         e.preventDefault();
-        switchRequisitionStep(2);
+        const step1 = document.getElementById('requisitionStep1');
+        const step2 = document.getElementById('requisitionStep2');
+        if (step1 && !step1.classList.contains('hidden')) {
+          switchRequisitionStep(2);
+        } else if (step2 && !step2.classList.contains('hidden')) {
+          switchRequisitionStep(3);
+        }
         return;
       }
     }

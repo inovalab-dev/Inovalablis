@@ -5674,34 +5674,101 @@ async function generatePdfForRequisition(reqFound) {
           doc.strokeColor('#cbd5e1').lineWidth(0.5).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
           doc.moveDown(2.3);
 
-          if (linhasToRender.length > 0) {
-            linhasToRender.forEach(l => {
-              if (doc.y > 730) doc.addPage();
+          const modeloLaudo = ex.modeloLaudo || (catEx && catEx.modeloLaudo) || 'Padrão LIS InovaLab';
+          const isHemogramaModel = modeloLaudo === 'Modelo Hemograma Completo' || modeloLaudo === 'Modelo Hematologia em Colunas' || ((examTitle.includes('HEMOGRAMA') || examTitle.includes('HEMOGRAMA COMPLETO')) && modeloLaudo !== 'Padrão LIS InovaLab');
 
-              const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
-              const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
-              let paramDisplay = isGenericParam
-                ? 'Resultado...:'
-                : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+          if (isHemogramaModel) {
+            // RENDERIZAÇÃO DO MODELO ESPECÍFICO DE HEMOGRAMA COMPLETO
+            const rawResText = String(ex.resultado || ex.result || ex.resultadoText || '').trim();
+            const resLines = rawResText ? rawResText.split('\n') : [];
 
-              let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
-              let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
-              if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
-                unitStr = '';
-              }
+            if (linhasToRender.length > 0) {
+              linhasToRender.forEach(l => {
+                if (doc.y > 730) doc.addPage();
+                const pName = String(l.PARAMETRO || l.part1 || '').trim();
+                const isSecHeader = pName.startsWith('===') || pName.startsWith('[') || pName.toUpperCase().includes('SÉRIE') || pName.toUpperCase().includes('ERITROGRAMA') || pName.toUpperCase().includes('LEUCOGRAMA') || pName.toUpperCase().includes('PLAQUETAS');
 
+                if (isSecHeader) {
+                  doc.moveDown(0.3);
+                  const sY = doc.y;
+                  doc.rect(40, sY, 515, 14).fillAndStroke('#e2e8f0', '#cbd5e1');
+                  doc.fillColor('#1e293b').fontSize(9).font('Courier-Bold').text(pName.replace(/^[=\[\s]+|[=\]\s]+$/g, ''), 45, sY + 2, { width: 505, align: 'left' });
+                  doc.y = sY + 18;
+                } else {
+                  const lineY = doc.y;
+                  let paramDisp = pName ? (pName.endsWith(':') ? pName : pName + '...:') : 'Parâmetro:';
+                  let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+                  let unitStr = String(l.unidade || '').trim();
+                  doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(paramDisp, 45, lineY, { width: 220 });
+                  doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(`${valStr} ${unitStr}`.trim(), 260, lineY, { align: 'left', width: 295 });
+                  doc.y = lineY + 14;
+                }
+              });
+            } else if (resLines.length > 0) {
+              resLines.forEach(l => {
+                if (doc.y > 730) doc.addPage();
+                const trimmed = l.trim();
+                if (!trimmed) return;
+
+                const isSecHeader = trimmed.startsWith('===') || trimmed.startsWith('[') || (trimmed.toUpperCase().includes('SÉRIE') && (trimmed.toUpperCase().includes('ERITROGRAMA') || trimmed.toUpperCase().includes('LEUCOGRAMA') || trimmed.toUpperCase().includes('PLAQUETAS')));
+
+                if (isSecHeader) {
+                  doc.moveDown(0.2);
+                  const sY = doc.y;
+                  doc.rect(40, sY, 515, 14).fillAndStroke('#e2e8f0', '#cbd5e1');
+                  doc.fillColor('#1e293b').fontSize(9).font('Courier-Bold').text(trimmed.replace(/^[=\[\s]+|[=\]\s]+$/g, ''), 45, sY + 2, { width: 505, align: 'left' });
+                  doc.y = sY + 18;
+                } else if (trimmed.includes(':')) {
+                  const parts = trimmed.split(':');
+                  const pName = parts[0].trim();
+                  const pVal = parts.slice(1).join(':').trim();
+                  const lineY = doc.y;
+                  doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(pName + '...:', 45, lineY, { width: 220 });
+                  doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text(pVal, 260, lineY, { align: 'left', width: 295 });
+                  doc.y = lineY + 14;
+                } else {
+                  const lineY = doc.y;
+                  doc.fillColor('#0f172a').fontSize(11).font('Courier').text(trimmed, 45, lineY, { width: 510 });
+                  doc.y = lineY + 14;
+                }
+              });
+            } else {
               const lineY = doc.y;
-              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
-              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${valStr}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
+              doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
+              doc.fillColor('#0f172a').fontSize(11).font('Courier-Bold').text('Sem resultado cadastrado', 170, lineY, { align: 'left', width: 315 });
               doc.y = lineY + 16;
-            });
+            }
           } else {
-            const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
-            const unitStr = String(ex.unidade || ex.unit || '').trim();
-            const lineY = doc.y;
-            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
-            doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${rawRes}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
-            doc.y = lineY + 16;
+            // MODELO PADRÃO LIS INOVALAB (PADRÃO PARA DEMAIS EXAMES)
+            if (linhasToRender.length > 0) {
+              linhasToRender.forEach(l => {
+                if (doc.y > 730) doc.addPage();
+
+                const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+                const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+                let paramDisplay = isGenericParam
+                  ? 'Resultado...:'
+                  : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+
+                let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+                let unitStr = String(l.unidade || ex.unidade || ex.unit || '').trim();
+                if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+                  unitStr = '';
+                }
+
+                const lineY = doc.y;
+                doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(paramDisplay, 45, lineY, { width: 180 });
+                doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${valStr}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
+                doc.y = lineY + 16;
+              });
+            } else {
+              const rawRes = String(ex.resultado || ex.result || ex.resultadoText || 'Sem resultado').trim();
+              const unitStr = String(ex.unidade || ex.unit || '').trim();
+              const lineY = doc.y;
+              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text('Resultado...:', 45, lineY, { width: 180 });
+              doc.fillColor('#0f172a').fontSize(14.5).font('Courier-Bold').text(`${rawRes}${unitStr ? '' + unitStr : ''}`, 170, lineY, { align: 'left', width: 315 });
+              doc.y = lineY + 16;
+            }
           }
 
           doc.moveDown(1.3);

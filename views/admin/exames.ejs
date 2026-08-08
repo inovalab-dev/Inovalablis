@@ -1454,6 +1454,7 @@
               <label class="block font-bold text-slate-700 font-mono mb-1 text-xs">Modelo de Laudo de Impressão Base:</label>
               <select id="mod-modelo-laudo" name="modeloLaudo" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-xs focus:border-[#284701] focus:bg-white transition-all">
                 <option value="Padrão LIS InovaLab">Padrão LIS InovaLab</option>
+                <option value="Modelo Hemograma Completo">Modelo Hemograma Completo (Eritrograma, Leucograma, Plaquetas)</option>
                 <option value="Modelo Hematologia em Colunas">Modelo Hematologia em Colunas</option>
                 <option value="Modelo Microbiologia & Antibiograma">Modelo Microbiologia & Antibiograma</option>
                 <option value="Modelo Texto Livre (Laudo Estruturado)">Modelo Texto Livre (Laudo Estruturado)</option>
@@ -1494,6 +1495,14 @@
                 <span class="text-[10px] font-sans text-slate-500">💡 Use &lt;b&gt;TEXTO&lt;/b&gt; para negrito</span>
               </div>
               <textarea id="mod-observacoes-laudo" name="observacoesLaudo" rows="3" placeholder="Escreva observações, notas técnicas (ex: <b>Amostra hemolisada</b>) para constar no laudo..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg font-medium text-xs focus:border-[#284701] focus:bg-white transition-all"></textarea>
+            </div>
+
+            <!-- Preenchimento Rápido Modelo Hemograma -->
+            <div class="md:col-span-2 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-600 font-mono">Preenchimento Rápido de Modelo:</span>
+              <button type="button" onclick="loadHemogramaStandardTemplate()" class="px-3 py-1.5 bg-[#284701] hover:bg-[#1E3E17] text-white font-mono font-bold text-xs rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                <span>🩸</span> Inserir Parâmetros Padrão do Hemograma
+              </button>
             </div>
           </div>
         </div>
@@ -5356,5 +5365,37 @@
     </div>
   </div>
 </div>
+
+<script>
+function loadHemogramaStandardTemplate() {
+  if (confirm('Deseja preencher os campos com o modelo padrão de laudo para Hemograma Completo?')) {
+    if (document.getElementById('mod-modelo-laudo')) document.getElementById('mod-modelo-laudo').value = 'Modelo Hemograma Completo';
+    if (document.getElementById('mod-titulo-laudo')) document.getElementById('mod-titulo-laudo').value = 'HEMOGRAMA COMPLETO';
+    if (document.getElementById('mod-material-laudo')) document.getElementById('mod-material-laudo').value = 'Sangue Total (EDTA)';
+    if (document.getElementById('mod-metodo-laudo')) document.getElementById('mod-metodo-laudo').value = 'Automatizado (Impedância / Citometria de Fluxo)';
+    if (document.getElementById('mod-valor-referencia-laudo')) {
+      document.getElementById('mod-valor-referencia-laudo').value = 
+`[ERITROGRAMA]
+Hemácias: Homens: 4.30 - 5.90 M/µL | Mulheres: 4.00 - 5.20 M/µL
+Hemoglobina: Homens: 13.5 - 17.5 g/dL | Mulheres: 12.0 - 15.5 g/dL
+Hematócrito: Homens: 39.0 - 52.0 % | Mulheres: 35.0 - 47.0 %
+VCM: 80.0 - 98.0 fL | HCM: 27.0 - 33.0 pg | CHCM: 32.0 - 36.0 g/dL | RDW: 11.5 - 14.5 %
+
+[LEUCOGRAMA]
+Leucócitos Totais: 4.000 a 11.000 /mm³
+Bastonetes: 1 a 5 % (40 a 550 /mm³) | Segmentados: 40 a 70 % (1.600 a 7.700 /mm³)
+Eosinófilos: 1 a 5 % (40 a 500 /mm³) | Basófilos: 0 a 1 % (0 a 100 /mm³)
+Linfócitos: 20 a 45 % (800 a 4.000 /mm³) | Monócitos: 2 a 10 % (80 a 1.000 /mm³)
+
+[PLAQUETAS]
+Contagem de Plaquetas: 150.000 a 450.000 /mm³ | VMP: 7.0 a 11.0 fL`;
+    }
+    if (document.getElementById('mod-observacoes-laudo')) {
+      document.getElementById('mod-observacoes-laudo').value = 'Morfologia eritrocitária e leucocitária sem alterações significativas no esfregaço sanguíneo.';
+    }
+    if (typeof showToast === 'function') showToast('Modelo de Hemograma Completo carregado com sucesso!', 'success');
+  }
+}
+</script>
 
 <%- include('../partials/footer') %>

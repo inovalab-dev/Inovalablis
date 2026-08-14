@@ -1,0 +1,17 @@
+<%
+  // Resolving default parameters
+  const layout = typeof locals.layout !== 'undefined' ? locals.layout : 'horizontal'; // 'horizontal', 'stacked', 'icon-only'
+  const variant = typeof locals.variant !== 'undefined' ? locals.variant : 'light';     // 'light', 'dark'
+  const showSlogan = typeof locals.showSlogan !== 'undefined' ? locals.showSlogan : true;
+  const heightClass = typeof locals.height !== 'undefined' ? locals.height : 'h-11';
+%>
+
+<div class="flex <%= layout === 'stacked' ? 'flex-col items-center text-center space-y-3' : 'items-center space-x-3' %> group">
+  <img 
+    src="/logo-inovalab-branco.png" 
+    alt="InovaLab - Cuidando da sua Saúde" 
+    class="<%= heightClass %> w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
+    onerror="this.onerror=null; this.src='/logo-inovalab.png';"
+  />
+</div>
+

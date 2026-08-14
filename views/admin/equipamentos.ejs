@@ -1,0 +1,466 @@
+<%- include('../partials/header', { page: 'admin-interfaceamento-equipamentos' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab / LIS) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <a href="/admin/interfaceamento" class="hover:text-brand-neutralDark transition-colors">Interface</a>
+        <span>•</span>
+        <span class="text-emerald-700 font-bold">Equipamentos</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Equipamentos -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-xs flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-2xs">
+            +
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Cadastro de Equipamentos Interfaceados
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Cadastre e gerencie a chave, descrição e o setor dos equipamentos conectados ao LIS.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões Principais de Ação -->
+    <div class="flex items-center gap-3">
+      <button 
+        type="button" 
+        onclick="openNewEquipmentModal()" 
+        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Equipamento</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo dos Equipamentos -->
+  <% 
+    const listEq = typeof equipamentos !== 'undefined' && Array.isArray(equipamentos) ? equipamentos : [];
+    const listSet = typeof setores !== 'undefined' && Array.isArray(setores) ? setores : [];
+    const totalEq = listEq.length;
+    
+    // Contagem de setores únicos vinculados a equipamentos
+    const uniqueSectors = new Set();
+    listEq.forEach(eq => { if (eq.setor) uniqueSectors.add(eq.setor); });
+  %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total Registrados</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalEq %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">🔬</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Setores Vinculados</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5"><%= uniqueSectors.size %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">🏢</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-blue-600 uppercase font-mono tracking-wider">Tabela de Setores</p>
+        <p class="text-2xl font-black text-blue-700 font-mono mt-0.5"><%= listSet.length %> disponíveis</p>
+      </div>
+      <a href="/admin/setores" title="Gerenciar Setores Cadastrados" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+        <span>📋 Setores</span> &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- TABELA / LISTA PRINCIPAL DE EQUIPAMENTOS -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Lista de Equipamentos Interfaceados</span>
+        <span id="equipCounterBadge" class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold font-mono">
+          <%= totalEq %> cadastrados
+        </span>
+      </div>
+
+      <!-- Filtro de Busca -->
+      <div class="relative w-full md:w-80">
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          id="searchEquipInput" 
+          oninput="filterEquipments()" 
+          placeholder="Buscar por chave, descrição ou setor..." 
+          class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all"
+        />
+      </div>
+
+    </div>
+
+    <!-- Tabela -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse" id="equipmentsTable">
+        <thead>
+          <tr class="bg-slate-100/70 border-b border-gray-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider font-mono">
+            <th class="py-3 px-4 w-48">Chave</th>
+            <th class="py-3 px-4">Descrição (Nome do Equipamento)</th>
+            <th class="py-3 px-4 w-64">Setor</th>
+            <th class="py-3 px-4 text-right w-32">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs text-slate-700">
+          <% if (totalEq === 0) { %>
+            <tr id="noEquipRow">
+              <td colspan="4" class="py-12 text-center text-gray-500">
+                <span class="text-3xl block mb-2">🔬</span>
+                <p class="font-bold text-sm text-slate-700">Nenhum equipamento cadastrado</p>
+                <p class="text-xs text-slate-500 mt-1">Clique no botão "+ Novo Equipamento" acima para realizar o cadastro.</p>
+              </td>
+            </tr>
+          <% } else { %>
+            <% listEq.forEach(function(eq) { %>
+              <% 
+                const eqId = eq.id || eq.chave || eq.codigo || '';
+                const eqChave = eq.chave || eq.codigo || eq.id || 'N/A';
+                const eqDesc = eq.descricao || eq.nome || eq.name || '';
+                const eqSetor = eq.setor || 'Geral';
+                const eqSetorId = eq.setorId || '';
+
+                // Busca o objeto do setor correspondente na tabela de setores
+                const linkedSetor = listSet.find(s => 
+                  (eqSetorId && String(s.id) === String(eqSetorId)) || 
+                  (s.descricao && s.descricao.toLowerCase() === eqSetor.toLowerCase()) ||
+                  (s.nome && s.nome.toLowerCase() === eqSetor.toLowerCase())
+                );
+                const displaySetorNome = linkedSetor ? (linkedSetor.descricao || linkedSetor.nome || eqSetor) : eqSetor;
+                const displaySetorSigla = linkedSetor && linkedSetor.sigla ? linkedSetor.sigla : '';
+                const displaySetorCod = linkedSetor && linkedSetor.codigo ? linkedSetor.codigo : '';
+              %>
+              <tr 
+                class="equip-row hover:bg-slate-50/80 transition-colors"
+                data-search="<%= (eqChave + ' ' + eqDesc + ' ' + displaySetorNome + ' ' + displaySetorSigla).toLowerCase() %>"
+              >
+                <td class="py-3 px-4 font-mono font-bold text-emerald-800">
+                  <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-xs font-mono font-bold">
+                    🔑 <%= eqChave %>
+                  </span>
+                </td>
+
+                <td class="py-3 px-4">
+                  <span class="font-bold text-slate-900 text-sm block"><%= eqDesc %></span>
+                </td>
+
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200/80 px-2.5 py-1 rounded-lg text-xs font-medium">
+                    🏢 <span class="font-bold"><%= displaySetorNome %></span>
+                    <% if (displaySetorSigla) { %>
+                      <span class="px-1.5 py-0.2 bg-blue-200/60 text-blue-900 rounded font-mono text-[10px] font-bold"><%= displaySetorSigla %></span>
+                    <% } else if (displaySetorCod) { %>
+                      <span class="px-1.5 py-0.2 bg-blue-200/60 text-blue-900 rounded font-mono text-[10px] font-bold">Cód <%= displaySetorCod %></span>
+                    <% } %>
+                  </span>
+                </td>
+
+                <td class="py-3 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button 
+                      type="button" 
+                      onclick="editEquipment('<%= eqId %>', '<%= (eqChave).replace(/'/g, "\\'") %>', '<%= (eqDesc).replace(/'/g, "\\'") %>', '<%= (displaySetorNome).replace(/'/g, "\\'") %>', '<%= (eqSetorId || (linkedSetor ? linkedSetor.id : '')).replace(/'/g, "\\'") %>')" 
+                      class="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1"
+                      title="Editar Equipamento"
+                    >
+                      ✏️ Editar
+                    </button>
+                    <button 
+                      type="button" 
+                      onclick="deleteEquipment('<%= eqId %>', '<%= (eqDesc).replace(/'/g, "\\'") %>')" 
+                      class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1"
+                      title="Excluir Equipamento"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL: CADASTRAR / EDITAR EQUIPAMENTO -->
+<div id="equipmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full border border-gray-200 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="p-4 bg-emerald-800 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🔬</span>
+        <h3 id="eqModalTitle" class="text-sm font-bold tracking-wide">
+          Cadastrar Novo Equipamento
+        </h3>
+      </div>
+      <button type="button" onclick="closeEquipmentModal()" class="text-white/80 hover:text-white font-bold text-xl cursor-pointer leading-none">&times;</button>
+    </div>
+
+    <!-- Formulário do Modal -->
+    <form id="equipmentForm" action="/admin/interfaceamento/equipamentos/salvar" method="POST" onsubmit="handleEquipmentSubmit(event)" class="p-5 space-y-4 text-xs">
+      <input type="hidden" name="id" id="eqFormId" value="" />
+
+      <!-- Campo 1: Chave -->
+      <div>
+        <label for="eqFormChave" class="block font-bold text-slate-700 mb-1">
+          Chave (Código / Identificador) *
+        </label>
+        <input 
+          type="text" 
+          name="chave" 
+          id="eqFormChave" 
+          placeholder="Ex: URIT8021, SYSMEX_XN550, BIOQ_01" 
+          required 
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none" 
+        />
+        <p class="text-[11px] text-slate-400 mt-1">Campo aberto de texto para identificar a chave do equipamento no protocolo.</p>
+      </div>
+
+      <!-- Campo 2: Descrição (Nome do Equipamento) -->
+      <div>
+        <label for="eqFormDescricao" class="block font-bold text-slate-700 mb-1">
+          Descrição (Nome do Equipamento) *
+        </label>
+        <input 
+          type="text" 
+          name="descricao" 
+          id="eqFormDescricao" 
+          placeholder="Ex: Urit 8021A (Bioquímica Clínica)" 
+          required 
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none" 
+        />
+        <p class="text-[11px] text-slate-400 mt-1">Nome amigável ou descrição completa do equipamento.</p>
+      </div>
+
+      <!-- Campo 3: Setor (Relação com Tabela de Setor) -->
+      <div>
+        <label for="eqFormSetor" class="block font-bold text-slate-700 mb-1">
+          Setor (Tabela de Setores) *
+        </label>
+        <input type="hidden" name="setorId" id="eqFormSetorId" value="" />
+        <select 
+          name="setor" 
+          id="eqFormSetor" 
+          onchange="updateSetorId(this)"
+          required 
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none cursor-pointer bg-white"
+        >
+          <option value="" data-id="">-- Selecione um Setor --</option>
+          <% if (listSet.length > 0) { %>
+            <% listSet.forEach(function(s) { %>
+              <% const nomeSetor = s.descricao || s.nome || s.name || s.setor; %>
+              <% const sId = s.id || ''; %>
+              <% const sSigla = s.sigla ? ' (' + s.sigla + ')' : ''; %>
+              <% if (nomeSetor) { %>
+                <option value="<%= nomeSetor %>" data-id="<%= sId %>">
+                  <%= s.codigo ? s.codigo + ' - ' : '' %><%= nomeSetor %><%= sSigla %>
+                </option>
+              <% } %>
+            <% }); %>
+          <% } else { %>
+            <option value="" data-id="" disabled>Nenhum setor cadastrado (Cadastre em Administracao > Setores)</option>
+          <% } %>
+        </select>
+        <p class="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+          <span>Setor cadastrado na tabela de setores do laboratório.</span>
+          <a href="/admin/setores" target="_blank" class="text-blue-600 hover:underline font-bold text-[10px]">Cadastrar Novo Setor &rarr;</a>
+        </p>
+      </div>
+
+      <!-- Rodapé com botões de ação -->
+      <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+        <button type="button" onclick="closeEquipmentModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs cursor-pointer transition-colors flex items-center gap-1.5">
+          <span>💾</span> Salvar Equipamento
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function filterEquipments() {
+    const rawVal = (document.getElementById('searchEquipInput').value || '').trim().toLowerCase();
+    const searchVal = rawVal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    const rows = document.querySelectorAll('#equipmentsTable .equip-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const rowSearch = (row.getAttribute('data-search') || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (!searchVal || rowSearch.includes(searchVal)) {
+        row.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+
+    const badge = document.getElementById('equipCounterBadge');
+    if (badge) {
+      badge.innerText = visibleCount + ' cadastrados';
+    }
+  }
+
+  function updateSetorId(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const setorIdInput = document.getElementById('eqFormSetorId');
+    if (setorIdInput && selectedOption) {
+      setorIdInput.value = selectedOption.getAttribute('data-id') || '';
+    }
+  }
+
+  function openNewEquipmentModal() {
+    document.getElementById('eqModalTitle').innerText = 'Cadastrar Novo Equipamento';
+    document.getElementById('eqFormId').value = '';
+    document.getElementById('eqFormChave').value = '';
+    document.getElementById('eqFormDescricao').value = '';
+    document.getElementById('eqFormSetor').value = '';
+    document.getElementById('eqFormSetorId').value = '';
+    
+    document.getElementById('equipmentModal').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('eqFormChave').focus();
+    }, 50);
+  }
+
+  function editEquipment(id, chave, descricao, setor, setorId) {
+    document.getElementById('eqModalTitle').innerText = 'Editar Equipamento';
+    document.getElementById('eqFormId').value = id || '';
+    document.getElementById('eqFormChave').value = chave || '';
+    document.getElementById('eqFormDescricao').value = descricao || '';
+    document.getElementById('eqFormSetorId').value = setorId || '';
+    
+    const selectSetor = document.getElementById('eqFormSetor');
+    if (selectSetor) {
+      selectSetor.value = setor || '';
+      // Se não encontrou pelo valor direto (nome), tenta encontrar pelo data-id ou por comparação case-insensitive
+      let found = false;
+      if (setorId) {
+        for (let i = 0; i < selectSetor.options.length; i++) {
+          if (selectSetor.options[i].getAttribute('data-id') === String(setorId)) {
+            selectSetor.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found && setor) {
+        for (let i = 0; i < selectSetor.options.length; i++) {
+          if (selectSetor.options[i].value.toLowerCase() === setor.toLowerCase()) {
+            selectSetor.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+      }
+      updateSetorId(selectSetor);
+    }
+
+    document.getElementById('equipmentModal').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('eqFormChave').focus();
+    }, 50);
+  }
+
+  function closeEquipmentModal() {
+    document.getElementById('equipmentModal').classList.add('hidden');
+  }
+
+  async function handleEquipmentSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const bodyObj = {
+      id: formData.get('id'),
+      chave: formData.get('chave'),
+      descricao: formData.get('descricao'),
+      setor: formData.get('setor'),
+      setorId: formData.get('setorId')
+    };
+
+    try {
+      const resp = await fetch('/admin/interfaceamento/equipamentos/salvar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(bodyObj)
+      });
+
+      const json = await resp.json();
+
+      if (json.success) {
+        window.location.reload();
+      } else {
+        alert(json.message || 'Erro ao salvar equipamento.');
+      }
+    } catch(err) {
+      console.error(err);
+      // Fallback para envio do form tradicional se o fetch falhar
+      form.submit();
+    }
+  }
+
+  async function deleteEquipment(id, descricao) {
+    if (!id) {
+      alert('ID ou Chave do equipamento não informado.');
+      return;
+    }
+    if (!confirm('Deseja realmente excluir o equipamento "' + (descricao || id) + '"?')) return;
+
+    try {
+      const resp = await fetch('/admin/interfaceamento/equipamentos/excluir/' + encodeURIComponent(id), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ id: id })
+      });
+      const json = await resp.json();
+      if (json.success) {
+        window.location.reload();
+      } else {
+        alert(json.message || 'Erro ao excluir equipamento.');
+      }
+    } catch(err) {
+      console.error(err);
+      window.location.href = '/admin/interfaceamento/equipamentos/excluir/' + encodeURIComponent(id);
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

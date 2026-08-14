@@ -1,0 +1,1133 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 md:p-8 w-full flex-1 flex flex-col gap-6 fade-in">
+  
+  <!-- Cabeçalho -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Gestão Financeira</p>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight">Relatório de Faturamento</h1>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 text-xs font-mono text-gray-500 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 shrink-0">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Atualizado em tempo real</span>
+    </div>
+  </div>
+
+  <!-- Sub-Navegação do Módulo Financeiro -->
+  <div class="flex border-b border-gray-200 overflow-x-auto whitespace-nowrap">
+    <a href="/admin/financeiro/dashboard" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-dashboard' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Dashboard
+    </a>
+    <a href="/admin/financeiro/relatorio-faturamento" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-relatorio-faturamento' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Relatório de Faturamento
+    </a>
+    <a href="/admin/financeiro/pessoas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-pessoas' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Clientes / Fornecedores
+    </a>
+    <a href="/admin/financeiro/contas-pagar" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-contas-pagar' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Contas a Pagar
+    </a>
+    <a href="/admin/financeiro/contas-receber" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-contas-receber' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Contas a Receber
+    </a>
+    <a href="/admin/financeiro/fechamento-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-fechamento-caixa' || page === 'admin-fechamento-caixa' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Conferência de Caixa
+    </a>
+    <a href="/admin/financeiro/fluxo-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-fluxo-caixa' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Fluxo de Caixa
+    </a>
+    <a href="/admin/financeiro/dre" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-dre' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5" title="Demonstrativo de Resultado">
+      Demonstrativo de Resultado
+    </a>
+    <a href="/admin/financeiro/movimentacoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-movimentacoes' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Movimentações
+    </a>
+    <a href="/admin/financeiro/configuracoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= page === 'admin-financeiro-configuracoes' ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Configurações
+    </a>
+  </div>
+
+  <!-- SEÇÃO DE RELATÓRIOS MENSAL E DIÁRIO DE FATURAMENTO -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+    <!-- CABEÇALHO DA SEÇÃO -->
+    <div class="bg-[#284701] text-white p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#3b661d]">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-emerald-200 border border-white/20 uppercase tracking-widest">Análise de Performance</span>
+          <span class="text-emerald-200/80 text-xs font-mono">• Faturamento Acumulado</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5 font-mono">
+          <svg class="w-6 h-6 text-brand-gold shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          <span>Comparativo Mensal de Faturamento</span>
+        </h2>
+        <p class="text-xs text-emerald-100/90 max-w-2xl font-sans">
+          Curva de crescimento do <strong>faturamento bruto acumulado</strong> dia a dia (Dia 1 ao 31). Considera apenas as entradas recebidas, sem descontar despesas/saídas de caixa.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Filtro por Recepção -->
+        <div class="bg-[#1e380e]/90 p-1.5 rounded-2xl border border-[#3b661d] flex items-center gap-2">
+          <label class="text-[10px] font-bold font-mono uppercase text-emerald-200 pl-2">Caixa:</label>
+          <select id="comparativo-filter-recepcao" onchange="loadComparativoData()" class="bg-[#1a310c] text-white text-xs font-bold font-mono px-3 py-1.5 rounded-xl border border-[#3b661d] focus:outline-none focus:ring-1 focus:ring-brand-gold cursor-pointer">
+            <option value="Todos" selected>Todos os Caixas</option>
+            <option value="Recepção Particular">Recepção Particular</option>
+            <option value="Recepção SUS">Recepção SUS</option>
+          </select>
+        </div>
+
+        <button type="button" onclick="loadComparativoData()" class="px-3.5 py-2 rounded-xl text-xs font-bold font-mono text-white bg-[#1e380e] hover:bg-[#3b661d] transition-all flex items-center gap-1.5 cursor-pointer border border-[#3b661d]">
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Atualizar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CORPO DA SEÇÃO -->
+    <div class="p-5 sm:p-6 space-y-6 bg-gray-50/50">
+      
+      <!-- CARREGANDO SPINNER -->
+      <div id="comparativo-loading" class="py-12 text-center space-y-3">
+        <div class="inline-block w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-xs font-bold font-mono text-gray-500 uppercase tracking-wider">Compilando histórico diário dos meses...</p>
+      </div>
+
+      <!-- CONTEÚDO PRINCIPAL (DASHBOARD + GRÁFICO) -->
+      <div id="comparativo-chart-container" class="hidden space-y-6">
+        
+        <!-- KPI CARDS COMPARATIVOS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          <!-- KPI 1: Acumulado do Mês Atual até Hoje -->
+          <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-2 h-full bg-emerald-500"></div>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono block">Mês Atual (Acumulado)</span>
+            <div id="comp-kpi-cur-so-far" class="text-2xl font-black text-emerald-900 font-mono mt-1">R$ 0,00</div>
+            <p id="comp-kpi-cur-day" class="text-[10px] font-bold text-emerald-700 font-mono mt-1">(Dia --)</p>
+          </div>
+
+          <!-- KPI 2: Mês Anterior no Mesmo Dia -->
+          <div class="bg-white p-4 rounded-2xl border border-blue-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono block">Mês Anterior (Mesmo Dia)</span>
+            <div id="comp-kpi-prev-same-day" class="text-2xl font-black text-blue-900 font-mono mt-1">R$ 0,00</div>
+            <p id="comp-kpi-prev-month-name" class="text-[10px] font-bold text-blue-700 font-mono mt-1">(--)</p>
+          </div>
+
+          <!-- KPI 3: Variação % na Mesma Data -->
+          <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Ritmo vs Mês Anterior</span>
+            <div class="mt-1 flex items-center">
+              <span id="comp-kpi-diff-badge" class="px-2.5 py-1 rounded-lg text-xs font-black font-mono">--</span>
+            </div>
+            <p class="text-[9px] text-gray-400 mt-1.5 font-mono">Comparando acumulado até o mesmo dia</p>
+          </div>
+
+          <!-- KPI 4: Média Diária no Mês Atual -->
+          <div class="bg-white p-4 rounded-2xl border border-purple-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-2 h-full bg-purple-500"></div>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono block">Média Diária (Mês Atual)</span>
+            <div id="comp-kpi-avg-daily" class="text-2xl font-black text-purple-900 font-mono mt-1">R$ 0,00 / dia</div>
+            <p class="text-[10px] font-bold text-purple-700 font-mono mt-1">Média por dia trabalhado</p>
+          </div>
+
+        </div>
+
+        <!-- BARRA DE SELEÇÃO DE MESES PARA EXIBIR -->
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-2">
+            <span class="text-[11px] font-bold text-gray-700 font-mono uppercase tracking-wider">Últimos 12 Meses (Clique para selecionar/comparar):</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-gray-400 font-mono mr-1">Atalhos:</span>
+              <button type="button" onclick="selectMonthPreset(3)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-all border border-emerald-300 cursor-pointer">
+                ⚡ 3 ÚLTIMOS MESES
+              </button>
+              <button type="button" onclick="selectMonthPreset(6)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all border border-gray-300 cursor-pointer">
+                6 MESES
+              </button>
+              <button type="button" onclick="selectMonthPreset(12)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all border border-gray-300 cursor-pointer">
+                12 MESES
+              </button>
+            </div>
+          </div>
+          <div id="comp-month-toggles" class="flex flex-wrap items-center gap-2">
+            <!-- Botões dinâmicos dos últimos 12 meses -->
+          </div>
+        </div>
+
+        <!-- ÁREA DO GRÁFICO CANVA -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 class="text-xs font-black font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Crescimento Acumulado do Faturamento por Dia do Mês (1 ao 31)</span>
+            </h3>
+            <span class="text-[10px] font-bold font-mono text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+              💡 Mês atual para no dia de hoje
+            </span>
+          </div>
+
+          <div class="relative w-full h-[380px] sm:h-[420px]">
+            <canvas id="comparativoChart"></canvas>
+          </div>
+        </div>
+
+        <!-- SEGUNDO GRÁFICO: FATURAMENTO DIÁRIO (ENTRADAS POR DIA DO MÊS) -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div>
+              <h3 class="text-xs font-black font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-gold"></span>
+                <span>Faturamento por Dia do Mês (Entradas Diárias Individuais)</span>
+              </h3>
+              <p class="text-[11px] text-gray-500 font-sans mt-0.5">
+                Veja o volume de dinheiro que entrou em cada dia específico para identificar os picos de receita.
+              </p>
+            </div>
+
+            <!-- Seletor de Mês para o Gráfico Diário -->
+            <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200 shrink-0">
+              <label class="text-[10px] font-bold font-mono uppercase text-gray-500 pl-2">Mês do Gráfico:</label>
+              <select id="daily-chart-month-select" onchange="changeDailyChartMonth(this.value)" class="bg-white text-gray-800 text-xs font-bold font-mono px-3 py-1.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#284701] cursor-pointer shadow-sm">
+                <!-- Preenchido via JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <!-- MINI CARDS KPI DO MÊS SELECIONADO NO GRÁFICO DIÁRIO -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider font-mono block">Maior Pico do Mês</span>
+                <div id="daily-kpi-peak" class="text-lg font-black text-emerald-900 font-mono mt-0.5">R$ 0,00</div>
+              </div>
+              <span id="daily-kpi-peak-day" class="px-2.5 py-1 bg-emerald-200 text-emerald-900 font-bold font-mono text-[11px] rounded-lg">Dia --</span>
+            </div>
+
+            <div class="bg-blue-50/60 p-3.5 rounded-2xl border border-blue-200/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider font-mono block">Média por Dia Com Entrada</span>
+                <div id="daily-kpi-avg" class="text-lg font-black text-blue-900 font-mono mt-0.5">R$ 0,00</div>
+              </div>
+              <span class="text-[10px] font-mono text-blue-700 font-bold">por dia ativo</span>
+            </div>
+
+            <div class="bg-purple-50/60 p-3.5 rounded-2xl border border-purple-200/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-purple-800 uppercase tracking-wider font-mono block">Total Entrada do Mês</span>
+                <div id="daily-kpi-total" class="text-lg font-black text-purple-900 font-mono mt-0.5">R$ 0,00</div>
+              </div>
+              <span id="daily-kpi-month-name" class="text-[10px] font-mono text-purple-700 font-bold">--</span>
+            </div>
+          </div>
+
+          <!-- ÁREA DO GRÁFICO DE BARRAS CANVA -->
+          <div class="relative w-full h-[320px] sm:h-[360px]">
+            <canvas id="dailyBarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: GRÁFICOS ANALÍTICOS COMPLEMENTARES (5 GRÁFICOS EM 2 POR LINHA) -->
+        <div class="space-y-6 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black font-mono uppercase text-[#284701] tracking-wider flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-[#284701]"></span>
+              <span>Análise Detalhada por Mês Selecionado & Histórico (5 Gráficos)</span>
+            </h3>
+            <span class="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">2 por linha</span>
+          </div>
+
+          <!-- GRID DE 2 COLUNAS (2 GRÁFICOS POR LINHA) -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- GRÁFICO 1: FATURAMENTO POR FORMA DE PAGAMENTO (ROSCA / DOUGHNUT) -->
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+              <div class="border-b border-gray-100 pb-2">
+                <h4 class="text-xs font-bold font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  <span>1. Faturamento por Forma de Pagamento</span>
+                </h4>
+                <p class="text-[11px] text-gray-500 font-sans mt-0.5">Distribuição em Dinheiro, PIX, Cartão Crédito, Débito e Cheque no mês</p>
+              </div>
+              <div class="relative w-full h-[280px] flex items-center justify-center">
+                <canvas id="paymentMethodsChart"></canvas>
+              </div>
+            </div>
+
+            <!-- GRÁFICO 2: FATURAMENTO POR DIA DA SEMANA (BARRAS) -->
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+              <div class="border-b border-gray-100 pb-2">
+                <h4 class="text-xs font-bold font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                  <span>2. Faturamento por Dia da Semana</span>
+                </h4>
+                <p class="text-[11px] text-gray-500 font-sans mt-0.5">Volume de entradas agrupado de Domingo a Sábado</p>
+              </div>
+              <div class="relative w-full h-[280px]">
+                <canvas id="weekdaysChart"></canvas>
+              </div>
+            </div>
+
+            <!-- GRÁFICO 3: EVOLUÇÃO MENSAL DO FATURAMENTO (ÚLTIMOS 12 MESES) -->
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+              <div class="border-b border-gray-100 pb-2">
+                <h4 class="text-xs font-bold font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                  <span>3. Histórico dos Últimos 12 Meses</span>
+                </h4>
+                <p class="text-[11px] text-gray-500 font-sans mt-0.5">Evolução total de faturamento mensal acumulado</p>
+              </div>
+              <div class="relative w-full h-[280px]">
+                <canvas id="monthlyHistoryChart"></canvas>
+              </div>
+            </div>
+
+            <!-- GRÁFICO 4: FATURAMENTO POR CAIXA / RECEPÇÃO (ROSCA / DOUGHNUT) -->
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+              <div class="border-b border-gray-100 pb-2">
+                <h4 class="text-xs font-bold font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span>4. Faturamento por Caixa / Recepção</span>
+                </h4>
+                <p class="text-[11px] text-gray-500 font-sans mt-0.5">Proporção entre Recepção Particular e SUS</p>
+              </div>
+              <div class="relative w-full h-[280px] flex items-center justify-center">
+                <canvas id="byRecepcaoChart"></canvas>
+              </div>
+            </div>
+
+            <!-- GRÁFICO 5: ENTRADAS VS SAÍDAS DE CAIXA (OCUPA A 3ª LINHA INTEGRALMENTE) -->
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm space-y-3 lg:col-span-2">
+              <div class="border-b border-gray-100 pb-2">
+                <h4 class="text-xs font-bold font-mono uppercase text-gray-800 tracking-wider flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  <span>5. Entradas (Faturamento Bruto) vs Saídas (Despesas do Caixa)</span>
+                </h4>
+                <p class="text-[11px] text-gray-500 font-sans mt-0.5">Comparativo do total de entradas vs retiradas e despesas pagas pelo caixa por mês</p>
+              </div>
+              <div class="relative w-full h-[300px]">
+                <canvas id="entradasVsSaidasChart"></canvas>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- CHART.JS CDN PARA OS RELATÓRIOS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // --- LÓGICA DO COMPARATIVO MENSAL E DIÁRIO DE FATURAMENTO ---
+  let comparativoChartInstance = null;
+  let currentComparativoData = null;
+  let selectedMonthKeys = [];
+
+  const monthColors = [
+    { border: '#059669', bg: 'rgba(5, 150, 105, 0.08)', name: 'Esmeralda' },
+    { border: '#2563eb', bg: 'rgba(37, 99, 235, 0.05)', name: 'Azul' },
+    { border: '#7c3aed', bg: 'rgba(124, 58, 237, 0.05)', name: 'Roxo' },
+    { border: '#d97706', bg: 'rgba(217, 119, 6, 0.05)', name: 'Âmbar' },
+    { border: '#0891b2', bg: 'rgba(8, 145, 178, 0.05)', name: 'Ciano' },
+    { border: '#e11d48', bg: 'rgba(225, 29, 72, 0.05)', name: 'Rosa' },
+    { border: '#4f46e5', bg: 'rgba(79, 70, 229, 0.05)', name: 'Índigo' },
+    { border: '#0d9488', bg: 'rgba(13, 148, 136, 0.05)', name: 'Teal' },
+    { border: '#ea580c', bg: 'rgba(234, 88, 12, 0.05)', name: 'Laranja' },
+    { border: '#db2777', bg: 'rgba(219, 39, 119, 0.05)', name: 'Pink' },
+    { border: '#65a30d', bg: 'rgba(101, 163, 13, 0.05)', name: 'Lima' },
+    { border: '#4b5563', bg: 'rgba(75, 85, 99, 0.05)', name: 'Cinza' }
+  ];
+
+  function formatMoney(value) {
+    return (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function loadComparativoData() {
+    const recepcaoSelect = document.getElementById('comparativo-filter-recepcao');
+    const recepcao = recepcaoSelect ? recepcaoSelect.value : 'Todos';
+    const loadingEl = document.getElementById('comparativo-loading');
+    const contentEl = document.getElementById('comparativo-chart-container');
+    
+    if (loadingEl) loadingEl.classList.remove('hidden');
+    if (contentEl) contentEl.classList.add('hidden');
+
+    try {
+      const res = await fetch(`/api/admin/financeiro/fechamento-caixa/comparativo-mensal?recepcao=${encodeURIComponent(recepcao)}`);
+      if (!res.ok) throw new Error('Erro na requisição do comparativo');
+      const data = await res.json();
+      currentComparativoData = data;
+      renderComparativoUI(data);
+    } catch (err) {
+      console.error('Erro ao carregar comparativo mensal:', err);
+    } finally {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (contentEl) contentEl.classList.remove('hidden');
+    }
+  }
+
+  function renderComparativoUI(data) {
+    if (!data || !data.months || data.months.length === 0) return;
+
+    const currentMonthObj = data.months.find(m => m.isCurrent) || data.months[0];
+    const previousMonthObj = data.months.find(m => !m.isCurrent) || null;
+
+    const curDay = data.currentDayOfMonth || 1;
+    const curAmountSoFar = currentMonthObj ? (currentMonthObj.dailyCumulative[curDay - 1] || 0) : 0;
+    
+    let prevAmountSameDay = 0;
+    if (previousMonthObj && previousMonthObj.dailyCumulative) {
+      prevAmountSameDay = previousMonthObj.dailyCumulative[Math.min(curDay - 1, previousMonthObj.dailyCumulative.length - 1)] || 0;
+    }
+
+    // KPI 1: Mês Atual Acumulado
+    const kpiCurSoFarEl = document.getElementById('comp-kpi-cur-so-far');
+    if (kpiCurSoFarEl) kpiCurSoFarEl.innerText = `R$ ${formatMoney(curAmountSoFar)}`;
+
+    const kpiCurDayEl = document.getElementById('comp-kpi-cur-day');
+    if (kpiCurDayEl) kpiCurDayEl.innerText = `(Dia ${curDay})`;
+
+    // KPI 2: Mês Anterior no Mesmo Dia
+    const kpiPrevSameDayEl = document.getElementById('comp-kpi-prev-same-day');
+    if (kpiPrevSameDayEl) kpiPrevSameDayEl.innerText = `R$ ${formatMoney(prevAmountSameDay)}`;
+
+    const kpiPrevMonthNameEl = document.getElementById('comp-kpi-prev-month-name');
+    if (kpiPrevMonthNameEl) {
+      kpiPrevMonthNameEl.innerText = previousMonthObj ? `(${previousMonthObj.label.split('(')[0].trim()} no Dia ${curDay})` : '(--)';
+    }
+
+    // KPI 3: Variação %
+    const kpiDiffBadge = document.getElementById('comp-kpi-diff-badge');
+    if (kpiDiffBadge) {
+      if (prevAmountSameDay > 0) {
+        const diffPct = ((curAmountSoFar - prevAmountSameDay) / prevAmountSameDay) * 100;
+        const isPos = diffPct >= 0;
+        kpiDiffBadge.className = `px-2.5 py-1 rounded-lg text-xs font-black font-mono inline-flex items-center gap-1 ${isPos ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`;
+        kpiDiffBadge.innerText = `${isPos ? '▲ +' : '▼ '}${diffPct.toFixed(1)}% ${isPos ? 'acima' : 'abaixo'}`;
+      } else {
+        kpiDiffBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-black font-mono bg-gray-100 text-gray-700';
+        kpiDiffBadge.innerText = 'Sem comparativo';
+      }
+    }
+
+    // KPI 4: Média Diária
+    const avgDaily = curDay > 0 ? (curAmountSoFar / curDay) : 0;
+    const kpiAvgDailyEl = document.getElementById('comp-kpi-avg-daily');
+    if (kpiAvgDailyEl) kpiAvgDailyEl.innerText = `R$ ${formatMoney(avgDaily)} / dia`;
+
+    // Renderizar Filtros de Meses (Toggles)
+    renderMonthToggles(data.months);
+
+    // Renderizar Gráfico Acumulado
+    renderComparativoChart(data);
+
+    // Renderizar Seletor e Gráfico de Barras Diário
+    populateDailyMonthSelect(data.months);
+    renderDailyBarChart();
+  }
+
+  function selectMonthPreset(count) {
+    if (!currentComparativoData || !currentComparativoData.months) return;
+    const available = currentComparativoData.months.slice(0, 12);
+    selectedMonthKeys = available.slice(0, count).map(m => m.key);
+    renderMonthToggles(currentComparativoData.months);
+    renderComparativoChart(currentComparativoData);
+  }
+
+  function renderMonthToggles(months) {
+    const container = document.getElementById('comp-month-toggles');
+    if (!container) return;
+
+    // Exibir no máximo os últimos 12 meses
+    const last12Months = months.slice(0, 12);
+
+    // Por padrão, selecionar os 3 últimos meses se nada tiver sido escolhido
+    if (selectedMonthKeys.length === 0) {
+      selectedMonthKeys = last12Months.slice(0, 3).map(m => m.key);
+    }
+
+    container.innerHTML = last12Months.map((m, idx) => {
+      const isChecked = selectedMonthKeys.includes(m.key);
+      const color = monthColors[idx % monthColors.length];
+      return `
+        <button type="button" onclick="toggleMonthSelection('${m.key}')" 
+                class="px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${isChecked ? 'shadow-sm text-gray-900 bg-white border-gray-300 ring-2 ring-emerald-500/20' : 'text-gray-400 bg-gray-50 border-gray-200 opacity-60 hover:opacity-100'}">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${color.border}"></span>
+          <span>${m.label}</span>
+          ${isChecked ? '<span class="text-[10px] text-emerald-600 font-black">✓</span>' : ''}
+        </button>
+      `;
+    }).join('');
+  }
+
+  function toggleMonthSelection(key) {
+    if (selectedMonthKeys.includes(key)) {
+      if (selectedMonthKeys.length === 1) return;
+      selectedMonthKeys = selectedMonthKeys.filter(k => k !== key);
+    } else {
+      selectedMonthKeys.push(key);
+    }
+    if (currentComparativoData) {
+      renderMonthToggles(currentComparativoData.months);
+      renderComparativoChart(currentComparativoData);
+    }
+  }
+
+  const WEEK_DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  function getDailyDayLabels(year, month) {
+    return Array.from({ length: 31 }, (_, i) => {
+      const dayNum = i + 1;
+      if (year && month) {
+        const dt = new Date(year, month - 1, dayNum);
+        const weekDay = WEEK_DAYS_PT[dt.getDay()];
+        return [String(dayNum), weekDay];
+      }
+      return [String(dayNum), ''];
+    });
+  }
+
+  function renderComparativoChart(data) {
+    const ctx = document.getElementById('comparativoChart');
+    if (!ctx) return;
+
+    if (typeof Chart === 'undefined') {
+      console.error('Chart.js ainda não foi carregado');
+      return;
+    }
+
+    if (comparativoChartInstance) {
+      comparativoChartInstance.destroy();
+    }
+
+    const datasets = [];
+
+    data.months.forEach((m, idx) => {
+      if (!selectedMonthKeys.includes(m.key)) return;
+
+      const color = monthColors[idx % monthColors.length];
+      const isCurrent = m.isCurrent;
+
+      datasets.push({
+        label: m.label,
+        data: m.dailyCumulative,
+        borderColor: color.border,
+        backgroundColor: isCurrent ? 'rgba(5, 150, 105, 0.08)' : color.bg,
+        borderWidth: isCurrent ? 3.5 : 2,
+        pointRadius: isCurrent ? 4 : 2,
+        pointHoverRadius: isCurrent ? 7 : 5,
+        pointBackgroundColor: color.border,
+        fill: isCurrent,
+        tension: 0.2,
+        spanGaps: false
+      });
+    });
+
+    const refMonthObj = data.months.find(m => selectedMonthKeys.includes(m.key)) || data.months.find(m => m.isCurrent) || data.months[0];
+    const compYear = refMonthObj ? refMonthObj.year : data.currentYear;
+    const compMonth = refMonthObj ? refMonthObj.month : data.currentMonth;
+    const compLabels = getDailyDayLabels(compYear, compMonth);
+
+    comparativoChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: compLabels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'nearest',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { family: 'monospace', size: 11, weight: 'bold' },
+              usePointStyle: true,
+              boxWidth: 8
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleFont: { family: 'monospace', size: 12, weight: 'bold' },
+            bodyFont: { family: 'sans-serif', size: 11 },
+            padding: 10,
+            cornerRadius: 10,
+            callbacks: {
+              title: function(tooltipItems) {
+                if (!tooltipItems || !tooltipItems.length) return '';
+                const rawLabel = tooltipItems[0].label;
+                if (Array.isArray(rawLabel)) {
+                  return `Dia ${rawLabel[0]} (${rawLabel[1]})`;
+                }
+                return `Dia ${rawLabel}`;
+              },
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) label += ': ';
+                if (context.parsed.y !== null && context.parsed.y !== undefined) {
+                  label += 'R$ ' + formatMoney(context.parsed.y);
+                } else {
+                  label += 'Sem lançamentos futuros';
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,0.04)' },
+            ticks: {
+              font: { family: 'monospace', size: 10 },
+              maxRotation: 0
+            }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: {
+              font: { family: 'monospace', size: 10 },
+              callback: function(val) {
+                return 'R$ ' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // --- LÓGICA DO SEGUNDO GRÁFICO: FATURAMENTO DIÁRIO POR DIA DO MÊS ---
+  let dailyBarChartInstance = null;
+  let selectedDailyMonthKey = null;
+
+  function populateDailyMonthSelect(months) {
+    const selectEl = document.getElementById('daily-chart-month-select');
+    if (!selectEl || !months) return;
+
+    if (!selectedDailyMonthKey || !months.some(m => m.key === selectedDailyMonthKey)) {
+      selectedDailyMonthKey = months[0] ? months[0].key : null;
+    }
+
+    selectEl.innerHTML = months.map(m => {
+      return `<option value="${m.key}" ${m.key === selectedDailyMonthKey ? 'selected' : ''}>${m.label}</option>`;
+    }).join('');
+  }
+
+  function changeDailyChartMonth(key) {
+    selectedDailyMonthKey = key;
+    renderDailyBarChart();
+  }
+
+  function renderDailyBarChart() {
+    if (!currentComparativoData || !currentComparativoData.months) return;
+
+    const ctx = document.getElementById('dailyBarChart');
+    if (!ctx) return;
+
+    if (typeof Chart === 'undefined') return;
+
+    const monthObj = currentComparativoData.months.find(m => m.key === selectedDailyMonthKey) || currentComparativoData.months[0];
+    if (!monthObj) return;
+
+    const rawData = monthObj.dailyRaw || [];
+
+    // Calcular Métricas KPIs
+    let maxVal = 0;
+    let maxDay = 0;
+    let sum = 0;
+    let activeDaysCount = 0;
+
+    rawData.forEach((val, idx) => {
+      if (val !== null && val !== undefined) {
+        sum += val;
+        if (val > 0) {
+          activeDaysCount++;
+        }
+        if (val > maxVal) {
+          maxVal = val;
+          maxDay = idx + 1;
+        }
+      }
+    });
+
+    const kpiPeakEl = document.getElementById('daily-kpi-peak');
+    if (kpiPeakEl) kpiPeakEl.innerText = `R$ ${formatMoney(maxVal)}`;
+
+    const kpiPeakDayEl = document.getElementById('daily-kpi-peak-day');
+    if (kpiPeakDayEl) {
+      if (maxDay && monthObj.year && monthObj.month) {
+        const peakDt = new Date(monthObj.year, monthObj.month - 1, maxDay);
+        const peakWeekDay = WEEK_DAYS_PT[peakDt.getDay()];
+        kpiPeakDayEl.innerText = `Dia ${maxDay} (${peakWeekDay})`;
+      } else {
+        kpiPeakDayEl.innerText = maxDay ? `Dia ${maxDay}` : 'Sem registros';
+      }
+    }
+
+    const kpiAvgEl = document.getElementById('daily-kpi-avg');
+    if (kpiAvgEl) kpiAvgEl.innerText = `R$ ${formatMoney(activeDaysCount > 0 ? sum / activeDaysCount : 0)}`;
+
+    const kpiTotalEl = document.getElementById('daily-kpi-total');
+    if (kpiTotalEl) kpiTotalEl.innerText = `R$ ${formatMoney(sum)}`;
+
+    const kpiMonthNameEl = document.getElementById('daily-kpi-month-name');
+    if (kpiMonthNameEl) kpiMonthNameEl.innerText = monthObj.label.split('(')[0].trim();
+
+    if (dailyBarChartInstance) {
+      dailyBarChartInstance.destroy();
+    }
+
+    const dailyLabels = getDailyDayLabels(monthObj.year, monthObj.month);
+
+    // Cores de barra: destacar em Dourado o dia de maior receita do mês
+    const barBackgrounds = rawData.map((val, idx) => {
+      if (idx + 1 === maxDay && val > 0) {
+        return '#d97706'; // Dourado/Âmbar para o pico máximo
+      }
+      return '#059669'; // Verde Esmeralda para os outros dias
+    });
+
+    dailyBarChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: dailyLabels,
+        datasets: [{
+          label: `Faturamento por Dia - ${monthObj.label.split('(')[0].trim()}`,
+          data: rawData,
+          backgroundColor: barBackgrounds,
+          borderRadius: 6,
+          borderSkipped: false,
+          hoverBackgroundColor: '#047857'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { family: 'monospace', size: 11, weight: 'bold' },
+              usePointStyle: true,
+              boxWidth: 8
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleFont: { family: 'monospace', size: 12, weight: 'bold' },
+            bodyFont: { family: 'sans-serif', size: 11 },
+            padding: 10,
+            cornerRadius: 10,
+            callbacks: {
+              title: function(tooltipItems) {
+                if (!tooltipItems || !tooltipItems.length) return '';
+                const rawLabel = tooltipItems[0].label;
+                if (Array.isArray(rawLabel)) {
+                  return `Dia ${rawLabel[0]} (${rawLabel[1]})`;
+                }
+                return `Dia ${rawLabel}`;
+              },
+              label: function(context) {
+                let val = context.parsed.y;
+                if (val !== null && val !== undefined) {
+                  return 'Faturamento no Dia: R$ ' + formatMoney(val);
+                }
+                return 'Sem registros futuros';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,0.03)' },
+            ticks: {
+              font: { family: 'monospace', size: 10 },
+              maxRotation: 0
+            }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: {
+              font: { family: 'monospace', size: 10 },
+              callback: function(val) {
+                return 'R$ ' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Renderizar os 5 gráficos analíticos adicionais
+    renderExtraCharts();
+  }
+
+  // --- LÓGICA DOS 5 GRÁFICOS ANALÍTICOS COMPLEMENTARES ---
+  let paymentMethodsChartInstance = null;
+  let weekdaysChartInstance = null;
+  let monthlyHistoryChartInstance = null;
+  let byRecepcaoChartInstance = null;
+  let entradasVsSaidasChartInstance = null;
+
+  // Plugin para desenhar o % diretamente dentro das fatias do gráfico de rosca/pizza
+  const doughnutPercentagesPlugin = {
+    id: 'doughnutPercentages',
+    afterDraw(chart) {
+      if (chart.config.type !== 'doughnut' && chart.config.type !== 'pie') return;
+      const { ctx } = chart;
+      chart.data.datasets.forEach((dataset, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (!meta.hidden) {
+          const total = dataset.data.reduce((acc, val) => acc + (Number(val) || 0), 0);
+          if (total <= 0) return;
+
+          meta.data.forEach((element, index) => {
+            const val = Number(dataset.data[index]) || 0;
+            if (val <= 0) return;
+            const pctNum = (val / total) * 100;
+            if (pctNum < 2.5) return; // Oculta o texto em fatias menores que 2.5% para não poluir
+
+            const percentageStr = (pctNum % 1 === 0 ? pctNum.toFixed(0) : pctNum.toFixed(1)) + '%';
+            const { x, y } = element.tooltipPosition();
+
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px monospace, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 4;
+            ctx.fillText(percentageStr, x, y);
+            ctx.restore();
+          });
+        }
+      });
+    }
+  };
+
+  function renderExtraCharts() {
+    if (!currentComparativoData || !currentComparativoData.months) return;
+
+    const monthObj = currentComparativoData.months.find(m => m.key === selectedDailyMonthKey) || currentComparativoData.months[0];
+    if (!monthObj) return;
+
+    if (typeof Chart === 'undefined') return;
+
+    // 1. FORMAS DE PAGAMENTO (ROSCA / DOUGHNUT)
+    const pm = monthObj.paymentMethods || { dinheiro: 0, pix: 0, cartaoCredito: 0, cartaoDebito: 0, cheque: 0 };
+    const pmLabels = ['Dinheiro', 'PIX', 'Cartão Crédito', 'Cartão Débito', 'Cheque'];
+    const pmData = [pm.dinheiro || 0, pm.pix || 0, pm.cartaoCredito || 0, pm.cartaoDebito || 0, pm.cheque || 0];
+    
+    const ctxPm = document.getElementById('paymentMethodsChart');
+    if (ctxPm) {
+      if (paymentMethodsChartInstance) paymentMethodsChartInstance.destroy();
+      paymentMethodsChartInstance = new Chart(ctxPm, {
+        type: 'doughnut',
+        data: {
+          labels: pmLabels,
+          datasets: [{
+            data: pmData,
+            backgroundColor: ['#10b981', '#14b8a6', '#6366f1', '#0284c7', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        plugins: [doughnutPercentagesPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: 'monospace', size: 10, weight: 'bold' },
+                usePointStyle: true,
+                padding: 12,
+                generateLabels: function(chart) {
+                  const data = chart.data;
+                  if (data.labels.length && data.datasets.length) {
+                    const dataset = data.datasets[0];
+                    const total = dataset.data.reduce((a, b) => a + Number(b || 0), 0);
+                    return data.labels.map((label, i) => {
+                      const val = Number(dataset.data[i]) || 0;
+                      const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                      const meta = chart.getDatasetMeta(0);
+                      const style = meta.controller.getStyle(i);
+                      return {
+                        text: `${label} (${pct}%)`,
+                        fillStyle: style.backgroundColor,
+                        strokeStyle: style.borderColor,
+                        lineWidth: style.borderWidth,
+                        hidden: isNaN(dataset.data[i]) || meta.data[i].hidden,
+                        index: i
+                      };
+                    });
+                  }
+                  return [];
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              callbacks: {
+                label: function(ctx) {
+                  const dataset = ctx.dataset;
+                  const total = dataset.data.reduce((a, b) => a + Number(b || 0), 0);
+                  const val = Number(ctx.parsed) || 0;
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                  return ` ${ctx.label}: R$ ${formatMoney(val)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. DIA DA SEMANA (BARRAS)
+    const wkData = monthObj.weekdays || Array(7).fill(0);
+    const wkLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const ctxWk = document.getElementById('weekdaysChart');
+    if (ctxWk) {
+      if (weekdaysChartInstance) weekdaysChartInstance.destroy();
+      weekdaysChartInstance = new Chart(ctxWk, {
+        type: 'bar',
+        data: {
+          labels: wkLabels,
+          datasets: [{
+            label: 'Faturamento por Dia da Semana',
+            data: wkData,
+            backgroundColor: '#3b82f6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              callbacks: {
+                label: function(ctx) {
+                  return ` Total no Dia: R$ ${formatMoney(ctx.parsed.y)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { family: 'monospace', size: 10 } } },
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                font: { family: 'monospace', size: 10 },
+                callback: function(val) { return 'R$ ' + (val >= 1000 ? (val/1000).toFixed(0) + 'k' : val); }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 3. HISTÓRICO MENSAL ÚLTIMOS 12 MESES (BARRAS)
+    const last12Months = [...currentComparativoData.months].reverse();
+    const histLabels = last12Months.map(m => m.label.split('(')[0].trim());
+    const histData = last12Months.map(m => m.totalMonth || 0);
+
+    const ctxHist = document.getElementById('monthlyHistoryChart');
+    if (ctxHist) {
+      if (monthlyHistoryChartInstance) monthlyHistoryChartInstance.destroy();
+      monthlyHistoryChartInstance = new Chart(ctxHist, {
+        type: 'bar',
+        data: {
+          labels: histLabels,
+          datasets: [{
+            label: 'Faturamento Mensal',
+            data: histData,
+            backgroundColor: '#8b5cf6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              callbacks: {
+                label: function(ctx) { return ` Faturamento Total: R$ ${formatMoney(ctx.parsed.y)}`; }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { family: 'monospace', size: 9 }, maxRotation: 45 } },
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                font: { family: 'monospace', size: 10 },
+                callback: function(val) { return 'R$ ' + (val >= 1000 ? (val/1000).toFixed(0) + 'k' : val); }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. FATURAMENTO POR CAIXA / RECEPÇÃO (ROSCA / DOUGHNUT)
+    const recObj = monthObj.byRecepcao || {};
+    const recKeys = Object.keys(recObj);
+    const recLabels = recKeys.length > 0 ? recKeys : ['Recepção Particular'];
+    const recData = recKeys.length > 0 ? recKeys.map(k => recObj[k]) : [monthObj.totalMonth || 0];
+
+    const ctxRec = document.getElementById('byRecepcaoChart');
+    if (ctxRec) {
+      if (byRecepcaoChartInstance) byRecepcaoChartInstance.destroy();
+      byRecepcaoChartInstance = new Chart(ctxRec, {
+        type: 'doughnut',
+        data: {
+          labels: recLabels,
+          datasets: [{
+            data: recData,
+            backgroundColor: ['#284701', '#d97706', '#3b82f6', '#ec4899', '#8b5cf6'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        plugins: [doughnutPercentagesPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: 'monospace', size: 10, weight: 'bold' },
+                usePointStyle: true,
+                padding: 12,
+                generateLabels: function(chart) {
+                  const data = chart.data;
+                  if (data.labels.length && data.datasets.length) {
+                    const dataset = data.datasets[0];
+                    const total = dataset.data.reduce((a, b) => a + Number(b || 0), 0);
+                    return data.labels.map((label, i) => {
+                      const val = Number(dataset.data[i]) || 0;
+                      const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                      const meta = chart.getDatasetMeta(0);
+                      const style = meta.controller.getStyle(i);
+                      return {
+                        text: `${label} (${pct}%)`,
+                        fillStyle: style.backgroundColor,
+                        strokeStyle: style.borderColor,
+                        lineWidth: style.borderWidth,
+                        hidden: isNaN(dataset.data[i]) || meta.data[i].hidden,
+                        index: i
+                      };
+                    });
+                  }
+                  return [];
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              callbacks: {
+                label: function(ctx) {
+                  const dataset = ctx.dataset;
+                  const total = dataset.data.reduce((a, b) => a + Number(b || 0), 0);
+                  const val = Number(ctx.parsed) || 0;
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                  return ` ${ctx.label}: R$ ${formatMoney(val)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 5. ENTRADAS VS SAÍDAS DE CAIXA (BARRAS AGRUPADAS)
+    const esMonths = [...currentComparativoData.months].reverse();
+    const esLabels = esMonths.map(m => m.label.split('(')[0].trim());
+    const esEntradas = esMonths.map(m => m.totalMonth || 0);
+    const esSaidas = esMonths.map(m => m.totalSaidas || 0);
+
+    const ctxEs = document.getElementById('entradasVsSaidasChart');
+    if (ctxEs) {
+      if (entradasVsSaidasChartInstance) entradasVsSaidasChartInstance.destroy();
+      entradasVsSaidasChartInstance = new Chart(ctxEs, {
+        type: 'bar',
+        data: {
+          labels: esLabels,
+          datasets: [
+            {
+              label: 'Entradas (Faturamento Bruto)',
+              data: esEntradas,
+              backgroundColor: '#10b981',
+              borderRadius: 6
+            },
+            {
+              label: 'Saídas (Despesas do Caixa)',
+              data: esSaidas,
+              backgroundColor: '#ef4444',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'monospace', size: 10, weight: 'bold' }, usePointStyle: true }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              callbacks: {
+                label: function(ctx) { return ` ${ctx.dataset.label}: R$ ${formatMoney(ctx.parsed.y)}`; }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { family: 'monospace', size: 9 }, maxRotation: 45 } },
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                font: { family: 'monospace', size: 10 },
+                callback: function(val) { return 'R$ ' + (val >= 1000 ? (val/1000).toFixed(0) + 'k' : val); }
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadComparativoData();
+  });
+</script>
+
+<%- include('../../partials/footer') %>
+

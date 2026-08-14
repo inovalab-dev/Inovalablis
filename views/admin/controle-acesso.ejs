@@ -1,0 +1,415 @@
+<%- include('../partials/header') %>
+
+<div class="p-4 md:p-8 max-w-7xl mx-auto flex-1 flex flex-col gap-8 fade-in">
+  
+  <!-- Cabeçalho da Página -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[#284701]/10 text-[#284701] flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Configurações do Sistema</p>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight">Controle de Acessos & Perfis</h1>
+      </div>
+    </div>
+    
+    <button onclick="openModal('add-profile-modal')" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+      Novo Perfil de Acesso
+    </button>
+  </div>
+
+  <!-- Alertas de Feedback -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <%= success_msg %>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <%= error_msg %>
+    </div>
+  <% } %>
+
+  <!-- Grid Principal -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Esquerda: Lista de Perfis e Permissões -->
+    <div class="lg:col-span-2 flex flex-col gap-6">
+      <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+        <div class="p-6 border-b border-brand-softBg bg-[#284701]/5">
+          <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Perfis de Acesso Cadastrados
+          </h2>
+          <p class="text-xs text-brand-neutralDark/60 mt-1">Gerencie os perfis de acesso de segurança e as permissões de tela dos funcionários.</p>
+        </div>
+
+        <div class="divide-y divide-brand-softBg">
+          <% profiles.forEach(profile => { %>
+            <div class="p-6 hover:bg-brand-softBg/20 transition-colors flex flex-col gap-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="font-black text-brand-neutralDark flex items-center gap-2 text-base">
+                    <%= profile.name %>
+                    <% if (profile.id === 'admin') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-[#284701]/10 text-[#284701]">Sistema</span>
+                    <% } %>
+                  </h3>
+                  <p class="text-xs text-brand-neutralDark/60 mt-1"><%= profile.description %></p>
+                </div>
+                
+                <% if (profile.id !== 'admin') { %>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="editProfile(<%= JSON.stringify(profile) %>)" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-[#284701]/10 hover:text-[#284701] transition-colors" title="Editar Perfil">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    </button>
+                    <button onclick="confirmDeleteProfile('<%= profile.id %>', '<%= profile.name %>')" class="p-2 rounded-lg bg-brand-softBg text-brand-neutralDark hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Excluir Perfil">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- Badges de Telas Permitidas -->
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <% 
+                  const permLabels = {
+                    dashboard: 'Painel Geral',
+                    exames: 'Exames & IA',
+                    comparador: 'Tabela de Custo',
+                    profissionais: 'Funcionários (RH)',
+                    requisicoes: 'Requisições',
+                    orcamentos: 'Orçamentos',
+                    financeiro: 'Financeiro',
+                    pops: 'POPs',
+                    nao_conformidades: 'Não Conformidades',
+                    avaliacoes: 'NPS & Avaliações',
+                    documentos: 'Documentos',
+                    blog: 'Blog',
+                    controle_acesso: 'Controle de Acessos'
+                  };
+                %>
+                <% 
+                  let perms = profile.permissions;
+                  if (typeof perms === 'string') {
+                    try { perms = JSON.parse(perms); } catch(e) { perms = {}; }
+                  }
+                  perms = perms || {};
+                %>
+                <% Object.keys(perms).forEach(key => { %>
+                  <% if (perms[key]) { %>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider bg-[#284701]/5 text-[#284701] border border-[#284701]/10">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#284701]"></span>
+                      <%= permLabels[key] || key %>
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider bg-brand-neutralDark/5 text-brand-neutralDark/40">
+                      <span class="w-1.5 h-1.5 rounded-full bg-brand-neutralDark/20"></span>
+                      <%= permLabels[key] || key %>
+                    </span>
+                  <% } %>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direita: Atribuição de Perfis aos Profissionais -->
+    <div class="flex flex-col gap-6">
+      <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+        <div class="p-6 border-b border-brand-softBg bg-[#284701]/5">
+          <h2 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            Vincular Perfis aos Profissionais
+          </h2>
+          <p class="text-xs text-brand-neutralDark/60 mt-1">Atribua um perfil de segurança para cada funcionário do laboratório.</p>
+        </div>
+
+        <form action="/admin/controle-acesso/assign" method="POST" class="p-6 flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Funcionário / Profissional</label>
+            <select name="professionalId" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+              <option value="" disabled selected>Selecione um profissional...</option>
+              <% professionals.forEach(prof => { %>
+                <option value="<%= prof.id %>">
+                  <%= prof.name %> (<%= prof.role || 'Sem Cargo' %>)
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Perfil de Segurança</label>
+            <select name="profileId" required class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+              <option value="" disabled selected>Selecione um perfil...</option>
+              <% profiles.forEach(profile => { %>
+                <option value="<%= profile.id %>"><%= profile.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all mt-2 active:scale-95 shadow-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Salvar Associação
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabela Rápida de Associações Atuais -->
+      <div class="bg-white rounded-2xl border border-brand-softBg custom-shadow overflow-hidden">
+        <div class="p-6 border-b border-brand-softBg">
+          <h3 class="font-bold text-[#284701] text-sm">Associações Ativas</h3>
+        </div>
+        <div class="divide-y divide-brand-softBg max-h-80 overflow-y-auto">
+          <% professionals.forEach(prof => { %>
+            <% 
+              const linkedProfile = profiles.find(p => p.id === prof.profileId);
+            %>
+            <div class="p-4 flex items-center justify-between gap-4 text-xs">
+              <div>
+                <p class="font-bold text-brand-neutralDark"><%= prof.name %></p>
+                <p class="text-[10px] text-brand-neutralDark/55 mt-0.5"><%= prof.role || 'Sem cargo' %></p>
+              </div>
+              <div>
+                <% if (linkedProfile) { %>
+                  <span class="px-2 py-1 rounded bg-[#284701]/10 text-[#284701] font-bold font-mono uppercase text-[9px] border border-[#284701]/10">
+                    <%= linkedProfile.name %>
+                  </span>
+                <% } else { %>
+                  <span class="px-2 py-1 rounded bg-brand-neutralDark/10 text-brand-neutralDark/50 font-bold font-mono uppercase text-[9px]">
+                    Sem Perfil (Herda Padrão)
+                  </span>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL: Adicionar Novo Perfil -->
+<div id="add-profile-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-xl overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        Novo Perfil de Acesso
+      </h3>
+      <button onclick="closeModal('add-profile-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form action="/admin/controle-acesso/add" method="POST" class="flex-1 overflow-y-auto max-h-[80vh] p-6 flex flex-col gap-6">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Nome do Perfil *</label>
+          <input type="text" name="name" required placeholder="Ex: Recepção Avançada, Auditor de Qualidade" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+        </div>
+        <div>
+          <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição / Objetivo do Perfil</label>
+          <textarea name="description" placeholder="Descreva brevemente quais cargos usarão este perfil..." rows="2" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-xs font-bold font-mono text-brand-neutralDark uppercase tracking-wider mb-3">Telas e Permissões de Acesso</p>
+        <p class="text-[11px] text-brand-neutralDark/60 mb-4">Selecione quais telas e sub-menus os profissionais associados a este perfil terão acesso.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-brand-softBg/30 p-4 rounded-xl border border-brand-softBg">
+          <% 
+            const permissionsList = [
+              { key: 'dashboard', label: 'Painel Geral (Dashboard)', desc: 'Dashboard de métricas' },
+              { key: 'exames', label: 'Exames & IA', desc: 'Gerenciar exames e guia IA' },
+              { key: 'comparador', label: 'Tabela de Custo', desc: 'Comparador de laboratórios' },
+              { key: 'profissionais', label: 'Funcionários (RH)', desc: 'Gerenciar equipe e registros' },
+              { key: 'requisicoes', label: 'Requisições (Logins)', desc: 'Logins rápidos de pacientes' },
+              { key: 'orcamentos', label: 'Orçamentos', desc: 'Visualizar e criar orçamentos' },
+              { key: 'financeiro', label: 'Financeiro', desc: 'Contas a pagar e receber' },
+              { key: 'pops', label: 'Wiki de POPs', desc: 'Acesso à base de conhecimento' },
+              { key: 'nao_conformidades', label: 'Não Conformidades', desc: 'Registro de desvios' },
+              { key: 'avaliacoes', label: 'NPS & Avaliações', desc: 'Pesquisas de satisfação' },
+              { key: 'documentos', label: 'Gestão de Documentos', desc: 'Arquivos e validade' },
+              { key: 'blog', label: 'Blog & Conteúdo', desc: 'Publicação de artigos' },
+              { key: 'controle_acesso', label: 'Controle de Acessos', desc: 'Esta tela (Uso restrito)' }
+            ];
+          %>
+          <% permissionsList.forEach(perm => { %>
+            <label class="flex items-start gap-3 p-3 bg-white hover:bg-[#284701]/5 rounded-lg border border-brand-neutralDark/5 shadow-sm transition-all cursor-pointer">
+              <input type="checkbox" name="permissions[<%= perm.key %>]" value="true" class="mt-1 rounded text-[#284701] focus:ring-[#284701] shrink-0">
+              <div>
+                <p class="text-xs font-bold text-[#284701] leading-tight"><%= perm.label %></p>
+                <p class="text-[10px] text-brand-neutralDark/50 mt-0.5"><%= perm.desc %></p>
+              </div>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('add-profile-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Criar Perfil
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Perfil -->
+<div id="edit-profile-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-xl overflow-hidden custom-shadow border border-brand-softBg flex flex-col scale-95 transition-all duration-300">
+    <div class="p-6 border-b border-brand-softBg bg-[#284701]/5 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        </svg>
+        Editar Perfil de Acesso
+      </h3>
+      <button onclick="closeModal('edit-profile-modal')" class="p-1.5 rounded-lg hover:bg-brand-softBg text-brand-neutralDark/40 hover:text-brand-neutralDark transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form id="edit-profile-form" action="/admin/controle-acesso/edit" method="POST" class="flex-1 overflow-y-auto max-h-[80vh] p-6 flex flex-col gap-6">
+      <input type="hidden" name="id" id="edit-profile-id">
+      
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Nome do Perfil *</label>
+          <input type="text" name="name" id="edit-profile-name" required placeholder="Ex: Recepção Avançada, Auditor de Qualidade" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all">
+        </div>
+        <div>
+          <label class="block text-xs font-bold font-mono text-brand-neutralDark/70 uppercase tracking-wider mb-2">Descrição / Objetivo do Perfil</label>
+          <textarea name="description" id="edit-profile-description" placeholder="Descreva brevemente quais cargos usarão este perfil..." rows="2" class="w-full px-4 py-3 rounded-xl border border-brand-neutralDark/15 focus:border-[#284701] focus:ring focus:ring-[#284701]/20 text-sm font-semibold transition-all"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-xs font-bold font-mono text-brand-neutralDark uppercase tracking-wider mb-3">Telas e Permissões de Acesso</p>
+        <p class="text-[11px] text-brand-neutralDark/60 mb-4">Selecione quais telas e sub-menus os profissionais associados a este perfil terão acesso.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-brand-softBg/30 p-4 rounded-xl border border-brand-softBg">
+          <% permissionsList.forEach(perm => { %>
+            <label class="flex items-start gap-3 p-3 bg-white hover:bg-[#284701]/5 rounded-lg border border-brand-neutralDark/5 shadow-sm transition-all cursor-pointer">
+              <input type="checkbox" name="permissions[<%= perm.key %>]" id="edit-perm-<%= perm.key %>" value="true" class="mt-1 rounded text-[#284701] focus:ring-[#284701] shrink-0">
+              <div>
+                <p class="text-xs font-bold text-[#284701] leading-tight"><%= perm.label %></p>
+                <p class="text-[10px] text-brand-neutralDark/50 mt-0.5"><%= perm.desc %></p>
+              </div>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-softBg">
+        <button type="button" onclick="closeModal('edit-profile-modal')" class="px-5 py-3 rounded-xl bg-brand-softBg hover:bg-brand-neutralDark/10 text-brand-neutralDark font-bold text-xs font-mono uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-brand-gold hover:bg-[#b09363] text-[#1b2914] font-black text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        const dialog = modal.querySelector('div');
+        if (dialog) {
+          dialog.classList.remove('scale-95');
+          dialog.classList.add('scale-100');
+        }
+      }, 50);
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+      const dialog = modal.querySelector('div');
+      if (dialog) {
+        dialog.classList.remove('scale-100');
+        dialog.classList.add('scale-95');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 150);
+    }
+  }
+
+  function editProfile(profile) {
+    document.getElementById('edit-profile-id').value = profile.id;
+    document.getElementById('edit-profile-name').value = profile.name;
+    document.getElementById('edit-profile-description').value = profile.description || '';
+    
+    // Resetar todos os checkboxes de permissões
+    const checkboxes = document.querySelectorAll('#edit-profile-form input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    // Atribuir valores salvos
+    let perms = profile.permissions;
+    if (typeof perms === 'string') {
+      try { perms = JSON.parse(perms); } catch(e) { perms = {}; }
+    }
+    if (perms) {
+      Object.keys(perms).forEach(key => {
+        const cb = document.getElementById('edit-perm-' + key);
+        if (cb) {
+          cb.checked = !!perms[key];
+        }
+      });
+    }
+    
+    openModal('edit-profile-modal');
+  }
+
+  function confirmDeleteProfile(id, name) {
+    if (confirm('Deseja realmente excluir o perfil de acesso "' + name + '"? Funcionários com este perfil perderão o acesso customizado correspondente.')) {
+      window.location.href = '/admin/controle-acesso/delete/' + id;
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

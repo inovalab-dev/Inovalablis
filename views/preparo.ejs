@@ -1,0 +1,177 @@
+<%- include('partials/header') %>
+
+<!-- Banner Superior -->
+<section class="bg-gradient-to-b from-brand-softBg/60 to-white py-12 border-b border-brand-light/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+    <span class="text-xs font-bold tracking-widest text-brand-gold uppercase font-mono block">Busca Inteligente</span>
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-brand-dark tracking-tight">Instruções de Preparo de Exames</h1>
+    <div class="w-12 h-1 bg-brand-gold mx-auto rounded-full"></div>
+    <p class="text-sm text-gray-500 max-w-2xl mx-auto">Consulte aqui os requisitos de jejum, cuidados prévios e prazos de entrega para garantir a precisão de seus resultados.</p>
+  </div>
+</section>
+
+<!-- Campo de Pesquisa em Tempo Real -->
+<section class="py-6 bg-white border-b border-brand-light/10">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="relative rounded-2xl shadow-md">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <svg class="h-5 h-5 text-brand-dark/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <input type="text" id="exam-search" placeholder="Digite o nome do exame (ex: Glicemia, Hemograma, Hormônio)..." class="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-brand-light/30 focus:outline-none focus:ring-2 focus:ring-brand-dark focus:border-transparent text-sm bg-brand-neutralLight font-medium">
+    </div>
+    
+    <!-- Filtros por Categoria Rápidos -->
+    <div class="flex flex-wrap gap-2 mt-4 justify-center" id="category-filters">
+      <button class="filter-btn active px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-dark text-white" data-cat="all">Todos</button>
+      <button class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white" data-cat="Sangue">Sangue</button>
+      <button class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white" data-cat="Diabetes">Diabetes</button>
+      <button class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white" data-cat="Urina">Urina</button>
+      <button class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white" data-cat="Hormônios">Hormônios</button>
+      <button class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-brand-softBg text-brand-dark hover:bg-brand-light hover:text-white" data-cat="Toxicologia">Toxicologia</button>
+    </div>
+  </div>
+</section>
+
+<!-- Catálogo Dinâmico de Exames -->
+<section class="py-12 bg-brand-neutralLight/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Grid de Exames -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="exams-grid">
+      <% exams.forEach(exam => { %>
+        <div class="exam-card bg-white rounded-3xl p-6 border border-brand-light/20 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between" data-category="<%= exam.category %>" data-name="<%= exam.name.toLowerCase() %>" data-instructions="<%= exam.instructions.toLowerCase() %>">
+          
+          <div class="space-y-4">
+            <!-- Cabeçalho do Card -->
+            <div class="flex justify-between items-start gap-2">
+              <span class="bg-brand-softBg text-brand-dark font-bold font-mono text-[9px] px-2.5 py-1 rounded-full uppercase">
+                <%= exam.category %>
+              </span>
+              <span class="text-xs text-brand-gold font-bold font-mono"><%= exam.timeframe %></span>
+            </div>
+
+            <!-- Nome do Exame -->
+            <div>
+              <h3 class="text-base font-bold text-brand-dark tracking-tight leading-snug"><%= exam.name %></h3>
+            </div>
+
+            <!-- Jejum Badge -->
+            <div class="flex items-center space-x-2 text-xs text-gray-500 font-medium">
+              <svg class="w-4 h-4 text-brand-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span><%= exam.fasting %></span>
+            </div>
+
+            <!-- Instruções -->
+            <div class="bg-brand-softBg/30 p-3.5 rounded-2xl border border-brand-light/10">
+              <h4 class="text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono mb-1">Como se preparar:</h4>
+              <p class="text-xs text-gray-500 leading-relaxed font-normal"><%= exam.instructions %></p>
+            </div>
+          </div>
+
+          <!-- Rodapé do Card com Ação -->
+          <div class="mt-6 pt-4 border-t border-brand-light/10 flex items-center justify-end">
+            <a href="https://wa.me/5543996183406?text=Olá%20InovaLab!%20Gostaria%20de%20agendar%20ou%20tirar%20dúvidas%20sobre%20o%20exame%20<%= encodeURIComponent(exam.name) %>" target="_blank" rel="noopener noreferrer" class="w-full text-center text-xs font-bold bg-brand-dark hover:bg-brand-light text-white py-2.5 rounded-xl transition-colors flex items-center justify-center space-x-1.5 shadow-sm hover:shadow-md">
+              <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.25 8.477 3.517 2.266 2.268 3.512 5.279 3.51 8.484-.006 6.545-5.34 11.884-11.954 11.884-.001 0-.002 0-.003 0-1.996-.001-3.956-.503-5.69-1.457L0 24zM6.59 17.545l.361.215a9.872 9.872 0 0 0 5.031 1.378H12a9.89 9.89 0 0 0 9.885-9.885A9.832 9.832 0 0 0 19 2.899 9.825 9.825 0 0 0 12.008 1.1c-5.451 0-9.887 4.434-9.89 9.884-.001 2.094.547 4.14 1.588 5.944l.236.375-1.003 3.655 3.743-.982zM17.472 14.38c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36-.195 1.871-.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+              <span>Dúvidas ou Agendamento</span>
+            </a>
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Mensagem de "Nenhum resultado encontrado" -->
+    <div id="no-results" class="hidden text-center py-16 space-y-4">
+      <div class="w-16 h-16 bg-brand-softBg/60 rounded-full flex items-center justify-center mx-auto text-brand-dark">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <p class="text-lg font-bold text-brand-dark">Nenhum exame encontrado</p>
+        <p class="text-xs text-gray-400">Tente buscar por termos mais genéricos como "sangue", "urina" ou "glicose".</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Script para a busca interativa de exames no frontend -->
+<script>
+  const searchInput = document.getElementById('exam-search');
+  const cards = document.querySelectorAll('.exam-card');
+  const noResults = document.getElementById('no-results');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const examsGrid = document.getElementById('exams-grid');
+
+  let activeCategory = 'all';
+  let searchTerm = '';
+
+  function filterExams() {
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const cardCat = card.getAttribute('data-category');
+      const cardName = card.getAttribute('data-name');
+      const cardInst = card.getAttribute('data-instructions');
+
+      const matchesSearch = cardName.includes(searchTerm) || cardInst.includes(searchTerm);
+      const matchesCategory = activeCategory === 'all' || cardCat === activeCategory;
+
+      if (matchesSearch && matchesCategory) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    if (visibleCount === 0) {
+      noResults.classList.remove('hidden');
+      examsGrid.classList.add('hidden');
+    } else {
+      noResults.classList.add('hidden');
+      examsGrid.classList.remove('hidden');
+    }
+  }
+
+  // Evento de Digitação com Debounce para o Google Analytics
+  let searchTimeout;
+  searchInput.addEventListener('input', (e) => {
+    searchTerm = e.target.value.toLowerCase().trim();
+    filterExams();
+
+    clearTimeout(searchTimeout);
+    if (searchTerm.length >= 3) {
+      searchTimeout = setTimeout(() => {
+        if (typeof trackExamSearch === 'function') {
+          trackExamSearch(searchTerm);
+        }
+      }, 1000);
+    }
+  });
+
+  // Eventos de Filtro por Botões
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active', 'bg-brand-dark', 'text-white'));
+      filterBtns.forEach(b => b.classList.add('bg-brand-softBg', 'text-brand-dark'));
+
+      btn.classList.add('active', 'bg-brand-dark', 'text-white');
+      btn.classList.remove('bg-brand-softBg', 'text-brand-dark');
+
+      activeCategory = btn.getAttribute('data-cat');
+      filterExams();
+
+      if (typeof gtag === 'function') {
+        gtag('event', 'click_filtro_categoria', {
+          'category_name': activeCategory,
+          'event_category': 'Engajamento'
+        });
+      }
+    });
+  });
+
+
+</script>
+
+<%- include('partials/footer') %>
+

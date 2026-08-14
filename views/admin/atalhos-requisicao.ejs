@@ -1,0 +1,430 @@
+<%- include('../partials/header', { page: 'admin-atalhos-requisicao' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6 fade-in">
+
+  <!-- CABEÇALHO DA PÁGINA -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-brand-softBg custom-shadow">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200">
+        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-brand-gold uppercase tracking-wider font-mono">Administração & Cadastros</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 font-mono">LIS Reativação</span>
+        </div>
+        <h1 class="text-2xl font-black text-[#284701] tracking-tight mt-0.5">Atalhos Requisição</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Configure predefinições de exames, descrições e materiais coletados para inclusão rápida durante a abertura de requisições.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewShortcutModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-extrabold text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>+ Adicionar Novo Atalho</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTAS DE FEEDBACK DA OPERAÇÃO -->
+  <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs">
+      <div class="w-7 h-7 rounded-lg bg-emerald-200 text-emerald-900 flex items-center justify-center font-bold shrink-0">✓</div>
+      <span><%= success_msg %></span>
+    </div>
+  <% } %>
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-xs">
+      <div class="w-7 h-7 rounded-lg bg-rose-200 text-rose-900 flex items-center justify-center font-bold shrink-0">!</div>
+      <span><%= error_msg %></span>
+    </div>
+  <% } %>
+
+  <!-- CARDS DE MÉTRICAS -->
+  <% 
+    const totalShortcuts = (shortcuts || []).length;
+    const uniqueExams = new Set((shortcuts || []).map(s => s.examCode || s.examId)).size;
+    const uniqueMaterials = new Set((shortcuts || []).map(s => s.material)).size;
+  %>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total de Atalhos</p>
+        <p class="text-2xl font-black text-[#284701] font-mono mt-0.5"><%= totalShortcuts %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
+        ⚡
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Exames Vinculados</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5"><%= uniqueExams %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
+        🧪
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-blue-600 uppercase font-mono tracking-wider">Materiais Mapeados</p>
+        <p class="text-2xl font-black text-blue-700 font-mono mt-0.5"><%= uniqueMaterials %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">
+        🩸
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA E TABELA PRINCIPAL DE ATALHOS -->
+  <div class="bg-white rounded-2xl border border-gray-200 custom-shadow overflow-hidden">
+    
+    <!-- BARRA SUPERIOR COM BUSCA -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xs font-black text-slate-800 uppercase font-mono tracking-wider">Listagem de Atalhos de Requisição</h2>
+        <span id="shortcutsCounterBadge" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-200 rounded-full text-xs font-bold font-mono">
+          <%= totalShortcuts %> cadastrados
+        </span>
+      </div>
+
+      <div class="relative w-full sm:w-80">
+        <input type="text" id="shortcutSearchInput" onkeyup="filterShortcutsTable()" placeholder="Buscar por Exame, Descrição ou Material..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#284701] focus:border-[#284701] transition-all">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse" id="shortcutsTable">
+        <thead>
+          <tr class="bg-slate-100/80 text-[11px] font-bold text-gray-600 uppercase font-mono border-b border-gray-200 select-none">
+            <th class="px-4 py-3 w-16 text-center">Código</th>
+            <th class="px-4 py-3">Exame</th>
+            <th class="px-4 py-3">Descrição do Atalho</th>
+            <th class="px-4 py-3">Material Coletado</th>
+            <th class="px-4 py-3 w-36 text-center">Data Cadastro</th>
+            <th class="px-4 py-3 w-28 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs" id="shortcutsTbody">
+          <% if (shortcuts && shortcuts.length > 0) { %>
+            <% shortcuts.forEach((s, idx) => { %>
+              <tr class="hover:bg-amber-50/30 transition-colors shortcut-row" data-search="<%= (s.examCode || '') + ' ' + (s.examName || '') + ' ' + (s.description || '') + ' ' + (s.material || '') %>">
+                <td class="px-4 py-3 text-center font-mono font-bold text-slate-500">
+                  #<%= idx + 1 %>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-mono font-bold text-[11px] border border-slate-200 shrink-0">
+                      <%= s.examCode || 'EXAME' %>
+                    </span>
+                    <span class="font-bold text-slate-900 leading-tight">
+                      <%= s.examName || 'Exame Sem Nome' %>
+                    </span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-semibold text-gray-800">
+                  <%= s.description || 'Sem descrição' %>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold font-mono text-[11px] border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <%= s.material || 'Material Padrão' %>
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-center font-mono text-gray-500 text-[11px]">
+                  <%= s.createdAt ? new Date(s.createdAt).toLocaleDateString('pt-BR') : '-' %>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center gap-1">
+                    <button type="button" onclick='openEditShortcutModal(<%- JSON.stringify(s) %>)' class="p-1.5 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors cursor-pointer" title="Editar Atalho">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/>
+                      </svg>
+                    </button>
+                    <form action="/admin/atalhos-requisicao/delete" method="POST" onsubmit="return confirm('Deseja realmente remover este atalho?')" class="inline">
+                      <input type="hidden" name="id" value="<%= s.id %>">
+                      <button type="submit" class="p-1.5 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer" title="Excluir Atalho">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr id="emptyStateRow">
+              <td colspan="6" class="px-4 py-12 text-center text-gray-500 bg-slate-50/50">
+                <div class="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                  <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold">
+                    ⚡
+                  </div>
+                  <p class="font-bold text-slate-800 text-sm">Nenhum atalho de requisição cadastrado</p>
+                  <p class="text-xs text-gray-500">Cadastre o primeiro atalho associando um exame, descrição e material para agilizar a criação de ordens de serviço.</p>
+                  <button type="button" onclick="openNewShortcutModal()" class="mt-2 px-4 py-2 bg-[#284701] text-white rounded-xl font-bold text-xs font-mono uppercase tracking-wider hover:bg-[#3d6b1d] transition-colors cursor-pointer">
+                    + Cadastrar Primeiro Atalho
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL CADASTRO / EDIÇÃO DE ATALHO REQUISIÇÃO -->
+<div id="modalAtalhosRequisicao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-xl w-full overflow-hidden transform transition-all my-8">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="p-6 bg-gradient-to-r from-[#284701] to-[#3a6402] text-white flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 shrink-0 font-bold text-lg border border-white/20">
+          ⚡
+        </div>
+        <div>
+          <h3 id="modalTitle" class="text-base font-black text-white tracking-tight">Adicionar Novo Atalho</h3>
+          <p class="text-xs text-emerald-100/80">Associe exame, descrição e o material coletado disponível</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeShortcutModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Form do Modal -->
+    <form id="shortcutForm" action="/admin/atalhos-requisicao/add" method="POST" class="p-6 space-y-5">
+      <input type="hidden" name="id" id="shortcutIdInput" value="">
+
+      <!-- Campo 1: EXAME -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-800 uppercase font-mono tracking-wider">
+          Exame <span class="text-rose-500">*</span>
+        </label>
+        <p class="text-[11px] text-gray-500">Selecione o exame cadastrado na tela de exames do LIS</p>
+        <select name="examId" id="shortcutExamSelect" onchange="onExamSelectChange()" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-[#284701] focus:border-[#284701] transition-all">
+          <option value="">-- Selecione o Exame --</option>
+          <% if (exams && exams.length > 0) { %>
+            <% exams.forEach(e => { %>
+              <option value="<%= e.id || e.code %>" data-code="<%= e.code || e.jalisCode || '' %>" data-name="<%= e.name %>" data-materials='<%- JSON.stringify(e.materiaisColetados || []) %>'>
+                <%= e.code || e.jalisCode ? '[' + (e.code || e.jalisCode) + '] ' : '' %><%= e.name %>
+              </option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+
+      <!-- Campo 2: DESCRIÇÃO -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-800 uppercase font-mono tracking-wider">
+          Descrição <span class="text-rose-500">*</span>
+        </label>
+        <p class="text-[11px] text-gray-500">Forneça um nome legível ou finalidade do atalho (Ex: Rotina Hematológica, Checkup Diabetes)</p>
+        <input type="text" name="description" id="shortcutDescriptionInput" placeholder="Ex: +Hemograma" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-[#284701] focus:border-[#284701] transition-all">
+      </div>
+
+      <!-- Campo 3: MATERIAL -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-800 uppercase font-mono tracking-wider">
+          Material Coletado <span class="text-rose-500">*</span>
+        </label>
+        <p class="text-[11px] text-gray-500">Selecione o material coletado disponível para o exame selecionado</p>
+        <select name="material" id="shortcutMaterialSelect" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-[#284701] focus:border-[#284701] transition-all">
+          <option value="">-- Selecione primeiro um exame acima --</option>
+        </select>
+      </div>
+
+      <!-- Ações do Modal -->
+      <div class="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeShortcutModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs font-mono uppercase tracking-wider rounded-xl transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 bg-[#284701] hover:bg-[#3d6b1d] text-white font-extrabold text-xs font-mono uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">
+          Salvar Atalho
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- SCRIPT DA TELA DE ATALHOS REQUISIÇÃO -->
+<script>
+  // Evento de alteração no combo do Exame: busca materiais do exame selecionado
+  function onExamSelectChange(selectedMaterialVal) {
+    const examSelect = document.getElementById('shortcutExamSelect');
+    const materialSelect = document.getElementById('shortcutMaterialSelect');
+    if (!examSelect || !materialSelect) return;
+
+    const opt = examSelect.options[examSelect.selectedIndex];
+    materialSelect.innerHTML = '';
+
+    if (!opt || !opt.value) {
+      materialSelect.innerHTML = '<option value="">-- Selecione primeiro um exame acima --</option>';
+      return;
+    }
+
+    let materials = [];
+    try {
+      const matAttr = opt.getAttribute('data-materials');
+      if (matAttr) materials = JSON.parse(matAttr);
+    } catch(e) {
+      console.error('Erro ao processar materiais do exame:', e);
+    }
+
+    if (Array.isArray(materials) && materials.length > 0) {
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = `-- Selecione o Material (${materials.length} disponível(is)) --`;
+      materialSelect.appendChild(defaultOption);
+
+      materials.forEach(m => {
+        const matName = m.nome || m.material || m.descricao || m.abrev || 'Sangue Total';
+        const matLabel = m.abrev ? `${matName} (${m.abrev})` : matName;
+        const o = document.createElement('option');
+        o.value = matName;
+        o.textContent = matLabel;
+        if (selectedMaterialVal && (selectedMaterialVal === matName || selectedMaterialVal === m.abrev)) {
+          o.selected = true;
+        }
+        materialSelect.appendChild(o);
+      });
+    } else {
+      // Fallback se o exame não tiver materiais coletados cadastrados explicitamente
+      const defaults = [
+        'Sangue Total',
+        'Soro',
+        'Plasma',
+        'Urina',
+        'Fezes',
+        'Liquor',
+        'Swab Nasal',
+        'Secreção'
+      ];
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = '-- Selecione o Material --';
+      materialSelect.appendChild(defaultOption);
+
+      defaults.forEach(d => {
+        const o = document.createElement('option');
+        o.value = d;
+        o.textContent = d;
+        if (selectedMaterialVal && selectedMaterialVal === d) {
+          o.selected = true;
+        }
+        materialSelect.appendChild(o);
+      });
+    }
+
+    if (selectedMaterialVal) {
+      let found = false;
+      for (let i = 0; i < materialSelect.options.length; i++) {
+        if (materialSelect.options[i].value === selectedMaterialVal) {
+          materialSelect.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found && selectedMaterialVal) {
+        const customOpt = document.createElement('option');
+        customOpt.value = selectedMaterialVal;
+        customOpt.textContent = selectedMaterialVal;
+        customOpt.selected = true;
+        materialSelect.appendChild(customOpt);
+      }
+    }
+  }
+
+  // Abrir Modal para criar novo
+  function openNewShortcutModal() {
+    const modal = document.getElementById('modalAtalhosRequisicao');
+    const form = document.getElementById('shortcutForm');
+    const title = document.getElementById('modalTitle');
+    
+    if (form) {
+      form.reset();
+      form.action = '/admin/atalhos-requisicao/add';
+    }
+    document.getElementById('shortcutIdInput').value = '';
+    if (title) title.textContent = 'Adicionar Novo Atalho';
+
+    onExamSelectChange();
+
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  // Abrir Modal para editar
+  function openEditShortcutModal(s) {
+    if (!s) return;
+    const modal = document.getElementById('modalAtalhosRequisicao');
+    const form = document.getElementById('shortcutForm');
+    const title = document.getElementById('modalTitle');
+    
+    if (form) form.action = '/admin/atalhos-requisicao/edit';
+    if (title) title.textContent = 'Editar Atalho Requisição';
+
+    document.getElementById('shortcutIdInput').value = s.id || '';
+    document.getElementById('shortcutDescriptionInput').value = s.description || '';
+
+    const examSelect = document.getElementById('shortcutExamSelect');
+    if (examSelect) {
+      let matched = false;
+      for (let i = 0; i < examSelect.options.length; i++) {
+        if (examSelect.options[i].value === String(s.examId) || examSelect.options[i].getAttribute('data-code') === String(s.examCode)) {
+          examSelect.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) examSelect.selectedIndex = 0;
+    }
+
+    onExamSelectChange(s.material);
+
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  // Fechar Modal
+  function closeShortcutModal() {
+    const modal = document.getElementById('modalAtalhosRequisicao');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Filtro dinâmico da Tabela
+  function filterShortcutsTable() {
+    const query = (document.getElementById('shortcutSearchInput').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.shortcut-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const text = (row.getAttribute('data-search') || '').toLowerCase();
+      if (text.includes(query)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    const badge = document.getElementById('shortcutsCounterBadge');
+    if (badge) badge.textContent = `${visibleCount} encontrados`;
+  }
+</script>
+
+<%- include('../partials/footer') %>

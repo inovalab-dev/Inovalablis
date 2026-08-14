@@ -1,0 +1,932 @@
+<%- include('../partials/header') %>
+
+<!-- Quill Editor CDN -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<style>
+  /* Estilo do documento (A4 papel) no visualizador */
+  #print-area h1, #print-area h2, #print-area h3, #print-area h4 {
+    color: #1e293b;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  #print-area h1 { font-size: 1.5rem; border-b: 2px solid #e2e8f0; padding-bottom: 0.25rem; }
+  #print-area h2 { font-size: 1.25rem; border-b: 1px solid #f1f5f9; padding-bottom: 0.25rem; }
+  #print-area h3 { font-size: 1.1rem; }
+  #print-area p { margin-top: 0.5rem; margin-bottom: 0.75rem; line-height: 1.6; color: #334155; }
+  #print-area ul, #print-area ol { margin-top: 0.5rem; margin-bottom: 0.75rem; padding-left: 1.5rem; }
+  #print-area ul { list-style-type: disc; }
+  #print-area ol { list-style-type: decimal; }
+  #print-area li { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+  #print-area blockquote { border-left: 4px solid #cbd5e1; padding-left: 1rem; color: #475569; font-style: italic; margin: 1rem 0; }
+  #print-area pre { background-color: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; font-family: monospace; overflow-x: auto; }
+
+  /* Personalização elegante do Quill */
+  .ql-toolbar.ql-snow {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-color: #e2e8f0 !important;
+    background-color: #f8fafc;
+  }
+  .ql-container.ql-snow {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-color: #e2e8f0 !important;
+    font-family: inherit;
+    font-size: 13px;
+    min-height: 250px;
+  }
+</style>
+
+<!-- Mensagens de Alerta (Toast) -->
+<div id="alerts-container" class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-4 hidden">
+  <div id="alert-success-added" class="hidden flex items-center p-4 mb-4 text-emerald-800 bg-emerald-50 rounded-2xl border border-emerald-100">
+    <div class="text-xs font-semibold font-mono">POP cadastrado com sucesso na wiki!</div>
+  </div>
+  <div id="alert-success-edited" class="hidden flex items-center p-4 mb-4 text-emerald-800 bg-emerald-50 rounded-2xl border border-emerald-100">
+    <div class="text-xs font-semibold font-mono">POP atualizado com sucesso!</div>
+  </div>
+  <div id="alert-success-deleted" class="hidden flex items-center p-4 mb-4 text-amber-800 bg-amber-50 rounded-2xl border border-amber-100">
+    <div class="text-xs font-semibold font-mono">Procedimento removido da árvore.</div>
+  </div>
+  <div id="alert-error-duplicate" class="hidden flex items-center p-4 mb-4 text-rose-800 bg-rose-50 rounded-2xl border border-rose-100">
+    <div class="text-xs font-semibold font-mono">Erro: Código de POP já existente! Use um código único.</div>
+  </div>
+</div>
+
+<!-- Cabeçalho Principal -->
+<section class="bg-brand-softBg/30 border-b border-brand-light/15 py-5">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-400">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Wiki de POPs</span>
+      </div>
+      <h1 class="text-xl font-black text-brand-neutralDark tracking-tight mt-1 flex items-center gap-2">
+        Wiki de POPs do Laboratório <span class="text-[10px] bg-brand-gold/20 text-brand-dark px-2 py-0.5 rounded-full font-mono font-bold uppercase tracking-wider">Gestão da Qualidade</span>
+      </h1>
+      <p class="text-xs text-gray-500 mt-0.5">Gerenciamento completo de manuais, protocolos e procedimentos operacionais em formato de árvore hierárquica.</p>
+    </div>
+    
+    <div class="flex gap-2 w-full sm:w-auto">
+      <button onclick="createRootPage('01. Sistema de Gestão da Qualidade')" class="flex-1 sm:flex-initial text-center px-4 py-2 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+        <span>Criar POP Raiz</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Painel de Métricas do Topo -->
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="bg-white p-4 rounded-2xl border border-brand-light/10 shadow-sm flex flex-col justify-between">
+    <span class="text-[9px] font-bold font-mono text-gray-400 uppercase tracking-widest">Total de POPs</span>
+    <div class="flex items-baseline justify-between mt-1">
+      <span class="text-xl font-extrabold text-brand-neutralDark font-mono" id="stats-total"><%= pops.length %></span>
+      <span class="text-[10px] text-gray-400">ativos</span>
+    </div>
+  </div>
+  <div class="bg-white p-4 rounded-2xl border border-brand-light/10 shadow-sm flex flex-col justify-between">
+    <span class="text-[9px] font-bold font-mono text-emerald-600 uppercase tracking-widest">Aprovados</span>
+    <div class="flex items-baseline justify-between mt-1">
+      <span class="text-xl font-extrabold text-emerald-600 font-mono" id="stats-approved"><%= pops.filter(p => p.status === 'Aprovado').length %></span>
+      <span class="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded font-mono font-bold">100% OK</span>
+    </div>
+  </div>
+  <div class="bg-white p-4 rounded-2xl border border-brand-light/10 shadow-sm flex flex-col justify-between">
+    <span class="text-[9px] font-bold font-mono text-amber-600 uppercase tracking-widest">Em Revisão / Pendentes</span>
+    <div class="flex items-baseline justify-between mt-1">
+      <span class="text-xl font-extrabold text-amber-500 font-mono" id="stats-pending"><%= pops.filter(p => p.status !== 'Aprovado').length %></span>
+      <span class="text-[10px] text-gray-400">revisar</span>
+    </div>
+  </div>
+  <div class="bg-white p-4 rounded-2xl border border-brand-light/10 shadow-sm flex flex-col justify-between">
+    <span class="text-[9px] font-bold font-mono text-brand-dark uppercase tracking-widest">Conformidade (NPS)</span>
+    <div class="flex items-baseline justify-between mt-1">
+      <span class="text-xl font-extrabold text-brand-dark font-mono" id="stats-compliance">
+        <%= pops.length > 0 ? Math.round((pops.filter(p => p.status === 'Aprovado').length / pops.length) * 100) : 0 %>%
+      </span>
+      <span class="text-[10px] text-gray-400 font-mono">Meta: 90%</span>
+    </div>
+  </div>
+</div>
+
+<!-- Área de Trabalho Split-Screen (Notion-style) -->
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="grid grid-cols-12 gap-6 items-stretch">
+    
+    <!-- Painel da Esquerda (Árvore Hierárquica de POPs) -->
+    <div class="col-span-12 lg:col-span-3 bg-white border border-brand-light/10 p-4 rounded-3xl shadow-sm flex flex-col lg:h-[calc(100vh-16rem)] min-h-[450px]">
+      
+      <!-- Caixa de Busca -->
+      <div class="relative mb-4 shrink-0">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input type="text" id="search-tree" onkeyup="searchTree()" placeholder="Buscar páginas ou conteúdo..." class="w-full pl-9 pr-4 py-2 border border-brand-light/20 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-dark/45 transition-colors bg-brand-softBg/20 placeholder:text-gray-400">
+      </div>
+
+      <!-- Scrollable List of Tree -->
+      <div id="tree-container" class="flex-1 overflow-y-auto pr-1 space-y-1">
+        <!-- populated dynamically via JS -->
+      </div>
+    </div>
+
+    <!-- Painel da Direita (Visualizador de Documentos & Editor Integrado) -->
+    <div class="col-span-12 lg:col-span-9 bg-brand-softBg/20 rounded-3xl flex flex-col lg:h-[calc(100vh-16rem)] min-h-[450px] overflow-hidden border border-brand-light/10">
+      
+      <!-- Estado Vazio (Nenhuma página selecionada) -->
+      <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
+        <div class="w-14 h-14 bg-brand-softBg rounded-full flex items-center justify-center text-brand-dark/60 mb-3 animate-pulse">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+        </div>
+        <h3 class="text-xs sm:text-sm font-bold text-gray-700">Central de POPs & Documentação</h3>
+        <p class="text-[11px] text-gray-400 max-w-xs mt-1">Clique em uma das páginas da árvore técnica lateral para visualizar, exportar ou editar com formato Word.</p>
+      </div>
+
+      <!-- VISUALIZADOR (Reader Mode) -->
+      <div id="reader-view" class="hidden flex-1 flex flex-col overflow-hidden bg-brand-softBg/10">
+        <!-- Barra de Ações do Documento -->
+        <div class="px-5 py-3 bg-white border-b border-brand-light/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2">
+            <span id="reader-doc-id" class="text-[10px] font-bold font-mono bg-brand-softBg text-brand-dark px-2 py-0.5 rounded-lg border">POP-COL-001</span>
+            <span id="reader-doc-category" class="text-[9px] font-bold px-2 py-0.5 rounded-full font-mono bg-brand-gold/15 text-brand-dark uppercase">Coleta</span>
+          </div>
+          
+          <div class="flex items-center gap-1.5">
+            <!-- Botão Aprovar se Pendente/Revisão -->
+            <button id="reader-btn-approve" onclick="quickApproveSelected()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-xl border border-emerald-100 transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span>Aprovar</span>
+            </button>
+            
+            <button onclick="printSelectedDoc()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 text-[10px] font-bold rounded-xl border border-gray-200 transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>PDF / Imprimir</span>
+            </button>
+
+            <button onclick="switchToEditor()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-[10px] font-bold rounded-xl border border-amber-200 transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+              <span>Editar</span>
+            </button>
+
+            <button onclick="deleteSelectedDoc()" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-bold rounded-xl border border-rose-100 transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <span>Excluir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Área de Leitura em Formato de Folha A4 -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 flex justify-center">
+          <div id="print-area" class="bg-white w-full max-w-[1000px] min-h-[297mm] p-6 sm:p-10 shadow-sm border border-gray-100 rounded-2xl flex flex-col">
+            <!-- Cabeçalho Técnico Oficial -->
+            <div class="border-b-2 border-brand-dark pb-4 mb-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <span class="text-[8px] font-bold font-mono text-gray-400 uppercase tracking-widest">Procedimento Operacional Padrão</span>
+                  <h1 id="reader-doc-title" class="text-base sm:text-lg font-extrabold text-brand-dark leading-tight mt-0.5">Procedimento para Coleta</h1>
+                </div>
+                <div class="shrink-0 flex sm:flex-col items-end gap-2 text-right">
+                  <span id="reader-doc-status-badge" class="inline-flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded border font-mono">Aprovado</span>
+                  <span id="reader-doc-version" class="text-[10px] font-bold font-mono bg-brand-gold/15 text-brand-dark px-1.5 py-0.5 rounded">v1.0</span>
+                </div>
+              </div>
+              
+              <!-- Tabela de Metadados -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-3 border-t border-gray-100 text-[9px] font-mono text-gray-400">
+                <div>
+                  <p class="uppercase text-[8px] font-bold">Elaborado por</p>
+                  <p id="reader-doc-author" class="text-gray-700 font-semibold mt-0.5">Dra. Sandra Regina</p>
+                </div>
+                <div>
+                  <p class="uppercase text-[8px] font-bold">Criado em</p>
+                  <p id="reader-doc-created" class="text-gray-700 font-semibold mt-0.5">10/01/2026</p>
+                </div>
+                <div>
+                  <p class="uppercase text-[8px] font-bold">Próxima Revisão</p>
+                  <p id="reader-doc-review" class="text-gray-700 font-semibold mt-0.5">10/01/2027</p>
+                </div>
+                <div>
+                  <p class="uppercase text-[8px] font-bold">Procedimento Pai</p>
+                  <p id="reader-doc-parent" class="text-gray-700 font-semibold mt-0.5">Nenhum</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conteúdo Real -->
+            <div id="reader-doc-html-content" class="text-xs sm:text-sm text-gray-700 leading-relaxed font-sans space-y-4">
+              <!-- Rich text content insert -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDITOR INTEGRADO (Editor Mode) -->
+      <div id="editor-view" class="hidden flex-1 flex flex-col overflow-hidden bg-white">
+        <form id="editor-form" action="/admin/pops/edit" method="POST" class="flex-1 flex flex-col overflow-hidden">
+          <textarea name="content" id="form-content-hidden" class="hidden"></textarea>
+          
+          <div class="px-5 py-3 border-b border-brand-light/10 flex items-center justify-between shrink-0 bg-brand-softBg/10">
+            <h3 id="editor-panel-title" class="text-xs font-extrabold text-brand-dark">Editar Documento</h3>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="cancelEditor()" class="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-500 text-[10px] font-bold font-mono uppercase tracking-wider rounded-xl transition-colors cursor-pointer">Cancelar</button>
+              <button type="submit" class="px-4 py-1.5 bg-brand-dark hover:bg-brand-neutralDark text-white text-[10px] font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">Salvar POP</button>
+            </div>
+          </div>
+
+          <!-- Formulário -->
+          <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Código Único *</label>
+                <input type="text" name="id" id="editor-form-id" required placeholder="POP-XXX-000" class="w-full px-2.5 py-1.5 border border-brand-light/20 rounded-xl font-bold font-mono text-xs uppercase focus:outline-none focus:border-brand-dark">
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Título do POP *</label>
+                <input type="text" name="title" id="editor-form-title" required placeholder="Ex: Procedimento para Coleta Venosa" class="w-full px-2.5 py-1.5 border border-brand-light/20 rounded-xl font-semibold text-xs focus:outline-none focus:border-brand-dark">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Setor / Tema</label>
+                <div class="relative">
+                  <select name="category" id="editor-form-category" class="w-full px-2.5 py-1.5 bg-white border border-brand-light/20 rounded-xl font-bold text-xs appearance-none cursor-pointer focus:outline-none">
+                    <option value="01. Sistema de Gestão da Qualidade">01. Sistema de Gestão da Qualidade</option>
+                    <option value="02. Recursos Humanos">02. Recursos Humanos</option>
+                    <option value="03. Atendimento">03. Atendimento</option>
+                    <option value="04. Fase Pré-Analítica">04. Fase Pré-Analítica</option>
+                    <option value="05. Processamento das Amostras">05. Processamento das Amostras</option>
+                    <option value="06. Fase Analítica">06. Fase Analítica</option>
+                    <option value="07. Fase Pós-Analítica">07. Fase Pós-Analítica</option>
+                    <option value="08. Biossegurança">08. Biossegurança</option>
+                    <option value="09. Infraestrutura">09. Infraestrutura</option>
+                    <option value="10. Tecnologia da Informação">10. Tecnologia da Informação</option>
+                    <option value="11. Gestão dos Equipamentos">11. Gestão dos Equipamentos</option>
+                    <option value="12. Gestão dos Exames">12. Gestão dos Exames</option>
+                    <option value="13. Situações de Contingência">13. Situações de Contingência</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Versão *</label>
+                <input type="text" name="version" id="editor-form-version" required placeholder="1.0" class="w-full px-2.5 py-1.5 border border-brand-light/20 rounded-xl font-mono text-center text-xs focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Status</label>
+                <div class="relative">
+                  <select name="status" id="editor-form-status" class="w-full px-2.5 py-1.5 bg-white border border-brand-light/20 rounded-xl font-bold text-xs appearance-none cursor-pointer focus:outline-none">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Em Revisão">Em Revisão</option>
+                    <option value="Aprovado">Aprovado</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Documento Superior (Pai)</label>
+                <select name="parentId" id="editor-form-parentId" class="w-full px-2.5 py-1.5 bg-white border border-brand-light/20 rounded-xl text-xs focus:outline-none">
+                  <option value="">Nenhum (Página Raiz)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Elaborador / Autor *</label>
+                <input type="text" name="author" id="editor-form-author" required placeholder="Dra. Sandra Regina" class="w-full px-2.5 py-1.5 border border-brand-light/20 rounded-xl font-semibold text-xs focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Próxima Revisão *</label>
+                <input type="date" name="reviewDate" id="editor-form-reviewDate" required class="w-full px-2.5 py-1.5 border border-brand-light/20 rounded-xl font-bold font-mono text-xs focus:outline-none">
+              </div>
+            </div>
+
+            <!-- Campo Editor de Texto Word -->
+            <div class="flex flex-col flex-1 min-h-[250px]">
+              <label class="block text-[9px] font-bold font-mono uppercase text-gray-400 mb-1">Diretrizes do POP (Formato Word) *</label>
+              <div id="quill-editor" class="flex-1 bg-white"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dados injetados do servidor
+  const allPops = <%- JSON.stringify(pops) %>;
+  let selectedPageId = null;
+  let quill = null;
+
+  // Estados de expansão
+  const isCollapsed = {};
+  const isSectorCollapsed = {
+    '01. Sistema de Gestão da Qualidade': false,
+    '02. Recursos Humanos': false,
+    '03. Atendimento': false,
+    '04. Fase Pré-Analítica': false,
+    '05. Processamento das Amostras': false,
+    '06. Fase Analítica': false,
+    '07. Fase Pós-Analítica': false,
+    '08. Biossegurança': false,
+    '09. Infraestrutura': false,
+    '10. Tecnologia da Informação': false,
+    '11. Gestão dos Equipamentos': false,
+    '12. Gestão dos Exames': false,
+    '13. Situações de Contingência': false
+  };
+
+  // Inicialização principal
+  window.addEventListener('DOMContentLoaded', () => {
+    // Alertas da query string
+    const params = new URLSearchParams(window.location.search);
+    const container = document.getElementById('alerts-container');
+    if (params.has('success') || params.has('error')) {
+      container.classList.remove('hidden');
+      if (params.get('success') === 'added') document.getElementById('alert-success-added').classList.remove('hidden');
+      else if (params.get('success') === 'edited') document.getElementById('alert-success-edited').classList.remove('hidden');
+      else if (params.get('success') === 'deleted') document.getElementById('alert-success-deleted').classList.remove('hidden');
+      else if (params.get('error') === 'duplicate_id') document.getElementById('alert-error-duplicate').classList.remove('hidden');
+      
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => { container.classList.add('hidden'); }, 5000);
+    }
+
+    // Default: colapsar todos os nós filhos
+    allPops.forEach(p => { isCollapsed[p.id] = true; });
+
+    renderTree();
+
+    // Selecionar primeiro POP ou linkado
+    if (allPops.length > 0) {
+      const idFromQuery = params.get('id');
+      if (idFromQuery && allPops.some(p => p.id === idFromQuery)) {
+        expandPageParents(idFromQuery);
+        selectPage(idFromQuery);
+      } else {
+        selectPage(allPops[0].id);
+      }
+    }
+  });
+
+  // Expande hierarquia de pais para um POP
+  function expandPageParents(pageId) {
+    let current = allPops.find(p => p.id === pageId);
+    while (current && current.parentId) {
+      isCollapsed[current.parentId] = false;
+      current = allPops.find(p => p.id === current.parentId);
+    }
+    if (current) {
+      isSectorCollapsed[current.category] = false;
+    }
+  }
+
+  // Alterna colapso do setor
+  function toggleSector(sector) {
+    isSectorCollapsed[sector] = !isSectorCollapsed[sector];
+    renderTree();
+  }
+
+  // Alterna colapso do nó na árvore
+  function toggleNode(id) {
+    isCollapsed[id] = !isCollapsed[id];
+    renderTree();
+  }
+
+  // Função para obter o código virtual dinâmico de qualquer POP na árvore de forma estável
+  function getVirtualCode(popId) {
+    const pop = allPops.find(p => p.id === popId);
+    if (!pop) return '';
+    
+    // Filtra todas as páginas que pertencem à mesma categoria/setor do POP
+    const sectorPops = allPops.filter(p => p.category === pop.category);
+    
+    // Função recursiva interna para calcular o caminho e o código de forma idêntica à renderização da árvore
+    function findCode(parentId, parentPrefix = '') {
+      const levelPages = sectorPops.filter(p => parentId ? p.parentId === parentId : (!p.parentId || !sectorPops.some(parent => parent.id === p.parentId)));
+      levelPages.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }));
+      
+      for (let i = 0; i < levelPages.length; i++) {
+        const page = levelPages[i];
+        const currentCode = parentId ? `${parentPrefix}.${i + 1}` : (i + 1).toString();
+        if (page.id === popId) {
+          return currentCode;
+        }
+        const childCode = findCode(page.id, currentCode);
+        if (childCode) return childCode;
+      }
+      return '';
+    }
+    
+    return findCode(null);
+  }
+
+  // Desenha recursivamente os filhos de um POP com numeração virtual sequencial dinâmica
+  function buildTreeHTML(pops, parentId, sector, parentPrefix = '') {
+    // Filtra páginas do setor que pertencem a este pai
+    const levelPages = pops.filter(p => p.category === sector && (parentId ? p.parentId === parentId : (!p.parentId || !pops.some(parent => parent.id === p.parentId))));
+    if (levelPages.length === 0) return '';
+
+    // Ordenação alfabética estável das páginas deste nível de modo a bater com a numeração virtual
+    levelPages.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }));
+
+    let html = '<ul class="pl-3.5 space-y-1 border-l border-gray-100 ml-2 mt-0.5">';
+    levelPages.forEach((page, index) => {
+      const hasChildren = pops.some(p => p.parentId === page.id && p.category === sector);
+      const statusColor = page.status === 'Aprovado' ? 'bg-emerald-500' : page.status === 'Em Revisão' ? 'bg-amber-500' : 'bg-rose-500';
+      const isSelected = selectedPageId === page.id;
+
+      // Calcula numeração virtual
+      let virtualCode = '';
+      let displayTitle = '';
+      if (!parentId) {
+        // Nível raiz: ex: "1. Sistema de Gestão da Qualidade" com emoji de pasta
+        virtualCode = (index + 1).toString();
+        displayTitle = `<span class="mr-1 text-sm font-normal">📂</span> <span class="font-bold text-brand-dark font-mono text-xs">${virtualCode}.</span> ${page.title}`;
+      } else {
+        // Nível filho: ex: "POP 1.1 - Elaboração e Controle de Documentos" com ícone de folha
+        virtualCode = `${parentPrefix}.${index + 1}`;
+        displayTitle = `<span class="font-bold text-gray-500 font-mono text-[10px] uppercase tracking-tight">POP ${virtualCode}</span> <span class="text-gray-400 font-mono text-[10px] font-bold mx-0.5">-</span> ${page.title}`;
+      }
+
+      html += `
+        <li class="tree-item-node" data-page-id="${page.id}">
+          <div class="group flex items-center justify-between p-1.5 rounded-xl hover:bg-brand-softBg/30 cursor-pointer transition-colors ${isSelected ? 'bg-brand-softBg/50 text-brand-dark font-extrabold' : 'text-gray-600 font-medium'}">
+            <div class="flex items-center gap-1.5 min-w-0" onclick="selectPage('${page.id}')">
+              ${hasChildren ? `
+                <button onclick="event.stopPropagation(); toggleNode('${page.id}')" class="p-0.5 hover:bg-gray-100 rounded text-gray-400">
+                  <svg class="w-3 h-3 transform ${isCollapsed[page.id] ? '' : 'rotate-90'} transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              ` : `
+                <span class="w-4"></span>
+              `}
+              <span class="w-1.5 h-1.5 rounded-full ${statusColor} shrink-0"></span>
+              ${parentId ? `
+                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              ` : ''}
+              <span class="text-xs truncate font-sans">${displayTitle}</span>
+            </div>
+            
+            <div class="hidden group-hover:flex items-center gap-1 pl-2">
+              <button onclick="event.stopPropagation(); createSubPage('${page.id}', '${page.category}')" title="Sub-página" class="p-0.5 hover:bg-white text-brand-dark rounded border border-gray-200">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <div id="children-${page.id}" class="${isCollapsed[page.id] ? 'hidden' : ''}">
+            ${buildTreeHTML(pops, page.id, sector, virtualCode)}
+          </div>
+        </li>
+      `;
+    });
+    html += '</ul>';
+    return html;
+  }
+
+  // Renderiza a árvore com pastas dos Setores
+  function renderTree() {
+    const container = document.getElementById('tree-container');
+    if (!container) return;
+    
+    const sectors = [
+      '01. Sistema de Gestão da Qualidade',
+      '02. Recursos Humanos',
+      '03. Atendimento',
+      '04. Fase Pré-Analítica',
+      '05. Processamento das Amostras',
+      '06. Fase Analítica',
+      '07. Fase Pós-Analítica',
+      '08. Biossegurança',
+      '09. Infraestrutura',
+      '10. Tecnologia da Informação',
+      '11. Gestão dos Equipamentos',
+      '12. Gestão dos Exames',
+      '13. Situações de Contingência'
+    ];
+    let html = '<div class="space-y-2">';
+    
+    sectors.forEach(sector => {
+      const sectorPages = allPops.filter(p => p.category === sector);
+      const hasPages = sectorPages.length > 0;
+      const isSectCollapsed = isSectorCollapsed[sector];
+      
+      html += `
+        <div class="pb-1">
+          <div class="group flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all" onclick="toggleSector('${sector}')">
+            <div class="flex items-center gap-2 min-w-0">
+              <svg class="w-3.5 h-3.5 text-brand-gold shrink-0 ${isSectCollapsed ? 'rotate-0' : 'rotate-90'} transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+              <span class="text-[10px] font-bold font-mono uppercase text-brand-dark tracking-wider truncate">${sector}</span>
+              <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.2 rounded-full">${sectorPages.length}</span>
+            </div>
+            
+            <button onclick="event.stopPropagation(); createRootPage('${sector}')" title="Novo POP neste Setor" class="hidden group-hover:block p-0.5 hover:bg-white text-brand-dark rounded border border-gray-200">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </button>
+          </div>
+          
+          <div id="sector-content-${sector}" class="${isSectCollapsed ? 'hidden' : ''} mt-0.5">
+            ${hasPages ? buildTreeHTML(allPops, null, sector) : `
+              <p class="text-[10px] text-gray-400 italic pl-7 py-0.5">Nenhum POP</p>
+            `}
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // Busca instantânea
+  function searchTree() {
+    const query = document.getElementById('search-tree').value.toLowerCase().trim();
+    const container = document.getElementById('tree-container');
+    if (!query) {
+      renderTree();
+      return;
+    }
+    
+    const matches = allPops.filter(p => 
+      p.id.toLowerCase().includes(query) || 
+      p.title.toLowerCase().includes(query) || 
+      p.author.toLowerCase().includes(query) || 
+      p.content.toLowerCase().includes(query)
+    );
+    
+    if (matches.length === 0) {
+      container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs font-mono">Nenhum POP encontrado.</div>`;
+      return;
+    }
+    
+    let html = '<div class="space-y-1 text-xs">';
+    html += `<p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 font-mono">Resultados (${matches.length})</p>`;
+    matches.forEach(page => {
+      const statusColor = page.status === 'Aprovado' ? 'bg-emerald-500' : page.status === 'Em Revisão' ? 'bg-amber-500' : 'bg-rose-500';
+      const isSelected = selectedPageId === page.id;
+      html += `
+        <div onclick="selectPage('${page.id}')" class="flex items-center justify-between p-2 rounded-xl hover:bg-brand-softBg/30 cursor-pointer transition-colors ${isSelected ? 'bg-brand-softBg/50 text-brand-dark font-bold' : 'text-gray-600 font-medium'}">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-1.5 h-1.5 rounded-full ${statusColor} shrink-0"></span>
+            <div class="min-w-0">
+              <p class="font-bold font-mono text-[8px] text-brand-dark/75">${page.id} - ${page.category}</p>
+              <p class="truncate text-xs text-gray-700 font-sans">${page.title}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // Seleciona um POP e carrega no leitor
+  function selectPage(id) {
+    selectedPageId = id;
+    const pop = allPops.find(p => p.id === id);
+    if (!pop) return;
+    
+    // Atualiza destaque visual na árvore lateral
+    document.querySelectorAll('.tree-item-node .group').forEach(el => {
+      el.classList.remove('bg-brand-softBg/50', 'text-brand-dark', 'font-extrabold');
+      el.classList.add('text-gray-600', 'font-medium');
+    });
+    
+    const node = document.querySelector(`[data-page-id="${id}"] > div`);
+    if (node) {
+      node.classList.add('bg-brand-softBg/50', 'text-brand-dark', 'font-extrabold');
+      node.classList.remove('text-gray-600', 'font-medium');
+    }
+    
+    // Calcula o código virtual para o cabeçalho/título do POP no leitor
+    const vCode = getVirtualCode(pop.id);
+    const isSubPage = !!pop.parentId;
+    const fullVirtualTitle = isSubPage ? `POP ${vCode} - ${pop.title}` : `${vCode}. ${pop.title}`;
+    
+    // Metadados no leitor
+    document.getElementById('reader-doc-id').textContent = pop.id;
+    document.getElementById('reader-doc-category').textContent = pop.category;
+    document.getElementById('reader-doc-title').textContent = fullVirtualTitle;
+    document.getElementById('reader-doc-author').textContent = pop.author;
+    document.getElementById('reader-doc-version').textContent = 'v' + pop.version;
+    document.getElementById('reader-doc-created').textContent = pop.createdDate ? pop.createdDate.split('-').reverse().join('/') : '--/--/----';
+    document.getElementById('reader-doc-review').textContent = pop.reviewDate ? pop.reviewDate.split('-').reverse().join('/') : '--/--/----';
+    
+    const statusBadge = document.getElementById('reader-doc-status-badge');
+    statusBadge.textContent = pop.status;
+    statusBadge.className = `inline-flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded border font-mono ` +
+      (pop.status === 'Aprovado' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 
+       pop.status === 'Em Revisão' ? 'bg-amber-50 text-amber-800 border-amber-100' : 'bg-rose-50 text-rose-800 border-rose-100');
+
+    const parentPage = allPops.find(p => p.id === pop.parentId);
+    document.getElementById('reader-doc-parent').textContent = parentPage ? `${parentPage.id} - ${parentPage.title}` : 'Nenhum';
+    
+    // Conteúdo (HTML ou Markdown)
+    document.getElementById('reader-doc-html-content').innerHTML = renderPopContentToHtml(pop.content);
+    
+    // Exibe/Esconde botão de Aprovação Rápida
+    const approveBtn = document.getElementById('reader-btn-approve');
+    if (pop.status === 'Aprovado') approveBtn.classList.add('hidden');
+    else approveBtn.classList.remove('hidden');
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('editor-view').classList.add('hidden');
+    document.getElementById('reader-view').classList.remove('hidden');
+  }
+
+  // Decide entre renderizar HTML ou Markdown
+  function renderPopContentToHtml(content) {
+    if (!content) return '';
+    const isHtml = /<[a-z][\s\S]*>/i.test(content);
+    return isHtml ? content : parseMarkdownToHtml(content);
+  }
+
+  // Parser simplificado de Markdown para compatibilidade reversa
+  function parseMarkdownToHtml(md) {
+    if (!md) return '';
+    let html = md.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    html = html.replace(/^### (.*$)/gim, '<h4 class="font-bold text-brand-dark uppercase tracking-wide border-l-4 border-brand-gold pl-2 mt-4 mb-1 font-mono">$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3 class="font-extrabold text-brand-neutralDark border-b pb-1 mt-4 mb-2">$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2 class="font-black text-brand-neutralDark mt-5 mb-3">$1</h2>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+    html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="ml-4 list-disc text-gray-600 mt-1">$1</li>');
+    html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4 list-decimal text-gray-600 mt-1">$1</li>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
+  // Inicializa o Quill Editor CDN com toolbar rica para manter formatacao do ChatGPT e suporte a colagem de imagem
+  function initQuill() {
+    if (quill) return;
+    const toolbarOptions = [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],        // Estilos básicos
+      [{ 'color': [] }, { 'background': [] }],          // Cores de texto e fundo
+      [{ 'align': [] }],                                // Alinhamento
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],     // Listas ordenadas e não ordenadas
+      [{ 'indent': '-1'}, { 'indent': '+1' }],          // Recuos
+      ['blockquote', 'code-block'],                     // Citações e código
+      ['link', 'image', 'video'],                       // Links, imagens e vídeos
+      ['clean']                                         // Limpar formatação
+    ];
+    quill = new Quill('#quill-editor', {
+      modules: { toolbar: toolbarOptions },
+      theme: 'snow',
+      placeholder: 'Cole seu POP formatado do ChatGPT ou descreva o procedimento aqui...'
+    });
+
+    // Interceptor robusto de colagem (paste) para imagens do Clipboard (prints de tela, imagens copiadas do sistema)
+    quill.root.addEventListener('paste', function(e) {
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+      
+      const items = clipboardData.items;
+      let hasImage = false;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          hasImage = true;
+          e.preventDefault(); // Impede a colagem padrão para tratar a imagem como Base64
+          const file = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'image', evt.target.result, Quill.sources.USER);
+            quill.setSelection(range.index + 1, Quill.sources.SILENT);
+          };
+          reader.readAsDataURL(file);
+          break;
+        }
+      }
+      
+      // Para colagem de textos ricos (como ChatGPT), o Quill nativamente lida muito bem 
+      // interpretando os formatos registrados na toolbar rica definida acima.
+    });
+  }
+
+  // Popula o Dropdown de Páginas Pais de forma dinâmica, incluindo código virtual
+  function populateParentDropdown(excludeId, selectedParentId) {
+    const select = document.getElementById('editor-form-parentId');
+    if (!select) return;
+    select.innerHTML = '<option value="">Nenhum (Página Raiz)</option>';
+    allPops.forEach(pop => {
+      if (excludeId && pop.id === excludeId) return;
+      const option = document.createElement('option');
+      option.value = pop.id;
+      const vCode = getVirtualCode(pop.id);
+      const isSub = !!pop.parentId;
+      const labelPrefix = isSub ? `POP ${vCode}` : `${vCode}`;
+      option.textContent = `[${labelPrefix}] ${pop.id} - ${pop.title}`;
+      if (selectedParentId && pop.id === selectedParentId) option.selected = true;
+      select.appendChild(option);
+    });
+  }
+
+  // Prepara interface para Edição
+  function switchToEditor() {
+    const pop = allPops.find(p => p.id === selectedPageId);
+    if (!pop) return;
+
+    const form = document.getElementById('editor-form');
+    form.action = '/admin/pops/edit';
+    document.getElementById('editor-panel-title').textContent = `Editar POP: ${pop.id}`;
+    
+    document.getElementById('editor-form-id').value = pop.id;
+    document.getElementById('editor-form-id').readOnly = true;
+    document.getElementById('editor-form-id').classList.add('bg-gray-100', 'cursor-not-allowed');
+
+    document.getElementById('editor-form-title').value = pop.title;
+    document.getElementById('editor-form-category').value = pop.category;
+    document.getElementById('editor-form-version').value = pop.version;
+    document.getElementById('editor-form-status').value = pop.status;
+    document.getElementById('editor-form-author').value = pop.author;
+    document.getElementById('editor-form-reviewDate').value = pop.reviewDate || '';
+
+    populateParentDropdown(pop.id, pop.parentId);
+
+    initQuill();
+    quill.root.innerHTML = pop.content;
+
+    document.getElementById('reader-view').classList.add('hidden');
+    document.getElementById('editor-view').classList.remove('hidden');
+  }
+
+  // Prepara interface para Criação de POP Raiz
+  function createRootPage(sector) {
+    const form = document.getElementById('editor-form');
+    form.action = '/admin/pops/add';
+    document.getElementById('editor-panel-title').textContent = `Criar Novo POP - ${sector}`;
+
+    const codePrefix = sector ? sector.substring(0, 3).toUpperCase() : 'GER';
+    const autoId = `POP-${codePrefix}-${Math.floor(100 + Math.random() * 900)}`;
+
+    document.getElementById('editor-form-id').value = autoId;
+    document.getElementById('editor-form-id').readOnly = false;
+    document.getElementById('editor-form-id').classList.remove('bg-gray-100', 'cursor-not-allowed');
+
+    document.getElementById('editor-form-title').value = '';
+    document.getElementById('editor-form-category').value = sector || 'Geral';
+    document.getElementById('editor-form-version').value = '1.0';
+    document.getElementById('editor-form-status').value = 'Pendente';
+    document.getElementById('editor-form-author').value = 'Administrador';
+
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+    document.getElementById('editor-form-reviewDate').value = oneYearLater.toISOString().split('T')[0];
+
+    populateParentDropdown(null, null);
+
+    initQuill();
+    quill.root.innerHTML = `
+      <h2>1. OBJETIVO</h2><p>Escreva o propósito aqui...</p>
+      <h2>2. MATERIAIS</h2><ul><li>Materiais...</li></ul>
+      <h2>3. PROCEDIMENTO</h2><ol><li>Passo 1...</li></ol>
+    `;
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('reader-view').classList.add('hidden');
+    document.getElementById('editor-view').classList.remove('hidden');
+  }
+
+  // Prepara interface para Criação de Sub-página
+  function createSubPage(parentPageId, sector) {
+    const parentPage = allPops.find(p => p.id === parentPageId);
+    if (!parentPage) return;
+
+    const form = document.getElementById('editor-form');
+    form.action = '/admin/pops/add';
+    document.getElementById('editor-panel-title').textContent = `Criar Sub-página para: ${parentPage.title}`;
+
+    const parentPrefix = parentPageId.split('-')[1] || 'GER';
+    const autoId = `POP-${parentPrefix}-${Math.floor(100 + Math.random() * 900)}`;
+
+    document.getElementById('editor-form-id').value = autoId;
+    document.getElementById('editor-form-id').readOnly = false;
+    document.getElementById('editor-form-id').classList.remove('bg-gray-100', 'cursor-not-allowed');
+
+    document.getElementById('editor-form-title').value = '';
+    document.getElementById('editor-form-category').value = sector || parentPage.category;
+    document.getElementById('editor-form-version').value = '1.0';
+    document.getElementById('editor-form-status').value = 'Pendente';
+    document.getElementById('editor-form-author').value = 'Administrador';
+
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+    document.getElementById('editor-form-reviewDate').value = oneYearLater.toISOString().split('T')[0];
+
+    populateParentDropdown(null, parentPageId);
+
+    initQuill();
+    quill.root.innerHTML = `<h2>1. SUB-OBJETIVO</h2><p>Diretrizes específicas desta etapa...</p>`;
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('reader-view').classList.add('hidden');
+    document.getElementById('editor-view').classList.remove('hidden');
+  }
+
+  function cancelEditor() {
+    if (selectedPageId) selectPage(selectedPageId);
+    else {
+      document.getElementById('editor-view').classList.add('hidden');
+      document.getElementById('empty-state').classList.remove('hidden');
+    }
+  }
+
+  // Mapeia HTML do Quill para o input hidden antes de enviar
+  document.getElementById('editor-form').addEventListener('submit', function(e) {
+    if (quill) {
+      document.getElementById('form-content-hidden').value = quill.root.innerHTML;
+    }
+  });
+
+  // Ação Rápida de Aprovação
+  async function quickApproveSelected() {
+    if (!selectedPageId) return;
+    if (!confirm(`Confirmar validação e aprovação do documento ${selectedPageId}? A validade será estendida por 1 ano.`)) return;
+
+    try {
+      const response = await fetch('/admin/pops/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedPageId, action: 'approve' })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        const pop = allPops.find(p => p.id === selectedPageId);
+        if (pop) {
+          pop.status = 'Aprovado';
+          const oneYearLater = new Date();
+          oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+          pop.reviewDate = oneYearLater.toISOString().split('T')[0];
+        }
+        
+        renderTree();
+        selectPage(selectedPageId);
+        updateTopStats();
+      } else {
+        alert('Erro ao aprovar o POP: ' + (result.error || 'Erro interno'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Ocorreu um erro ao enviar a requisição de aprovação.');
+    }
+  }
+
+  // Deleta o documento selecionado
+  function deleteSelectedDoc() {
+    if (!selectedPageId) return;
+    if (confirm('ATENÇÃO: Deseja realmente excluir permanentemente este POP do acervo? Esta ação é irreversível!')) {
+      window.location.href = `/admin/pops/delete/${selectedPageId}`;
+    }
+  }
+
+  // Impressão / Exportação PDF
+  function printSelectedDoc() {
+    const printContent = document.getElementById('print-area').innerHTML;
+    const win = window.open('', '', 'width=800,height=600');
+    win.document.write(`
+      <html>
+        <head>
+          <title>Imprimir POP - ${selectedPageId}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <script src="https://cdn.tailwindcss.com"><\/script>
+          <style>
+            body { font-family: 'Inter', sans-serif; padding: 40px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="max-w-4xl mx-auto">${printContent}</div>
+          <script>
+            setTimeout(() => { window.print(); window.close(); }, 500);
+          <\/script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  // Atualização dinâmica de estatísticas do topo
+  function updateTopStats() {
+    let total = allPops.length;
+    let approved = allPops.filter(p => p.status === 'Aprovado').length;
+    let pending = total - approved;
+    let compliance = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+    document.getElementById('stats-approved').textContent = approved;
+    document.getElementById('stats-pending').textContent = pending;
+    document.getElementById('stats-compliance').textContent = compliance + '%';
+  }
+</script>
+
+<%- include('../partials/footer') %>

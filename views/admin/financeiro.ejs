@@ -1,0 +1,837 @@
+<%- include('../partials/header') %>
+
+<div class="flex-1 p-6 md:p-8 space-y-6">
+  <!-- Cabeçalho -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-bold text-brand-dark uppercase tracking-wider font-mono">
+        <span class="w-2 h-2 rounded-full bg-brand-gold"></span>
+        Administração Financeira
+      </div>
+      <h1 class="text-3xl font-extrabold text-brand-neutralDark tracking-tight mt-1">Contas a Pagar e Receber</h1>
+      <p class="text-sm text-gray-500">Gerencie o fluxo de caixa, pagamentos de fornecedores e recebimentos de convênios/particulares do laboratório.</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="openAddModal('pagar')" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Contas a Pagar
+      </button>
+      <button onclick="openAddModal('receber')" class="px-4 py-2.5 rounded-xl bg-[#284701] hover:bg-[#3d6b1d] text-white font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Contas a Receber
+      </button>
+    </div>
+  </div>
+
+  <!-- Abas de Navegação Financeira -->
+  <div class="flex border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
+    <a href="/admin/financeiro/dashboard" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dashboard') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Dashboard
+    </a>
+    <a href="/admin/financeiro/relatorio-faturamento" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-relatorio-faturamento') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Relatório de Faturamento
+    </a>
+    <a href="/admin/financeiro/pessoas" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-pessoas') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Clientes / Fornecedores
+    </a>
+    <a href="/admin/financeiro" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro') ? 'border-[#284701] text-[#284701]' : 'border-[#284701] text-[#284701]' %> transition-all flex items-center gap-1.5">
+      Contas Pagar / Receber
+    </a>
+    <a href="/admin/financeiro/fechamento-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && (page === 'admin-financeiro-fechamento-caixa' || page === 'admin-fechamento-caixa')) ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Fechamento de Caixa
+    </a>
+    <a href="/admin/financeiro/fluxo-caixa" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-fluxo-caixa') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Fluxo de Caixa
+    </a>
+    <a href="/admin/financeiro/dre" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-dre') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5" title="Demonstrativo de Resultado">
+      Demonstrativo de Resultado
+    </a>
+    <a href="/admin/financeiro/movimentacoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-movimentacoes') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Movimentações
+    </a>
+    <a href="/admin/financeiro/configuracoes" class="px-4 py-2.5 font-bold text-xs uppercase tracking-wider font-mono border-b-2 <%= (typeof page !== 'undefined' && page === 'admin-financeiro-configuracoes') ? 'border-[#284701] text-[#284701]' : 'border-transparent text-gray-500 hover:text-[#284701] hover:border-gray-300' %> transition-all flex items-center gap-1.5">
+      Configurações
+    </a>
+  </div>
+
+  <!-- Seletor de Competência (Mês de Referência) -->
+  <div class="bg-gradient-to-r from-emerald-500/10 via-brand-gold/10 to-transparent p-4 rounded-2xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-emerald-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider font-mono">Controle por Competência</p>
+        <h2 class="text-sm font-bold text-gray-800">Visualizando competência de: <span class="text-[#284701] font-black"><%= formatCompetence(selectedCompetence) %></span></h2>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button onclick="navigateCompetence(-1)" class="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all shadow-sm cursor-pointer" title="Mês Anterior">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      </button>
+      
+      <select id="competence-select" onchange="changeCompetence(this.value)" class="text-xs font-mono font-bold bg-white border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#284701] text-gray-700 shadow-sm">
+        <option value="all" <%= selectedCompetence === 'all' ? 'selected' : '' %>>Todos os Meses</option>
+        <% availableCompetences.forEach(comp => { %>
+          <option value="<%= comp %>" <%= selectedCompetence === comp ? 'selected' : '' %>><%= formatCompetence(comp) %></option>
+        <% }) %>
+      </select>
+      
+      <button onclick="navigateCompetence(1)" class="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all shadow-sm cursor-pointer" title="Próximo Mês">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Indicadores / Resumo -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Contas a Pagar Pendentes -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">A Pagar (Pendente)</p>
+        <p class="text-2xl font-black text-rose-600 mt-1">
+          <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPagarPendente) %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+
+    <!-- Contas a Pagar Pago -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">A Pagar (Pago)</p>
+        <p class="text-2xl font-black text-gray-500 mt-1">
+          <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPagarPago) %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Contas a Receber Pendente -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">A Receber (Pendente)</p>
+        <p class="text-2xl font-black text-[#284701] mt-1">
+          <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalReceberPendente) %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[#284701]">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M14 4h6a2 2 0 012 2v1M14 4a2 2 0 00-2 2v1m-6 8a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+      </div>
+    </div>
+
+    <!-- Contas a Receber Pago -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">A Receber (Recebido)</p>
+        <p class="text-2xl font-black text-brand-gold mt-1">
+          <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalReceberPago) %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-brand-gold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-4 flex items-center gap-1.5">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
+      Filtros de Pesquisa
+    </h3>
+    
+    <form action="/admin/financeiro" method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+      <!-- Tipo de Conta -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Tipo de Fluxo</label>
+        <select name="type" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>Todos os Fluxos</option>
+          <option value="pagar" <%= filters.type === 'pagar' ? 'selected' : '' %>>Contas a Pagar</option>
+          <option value="receber" <%= filters.type === 'receber' ? 'selected' : '' %>>Contas a Receber</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Status</label>
+        <select name="status" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>Todos os Status</option>
+          <option value="pendente" <%= filters.status === 'pendente' ? 'selected' : '' %>>Pendente / Em Aberto</option>
+          <option value="pago" <%= filters.status === 'pago' ? 'selected' : '' %>>Pago / Recebido</option>
+        </select>
+      </div>
+
+      <!-- Fornecedor/Cliente -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Fornecedor / Cliente</label>
+        <select name="provider" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <option value="all">Todos</option>
+          <% settings.providers.forEach(p => { %>
+            <option value="<%= p %>" <%= filters.provider === p ? 'selected' : '' %>><%= p %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Plano de Contas -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Plano de Contas</label>
+        <select name="chart" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <option value="all">Todos</option>
+          <% settings.chartsOfAccounts.forEach(c => { %>
+            <option value="<%= c %>" <%= filters.chart === c ? 'selected' : '' %>><%= c %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Vencimento Inicial -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Vencimento De</label>
+        <input type="date" name="start_date" value="<%= filters.start_date || '' %>" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+      </div>
+
+      <!-- Vencimento Final -->
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Vencimento Até</label>
+        <div class="flex gap-2">
+          <input type="date" name="end_date" value="<%= filters.end_date || '' %>" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <button type="submit" class="p-2.5 bg-[#284701] text-white rounded-lg hover:bg-brand-dark transition-all shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </button>
+        </div>
+      </div>
+    </form>
+    
+    <% if (Object.keys(filters).length > 0 && (filters.type || filters.status || filters.provider || filters.chart || filters.start_date || filters.end_date)) { %>
+      <div class="flex justify-end mt-3">
+        <a href="/admin/financeiro" class="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          Limpar Filtros ativos
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Listagem de Transações -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-bold text-brand-neutralDark">Transações Lançadas</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Mostrando <%= transactions.length %> lançamentos financeiros.</p>
+      </div>
+    </div>
+
+    <% if (transactions.length === 0) { %>
+      <div class="p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-brand-softBg flex items-center justify-center text-brand-dark mx-auto mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16c1.657 0 3-.895 3-2s-1.343-2-3-2m-3-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+        </div>
+        <h3 class="text-sm font-bold text-brand-neutralDark">Nenhum lançamento encontrado</h3>
+        <p class="text-xs text-gray-400 mt-1">Experimente remover alguns filtros ou faça um novo lançamento.</p>
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-brand-softBg/50 text-[10px] font-bold text-brand-dark uppercase tracking-wider font-mono border-b border-gray-100">
+              <th class="p-4 w-12 text-center">Tipo</th>
+              <th class="p-4">Identificação / Documento</th>
+              <th class="p-4">Fornecedor / Cliente</th>
+              <th class="p-4">Plano de Contas</th>
+              <th class="p-4">Vencimento</th>
+              <th class="p-4 text-right">Valor</th>
+              <th class="p-4 text-center">Status</th>
+              <th class="p-4 text-center w-28">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-xs text-gray-700">
+            <% transactions.forEach(tx => { %>
+              <tr class="hover:bg-brand-softBg/20 transition-all">
+                <!-- Tipo -->
+                <td class="p-4 text-center">
+                  <% if (tx.type === 'pagar') { %>
+                    <span class="inline-flex w-7 h-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 font-bold" title="Contas a Pagar">
+                      P
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex w-7 h-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 font-bold" title="Contas a Receber">
+                      R
+                    </span>
+                  <% } %>
+                </td>
+                
+                <!-- Identificação / Documento -->
+                <td class="p-4">
+                  <div class="font-bold text-brand-neutralDark">
+                    Nº <%= tx.number || 'S/N' %>
+                  </div>
+                  <% if (tx.docNumber || tx.docType) { %>
+                    <div class="text-[10px] text-gray-400 font-mono mt-0.5">
+                      <%= tx.docType %>: <%= tx.docNumber || 'Sem Nº' %>
+                    </div>
+                  <% } %>
+                </td>
+
+                <!-- Fornecedor / Cliente -->
+                <td class="p-4">
+                  <span class="font-medium text-gray-900"><%= tx.provider %></span>
+                  <% if (tx.tags && tx.tags.length > 0) { %>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <% tx.tags.forEach(tag => { %>
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-brand-softBg text-brand-dark">
+                          <%= tag %>
+                        </span>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </td>
+
+                <!-- Plano de Contas -->
+                <td class="p-4">
+                  <div class="text-gray-800 font-medium"><%= tx.chartOfAccounts %></div>
+                  <% if (tx.bank) { %>
+                    <div class="text-[10px] text-gray-400 mt-0.5">
+                      Banco: <%= tx.bank %>
+                    </div>
+                  <% } %>
+                </td>
+
+                <!-- Vencimento -->
+                <td class="p-4">
+                  <% 
+                    const isOverdue = tx.status !== 'pago' && new Date(tx.dueDate) < new Date();
+                    const dueFormatted = tx.dueDate.split('-').reverse().join('/');
+                  %>
+                  <div class="<%= isOverdue ? 'text-rose-600 font-extrabold' : 'text-gray-900 font-medium' %> flex items-center gap-1">
+                    <%= dueFormatted %>
+                    <% if (isOverdue) { %>
+                      <span class="px-1 py-0.5 rounded text-[8px] font-bold bg-rose-100 text-rose-700 font-mono animate-pulse uppercase">Vencido</span>
+                    <% } %>
+                  </div>
+                  <% if (tx.issueDate) { %>
+                    <div class="text-[9px] text-gray-400 mt-0.5">
+                      Emissão: <%= tx.issueDate.split('-').reverse().join('/') %>
+                    </div>
+                  <% } %>
+                </td>
+
+                <!-- Valor -->
+                <td class="p-4 text-right">
+                  <div class="font-extrabold text-sm <%= tx.type === 'pagar' ? 'text-rose-600' : 'text-emerald-700' %>">
+                    <%= tx.type === 'pagar' ? '-' : '+' %>&nbsp;<%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.amount) %>
+                  </div>
+                  <% if (tx.installments && tx.installments > 1) { %>
+                    <div class="text-[10px] text-gray-400 font-mono">
+                      <%= tx.installments %> Parcelas
+                    </div>
+                  <% } %>
+                </td>
+
+                <!-- Status -->
+                <td class="p-4 text-center">
+                  <% if (tx.status === 'pago') { %>
+                    <form action="/admin/financeiro/status" method="POST" class="inline">
+                      <input type="hidden" name="id" value="<%= tx.id %>">
+                      <input type="hidden" name="status" value="pendente">
+                      <button type="submit" title="Clique para reabrir lançamento" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 hover:bg-rose-100 hover:text-rose-800 transition-all uppercase tracking-wider font-mono">
+                        Pago
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <button type="button" onclick="openBaixaModal('<%= tx.id %>', '<%= tx.provider.replace(/\'/g, '\\\'') %>', <%= tx.amount %>, '<%= tx.bank || '' %>', '<%= tx.type %>')" title="Clique para dar baixa" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 hover:bg-emerald-600 hover:text-white transition-all uppercase tracking-wider font-mono cursor-pointer">
+                      Pendente
+                    </button>
+                  <% } %>
+                </td>
+
+                <!-- Ações -->
+                <td class="p-4 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="openEditModal(<%= JSON.stringify(tx) %>)" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar Lançamento">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    
+                    <form action="/admin/financeiro/delete" method="POST" onsubmit="return confirm('Deseja realmente excluir este lançamento financeiro? Essa ação é irreversível.');" class="inline">
+                      <input type="hidden" name="id" value="<%= tx.id %>">
+                      <button type="submit" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Deletar Lançamento">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ================= MODAL DE LANÇAMENTO (CADASTRO / EDIÇÃO) ================= -->
+<div id="tx-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden fade-in relative border border-gray-100 max-h-[90vh] flex flex-col">
+    <!-- Cabeçalho Modal -->
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-brand-softBg/30">
+      <div>
+        <h2 id="modal-title" class="text-lg font-black text-brand-neutralDark">Cadastro de Conta a Pagar</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Preencha as informações detalhadamente para compor o caixa do laboratório.</p>
+      </div>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Formulário -->
+    <form id="tx-form" action="/admin/financeiro/add" method="POST" class="overflow-y-auto p-6 space-y-4 text-left flex-1">
+      <input type="hidden" name="id" id="form-tx-id">
+      <input type="hidden" name="type" id="form-tx-type" value="pagar">
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Número de Lançamento -->
+        <div>
+          <label for="form-number" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Número</label>
+          <input type="text" name="number" id="form-number" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+
+        <!-- Data Emissão -->
+        <div>
+          <label for="form-issueDate" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Data Emissão *</label>
+          <input type="date" name="issueDate" id="form-issueDate" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+
+        <!-- Número de Documento -->
+        <div>
+          <label for="form-docNumber" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Número Documento</label>
+          <input type="text" name="docNumber" id="form-docNumber" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Fornecedor / Cliente -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="form-provider" class="block text-[10px] font-bold text-gray-400 uppercase font-mono">Fornecedor / Cliente *</label>
+            <button type="button" onclick="promptAddProvider()" class="text-[10px] font-bold text-brand-dark hover:underline font-mono">Adicionar novo fornecedor</button>
+          </div>
+          <select name="provider" id="form-provider" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+            <option value="">Selecione...</option>
+            <% settings.providers.forEach(p => { %>
+              <option value="<%= p %>"><%= p %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Tipo Documento -->
+        <div>
+          <label for="form-docType" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Tipo Documento *</label>
+          <select name="docType" id="form-docType" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+            <option value="">Selecione...</option>
+            <% settings.docTypes.forEach(d => { %>
+              <option value="<%= d %>"><%= d %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Plano de Contas -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="form-chartOfAccounts" class="block text-[10px] font-bold text-gray-400 uppercase font-mono">Plano de Contas *</label>
+            <button type="button" onclick="promptAddChart()" class="text-[10px] font-bold text-brand-dark hover:underline font-mono">Adicionar novo plano</button>
+          </div>
+          <select name="chartOfAccounts" id="form-chartOfAccounts" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+            <option value="">Selecione...</option>
+            <% settings.chartsOfAccounts.forEach(c => { %>
+              <option value="<%= c %>"><%= c %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Banco -->
+        <div>
+          <label for="form-bank" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Banco</label>
+          <select name="bank" id="form-bank" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+            <option value="">Selecione...</option>
+            <% settings.banks.forEach(b => { %>
+              <option value="<%= b %>"><%= b %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tags e Descrição -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-1">
+          <label for="form-tags" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Tags (Separar por vírgula)</label>
+          <input type="text" name="tags" id="form-tags" placeholder="Ex: Urgente, Estoque, TI" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+        <div class="md:col-span-2">
+          <label for="form-description" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Descrição</label>
+          <input type="text" name="description" id="form-description" placeholder="Informações adicionais sobre o lançamento..." class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+      </div>
+
+      <!-- Valor Total, Parcelas, Vencimento, Intervalo, Recorrente -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 pt-2">
+        <div>
+          <label for="form-amount" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Valor Total (R$) *</label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="form-amount" required placeholder="0.00" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark font-mono font-bold text-brand-dark">
+        </div>
+
+        <div>
+          <label for="form-installments" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Parcelas</label>
+          <input type="number" min="1" max="120" name="installments" id="form-installments" value="1" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark font-mono">
+        </div>
+
+        <div>
+          <label for="form-dueDate" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Vencimento *</label>
+          <input type="date" name="dueDate" id="form-dueDate" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+
+        <div>
+          <label for="form-interval" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Intervalo</label>
+          <select name="interval" id="form-interval" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+            <option value="Único">Único</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Quinzenal">Quinzenal</option>
+            <option value="Mensal" selected>Mensal</option>
+            <option value="Anual">Anual</option>
+          </select>
+        </div>
+
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-2">Recorrente</label>
+          <div class="flex items-center gap-2 mt-1">
+            <input type="checkbox" name="recurrent" id="form-recurrent" value="true" class="w-4 h-4 text-brand-dark border-gray-300 rounded focus:ring-brand-light">
+            <span class="text-xs text-gray-600 font-medium">Recorrente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <!-- Status de Lançamento Inicial -->
+        <div>
+          <label for="form-status" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Situação Inicial</label>
+          <select name="status" id="form-status" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark" onchange="togglePaidAt()">
+            <option value="pendente" selected>Pendente / Em Aberto</option>
+            <option value="pago">Pago / Recebido</option>
+          </select>
+        </div>
+
+        <!-- Data do Pagamento -->
+        <div id="form-paidAt-container" class="hidden">
+          <label for="form-paidAt" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Data da Baixa / Pagamento</label>
+          <input type="date" name="paidAt" id="form-paidAt" class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+      </div>
+
+      <!-- Rodapé do formulário -->
+      <div class="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-bold text-xs hover:bg-gray-50 transition-colors uppercase font-mono">
+          Cancelar
+        </button>
+        <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#284701] hover:bg-brand-dark text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono">
+          Salvar Conta
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Controladores do Modal
+  function openAddModal(type) {
+    const form = document.getElementById('tx-form');
+    form.reset();
+    form.action = '/admin/financeiro/add';
+    
+    document.getElementById('form-tx-id').value = '';
+    document.getElementById('form-tx-type').value = type;
+    document.getElementById('form-status').value = 'pendente';
+    
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('form-issueDate').value = today;
+    document.getElementById('form-dueDate').value = today;
+    document.getElementById('form-paidAt').value = today;
+
+    // Adjust titles & colors based on type
+    const modalTitle = document.getElementById('modal-title');
+    const saveBtn = form.querySelector('button[type="submit"]');
+    
+    if (type === 'pagar') {
+      modalTitle.textContent = 'Cadastro de Conta a Pagar';
+      modalTitle.parentElement.nextElementSibling.textContent = 'Preencha as informações da sua despesa de laboratório.';
+      saveBtn.className = 'px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono';
+    } else {
+      modalTitle.textContent = 'Cadastro de Conta a Receber';
+      modalTitle.parentElement.nextElementSibling.textContent = 'Preencha as informações do seu faturamento de laboratório.';
+      saveBtn.className = 'px-6 py-2.5 rounded-xl bg-[#284701] hover:bg-brand-dark text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono';
+    }
+
+    togglePaidAt();
+    
+    document.getElementById('tx-modal').classList.remove('hidden');
+    document.getElementById('form-number').focus();
+  }
+
+  function openEditModal(tx) {
+    const form = document.getElementById('tx-form');
+    form.reset();
+    form.action = '/admin/financeiro/edit';
+
+    document.getElementById('form-tx-id').value = tx.id;
+    document.getElementById('form-tx-type').value = tx.type;
+    document.getElementById('form-number').value = tx.number || '';
+    document.getElementById('form-issueDate').value = tx.issueDate || '';
+    document.getElementById('form-docNumber').value = tx.docNumber || '';
+    document.getElementById('form-provider').value = tx.provider || '';
+    document.getElementById('form-docType').value = tx.docType || '';
+    document.getElementById('form-chartOfAccounts').value = tx.chartOfAccounts || '';
+    document.getElementById('form-bank').value = tx.bank || '';
+    document.getElementById('form-tags').value = (tx.tags || []).join(', ');
+    document.getElementById('form-description').value = tx.description || '';
+    document.getElementById('form-amount').value = tx.amount || '';
+    document.getElementById('form-installments').value = tx.installments || '1';
+    document.getElementById('form-dueDate').value = tx.dueDate || '';
+    document.getElementById('form-interval').value = tx.interval || 'Mensal';
+    document.getElementById('form-recurrent').checked = !!tx.recurrent;
+    document.getElementById('form-status').value = tx.status || 'pendente';
+    document.getElementById('form-paidAt').value = tx.paidAt || new Date().toISOString().split('T')[0];
+
+    const modalTitle = document.getElementById('modal-title');
+    const saveBtn = form.querySelector('button[type="submit"]');
+    
+    if (tx.type === 'pagar') {
+      modalTitle.textContent = 'Editar Conta a Pagar';
+      saveBtn.className = 'px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono';
+    } else {
+      modalTitle.textContent = 'Editar Conta a Receber';
+      saveBtn.className = 'px-6 py-2.5 rounded-xl bg-[#284701] hover:bg-brand-dark text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono';
+    }
+
+    togglePaidAt();
+
+    document.getElementById('tx-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('tx-modal').classList.add('hidden');
+  }
+
+  function togglePaidAt() {
+    const status = document.getElementById('form-status').value;
+    const container = document.getElementById('form-paidAt-container');
+    if (status === 'pago') {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+
+  // Adição Dinâmica via AJAX
+  async function promptAddProvider() {
+    const providerName = prompt("Digite o nome do novo Fornecedor / Cliente:");
+    if (!providerName || !providerName.trim()) return;
+
+    try {
+      const response = await fetch('/api/financeiro/add-provider', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ provider: providerName })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Recarregar os selects de fornecedor no formulário
+        const select = document.getElementById('form-provider');
+        select.innerHTML = '<option value="">Selecione...</option>';
+        data.providers.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          if (p === providerName.trim()) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+        alert('Fornecedor "' + providerName.trim() + '" adicionado com sucesso!');
+      } else {
+        alert('Erro ao adicionar fornecedor: ' + (data.error || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar fornecedor.');
+    }
+  }
+
+  async function promptAddChart() {
+    const chartName = prompt("Digite o nome do novo Plano de Contas:");
+    if (!chartName || !chartName.trim()) return;
+
+    try {
+      const response = await fetch('/api/financeiro/add-chart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ chart: chartName })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Recarregar o select de plano de contas no formulário
+        const select = document.getElementById('form-chartOfAccounts');
+        select.innerHTML = '<option value="">Selecione...</option>';
+        data.chartsOfAccounts.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          if (c === chartName.trim()) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+        alert('Plano de Contas "' + chartName.trim() + '" adicionado com sucesso!');
+      } else {
+        alert('Erro ao adicionar plano de contas: ' + (data.error || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar plano de contas.');
+    }
+  }
+
+  // Funções para controle de Competência
+  function changeCompetence(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('competence', val);
+    window.location.href = url.toString();
+  }
+  
+  function navigateCompetence(direction) {
+    const select = document.getElementById('competence-select');
+    if (!select) return;
+    const currentIndex = select.selectedIndex;
+    // Ordem é decrescente (mais recente primeiro), então navegar para mês anterior (-1 na direção temporal) significa aumentar o index no select (+1 index)
+    // Direção -1 (mês anterior): incrementa index
+    // Direção 1 (mês posterior): decrementa index
+    let nextIndex = currentIndex + (direction * -1);
+    if (nextIndex >= 0 && nextIndex < select.options.length) {
+      changeCompetence(select.options[nextIndex].value);
+    }
+  }
+
+  // Controladores do Modal de Baixa
+  function openBaixaModal(id, provider, amount, bank, type) {
+    document.getElementById('baixa-id').value = id;
+    document.getElementById('baixa-provider').textContent = provider;
+    
+    // Formatar valor para BRL
+    const formattedAmount = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
+    document.getElementById('baixa-amount').textContent = (type === 'pagar' ? '-' : '+') + ' ' + formattedAmount;
+    
+    // Configurar banco pré-selecionado ou padrão
+    const bankSelect = document.getElementById('baixa-bank');
+    if (bank && bank.trim() !== '') {
+      bankSelect.value = bank;
+    } else {
+      bankSelect.selectedIndex = 0; // Primeiro banco cadastrado
+    }
+
+    // Set data de pagamento para hoje
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('baixa-paidAt').value = today;
+
+    // Customizar título e botão com base no tipo
+    const titleEl = document.getElementById('baixa-title');
+    const descEl = document.getElementById('baixa-desc');
+    const btnConfirm = document.getElementById('baixa-btn-confirm');
+    
+    if (type === 'pagar') {
+      titleEl.textContent = 'Dar Baixa / Pagar Conta';
+      descEl.textContent = 'Confirme o pagamento da despesa para registrar a saída no caixa.';
+      btnConfirm.className = 'px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono cursor-pointer';
+      btnConfirm.textContent = 'Confirmar Pagamento';
+    } else {
+      titleEl.textContent = 'Dar Baixa / Receber Conta';
+      descEl.textContent = 'Confirme o recebimento do faturamento para registrar a entrada no caixa.';
+      btnConfirm.className = 'px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono cursor-pointer';
+      btnConfirm.textContent = 'Confirmar Recebimento';
+    }
+
+    document.getElementById('baixa-modal').classList.remove('hidden');
+  }
+
+  function closeBaixaModal() {
+    document.getElementById('baixa-modal').classList.add('hidden');
+  }
+</script>
+
+<!-- ================= MODAL DE BAIXA FINANCEIRA ================= -->
+<div id="baixa-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden fade-in relative border border-gray-100 p-6">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+      <div>
+        <h3 id="baixa-title" class="text-lg font-black text-brand-neutralDark">Dar Baixa no Lançamento</h3>
+        <p id="baixa-desc" class="text-xs text-gray-400 mt-0.5">Confirme as informações para registrar o pagamento/recebimento.</p>
+      </div>
+      <button type="button" onclick="closeBaixaModal()" class="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/status" method="POST" class="space-y-4">
+      <input type="hidden" name="id" id="baixa-id">
+      <input type="hidden" name="status" value="pago">
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Fornecedor / Cliente</label>
+        <div id="baixa-provider" class="text-xs font-bold text-gray-800 bg-gray-50 rounded-lg p-2.5 border border-gray-100"></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Valor Original</label>
+          <div id="baixa-amount" class="text-xs font-mono font-bold text-gray-800 bg-gray-50 rounded-lg p-2.5 border border-gray-100"></div>
+        </div>
+        <div>
+          <label for="baixa-paidAt" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Data da Baixa *</label>
+          <input type="date" name="paidAt" id="baixa-paidAt" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+        </div>
+      </div>
+
+      <div>
+        <label for="baixa-bank" class="block text-[10px] font-bold text-gray-400 uppercase font-mono mb-1">Conta Bancária / Banco *</label>
+        <select name="bank" id="baixa-bank" required class="w-full text-xs bg-brand-neutralLight border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-brand-dark">
+          <% settings.banks.forEach(b => { %>
+            <option value="<%= b %>"><%= b %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeBaixaModal()" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-500 font-bold text-xs hover:bg-gray-50 transition-colors uppercase font-mono cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" id="baixa-btn-confirm" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-sm uppercase font-mono cursor-pointer">
+          Confirmar Baixa
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

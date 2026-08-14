@@ -1,0 +1,455 @@
+<%- include('partials/header') %>
+
+<!-- Conteúdo Principal -->
+<main class="flex-grow py-12 bg-brand-neutralLight/40">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <% if (!patient) { %>
+      <div class="relative max-w-md mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-brand-light/20 shadow-xl custom-shadow fade-in space-y-6">
+        <!-- Detalhe Dourado Decorativo -->
+        <div class="absolute -top-3 -left-3 w-12 h-12 rounded-2xl bg-brand-gold/20 border border-brand-gold/45 -z-10 flex items-center justify-center">
+          <span class="text-brand-dark font-serif font-extrabold text-xl">+</span>
+        </div>
+
+        <!-- Logotipo e Cabeçalho do Login -->
+        <div class="text-center space-y-2">
+          <div class="w-12 h-12 bg-brand-dark text-white rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <h1 class="text-xl font-bold text-brand-dark tracking-tight">Portal de Resultados</h1>
+          <p class="text-xs text-gray-500">Consulte seu laudo clínico digitando os dados de identificação do seu protocolo.</p>
+        </div>
+
+        <!-- Alertas de Erro (Servidor/Query) -->
+        <% if (error) { %>
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs leading-relaxed text-center font-semibold">
+            <%= error %>
+          </div>
+        <% } %>
+
+        <form onsubmit="event.preventDefault(); enviarFormulario();" action="https://inovalab.lab.jalis.net.br/resultado/logar" method="post" id="formLogin" class="login-form space-y-4">
+          <!-- Campo Usuário / Protocolo -->
+          <div class="space-y-1.5 text-left">
+            <label for="usuario" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono">Usuário</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <input type="text" id="usuario" name="usuario" required placeholder="Digite seu Usuário..." 
+                     class="w-full pl-10 pr-4 py-3 bg-brand-neutralLight text-brand-dark placeholder-gray-400 rounded-xl border border-brand-light/20 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark text-sm transition-all">
+            </div>
+          </div>
+          <input type="hidden" name="cfg_codigo" value="inovalab">
+          
+          <!-- Campo Senha -->
+          <div class="space-y-1.5 text-left">
+            <label for="senha" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono">Senha de Acesso</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <input type="password" id="senha" name="senha" required placeholder="Digite sua senha..." 
+                     class="w-full pl-10 pr-4 py-3 bg-brand-neutralLight text-brand-dark placeholder-gray-400 rounded-xl border border-brand-light/20 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark text-sm transition-all">
+            </div>
+          </div>
+
+          <!-- Mensagem de erro dinâmica -->
+          <div id="login-error-message" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs text-center font-sans">
+            <div class="flex items-center justify-center space-x-2">
+              <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="error-text font-semibold">Usuário ou senha incorretos.</span>
+            </div>
+          </div>
+
+          <!-- Botão Entrar -->
+          <button type="submit" id="btn-login-submit"
+                  class="w-full py-3.5 px-4 bg-brand-dark hover:bg-brand-dark/95 text-white font-bold rounded-xl text-xs uppercase tracking-wider font-mono transition-all hover:scale-[1.01] flex items-center justify-center gap-2 cursor-pointer shadow-md">
+            <span id="btn-login-icon">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+            </span>
+            <span id="btn-login-text">Visualizar Resultados</span>
+          </button>
+        </form>
+
+        <script>
+          async function enviarFormulario() {
+            const usuario = document.getElementById('usuario').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            const errorBox = document.getElementById('login-error-message');
+            const btnSubmit = document.getElementById('btn-login-submit');
+            const btnText = document.getElementById('btn-login-text');
+            const btnIcon = document.getElementById('btn-login-icon');
+
+            if (!usuario || !senha) {
+              alert("Por favor, preencha todos os campos.");
+              return;
+            }
+
+            // Ocultar mensagem de erro anterior
+            if (errorBox) {
+              errorBox.classList.add('hidden');
+            }
+
+            // Desabilitar botão e mostrar loading
+            if (btnSubmit) {
+              btnSubmit.disabled = true;
+              btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+            if (btnText) {
+              btnText.textContent = "Validando Acesso...";
+            }
+            if (btnIcon) {
+              btnIcon.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>`;
+            }
+
+            // Dispara o evento gtag se estiver definido
+            if (typeof gtag === 'function') {
+              gtag('event', 'login_tentativa_resultados_page', {
+                event_category: 'Login',
+                event_label: 'Formulário de resultados online',
+                value: 1
+              });
+            }
+
+            try {
+              const response = await fetch('/api/verificar-login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ usuario, senha, cfg_codigo: 'inovalab' })
+              });
+
+              const result = await response.json();
+
+              if (result.success) {
+                const form = document.getElementById("formLogin");
+                if (result.isLocal) {
+                  form.action = "/resultados";
+                } else {
+                  form.action = "https://inovalab.lab.jalis.net.br/resultado/logar";
+                }
+                form.submit();
+              } else {
+                // Erro de credenciais inválidas
+                if (errorBox) {
+                  const errorText = errorBox.querySelector('.error-text');
+                  if (errorText) {
+                    errorText.textContent = result.message || 'Usuário ou senha incorretos.';
+                  }
+                  errorBox.classList.remove('hidden');
+                }
+                // Restaurar botão
+                restaurarBotao();
+              }
+            } catch (err) {
+              console.error('Erro na validação do login:', err);
+              // Em caso de erro de conexão com nosso server, envia o form de qualquer forma como fallback
+              document.getElementById("formLogin").submit();
+            }
+          }
+
+          function restaurarBotao() {
+            const btnSubmit = document.getElementById('btn-login-submit');
+            const btnText = document.getElementById('btn-login-text');
+            const btnIcon = document.getElementById('btn-login-icon');
+
+            if (btnSubmit) {
+              btnSubmit.disabled = false;
+              btnSubmit.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+            if (btnText) {
+              btnText.textContent = "Visualizar Resultados";
+            }
+            if (btnIcon) {
+              btnIcon.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>`;
+            }
+          }
+        </script>
+
+        <div class="bg-brand-softBg/50 rounded-xl p-3 border border-brand-light/10 text-center">
+          <p class="text-[10px] text-gray-500 leading-normal">
+            Insira o <strong>Usuário</strong> e <strong>Senha</strong> impressos em seu canhoto de atendimento que recebeu no dia da coleta.
+          </p>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100 text-center space-y-2">
+          <p class="text-[10px] text-gray-400">Não possui ou perdeu sua senha de acesso?</p>
+          <p class="text-xs font-semibold text-brand-dark">Fale com nossa recepção em Cambará:</p>
+          <a href="https://wa.me/5543996183406?text=Olá,%20gostaria%20de%20solicitar%20a%20senha%20de%20acesso%20dos%20meus%20laudos." target="_blank" class="inline-flex items-center text-xs text-emerald-600 hover:text-emerald-700 font-bold">
+            <svg class="w-4 h-4 mr-1 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.276 3.508 8.48-.003 6.66-5.338 11.998-11.95 11.998-2.005-.001-3.974-.502-5.716-1.455L0 24zm6.59-4.846c1.6.95 3.588 1.453 5.628 1.454 5.514 0 10.002-4.485 10.005-9.998.002-2.671-1.03-5.181-2.906-7.06C17.502 1.671 14.993.638 12.008.638 6.495.638 2.006 5.122 2.003 10.635c0 1.916.499 3.791 1.448 5.4l-.956 3.493 3.552-.931z"/></svg>
+            Solicitar via WhatsApp
+          </a>
+        </div>
+      </div>
+    <!-- Seção: Se ESTIVER logado / Exibe Laudo Clínico Formatado -->
+    <% } else { %>
+      <%
+      function formatLisHtmlText(str) {
+        if (str === null || str === undefined) return '';
+        let text = String(str);
+        text = text.replace(/&amp;lt;b&amp;gt;/gi, '<b>').replace(/&amp;lt;\/b&amp;gt;/gi, '</b>');
+        text = text.replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>');
+        let safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return safe.replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/gi, '<strong class="font-bold text-gray-900">$1</strong>');
+      }
+      %>
+      <div class="space-y-6 fade-in" id="printable-area">
+        
+        <!-- Botões de Controle Superior (Não-imprimíveis) -->
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-2xl border border-brand-light/20 shadow-sm gap-4 print:hidden">
+          <div class="flex items-center space-x-2">
+            <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-bold text-gray-500 font-mono">Autenticação Segura ativa</span>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="window.print()" class="px-4 py-2 bg-brand-dark text-white text-xs font-bold rounded-xl hover:bg-brand-light transition-colors inline-flex items-center shadow-sm">
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Imprimir Laudo Completo
+            </button>
+            <a href="/resultados" class="px-4 py-2 border border-brand-light text-brand-dark text-xs font-bold rounded-xl hover:bg-brand-softBg transition-colors">
+              Sair da Conta
+            </a>
+          </div>
+        </div>
+
+        <!-- O Laudo em Si (Estética de Documento Clínico Real InovaLab) -->
+        <div class="bg-white rounded-2xl p-6 sm:p-10 border border-slate-300 shadow-xl font-mono relative">
+          
+          <!-- Selo Translúcido de Fundo -->
+          <div class="absolute inset-0 flex items-center justify-center opacity-[0.015] pointer-events-none select-none">
+            <svg class="w-96 h-96" fill="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+          </div>
+
+          <!-- CABEÇALHO OFICIAL DO LAUDO (INOVALAB) -->
+          <div class="border-b-2 border-slate-800 pb-3 mb-5 font-mono text-slate-900 leading-tight">
+            <!-- LOGO E DADOS DA INSTITUIÇÃO -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <img src="/logo-inovalab.png" alt="Laboratório InovaLab" class="h-14 sm:h-16 w-auto object-contain shrink-0" />
+              </div>
+
+              <div class="text-right font-sans text-[11px] text-slate-900 leading-snug">
+                <div class="font-bold text-xs uppercase tracking-tight text-slate-950">LABORATÓRIO INOVALAB</div>
+                <div class="flex items-center justify-end gap-1 text-[10.5px]">
+                  <span class="text-emerald-700">📍</span>
+                  <span>Rua Tiradentes, N°999 - Centro</span>
+                </div>
+                <div class="text-[10.5px]">Cambará-PR</div>
+                <div class="text-[10.5px]">(43) 99618-3406</div>
+                <div class="text-[10.5px] font-semibold">CNES: 4832884</div>
+              </div>
+            </div>
+
+            <!-- QUADRO DE DADOS DO PACIENTE E REQUISIÇÃO -->
+            <div class="border-2 border-slate-900 rounded-xs p-2.5 grid grid-cols-12 gap-2 text-[11px] font-mono bg-white">
+              <div class="col-span-8 space-y-1">
+                <div class="truncate">
+                  <span>Paciente:</span> <strong class="text-slate-950 font-bold text-[12px]"><%= patient.patientName %></strong>
+                </div>
+                <div class="truncate">
+                  <span>Médico..:</span> <span><%= patient.doctor || 'DR. Carlos Drumont' %></span>
+                </div>
+                <div class="grid grid-cols-2 gap-1 truncate">
+                  <div><span>Convênio:</span> <span><%= patient.convenio || 'Particular' %></span></div>
+                  <div><span>Procedência:</span> <span><%= patient.procedencia || 'Coleta' %></span></div>
+                </div>
+              </div>
+
+              <div class="col-span-4 pl-2 border-l border-slate-300 flex flex-col justify-between text-right">
+                <div class="space-y-0.5 text-[10.5px]">
+                  <div><span>Idade......:</span> <span><%= patient.age || patient.idade || 'N/I' %></span></div>
+                  <div><span>Data Requis.:</span> <span><%= patient.date || patient.createdAt || '05/08/2026, 13:37:50' %></span></div>
+                  <div><span>Data Emissão:</span> <span><%= patient.dataEmissao || new Date().toLocaleDateString('pt-BR') %></span></div>
+                </div>
+                <div class="flex flex-col items-end mt-1">
+                  <div class="font-mono text-[9px] font-bold tracking-[0.15em] bg-slate-900 text-white px-1 py-0.5 rounded-xs inline-block">
+                    ||||||||||||||||||||||||||||||||
+                  </div>
+                  <div class="font-mono font-bold text-[11px] tracking-wider text-slate-950 mt-0.5">
+                    <%= patient.protocol || patient.requisitionCode || '00001004' %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Listagem de Resultados dos Exames -->
+          <div class="py-4 space-y-6">
+            <% patient.exams.forEach(exam => { %>
+              <%
+                const examTitle = (exam.titulo || exam.name || exam.codigo || 'EXAME').toUpperCase();
+                const examMaterial = exam.material || 'Soro';
+                const examMetodo = exam.metodo || exam.method || 'Colorimétrico';
+                const examEquip = exam.equipamento || exam.equipment || '';
+                const refValue = exam.valorReferencia || exam.referenceValue || '';
+                const interpValue = exam.interpretacao || exam.interpretation || '';
+                const obsValue = exam.observacoesLaudo || exam.observacao || exam.observations || '';
+                const hasLinhas = Array.isArray(exam.linhas) && exam.linhas.length > 0;
+                const hasResults = Array.isArray(exam.results) && exam.results.length > 0;
+              %>
+              <div class="mb-6 font-mono">
+                <!-- TÍTULO DO EXAME EM FAIXA DESTAQUE -->
+                <div class="bg-slate-200 border border-slate-400 py-1.5 px-3 text-center font-bold text-sm text-slate-950 uppercase tracking-wider mb-3 rounded-xs">
+                  <%= examTitle %>
+                </div>
+
+                <!-- DADOS TÉCNICOS E CABEÇALHO DO EXAME -->
+                <div class="text-[10.5px] space-y-0.5 text-slate-800 border-b border-slate-200 pb-2 mb-3">
+                  <div class="flex flex-wrap gap-x-6 gap-y-1">
+                    <div><span class="text-slate-600 font-medium">Material:</span> <strong class="text-slate-900"><%= examMaterial %></strong></div>
+                    <div><span class="text-slate-600 font-medium">Método:</span> <strong class="text-slate-900"><%= examMetodo %></strong></div>
+                    <% if (examEquip) { %>
+                      <div><span class="text-slate-600 font-medium">Equipamento:</span> <strong class="text-slate-900"><%= examEquip %></strong></div>
+                    <% } %>
+                  </div>
+                </div>
+
+                <!-- 1. BLOCO DE RESULTADO(S) -->
+                <div class="space-y-2 bg-slate-50/90 p-3 border border-slate-200 rounded-xs mb-3">
+                  <% if (hasLinhas) { %>
+                    <% exam.linhas.forEach(l => {
+                      const rawParam = String(l.PARAMETRO || l.part1 || 'Resultado').trim();
+                      const isGenericParam = rawParam.toUpperCase() === 'RESULTADO' || rawParam.toUpperCase() === 'VALOR OBTIDO';
+                      let paramDisplay = isGenericParam 
+                        ? 'Resultado...:' 
+                        : (rawParam.endsWith('...') ? rawParam + ':' : (rawParam.endsWith(':') ? rawParam.replace(/:$/, '...:') : rawParam + '...:'));
+                      let valStr = String(l.resultado !== undefined && l.resultado !== null ? l.resultado : '').trim();
+                      let unitStr = String(l.unidade || exam.unidade || exam.unit || '').trim();
+                      if (unitStr && valStr.toLowerCase().endsWith(unitStr.toLowerCase())) {
+                        unitStr = '';
+                      }
+                    %>
+                      <div class="flex items-baseline gap-2 text-xs font-mono border-b border-dashed border-slate-200 pb-1.5 last:border-0 last:pb-0">
+                        <span class="font-bold text-slate-900 text-xs"><%= paramDisplay %></span>
+                        <span class="font-extrabold text-slate-950 text-sm tracking-wide">
+                          <%= valStr %><% if (unitStr) { %> <span class="not-italic text-xs font-bold text-slate-800 ml-1"><%= unitStr %></span><% } %>
+                        </span>
+                      </div>
+                    <% }) %>
+                  <% } else if (hasResults) { %>
+                    <% exam.results.forEach(res => { %>
+                      <div class="flex items-baseline gap-2 text-xs font-mono border-b border-dashed border-slate-200 pb-1.5 last:border-0 last:pb-0">
+                        <span class="font-bold text-slate-900 text-xs"><%= res.parameter %>...:</span>
+                        <span class="font-extrabold text-slate-950 text-sm tracking-wide">
+                          <%= res.value %>
+                        </span>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div class="flex items-baseline gap-2 text-xs font-mono">
+                      <span class="font-bold text-slate-900 text-xs">Resultado...:</span>
+                      <span class="font-extrabold text-slate-950 text-sm tracking-wide">
+                        <%= exam.resultado || exam.result || 'Sem resultado' %> <%= exam.unidade || exam.unit || '' %>
+                      </span>
+                    </div>
+                  <% } %>
+                </div>
+
+                <!-- 2. VALORES DE REFERÊNCIA -->
+                <% if (refValue && refValue.trim()) { %>
+                  <div class="mb-3 p-2.5 bg-white border border-slate-200 rounded-xs">
+                    <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Valores de Referência:</div>
+                    <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono"><%- formatLisHtmlText(refValue) %></div>
+                  </div>
+                <% } %>
+
+                <!-- 3. INTERPRETAÇÃO / NOTA TÉCNICA -->
+                <% if (interpValue && interpValue.trim()) { %>
+                  <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
+                    <div class="font-bold text-[11px] text-slate-900 mb-1 border-b border-slate-200 pb-0.5">Interpretação / Nota Técnica:</div>
+                    <div class="text-[10.5px] text-slate-700 whitespace-pre-line leading-relaxed font-mono"><%- formatLisHtmlText(interpValue) %></div>
+                  </div>
+                <% } %>
+
+                <!-- 4. OBSERVAÇÕES E NOTAS DO LAUDO -->
+                <% if (obsValue && obsValue.trim()) { %>
+                  <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xs">
+                    <div class="text-[10.5px] text-slate-700 whitespace-pre-line text-justify leading-relaxed font-mono"><%- formatLisHtmlText(obsValue) %></div>
+                  </div>
+                <% } %>
+
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- RODAPÉ DE LIBERAÇÃO ELETRÔNICA E CHANCELA DIGITAL -->
+          <div class="mt-8 pt-3 border-t-2 border-slate-800 text-[10.5px] font-mono text-slate-700 flex flex-wrap items-center justify-between gap-2">
+            <div>Coleta: <strong class="text-slate-900"><%= patient.date || patient.createdAt %></strong></div>
+            <div>Liberado eletronicamente por: <strong class="text-emerald-900"><%= patient.liberadoPor || 'Dr. Alysson Silva (Resp. Técnico)' %></strong></div>
+            <div>Cód. Autenticidade: <span class="font-mono text-[9px] text-slate-800"><%= patient.hash || '30b0159888103142783ca35ff8ea92ad' %></span></div>
+          </div>
+
+        </div>
+
+        <!-- Bloco de Avaliação de Satisfação (print:hidden) -->
+        <div class="print:hidden mt-8 bg-white rounded-3xl p-6 sm:p-8 border border-brand-light/15 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6 animate-fade-in">
+          <div class="space-y-1.5 text-center sm:text-left">
+            <span class="text-[9px] font-bold uppercase tracking-widest text-brand-gold font-mono block">Matriz de Qualidade InovaLab</span>
+            <h3 class="text-sm font-extrabold text-brand-dark">Como foi sua experiência no InovaLab Cambará?</h3>
+            <p class="text-xs text-gray-500 leading-relaxed max-w-md">
+              Sua opinião direta nos ajuda a manter a delicadeza na coleta e a rapidez na entrega dos seus resultados.
+            </p>
+          </div>
+          
+          <!-- Estrelas Interativas para encaminhamento rápido -->
+          <div class="flex flex-col items-center sm:items-end gap-2 shrink-0">
+            <div class="flex items-center space-x-1">
+              <% for(let i = 1; i <= 5; i++) { %>
+                <a href="/avaliar/<%= patient.hash || patient.protocol %>?rating=<%= i %>&name=<%= encodeURIComponent(patient.patientName) %>" class="group text-gray-300 hover:text-amber-400 focus:outline-none transition-transform duration-100 hover:scale-110 active:scale-95">
+                  <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                  </svg>
+                </a>
+              <% } %>
+            </div>
+            <span class="text-[10px] font-mono text-gray-400 font-semibold uppercase">Clique em uma estrela para avaliar</span>
+          </div>
+        </div>
+
+      </div>
+    <% } %>
+
+  </div>
+</main>
+
+<style>
+  /* CSS especial de impressão para o laudo */
+  @media print {
+    body {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    header, footer, .print\:hidden {
+      display: none !important;
+    }
+    main {
+      padding: 0 !important;
+      background: none !important;
+    }
+    #printable-area {
+      border: none !important;
+      box-shadow: none !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+    .custom-shadow {
+      box-shadow: none !important;
+    }
+  }
+</style>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,261 @@
+<%- include('../partials/header') %>
+
+<!-- Top Section with Clinical Banner -->
+<section class="bg-gradient-to-r from-brand-dark to-brand-light/85 text-white py-8 relative overflow-hidden">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.06),transparent_50%)] pointer-events-none"></div>
+  <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+  
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10 animate-fade-in">
+    <div class="space-y-3 max-w-3xl">
+      <div class="flex items-center gap-2 text-xs font-semibold text-brand-light/20 bg-white/10 px-3 py-1 rounded-full w-fit">
+        <a href="/admin" class="hover:text-white transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-white font-bold font-mono uppercase text-[9px] tracking-wider">Instruções de Exames</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">Instruções de Preparo & Coleta</h1>
+      <p class="text-xs text-white/80 max-w-xl leading-relaxed">
+        Consulte rapidamente as orientações detalhadas de preparo dos pacientes para cada exame. Copie as orientações com um clique para envio fácil via WhatsApp ou e-mail.
+      </p>
+    </div>
+
+    <!-- Stats badge -->
+    <div class="bg-white/10 backdrop-blur-sm border border-white/10 px-4 py-2.5 rounded-2xl flex items-center gap-2.5 shrink-0">
+      <span class="w-2.5 h-2.5 rounded-full bg-brand-gold animate-pulse"></span>
+      <span class="text-xs font-bold font-mono uppercase tracking-wider text-white">
+        Exames com Orientações: <span id="instruction-total-count" class="text-sm font-black text-brand-gold"><%= exams.length %></span>
+      </span>
+    </div>
+  </div>
+</section>
+
+<section class="py-10 bg-brand-neutralLight/45">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    
+    <!-- Filtros e Barra de Busca -->
+    <div class="bg-white p-5 rounded-2xl border border-brand-light/10 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+      <!-- Busca por texto -->
+      <div class="md:col-span-6 relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <svg class="h-4.5 w-4.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="text" id="instruction-search" oninput="filterInstructions()" placeholder="Buscar por Nome do Exame, Cód. Jalis ou Categoria..." 
+               class="w-full pl-11 pr-4 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-semibold text-brand-dark placeholder:text-gray-400" autocomplete="off">
+      </div>
+
+      <!-- Filtro por Categoria -->
+      <div class="md:col-span-3">
+        <select id="instruction-filter-category" onchange="filterInstructions()" 
+                class="w-full px-3 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-bold text-brand-dark cursor-pointer">
+          <option value="all">Todas as Categorias</option>
+          <% 
+            const uniqueCategories = [...new Set(exams.map(e => e.category).filter(Boolean))].sort();
+            uniqueCategories.forEach(cat => { 
+          %>
+            <option value="<%= cat.toLowerCase() %>"><%= cat %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Filtro por Jejum -->
+      <div class="md:col-span-3">
+        <select id="instruction-filter-fasting" onchange="filterInstructions()" 
+                class="w-full px-3 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-white text-xs font-bold text-brand-dark cursor-pointer">
+          <option value="all">Qualquer Requisito de Jejum</option>
+          <option value="yes">Apenas que Exigem Jejum</option>
+          <option value="no">Apenas Sem Jejum Obrigatório</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Lista de Instruções em Grid de Cards Modernos -->
+    <div id="instructions-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% exams.forEach(exam => { %>
+        <% 
+          const hasFasting = exam.fasting && !exam.fasting.toLowerCase().includes('não') && !exam.fasting.toLowerCase().includes('sem');
+        %>
+        <div class="instruction-card bg-white rounded-3xl border border-brand-light/10 shadow-sm hover:shadow-md transition-all p-6 flex flex-col justify-between space-y-4"
+             data-name="<%= exam.name.toLowerCase() %>"
+             data-jalis="<%= (exam.jalisCode || '').toLowerCase() %>"
+             data-category="<%= exam.category.toLowerCase() %>"
+             data-fasting="<%= hasFasting ? 'yes' : 'no' %>">
+          
+          <div class="space-y-3">
+            <!-- Cabeçalho do Card -->
+            <div class="flex justify-between items-start gap-3">
+              <div>
+                <span class="bg-indigo-50 text-indigo-700 font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-indigo-100 mb-1 inline-block">
+                  <%= exam.category %>
+                </span>
+                <h3 class="text-sm font-extrabold text-brand-dark leading-tight"><%= exam.name %></h3>
+              </div>
+              <div class="flex flex-col items-end shrink-0 gap-1 font-mono">
+                <% if (exam.jalisCode) { %>
+                  <span class="bg-emerald-50 text-emerald-800 border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded" title="Código Jalis">
+                    JL: <%= exam.jalisCode %>
+                  </span>
+                <% } %>
+                <% if (exam.code) { %>
+                  <span class="bg-amber-50 text-amber-800 border border-amber-100 text-[9px] font-bold px-1.5 py-0.5 rounded" title="Código de Gestão">
+                    Cód: <%= exam.code %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="border-t border-brand-light/5 my-2"></div>
+
+            <!-- Badges Clínicos -->
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-amber-50 border border-amber-100 text-[10px] text-amber-800 font-bold">
+                <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <span>Jejum: <%= exam.fasting %></span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 font-bold font-mono">
+                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Prazo: <%= exam.timeframe %></span>
+              </div>
+            </div>
+
+            <!-- Bloco de Instruções Clínicas -->
+            <div class="bg-brand-softBg/35 rounded-2xl p-4 border border-brand-light/5">
+              <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1 font-mono">Instruções de Preparo (Orientação)</span>
+              <p class="text-[11px] text-gray-600 font-medium leading-relaxed whitespace-pre-line select-text" id="inst-text-<%= exam.id %>"><%= exam.instructions || 'Nenhuma instrução clínica cadastrada para este exame.' %></p>
+            </div>
+          </div>
+
+          <!-- Ação rápida -->
+          <div class="flex items-center gap-2 pt-2">
+            <button onclick="copyInstructions('<%= exam.id %>', '<%= exam.name.replace(/'/g, "\\'") %>')" 
+                    class="w-full flex items-center justify-center gap-1.5 py-2.5 bg-brand-softBg hover:bg-indigo-50 hover:text-indigo-700 text-brand-dark/80 text-[11px] font-bold rounded-xl transition-all cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+              </svg>
+              <span>Copiar Orientações</span>
+            </button>
+            <button onclick="shareViaWhatsapp('<%= exam.id %>', '<%= exam.name.replace(/'/g, "\\'") %>')" 
+                    class="p-2.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-xl transition-all cursor-pointer" 
+                    title="Compartilhar no Whatsapp">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.634-1.02-5.111-2.88-6.973C16.38 1.912 13.9 1.35 11.99 1.35c-5.433 0-9.858 4.42-9.863 9.858-.002 1.737.478 3.435 1.39 4.937L2.45 21.65l5.592-1.466-.395-.23zm10.741-7.224c-.29-.145-1.716-.848-1.98-.942-.266-.096-.459-.145-.653.145-.192.291-.745.942-.913 1.135-.167.192-.335.218-.625.073-.29-.145-1.226-.452-2.336-1.442-.864-.771-1.448-1.724-1.618-2.015-.17-.29-.018-.448.127-.591.131-.13.29-.338.436-.508.145-.17.193-.29.29-.484.097-.193.048-.363-.024-.508-.073-.145-.653-1.573-.895-2.153-.235-.568-.474-.49-.653-.5-.167-.008-.361-.01-.553-.01-.193 0-.507.072-.772.362-.266.29-1.014.992-1.014 2.422 0 1.43 1.039 2.812 1.184 3.006.145.193 2.045 3.123 4.956 4.378.692.298 1.233.477 1.655.61.696.22 1.33.19 1.83.115.558-.084 1.716-.701 1.956-1.38.24-.678.24-1.26.168-1.38-.072-.12-.266-.192-.555-.337z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      <% }) %>
+
+      <!-- No results message -->
+      <div id="no-instructions" class="hidden col-span-full py-16 text-center text-gray-400 font-medium font-sans">
+        <div class="flex flex-col items-center justify-center space-y-3 bg-white rounded-3xl p-8 border border-brand-light/10 shadow-sm max-w-md mx-auto">
+          <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm font-bold text-gray-600">Nenhuma instrução clínica encontrada.</p>
+          <p class="text-[11px] text-gray-400">Tente buscar por termos mais genéricos ou limpar os filtros de pesquisa.</p>
+          <button type="button" onclick="clearInstructionFilters()" class="text-xs text-indigo-600 font-extrabold hover:underline cursor-pointer">Limpar Filtros</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Notificação Toast para Cópia -->
+<div id="toast" class="fixed bottom-6 right-6 bg-brand-dark text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-wider hidden z-50 animate-slide-up">
+  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+  <span id="toast-message">Copiado com sucesso!</span>
+</div>
+
+<script>
+  function filterInstructions() {
+    const searchVal = document.getElementById('instruction-search').value.toLowerCase().trim();
+    const categoryVal = document.getElementById('instruction-filter-category').value.toLowerCase().trim();
+    const fastingVal = document.getElementById('instruction-filter-fasting').value;
+
+    const cards = document.querySelectorAll('.instruction-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const name = card.getAttribute('data-name') || '';
+      const jalis = card.getAttribute('data-jalis') || '';
+      const category = card.getAttribute('data-category') || '';
+      const fasting = card.getAttribute('data-fasting') || 'no';
+
+      // 1. Busca por texto
+      const matchesSearch = !searchVal || name.includes(searchVal) || jalis.includes(searchVal) || category.includes(searchVal);
+
+      // 2. Filtro de Categoria
+      const matchesCategory = categoryVal === 'all' || category === categoryVal;
+
+      // 3. Filtro de Jejum
+      let matchesFasting = true;
+      if (fastingVal === 'yes') {
+        matchesFasting = fasting === 'yes';
+      } else if (fastingVal === 'no') {
+        matchesFasting = fasting === 'no';
+      }
+
+      if (matchesSearch && matchesCategory && matchesFasting) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    const noResults = document.getElementById('no-instructions');
+    if (visibleCount === 0) {
+      noResults.classList.remove('hidden');
+    } else {
+      noResults.classList.add('hidden');
+    }
+  }
+
+  function clearInstructionFilters() {
+    document.getElementById('instruction-search').value = '';
+    document.getElementById('instruction-filter-category').value = 'all';
+    document.getElementById('instruction-filter-fasting').value = 'all';
+    filterInstructions();
+  }
+
+  function copyInstructions(id, examName) {
+    const textEl = document.getElementById(`inst-text-${id}`);
+    if (!textEl) return;
+
+    const textToCopy = `*InovaLab - Orientações de Preparo*\n\n*Exame:* ${examName}\n\n${textEl.innerText}\n\n_Em caso de dúvidas, fale conosco!_`;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      showToast(`Instruções de ${examName} copiadas!`);
+    }).catch(err => {
+      console.error('Erro ao copiar:', err);
+    });
+  }
+
+  function shareViaWhatsapp(id, examName) {
+    const textEl = document.getElementById(`inst-text-${id}`);
+    if (!textEl) return;
+
+    const textToShare = `*InovaLab - Orientações de Preparo*\n\n*Exame:* ${examName}\n\n${textEl.innerText}\n\n_Em caso de dúvidas, fale conosco!_`;
+    const urlEncoded = encodeURIComponent(textToShare);
+    window.open(`https://api.whatsapp.com/send?text=${urlEncoded}`, '_blank');
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastMessage.innerText = message;
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 3000);
+  }
+</script>
+
+<%- include('../partials/footer') %>

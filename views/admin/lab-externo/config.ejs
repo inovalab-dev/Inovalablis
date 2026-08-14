@@ -1,0 +1,383 @@
+<%- include('../../partials/header', { page: 'admin-lab-externo-config' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Laboratório Externo</span>
+        <span>•</span>
+        <span class="text-amber-700 font-bold">Config Apoio</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm flex items-center justify-center shrink-0 relative text-brand-gold font-black text-xl">
+          ⚙️
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight flex items-center gap-2">
+            Config Apoio
+            <span class="text-xs font-mono font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full uppercase border border-amber-200">Integração</span>
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Parâmetros de configuração e credenciais de conexão com os laboratórios de apoio parceiros
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegação por Abas Principais -->
+  <div class="border-b border-gray-200 bg-white rounded-2xl p-2 shadow-2xs border">
+    <nav class="flex space-x-2" aria-label="Tabs">
+      <button 
+        type="button" 
+        id="tab-btn-alvaro" 
+        onclick="switchConfigTab('alvaro')" 
+        class="flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer bg-slate-900 text-amber-400 shadow-sm border border-slate-800"
+      >
+        <span>🧪</span>
+        <span>Configuração Álvaro</span>
+      </button>
+
+      <button 
+        type="button" 
+        id="tab-btn-pardini" 
+        onclick="switchConfigTab('pardini')" 
+        class="flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer text-gray-500 hover:text-slate-900 hover:bg-gray-100"
+      >
+        <span>🔬</span>
+        <span>Configuração Pardini</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ALERTA DE FEEDBACK -->
+  <div id="config-alert-box" class="hidden p-4 rounded-2xl border transition-all flex items-start gap-3">
+    <span id="config-alert-icon" class="text-xl shrink-0"></span>
+    <div class="flex-1">
+      <p id="config-alert-title" class="font-bold text-xs uppercase font-mono tracking-wider mb-0.5"></p>
+      <p id="config-alert-msg" class="text-xs font-sans"></p>
+    </div>
+    <button type="button" onclick="hideConfigAlert()" class="text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer">&times;</button>
+  </div>
+
+  <!-- ABA: CONFIGURAÇÃO ÁLVARO -->
+  <div id="config-panel-alvaro" class="space-y-6">
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+      <!-- Card Header -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg">
+            🔌
+          </div>
+          <div>
+            <h2 class="text-sm font-black uppercase font-mono tracking-wider text-amber-400">
+              Parâmetros de Integração
+            </h2>
+            <p class="text-[11px] font-mono text-gray-300">
+              Serviços Web REST do Laboratório Álvaro de Apoio
+            </p>
+          </div>
+        </div>
+        <span class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[10px] font-bold rounded-lg uppercase">
+          Álvaro Apoio
+        </span>
+      </div>
+
+      <!-- Form Body -->
+      <form id="form-config-alvaro" onsubmit="handleSaveConfigAlvaro(event)" class="p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <!-- Campo: Url Ambiente -->
+          <div class="md:col-span-2 space-y-1.5">
+            <label for="urlAmbiente" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Url Ambiente <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🌐</span>
+              <input 
+                type="text" 
+                id="urlAmbiente" 
+                name="urlAmbiente" 
+                value="<%= configAlvaro.urlAmbiente || 'http://webservice.alvaro.com.br/webserviceaol/rest/homologacao/v1' %>" 
+                placeholder="http://webservice.alvaro.com.br/webserviceaol/rest/homologacao/v1" 
+                required
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+            </div>
+            <p class="text-[11px] text-gray-500">URL do ambiente de homologação ou produção do webservice Álvaro.</p>
+          </div>
+
+          <!-- Campo: Nome do LIS -->
+          <div class="space-y-1.5">
+            <label for="nomeLis" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Nome do LIS
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🏷️</span>
+              <input 
+                type="text" 
+                id="nomeLis" 
+                name="nomeLis" 
+                value="<%= configAlvaro.nomeLis || 'InovalabLis' %>" 
+                placeholder="Ex: InovalabLis" 
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+            </div>
+            <p class="text-[11px] text-gray-500">Identificador do sistema LIS (atributo 'lis' no XML).</p>
+          </div>
+
+          <!-- Campo: Entidade -->
+          <div class="space-y-1.5">
+            <label for="entidade" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Entidade
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🏢</span>
+              <input 
+                type="text" 
+                id="entidade" 
+                name="entidade" 
+                value="<%= configAlvaro.entidade || '19816' %>" 
+                placeholder="Ex: 19816" 
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+            </div>
+            <p class="text-[11px] text-gray-500">Código da entidade/cliente fornecido pelo Álvaro.</p>
+          </div>
+
+          <!-- Campo: Id do Agente -->
+          <div class="space-y-1.5">
+            <label for="idAgente" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Id do Agente
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🆔</span>
+              <input 
+                type="text" 
+                id="idAgente" 
+                name="idAgente" 
+                value="<%= configAlvaro.idAgente || '193762' %>" 
+                placeholder="Ex: 193762" 
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+            </div>
+            <p class="text-[11px] text-gray-500">Identificador do agente de sincronização ou usuário WebService.</p>
+          </div>
+
+          <!-- Campo: Senha -->
+          <div class="space-y-1.5">
+            <label for="senha" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Senha
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🔒</span>
+              <input 
+                type="password" 
+                id="senha" 
+                name="senha" 
+                value="<%= configAlvaro.senha || '4353cd' %>" 
+                placeholder="••••••••••••" 
+                class="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('senha', 'eye-icon-senha')" 
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <span id="eye-icon-senha">👁️</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-gray-500">Senha para autenticação das requisições.</p>
+          </div>
+
+          <!-- Campo: Chave -->
+          <div class="space-y-1.5">
+            <label for="chave" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Chave
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">🔑</span>
+              <input 
+                type="password" 
+                id="chave" 
+                name="chave" 
+                value="<%= configAlvaro.chave || '581abd3154b1e858' %>" 
+                placeholder="Ex: Token de Acesso" 
+                class="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('chave', 'eye-icon-chave')" 
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <span id="eye-icon-chave">👁️</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-gray-500">Chave secreta ou token de API para autenticação.</p>
+          </div>
+
+          <!-- Campo: Setor Padrão -->
+          <div class="space-y-1.5">
+            <label for="setorPadrao" class="block text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
+              Setor Padrão
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">📊</span>
+              <input 
+                type="text" 
+                id="setorPadrao" 
+                name="setorPadrao" 
+                value="<%= configAlvaro.setorPadrao || '11' %>" 
+                placeholder="Ex: 11" 
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+              >
+            </div>
+            <p class="text-[11px] text-gray-500">Código do setor padrão utilizado no LIS para composição do códigolis (últimos 2 dígitos).</p>
+          </div>
+
+        </div>
+
+        <!-- Submit Footer -->
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+          <button 
+            type="submit" 
+            id="btn-save-alvaro" 
+            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+          >
+            <span>✓</span>
+            <span id="btn-save-alvaro-text">Salvar Parâmetros</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ABA: CONFIGURAÇÃO PARDINI -->
+  <div id="config-panel-pardini" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center max-w-xl mx-auto my-8">
+      <div class="w-16 h-16 bg-cyan-50 border border-cyan-200 rounded-full flex items-center justify-center mx-auto text-2xl text-cyan-600 mb-4">
+        🔬
+      </div>
+      <h3 class="text-base font-black text-slate-800 uppercase font-mono tracking-wider mb-2">
+        Configuração Pardini
+      </h3>
+      <p class="text-xs text-gray-500 leading-relaxed mb-4">
+        Nenhum parâmetro necessário no momento. Esta aba foi reservada para futuras definições e integrações com o Laboratório Pardini.
+      </p>
+      <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 text-[11px] font-mono font-bold rounded-full">
+        Em Breve
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchConfigTab(tab) {
+    const btnAlvaro = document.getElementById('tab-btn-alvaro');
+    const btnPardini = document.getElementById('tab-btn-pardini');
+    const panelAlvaro = document.getElementById('config-panel-alvaro');
+    const panelPardini = document.getElementById('config-panel-pardini');
+
+    if (tab === 'alvaro') {
+      btnAlvaro.className = "flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer bg-slate-900 text-amber-400 shadow-sm border border-slate-800";
+      btnPardini.className = "flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer text-gray-500 hover:text-slate-900 hover:bg-gray-100";
+      panelAlvaro.classList.remove('hidden');
+      panelPardini.classList.add('hidden');
+    } else {
+      btnPardini.className = "flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer bg-slate-900 text-cyan-400 shadow-sm border border-slate-800";
+      btnAlvaro.className = "flex items-center gap-2.5 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer text-gray-500 hover:text-slate-900 hover:bg-gray-100";
+      panelPardini.classList.remove('hidden');
+      panelAlvaro.classList.add('hidden');
+    }
+  }
+
+  function togglePasswordVisibility(inputId, eyeIconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(eyeIconId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (icon) icon.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      if (icon) icon.textContent = '👁️';
+    }
+  }
+
+  function showConfigAlert(type, title, msg) {
+    const box = document.getElementById('config-alert-box');
+    const icon = document.getElementById('config-alert-icon');
+    const titleEl = document.getElementById('config-alert-title');
+    const msgEl = document.getElementById('config-alert-msg');
+    if (!box) return;
+
+    if (type === 'success') {
+      box.className = "p-4 rounded-2xl border transition-all flex items-start gap-3 bg-emerald-50 border-emerald-200 text-emerald-900";
+      icon.textContent = "✅";
+    } else {
+      box.className = "p-4 rounded-2xl border transition-all flex items-start gap-3 bg-red-50 border-red-200 text-red-900";
+      icon.textContent = "⚠️";
+    }
+
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    box.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideConfigAlert() {
+    const box = document.getElementById('config-alert-box');
+    if (box) box.classList.add('hidden');
+  }
+
+  async function handleSaveConfigAlvaro(e) {
+    e.preventDefault();
+    hideConfigAlert();
+
+    const btn = document.getElementById('btn-save-alvaro');
+    const btnText = document.getElementById('btn-save-alvaro-text');
+
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = "Salvando...";
+
+    const payload = {
+      urlAmbiente: document.getElementById('urlAmbiente').value,
+      nomeLis: document.getElementById('nomeLis').value,
+      entidade: document.getElementById('entidade').value,
+      idAgente: document.getElementById('idAgente').value,
+      senha: document.getElementById('senha').value,
+      chave: document.getElementById('chave').value,
+      setorPadrao: document.getElementById('setorPadrao').value
+    };
+
+    try {
+      const res = await fetch('/api/lab-externo/config/alvaro/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showConfigAlert('success', 'Sucesso!', data.message || 'Parâmetros de integração salvos com sucesso.');
+      } else {
+        showConfigAlert('error', 'Atenção', data.message || 'Erro ao salvar configurações.');
+      }
+    } catch (err) {
+      console.error(err);
+      showConfigAlert('error', 'Erro de Conexão', 'Não foi possível se comunicar com o servidor.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = "Salvar Parâmetros";
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

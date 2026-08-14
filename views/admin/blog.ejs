@@ -1,0 +1,187 @@
+<%- include('../partials/header') %>
+
+<!-- Top Section -->
+<section class="bg-brand-softBg/30 border-b border-brand-light/15 py-6">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Blog & Dicas</span>
+      </div>
+      <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight">Gerenciamento do Blog</h1>
+    </div>
+    
+    <button onclick="toggleAddPostForm()" id="toggle-add-btn" class="text-xs font-bold bg-brand-dark hover:bg-brand-light text-white px-5 py-3 rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      <span>Criar Nova Matéria</span>
+    </button>
+  </div>
+</section>
+
+<section class="py-12 bg-brand-neutralLight/45">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+
+    <!-- Painel de Cadastro de Postagem (Oculto por Padrão) -->
+    <div id="add-post-panel" class="hidden bg-white p-6 sm:p-8 rounded-3xl border-2 border-brand-light/30 shadow-md space-y-6 animate-fade-in">
+      <div class="flex justify-between items-center pb-4 border-b border-brand-light/10">
+        <h2 id="form-title" class="text-lg font-extrabold text-brand-dark">Criar Nova Matéria no Blog</h2>
+        <button onclick="hideAddPostForm()" class="text-gray-400 hover:text-gray-600 text-sm font-semibold">Cancelar</button>
+      </div>
+
+      <form id="post-form" action="/admin/blog/add" method="POST" class="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <input type="hidden" name="id" id="form-post-id">
+        
+        <div class="md:col-span-4">
+          <label for="title" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Título do Artigo</label>
+          <input type="text" name="title" id="form-post-title" required placeholder="Ex: Como evitar resfriados no inverno através da alimentação" class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-semibold">
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="category" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Categoria</label>
+          <select name="category" id="form-post-category" required class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-semibold">
+            <option value="Prevenção">Prevenção</option>
+            <option value="Preparo">Preparo de Exames</option>
+            <option value="Curiosidades">Curiosidades / Saúde</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-3">
+          <label for="author" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Autor(a) da Matéria</label>
+          <input type="text" name="author" id="form-post-author" required placeholder="Ex: Dra. Carolina Mendes" class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-semibold">
+        </div>
+
+        <div class="md:col-span-3">
+          <label for="readTime" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Tempo de Leitura Estimado</label>
+          <input type="text" name="readTime" id="form-post-readTime" required placeholder="Ex: 4 min de leitura" class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-semibold">
+        </div>
+
+        <div class="md:col-span-6">
+          <label for="excerpt" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Resumo / Introdução Rápida (Exibido no card inicial)</label>
+          <input type="text" name="excerpt" id="form-post-excerpt" required placeholder="Escreva uma breve frase de 1 ou 2 linhas que incentive o leitor a clicar para ler..." class="w-full px-4 py-2.5 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-medium">
+        </div>
+
+        <div class="md:col-span-6">
+          <label for="content" class="block text-xs font-bold text-brand-dark uppercase tracking-wider font-mono mb-1.5">Conteúdo do Artigo</label>
+          <div class="mb-2 text-[10px] text-gray-400 font-mono">
+            Dica: Escreva os parágrafos normalmente. Para fazer subtítulos grandes, use <strong class="text-brand-dark">### Seu Subtítulo</strong> no início da linha. Para listas, use <strong class="text-brand-dark">* Item</strong>.
+          </div>
+          <textarea name="content" id="form-post-content" rows="12" required placeholder="Escreva o artigo completo..." class="w-full px-4 py-3 rounded-xl border border-brand-light/30 focus:outline-none focus:ring-1 focus:ring-brand-dark bg-brand-neutralLight text-xs font-medium leading-relaxed font-mono"></textarea>
+        </div>
+
+        <div class="md:col-span-6 flex justify-end gap-3 pt-2">
+          <button type="button" onclick="hideAddPostForm()" class="px-5 py-3 bg-brand-softBg hover:bg-brand-light/20 text-brand-dark text-xs font-bold rounded-xl transition-all cursor-pointer">
+            Fechar
+          </button>
+          <button type="submit" id="submit-btn" class="px-6 py-3 bg-brand-dark hover:bg-brand-light text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer">
+            Publicar Matéria
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lista de Artigos no Blog -->
+    <div class="bg-white rounded-3xl border border-brand-light/15 overflow-hidden shadow-sm">
+      <div class="px-6 py-5 border-b border-brand-light/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 class="text-base font-extrabold text-brand-dark font-mono uppercase tracking-wider">Publicações Ativas</h2>
+        <span class="text-xs font-bold text-gray-400"><span><%= posts.length %></span> postagens no ar</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-brand-softBg/30 text-[10px] font-bold uppercase tracking-widest text-brand-dark/75 border-b border-brand-light/10 font-mono">
+              <th class="py-4 px-6">Título da Matéria</th>
+              <th class="py-4 px-6">Categoria</th>
+              <th class="py-4 px-6">Autor(a)</th>
+              <th class="py-4 px-6">Data de Pub.</th>
+              <th class="py-4 px-6 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-brand-light/10 text-xs font-medium text-gray-600">
+            <% posts.forEach(post => { %>
+              <tr class="hover:bg-brand-softBg/20 transition-colors">
+                <td class="py-4 px-6">
+                  <div class="space-y-1">
+                    <p class="font-bold text-brand-dark text-sm"><%= post.title %></p>
+                    <p class="text-[11px] text-gray-400 font-normal leading-relaxed line-clamp-1 max-w-md"><%= post.excerpt %></p>
+                  </div>
+                </td>
+                <td class="py-4 px-6">
+                  <span class="bg-brand-softBg text-brand-dark font-bold font-mono text-[9px] px-2.5 py-1 rounded-full uppercase">
+                    <%= post.category %>
+                  </span>
+                </td>
+                <td class="py-4 px-6 text-gray-500 font-semibold"><%= post.author %></td>
+                <td class="py-4 px-6 font-mono text-gray-400"><%= post.date %></td>
+                <td class="py-4 px-6 text-right space-x-1 whitespace-nowrap">
+                  <a href="/blog/<%= post.id %>" target="_blank" class="p-2 bg-brand-softBg text-brand-dark hover:bg-brand-dark hover:text-white rounded-lg transition-colors inline-block cursor-pointer" title="Ver Artigo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </a>
+                  <button onclick="editPost('<%= JSON.stringify(post).replace(/'/g, "\\'") %>')" class="p-2 bg-brand-softBg text-brand-dark hover:bg-brand-dark hover:text-white rounded-lg transition-colors cursor-pointer" title="Editar Artigo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <a href="/admin/blog/delete/<%= post.id %>" onclick="return confirm('Deseja realmente remover esta postagem do blog?')" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-colors inline-block cursor-pointer" title="Remover Artigo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      
+      <% if (posts.length === 0) { %>
+        <div class="text-center py-12 text-gray-400">
+          Nenhuma matéria publicada ainda. Clique em "Criar Nova Matéria" acima para começar!
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  function toggleAddPostForm() {
+    const panel = document.getElementById('add-post-panel');
+    panel.classList.toggle('hidden');
+    
+    // Reseta form para estado "Add" caso estivesse editando
+    document.getElementById('form-title').innerText = "Criar Nova Matéria no Blog";
+    document.getElementById('post-form').action = "/admin/blog/add";
+    document.getElementById('form-post-id').value = "";
+    document.getElementById('post-form').reset();
+    document.getElementById('submit-btn').innerText = "Publicar Matéria";
+  }
+
+  function hideAddPostForm() {
+    document.getElementById('add-post-panel').classList.add('hidden');
+  }
+
+  function editPost(postStr) {
+    const post = JSON.parse(postStr);
+    
+    // Mostra o formulário
+    const panel = document.getElementById('add-post-panel');
+    panel.classList.remove('hidden');
+    
+    // Altera títulos e action do form
+    document.getElementById('form-title').innerText = "Editar Matéria: " + post.title;
+    document.getElementById('post-form').action = "/admin/blog/edit";
+    document.getElementById('submit-btn').innerText = "Salvar Alterações";
+    
+    // Preenche os campos
+    document.getElementById('form-post-id').value = post.id;
+    document.getElementById('form-post-title').value = post.title;
+    document.getElementById('form-post-category').value = post.category;
+    document.getElementById('form-post-author').value = post.author;
+    document.getElementById('form-post-readTime').value = post.readTime;
+    document.getElementById('form-post-excerpt').value = post.excerpt;
+    document.getElementById('form-post-content').value = post.content;
+    
+    // Rola para o formulário
+    panel.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,308 @@
+<%- include('../partials/header', { page: 'admin-materiais-coletados' }) %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1 space-y-6">
+
+  <!-- Cabeçalho Principal da Tela (Padrão InovaLab / LIS) -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <a href="/admin" class="hover:text-brand-neutralDark transition-colors">Administração</a>
+        <span>•</span>
+        <span>Cadastros</span>
+        <span>•</span>
+        <span class="text-indigo-700 font-bold">Materiais Coletados</span>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Ícone do Cadastro de Materiais Coletados -->
+        <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0 relative">
+          <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5a3.75 3.75 0 01-3.75 3.75H8.75A3.75 3.75 0 015 14.5m14 0V17a3 3 0 01-3 3H8a3 3 0 01-3-3v-2.5"/>
+          </svg>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-indigo-600 rounded-lg text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            +
+          </div>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight">
+            Cadastro de Materiais Coletados
+          </h1>
+          <p class="text-xs text-brand-neutral/70">
+            Cadastre e gerencie os materiais biológicos (sangue, urina, fezes, secreções) coletados para exames laboratoriais
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="flex items-center gap-3">
+      <button type="button" onclick="openNewMaterialModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer flex items-center gap-2" title="Novo Material (Ctrl+N)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>+ Novo Material</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / Resumo dos Materiais -->
+  <% 
+    const totalMateriais = materiais ? materiais.length : 0;
+  %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-gray-500 uppercase font-mono tracking-wider">Total Registrados</p>
+        <p class="text-2xl font-black text-slate-800 font-mono mt-0.5"><%= totalMateriais %></p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 text-lg">🧫</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-600 uppercase font-mono tracking-wider">Status do Cadastro</p>
+        <p class="text-2xl font-black text-emerald-700 font-mono mt-0.5">Ativo</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg">✅</div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold text-blue-600 uppercase font-mono tracking-wider">Próximo Código</p>
+        <p class="text-2xl font-black text-blue-700 font-mono mt-0.5">
+          <% 
+            let maxCod = 0;
+            if (materiais) {
+              materiais.forEach(m => {
+                const num = parseInt(m.codigo, 10);
+                if (!isNaN(num) && num > maxCod) maxCod = num;
+              });
+            }
+          %>
+          <%= maxCod + 1 %>
+        </p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg">🏷️</div>
+    </div>
+  </div>
+
+  <!-- TABELA / LISTA PRINCIPAL DE MATERIAIS COLETADOS -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    
+    <!-- Barra Superior de Pesquisa e Filtros -->
+    <div class="p-4 bg-slate-50/80 border-b border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-sm font-black text-slate-800 uppercase tracking-wide shrink-0">Lista de Materiais Coletados</span>
+        <span id="materiaisCounterBadge" class="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold font-mono">
+          <%= totalMateriais %> cadastrados
+        </span>
+      </div>
+
+      <!-- Campo de Busca -->
+      <div class="flex items-center gap-2.5 w-full md:w-auto">
+        <div class="relative w-full sm:w-80">
+          <input type="text" id="searchMateriaisInput" onkeyup="filterMateriaisTable()" placeholder="Buscar por código, descrição ou abreviatura..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs">
+          <span class="absolute left-2.5 top-2 text-gray-400 text-xs">🔍</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabela de Materiais Coletados -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-100/90 border-b border-gray-200 text-[10px] font-black text-gray-500 uppercase font-mono tracking-wider">
+            <th class="p-3 w-28 text-center">Código</th>
+            <th class="p-3">Descrição do Material</th>
+            <th class="p-3 w-40 text-center">Abreviatura</th>
+            <th class="p-3 w-32 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="materiaisTableBody" class="divide-y divide-gray-100 text-xs font-medium">
+          <% if (!materiais || materiais.length === 0) { %>
+            <tr>
+              <td colspan="4" class="p-8 text-center text-gray-400 font-sans italic">
+                Nenhum material coletado cadastrado até o momento.
+              </td>
+            </tr>
+          <% } else { %>
+            <% materiais.forEach(m => { %>
+              <tr class="material-row hover:bg-indigo-50/40 transition-colors" data-search="<%= (m.codigo + ' ' + m.descricao + ' ' + (m.abreviatura || '')).toLowerCase() %>">
+                <td class="p-3 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
+                  #<%= m.codigo %>
+                </td>
+                <td class="p-3">
+                  <div class="font-bold text-slate-800 text-sm"><%= m.descricao %></div>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-mono font-bold">
+                    <%= m.abreviatura || '-' %>
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="editMaterial('<%= m.id %>')" title="Editar Material" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                      ✏️ Editar
+                    </button>
+                    <button type="button" onclick="deleteMaterial('<%= m.id %>', '<%= (m.descricao || '').replace(/'/g, "\\'") %>')" title="Excluir Material" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1 cursor-pointer">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL DE CADASTRO / EDIÇÃO DE MATERIAL COLETADO -->
+<div id="materialModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+    
+    <!-- Modal Header -->
+    <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🧫</span>
+        <h3 id="materialModalTitle" class="text-sm font-extrabold uppercase font-mono tracking-wider text-brand-gold">
+          Cadastrar Novo Material Coletado
+        </h3>
+      </div>
+      <button type="button" onclick="closeMaterialModal()" class="text-white/70 hover:text-white text-xl font-bold p-1 cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Form Container -->
+    <form id="materialForm" action="/admin/materiais-coletados/save" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+      <input type="hidden" name="id" id="mat-id" value="">
+
+      <!-- Código -->
+      <div class="space-y-1">
+        <label for="mat-codigo" class="block text-xs font-extrabold text-slate-700 uppercase font-mono">
+          Código: <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="codigo" id="mat-codigo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold font-mono text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[10px] text-gray-500">Informe ou mantenha o código numérico/sequencial do material.</p>
+      </div>
+
+      <!-- Descrição -->
+      <div class="space-y-1">
+        <label for="mat-descricao" class="block text-xs font-extrabold text-slate-700 uppercase font-mono">
+          Descrição: <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="descricao" id="mat-descricao" required placeholder="Ex: SANGUE EDTA, URINA 24H, FEZES..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[10px] text-gray-500">Informe o nome completo do material biológico.</p>
+      </div>
+
+      <!-- Abreviatura -->
+      <div class="space-y-1">
+        <label for="mat-abreviatura" class="block text-xs font-extrabold text-slate-700 uppercase font-mono">
+          Abreviatura: <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" name="abreviatura" id="mat-abreviatura" required placeholder="Ex: EDTA, SORO, U24H, FEZES..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-bold font-mono text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[10px] text-gray-500">Informe uma abreviação curta para ser impressa em mapas e etiquetas.</p>
+      </div>
+
+      <!-- Footer Actions inside Modal -->
+      <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeMaterialModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl uppercase font-mono transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl uppercase font-mono tracking-wider shadow-md shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer">
+          💾 Salvar Material
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  let materiaisList = <%- JSON.stringify(materiais || []) %>;
+
+  function openNewMaterialModal() {
+    document.getElementById('materialForm').reset();
+    document.getElementById('mat-id').value = '';
+    
+    // Gerar próximo código sequencial
+    let maxCod = 0;
+    materiaisList.forEach(m => {
+      const num = parseInt(m.codigo, 10);
+      if (!isNaN(num) && num > maxCod) maxCod = num;
+    });
+    document.getElementById('mat-codigo').value = String(maxCod + 1);
+
+    document.getElementById('materialModalTitle').innerText = 'Cadastrar Novo Material Coletado';
+    document.getElementById('materialModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('mat-descricao').focus(), 100);
+  }
+
+  function closeMaterialModal() {
+    document.getElementById('materialModal').classList.add('hidden');
+  }
+
+  function editMaterial(id) {
+    const item = materiaisList.find(m => String(m.id) === String(id));
+    if (!item) return;
+
+    document.getElementById('mat-id').value = item.id;
+    document.getElementById('mat-codigo').value = item.codigo || '';
+    document.getElementById('mat-descricao').value = item.descricao || '';
+    document.getElementById('mat-abreviatura').value = item.abreviatura || '';
+
+    document.getElementById('materialModalTitle').innerText = 'Editar Material #' + item.codigo;
+    document.getElementById('materialModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('mat-descricao').focus(), 100);
+  }
+
+  function deleteMaterial(id, desc) {
+    if (confirm('Tem certeza que deseja excluir o material coletado "' + desc + '"?')) {
+      fetch('/admin/materiais-coletados/delete/' + encodeURIComponent(id), {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      }).then(res => {
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          window.location.href = '/admin/materiais-coletados/delete/' + encodeURIComponent(id);
+        }
+      }).catch(() => {
+        window.location.href = '/admin/materiais-coletados/delete/' + encodeURIComponent(id);
+      });
+    }
+  }
+
+  function filterMateriaisTable() {
+    const query = document.getElementById('searchMateriaisInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.material-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const text = row.getAttribute('data-search') || '';
+      if (!query || text.includes(query)) {
+        row.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+
+    const badge = document.getElementById('materiaisCounterBadge');
+    if (badge) {
+      badge.innerText = visibleCount + ' exibidos';
+    }
+  }
+
+  // Atalho de teclado Ctrl + N para criar novo material
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      openNewMaterialModal();
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

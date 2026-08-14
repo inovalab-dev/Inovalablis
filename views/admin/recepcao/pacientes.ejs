@@ -1,0 +1,1794 @@
+<%- include('../../partials/header') %>
+
+<div class="p-4 sm:p-6 lg:p-8 max-w-[98vw] xl:max-w-[96vw] mx-auto w-full flex-1">
+  <!-- Cabeçalho Principal da Tela -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-brand-neutral/60 font-mono uppercase tracking-wider mb-1">
+        <span>Recepção LIS</span>
+        <span>•</span>
+        <span class="text-brand-gold font-bold">Prontuário Eletrônico do Paciente (PEP)</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-neutralDark flex items-center gap-2">
+        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Cadastro de Pacientes (Histórico & Prontuários)
+      </h1>
+      <p class="text-xs text-brand-neutral/70 mt-1">
+        Histórico paginado de pacientes cadastrados. Clique em "Novo Paciente" para abrir a ficha completa.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="openImportModal()" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 cursor-pointer" title="Importar Pacientes em Lote (CSV/JSON)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span>Importar Pacientes</span>
+      </button>
+
+      <button onclick="openPatientModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer" title="Novo Registro (CTRL + N)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Novo Paciente <span class="font-mono text-[10px] opacity-80">(Ctrl+N)</span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Busca, Filtros e Estatísticas Rápidas -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6 space-y-3">
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="patientSearchInput" onkeyup="filterAndPaginatePatients()" placeholder="Buscar paciente por nome, código, CPF, RG, prontuário, telefone ou cidade..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all">
+      </div>
+      <select id="itemsPerPageSelect" onchange="changeItemsPerPage()" class="w-full sm:w-36 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+        <option value="20">20 por pág.</option>
+        <option value="50" selected>50 por pág.</option>
+        <option value="100">100 por pág.</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabela com Histórico Paginado de Pacientes -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider font-mono">
+            <th class="py-3.5 px-4">Código / Sexo</th>
+            <th class="py-3.5 px-4">Paciente / Responsável</th>
+            <th class="py-3.5 px-4">CPF / RG / Nasc.</th>
+            <th class="py-3.5 px-4">Contato / Cidade</th>
+            <th class="py-3.5 px-4 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-xs text-gray-700 font-medium" id="patientsTableBody">
+          <!-- Renderizado via JavaScript paginado -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Controles de Paginação -->
+    <div class="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-mono">
+      <div id="paginationInfo">
+        Exibindo 0 - 0 de 0 pacientes
+      </div>
+      <div class="flex items-center gap-1.5" id="paginationControls">
+        <!-- Botoes de paginacao gerados dinamicamente -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE POPUP COMPLETO - CADASTRO DE PACIENTES (LIS)    -->
+<!-- ========================================================= -->
+<div id="patientModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 lg:p-6 hidden">
+  <div class="bg-white rounded-2xl max-w-[98vw] xl:max-w-[95vw] 2xl:max-w-[90vw] w-full h-[95vh] max-h-[95vh] shadow-2xl overflow-hidden flex flex-col border border-gray-200">
+    
+    <!-- Cabeçalho do Modal LIS -->
+    <div class="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 px-6 py-3.5 border-b border-gray-200 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-emerald-600 text-white rounded-xl shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-gray-900 tracking-tight" id="modalTitle">Cadastro de pacientes</h2>
+          <p class="text-xs text-gray-500 font-mono">Formulário Unificado LIS - InovaLab Prontuário Eletrônico do Paciente</p>
+        </div>
+      </div>
+      <button onclick="closePatientModal()" type="button" class="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer" title="Fechar (ESC)">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Conteúdo do Formulário -->
+    <form action="/admin/recepcao/pacientes/save" method="POST" id="patientMainForm" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+      <input type="hidden" name="id" id="form-patient-id">
+      <input type="hidden" name="photo" id="form-patient-photo">
+
+      <!-- PARTE SUPERIOR DA FICHA (Dados Principais) -->
+      <div class="bg-gray-50/80 p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+        
+        <!-- Header do Card Dados Principais -->
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-sm"></span>
+            <h3 class="text-xs font-black text-gray-800 uppercase tracking-wider">Dados Principais</h3>
+          </div>
+          <span class="text-[10px] text-gray-500 font-medium">Informações do Paciente</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          
+          <!-- Lado Esquerdo: Campos Principais -->
+          <div class="lg:col-span-10 space-y-2.5">
+            
+            <!-- Linha 1: Código & Nome completo & Nome Social -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+              <div class="sm:col-span-3 lg:col-span-2 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Código</label>
+                <input type="text" name="code" id="form-code" class="w-full px-2.5 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs font-mono font-black text-emerald-800 outline-none cursor-not-allowed select-none" readonly title="Código numérico incremental (Gerado automaticamente)" placeholder="Automático">
+              </div>
+              <div class="sm:col-span-5 lg:col-span-6 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Nome completo *</label>
+                <input type="text" name="name" id="form-name" required placeholder="Nome completo do paciente *" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900 outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="sm:col-span-4 lg:col-span-4 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Nome Social</label>
+                <input type="text" name="socialName" id="form-socialName" placeholder="Nome social (se houver)" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+            </div>
+
+            <!-- Linha 2: CPF, RG, WhatsApp, Responde WhatsApp -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+              <div class="sm:col-span-3 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">CPF</label>
+                <input type="text" name="cpf" id="form-cpf" placeholder="000.000.000-00" maxlength="14" oninput="this.value = applyCpfMask(this.value)" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="sm:col-span-3 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">RG</label>
+                <input type="text" name="rg" id="form-rg" placeholder="Número do RG" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="sm:col-span-3 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">WhatsApp / Celular</label>
+                <input type="text" name="whatsapp" id="form-whatsapp" placeholder="(43) 99999-9999" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="sm:col-span-3 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Responde WhatsApp?</label>
+                <select name="respondsWhatsapp" id="form-respondsWhatsapp" onchange="toggleRespondsWhatsappField()" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold outline-none focus:ring-1 focus:ring-emerald-500">
+                  <option value="Sim">Sim (Próprio nº)</option>
+                  <option value="Não">Não (Outro contato)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Campo Dinâmico: Contato de WhatsApp se NÃO responde pelo próprio número -->
+            <div id="container-whatsappAlt" class="hidden bg-amber-50/90 p-2.5 rounded-xl border border-amber-200">
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                <div class="sm:col-span-5 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <span class="text-xs font-bold text-amber-900">Contato de Recado/WhatsApp do Paciente:</span>
+                </div>
+                <div class="sm:col-span-7 flex items-center gap-2">
+                  <label class="font-bold text-amber-900 shrink-0 text-xs">WhatsApp Contato:</label>
+                  <input type="text" name="whatsappAlt" id="form-whatsappAlt" placeholder="(43) 98888-8888 (Nome do responsável/recado)" class="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-mono font-bold text-amber-900 outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 3: Sexo, Gênero, Nasc, Idade -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 items-center">
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Sexo *</label>
+                <select name="sex" id="form-sex" required class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                  <option value="">Selecione...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Gênero</label>
+                <select name="gender" id="form-gender" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                  <option value="Não informado">Não informado</option>
+                  <option value="Cisgênero">Cisgênero</option>
+                  <option value="Transgênero">Transgênero</option>
+                  <option value="Não-binário">Não-binário</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                </select>
+              </div>
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Data Nasc. *</label>
+                <input type="date" name="birthDate" id="form-birthDate" required onchange="calculateAgeFromBirth()" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Idade (automática)</label>
+                <div class="flex items-center gap-1">
+                  <input type="number" name="ageValue" id="form-ageValue" class="w-full px-2 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 outline-none cursor-not-allowed select-none" readonly title="Idade calculada automaticamente a partir da Data de Nascimento" placeholder="0">
+                  <select name="ageUnit" id="form-ageUnit" class="px-1.5 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-[11px] font-bold text-gray-700 outline-none cursor-not-allowed select-none pointer-events-none" title="Unidade da idade">
+                    <option value="Ano(s)">Anos</option>
+                    <option value="Mês(es)">Meses</option>
+                    <option value="Dia(s)">Dias</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 4: Nome da Mãe & Senha Web -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+              <div class="sm:col-span-8 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Nome completo da Mãe</label>
+                <input type="text" name="motherName" id="form-motherName" placeholder="Nome completo da mãe do paciente" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+              </div>
+              <div class="sm:col-span-4 flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Senha Web</label>
+                <div class="flex items-center gap-1.5">
+                  <input type="text" name="webPassword" id="form-webPassword" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-emerald-800 outline-none focus:ring-1 focus:ring-emerald-500">
+                  <button type="button" onclick="generateWebPassword()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded-lg text-[11px] font-bold shrink-0 transition-colors cursor-pointer" title="Gerar nova senha web">Gerar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 5: Observação Clínica & Observação Geral -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Observação Clínica</label>
+                <textarea name="clinicalNotes" id="form-clinicalNotes" rows="1" placeholder="Histórico ou condição clínica relevante (ex: hipertensão, veias difíceis...)" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+              </div>
+              <div class="flex flex-col">
+                <label class="font-bold text-gray-700 text-[11px] mb-0.5">Observação Geral / Atendimento</label>
+                <textarea name="obs" id="form-obs" rows="1" placeholder="Observações administrativas ou de atendimento do paciente" class="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lado Direito: Box de Foto do Paciente -->
+          <div class="lg:col-span-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-3 bg-white text-center cursor-pointer hover:border-emerald-500 transition-colors group min-h-[220px]" onclick="triggerPhotoUpload()">
+            <div id="photoPreviewContainer" class="flex flex-col items-center">
+              <svg class="w-12 h-12 text-gray-300 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+              <span class="text-[11px] text-gray-400 font-medium mt-1">Foto do Paciente</span>
+            </div>
+            <input type="file" id="patientPhotoInput" accept="image/*" class="hidden" onchange="handlePhotoSelect(event)">
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SISTEMA DE ABAS (TABS) - Endereço em Primeiro Lugar -->
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-1 overflow-x-auto text-xs font-bold" id="patientTabs">
+          <button type="button" onclick="switchTab('endereco')" id="tab-btn-endereco" class="px-4 py-2 border-b-2 border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg transition-all cursor-pointer">Endereço</button>
+          <button type="button" onclick="switchTab('adicionais')" id="tab-btn-adicionais" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer">Adicionais / Responsáveis</button>
+          <button type="button" onclick="switchTab('convenio')" id="tab-btn-convenio" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer">Convênio / Médico</button>
+          <button type="button" onclick="switchTab('medicamento')" id="tab-btn-medicamento" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer">Medicamento</button>
+          <button type="button" onclick="switchTab('coleta')" id="tab-btn-coleta" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer">Obs. Coleta</button>
+          <button type="button" onclick="switchTab('historicos')" id="tab-btn-historicos" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer">Históricos</button>
+        </nav>
+      </div>
+
+      <!-- ABA 1: ENDEREÇO (PRIMEIRA ABA) -->
+      <div id="tab-content-endereco" class="tab-pane space-y-3">
+        <div class="bg-gray-50/60 p-4 rounded-xl border border-gray-200 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-4 flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">CEP:</label>
+              <input type="text" name="cep" id="form-cep" placeholder="86390-000" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              <button type="button" onclick="searchCep()" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold">Buscar</button>
+            </div>
+            <div class="sm:col-span-8 flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Logradouro:</label>
+              <input type="text" name="street" id="form-street" placeholder="Rua / Avenida" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-4 flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Número:</label>
+              <input type="text" name="number" id="form-number" placeholder="123" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+            <div class="sm:col-span-8 flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Complemento:</label>
+              <input type="text" name="complement" id="form-complement" placeholder="Apto 101, Bloco B" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-5 flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Bairro:</label>
+              <input type="text" name="neighborhood" id="form-neighborhood" placeholder="Centro" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+            <div class="sm:col-span-5 flex items-center gap-1">
+              <label class="w-16 font-bold text-gray-700 text-right pr-1">Cidade:</label>
+              <input type="text" name="city" id="form-city" value="Cambará" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+            <div class="sm:col-span-2 flex items-center gap-1">
+              <label class="font-bold text-gray-700 pr-1">UF:</label>
+              <select name="state" id="form-state" class="w-full px-1 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+                <option value="PR">PR</option>
+                <option value="SP">SP</option>
+                <option value="SC">SC</option>
+                <option value="RS">RS</option>
+                <option value="MS">MS</option>
+                <option value="MG">MG</option>
+                <option value="RJ">RJ</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <label class="w-20 font-bold text-gray-700 text-right pr-1">Ponto Ref.:</label>
+            <input type="text" name="referencePoint" id="form-referencePoint" placeholder="Próximo ao Hospital / Praça Central" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 2: ADICIONAIS / RESPONSÁVEIS -->
+      <div id="tab-content-adicionais" class="tab-pane hidden space-y-3">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          
+          <!-- Lado Esquerdo: Formulários Complementares -->
+          <div class="lg:col-span-8 space-y-2">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-5 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Estado Civil:</label>
+                <select name="maritalStatus" id="form-maritalStatus" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                  <option value="Solteiro">Solteiro</option>
+                  <option value="Casado">Casado</option>
+                  <option value="Divorciado">Divorciado</option>
+                  <option value="Viúvo">Viúvo</option>
+                  <option value="União Estável">União Estável</option>
+                </select>
+              </div>
+              <div class="sm:col-span-3 flex items-center gap-1">
+                <label class="font-bold text-gray-700 pr-1">Nr. Filhos:</label>
+                <input type="number" name="childrenCount" id="form-childrenCount" min="0" value="0" class="w-14 px-1.5 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              </div>
+              <div class="sm:col-span-4 flex items-center gap-1">
+                <label class="font-bold text-gray-700 pr-1">Passaporte:</label>
+                <input type="text" name="passport" id="form-passport" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none font-mono">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Profissão:</label>
+              <input type="text" name="profession" id="form-profession" placeholder="Profissão ou ocupação do paciente" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-6 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Peso (kg):</label>
+                <input type="number" step="0.01" min="0" name="weight" id="form-weight" placeholder="0.00" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              </div>
+              <div class="sm:col-span-6 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Altura (m):</label>
+                <input type="number" step="0.01" min="0" name="height" id="form-height" placeholder="0.00" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-5 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Fumante:</label>
+                <select name="smoker" id="form-smoker" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+              <div class="sm:col-span-7 flex items-center gap-2">
+                <label class="font-bold text-gray-700 pr-1">Diabético:</label>
+                <select name="diabetic" id="form-diabetic" class="w-28 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+                <label class="flex items-center gap-1 text-[11px] text-gray-600 cursor-pointer">
+                  <input type="checkbox" name="noInfoDiabetic" id="form-noInfoDiabetic" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                  Não informado
+                </label>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">E-mail:</label>
+              <input type="email" name="email" id="form-email" placeholder="email@paciente.com.br" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+
+            <div class="flex items-center gap-1">
+              <label class="w-20 font-bold text-gray-700 text-right pr-1">Pai:</label>
+              <input type="text" name="fatherName" id="form-fatherName" placeholder="Nome completo do pai" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-7 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Responsável:</label>
+                <input type="text" name="responsibleName" id="form-responsibleName" placeholder="Nome do responsável legal" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+              </div>
+              <div class="sm:col-span-5 flex items-center gap-1">
+                <label class="font-bold text-gray-700 pr-1">CPF Resp.:</label>
+                <input type="text" name="responsibleCpf" id="form-responsibleCpf" placeholder="000.000.000-00" maxlength="14" oninput="this.value = applyCpfMask(this.value)" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-7 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Pagador:</label>
+                <input type="text" name="payerName" id="form-payerName" placeholder="Nome do pagador do exame" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+              </div>
+              <div class="sm:col-span-5 flex items-center gap-1">
+                <label class="font-bold text-gray-700 pr-1">CPF Pagador:</label>
+                <input type="text" name="payerCpf" id="form-payerCpf" placeholder="000.000.000-00" maxlength="14" oninput="this.value = applyCpfMask(this.value)" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+              <div class="sm:col-span-7 flex items-center gap-1">
+                <label class="w-20 font-bold text-gray-700 text-right pr-1">Empresa:</label>
+                <input type="text" name="company" id="form-company" placeholder="Empresa conveniente ou do paciente" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+              </div>
+              <div class="sm:col-span-5 flex items-center gap-1">
+                <label class="font-bold text-gray-700 pr-1">Indicação:</label>
+                <select name="indication" id="form-indication" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                  <option value="">Selecione...</option>
+                  <option value="Médico">Médico</option>
+                  <option value="Amigo / Familiar">Amigo / Familiar</option>
+                  <option value="Redes Sociais">Redes Sociais</option>
+                  <option value="Google / Site">Google / Site</option>
+                  <option value="Mala Direta">Mala Direta</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lado Direito: Checkboxes de Permissões e Alertas LIS -->
+          <div class="lg:col-span-4 bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-gray-600 border-b pb-1 mb-2">Restrições & Notificações</h4>
+            
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="isVip" id="form-isVip" class="rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+              <span class="font-bold text-amber-700">VIP</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="prohibitRegistration" id="form-prohibitRegistration" class="rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+              Proibir cadastro
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="prohibitWeb" id="form-prohibitWeb" class="rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+              Proibir visualização na Web
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="incapacitated" id="form-incapacitated" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+              Incapacitado
+            </label>
+            <hr class="border-gray-200">
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="noSms" id="form-noSms" class="rounded border-gray-300 text-gray-600">
+              Não enviar SMS
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="noEmail" id="form-noEmail" class="rounded border-gray-300 text-gray-600">
+              Não enviar e-mail
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="noPush" id="form-noPush" class="rounded border-gray-300 text-gray-600">
+              Não enviar Push
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="noWhatsapp" id="form-noWhatsapp" class="rounded border-gray-300 text-gray-600">
+              Não enviar WhatsApp
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="sendDirectMail" id="form-sendDirectMail" checked class="rounded border-gray-300 text-emerald-600">
+              Enviar mala-direta
+            </label>
+            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+              <input type="checkbox" name="printCard" id="form-printCard" class="rounded border-gray-300 text-blue-600">
+              Imprimir Carteira
+            </label>
+
+            <div class="pt-2">
+              <button type="button" class="w-full px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 rounded text-xs font-bold text-center">
+                Carteira ▼
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ABA 3: CONVÊNIO / MÉDICO -->
+      <div id="tab-content-convenio" class="tab-pane hidden space-y-3">
+        <div class="bg-gray-50/60 p-4 rounded-xl border border-gray-200 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-24 font-bold text-gray-700 text-right pr-1">Convênio:</label>
+              <select name="convenio" id="form-convenio" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                <option value="Particular">Particular</option>
+                <option value="Unimed">Unimed</option>
+                <option value="Cisnorpi">Cisnorpi</option>
+                <option value="Bradesco Saúde">Bradesco Saúde</option>
+                <option value="Cassi">Cassi</option>
+                <option value="SulAmérica">SulAmérica</option>
+              </select>
+            </div>
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-28 font-bold text-gray-700 text-right pr-1">Carteirinha:</label>
+              <input type="text" name="insuranceNumber" id="form-insuranceNumber" placeholder="Nº de identificação no convênio" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-24 font-bold text-gray-700 text-right pr-1">Validade:</label>
+              <input type="date" name="insuranceValidity" id="form-insuranceValidity" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-28 font-bold text-gray-700 text-right pr-1">Cartão SUS:</label>
+              <input type="text" name="cns" id="form-cns" placeholder="Cartão Nacional de Saúde (CNS)" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-24 font-bold text-gray-700 text-right pr-1">Plano/Cat.:</label>
+              <input type="text" name="plan" id="form-plan" placeholder="Ex: Básico, Especial, Executivo" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+            <div class="sm:col-span-6 flex items-center gap-1">
+              <label class="w-28 font-bold text-gray-700 text-right pr-1">Médico Habitual:</label>
+              <input type="text" name="defaultDoctor" id="form-defaultDoctor" placeholder="Nome do médico solicitante usual" class="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 4: MEDICAMENTO -->
+      <div id="tab-content-medicamento" class="tab-pane hidden space-y-3">
+        <div class="bg-gray-50/60 p-4 rounded-xl border border-gray-200 space-y-3">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Medicamentos em uso contínuo:</label>
+            <textarea name="continuousMedications" id="form-continuousMedications" rows="2" placeholder="Informe se toma medicamentos diariamente (ex: Losartana, Metformina, Papanicolau...)" class="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <label class="font-bold text-gray-700">Uso de Anticoagulante?</label>
+              <select name="useAnticoagulant" id="form-useAnticoagulant" class="px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                <option value="Não">Não</option>
+                <option value="Sim">Sim (Marevan, Clexane, Xarelto, AAS)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="font-bold text-gray-700">Uso de Antibiótico?</label>
+              <select name="useAntibiotic" id="form-useAntibiotic" class="px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+                <option value="Não">Não</option>
+                <option value="Sim">Sim</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Detalhes do Antibiótico (Nome & Dias de Uso):</label>
+            <input type="text" name="antibioticDetails" id="form-antibioticDetails" placeholder="Ex: Amoxicilina 500mg - 3º dia de uso" class="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none">
+          </div>
+
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Outros Fármacos ou Corticoides:</label>
+            <textarea name="otherDrugs" id="form-otherDrugs" rows="2" placeholder="Injeções recentes, vitaminas em alta dose, etc." class="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 5: OBS. COLETA -->
+      <div id="tab-content-coleta" class="tab-pane hidden space-y-3">
+        <div class="bg-gray-50/60 p-4 rounded-xl border border-gray-200 space-y-3">
+          <div>
+            <label class="block font-bold text-rose-700 mb-1">Alergias Relatadas pelo Paciente:</label>
+            <input type="text" name="allergies" id="form-allergies" placeholder="Ex: Látex, Dipirona, Iodo, Esparadrapo..." class="w-full px-2 py-1 bg-rose-50 border border-rose-200 text-rose-900 rounded text-xs font-bold outline-none">
+          </div>
+
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Observações e Restrições Especiais para a Equipe de Coleta:</label>
+            <textarea name="collectionNotes" id="form-collectionNotes" rows="3" placeholder="Ex: Paciente possui veias finas/frágil, desmaia com facilidade ao ver sangue, coleta pediátrica, restrição de braço devido a cirurgia..." class="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+          </div>
+
+          <div class="space-y-1.5 pt-1">
+            <h5 class="font-bold text-gray-700">Alertas Automáticos de Enfermagem:</h5>
+            <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+              <input type="checkbox" name="butterflyNeedle" id="form-butterflyNeedle" class="rounded border-gray-300 text-emerald-600">
+              Coleta preferencial com scalp/borboleta
+            </label>
+            <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+              <input type="checkbox" name="requiresEscort" id="form-requiresEscort" class="rounded border-gray-300 text-emerald-600">
+              Requer acompanhante durante a coleta
+            </label>
+            <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+              <input type="checkbox" name="bedriddenPatient" id="form-bedriddenPatient" class="rounded border-gray-300 text-emerald-600">
+              Paciente acamado / coleta em maca
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 6: HISTÓRICOS DE ATENDIMENTO -->
+      <div id="tab-content-historicos" class="tab-pane hidden space-y-3">
+        <div class="bg-gray-50/60 p-3 rounded-xl border border-gray-200">
+          <h4 class="font-bold text-gray-800 mb-2 flex items-center justify-between">
+            <span>Histórico Clínico do Paciente no Laboratório</span>
+            <span class="text-[10px] font-mono text-gray-500" id="historyPatientCode">Código: PAC-000000</span>
+          </h4>
+
+          <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-gray-100 border-b border-gray-200 text-gray-600 uppercase text-[10px]">
+                <tr>
+                  <th class="p-2">Data / Hora</th>
+                  <th class="p-2">OS / Requisição</th>
+                  <th class="p-2">Convênio</th>
+                  <th class="p-2">Médico</th>
+                  <th class="p-2">Status</th>
+                  <th class="p-2 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="patientHistoryTableBody" class="divide-y divide-gray-100">
+                <tr>
+                  <td colspan="6" class="p-4 text-center text-gray-400">
+                    Selecione ou salve um paciente para visualizar o histórico de requisições.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dica de Teclas no estilo LIS do rodapé -->
+      <div class="flex items-center justify-between text-[11px] text-gray-400 font-mono px-1">
+        <span>* Campos obrigatórios</span>
+        <span class="bg-gray-100 px-2 py-0.5 rounded border border-gray-200 text-gray-600">Ctrl + ENTER - próximo campo</span>
+      </div>
+
+      <!-- BARRA INFERIOR DE BOTÕES DO CADASTRO: APENAS CANCELAR E SALVAR -->
+      <div class="pt-3 border-t border-gray-200 flex items-center justify-end gap-3 bg-gray-50/90 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6 p-4 rounded-b-2xl shrink-0">
+        <button type="button" onclick="closePatientModal()" class="px-6 py-2 bg-white hover:bg-gray-100 text-gray-700 font-bold text-xs border border-gray-300 rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5" title="Cancelar (CTRL + C)">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          <span>Cancelar <span class="font-mono text-[10px] opacity-80">(Ctrl+C)</span></span>
+        </button>
+        <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5" title="Salvar (CTRL + S)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>Salvar <span class="font-mono text-[10px] opacity-80">(Ctrl+S)</span></span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Form Escondido para Exclusão de Paciente -->
+<form id="deletePatientForm" action="/admin/recepcao/pacientes/delete" method="POST" class="hidden">
+  <input type="hidden" name="id" id="delete-patient-id">
+</form>
+
+<!-- ========================================================= -->
+<!-- MODAL DE IMPORTAÇÃO DE PACIENTES EM LOTE (CSV / JSON)     -->
+<!-- ========================================================= -->
+<div id="importPatientsModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 hidden">
+  <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col border border-gray-200">
+    
+    <!-- Cabeçalho do Modal -->
+    <div class="bg-gradient-to-r from-blue-50 via-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-gray-900 tracking-tight">Importação de Pacientes em Lote</h2>
+          <p class="text-xs text-gray-500 font-mono">Carregue arquivos em formato CSV ou JSON para cadastrar ou atualizar registros</p>
+        </div>
+      </div>
+      <button onclick="closeImportModal()" type="button" class="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+      <!-- Opções de Modelos e Área de Upload -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+        <div>
+          <h4 class="font-bold text-blue-900 text-xs">Modelos de Exemplo para Download</h4>
+          <p class="text-[11px] text-blue-700/80 mt-0.5">Baixe a planilha modelo para preencher seus dados de forma compatível:</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="downloadCSVTemplate()" type="button" class="px-3 py-2 bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Modelo CSV</span>
+          </button>
+          <button onclick="downloadJSONTemplate()" type="button" class="px-3 py-2 bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            <span>Modelo JSON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dropzone para Seleção de Arquivo -->
+      <div id="importDropzone" onclick="document.getElementById('importFileInput').click()" class="border-2 border-dashed border-gray-300 hover:border-blue-500 bg-gray-50/50 hover:bg-blue-50/30 transition-all rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center justify-center gap-2">
+        <input type="file" id="importFileInput" accept=".csv,.json,.txt" class="hidden" onchange="handleImportFileSelect(event)">
+        <div class="p-3 bg-blue-100 text-blue-600 rounded-full">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        </div>
+        <div>
+          <p class="font-bold text-gray-800 text-sm">Clique ou arraste seu arquivo aqui</p>
+          <p class="text-gray-500 text-xs mt-1">Formatos aceitos: <span class="font-mono font-bold text-gray-700">.CSV</span> (separado por vírgula ou ponto e vírgula) ou <span class="font-mono font-bold text-gray-700">.JSON</span></p>
+        </div>
+      </div>
+
+      <!-- Opção Sobrescrever / Atualizar -->
+      <div class="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <input type="checkbox" id="overwriteImportCheck" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+        <label for="overwriteImportCheck" class="cursor-pointer font-medium">
+          Atualizar cadastro se o paciente (CPF, Código ou Nome + Data Nasc.) já existir no sistema
+        </label>
+      </div>
+
+      <!-- Tabela Prévia dos Dados Carregados -->
+      <div id="importPreviewContainer" class="hidden space-y-2">
+        <div class="flex items-center justify-between font-mono text-xs">
+          <span class="font-bold text-gray-700" id="importPreviewCount">0 pacientes identificados</span>
+          <button type="button" onclick="resetImportFile()" class="text-rose-600 hover:underline cursor-pointer">Trocar arquivo</button>
+        </div>
+
+        <div class="border border-gray-200 rounded-xl overflow-x-auto max-h-60">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-100 font-mono text-[11px] text-gray-600 uppercase border-b border-gray-200 sticky top-0">
+              <tr>
+                <th class="py-2 px-3">#</th>
+                <th class="py-2 px-3">Nome / Paciente</th>
+                <th class="py-2 px-3">Sexo</th>
+                <th class="py-2 px-3">Nascimento</th>
+                <th class="py-2 px-3">CPF</th>
+                <th class="py-2 px-3">Contato</th>
+                <th class="py-2 px-3">Cidade/UF</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewTableBody" class="divide-y divide-gray-100 font-medium text-gray-700">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé com Ações -->
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between shrink-0">
+      <button onclick="closeImportModal()" type="button" class="px-4 py-2 text-gray-600 hover:bg-gray-200 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer">
+        Cancelar
+      </button>
+      <button id="confirmImportBtn" onclick="submitImportedPatients()" disabled type="button" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span id="confirmImportBtnText">Confirmar Importação</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Dados de pacientes carregados do servidor
+  const rawPatients = <%- JSON.stringify(patients || []) %>;
+  
+  // Ordenar para que os últimos cadastros fiquem em primeiro
+  let allPatients = [...rawPatients].reverse().sort((a, b) => {
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    const numA = parseInt(String(a.code || a.id || '0').replace(/\D/g, ''), 10) || 0;
+    const numB = parseInt(String(b.code || b.id || '0').replace(/\D/g, ''), 10) || 0;
+    if (numA !== numB) return numB - numA;
+    return 0;
+  });
+
+  let filteredPatients = [...allPatients];
+  let currentPage = 1;
+  let itemsPerPage = 50;
+
+  function sortPatientsList() {
+    allPatients.sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      if (timeA !== timeB) return timeB - timeA;
+      const numA = parseInt(String(a.code || a.id || '0').replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(String(b.code || b.id || '0').replace(/\D/g, ''), 10) || 0;
+      return numB - numA;
+    });
+  }
+
+  function showToast(msg, type = 'success') {
+    let toast = document.getElementById('lisGlobalToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'lisGlobalToast';
+      document.body.appendChild(toast);
+    }
+    const isSuccess = type === 'success';
+    toast.className = `fixed bottom-5 right-5 z-[9999] px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 font-bold text-xs text-white transition-all duration-300 opacity-0 translate-y-3 pointer-events-none ${isSuccess ? 'bg-emerald-600 border border-emerald-500' : 'bg-rose-600 border border-rose-500'}`;
+    toast.innerHTML = isSuccess 
+      ? `<svg class="w-5 h-5 text-emerald-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>${msg}</span>`
+      : `<svg class="w-5 h-5 text-rose-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg><span>${msg}</span>`;
+
+    requestAnimationFrame(() => {
+      toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+    });
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+    }, 3500);
+  }
+
+  // Inicialização ao carregar a página
+  document.addEventListener('DOMContentLoaded', () => {
+    filterAndPaginatePatients();
+
+    const patientForm = document.getElementById('patientMainForm');
+    if (patientForm) {
+      patientForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const origBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Salvando...</span>
+          `;
+        }
+
+        try {
+          const formData = new FormData(this);
+          const params = new URLSearchParams();
+          for (const [key, value] of formData.entries()) {
+            params.append(key, value);
+          }
+
+          const response = await fetch('/admin/recepcao/pacientes/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            },
+            body: params.toString()
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            if (data.patients && Array.isArray(data.patients)) {
+              allPatients = data.patients;
+            } else if (data.patient) {
+              const idx = allPatients.findIndex(p => 
+                (data.patient.id && String(p.id) === String(data.patient.id)) || 
+                (data.patient.code && String(p.code) === String(data.patient.code))
+              );
+              if (idx !== -1) {
+                allPatients[idx] = data.patient;
+              } else {
+                allPatients.unshift(data.patient);
+              }
+            }
+
+            sortPatientsList();
+            currentPage = 1;
+            filterAndPaginatePatients();
+            closePatientModal();
+            showToast(data.message || 'Paciente salvo com sucesso!', 'success');
+          } else {
+            alert(data.error || 'Erro ao salvar cadastro do paciente.');
+          }
+        } catch (err) {
+          console.error('Erro ao salvar paciente via AJAX:', err);
+          alert('Erro de conexão ao salvar paciente.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnText;
+          }
+        }
+      });
+    }
+  });
+
+  // Função para filtrar e paginar o histórico na tela principal
+  function filterAndPaginatePatients() {
+    const query = (document.getElementById('patientSearchInput').value || '').toLowerCase().trim();
+    const queryDigits = query.replace(/\D/g, '');
+
+    filteredPatients = allPatients.filter(p => {
+      const name = (p.name || '').toLowerCase();
+      const social = (p.socialName || '').toLowerCase();
+      const code = (p.code || p.id || '').toLowerCase();
+      const pront = (p.prontuario || '').toLowerCase();
+      const cpf = (p.cpf || '').toLowerCase();
+      const cpfDigits = cpf.replace(/\D/g, '');
+      const rg = (p.rg || '').toLowerCase();
+      const phone = (p.phone || '').toLowerCase();
+      const city = (p.city || '').toLowerCase();
+
+      return !query || 
+        name.includes(query) || 
+        social.includes(query) || 
+        code.includes(query) || 
+        pront.includes(query) || 
+        cpf.includes(query) || 
+        (queryDigits.length >= 3 && cpfDigits.includes(queryDigits)) ||
+        rg.includes(query) || 
+        phone.includes(query) || 
+        city.includes(query);
+    });
+
+    currentPage = 1;
+    renderPatientsTablePage();
+  }
+
+  function changeItemsPerPage() {
+    itemsPerPage = parseInt(document.getElementById('itemsPerPageSelect').value, 10) || 50;
+    currentPage = 1;
+    renderPatientsTablePage();
+  }
+
+  function renderPatientsTablePage() {
+    const totalItems = filteredPatients.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const pagePatients = filteredPatients.slice(startIndex, endIndex);
+
+    const tbody = document.getElementById('patientsTableBody');
+    tbody.innerHTML = '';
+
+    if (pagePatients.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-12 text-center text-gray-400 font-mono text-xs">
+            Nenhum paciente encontrado com os filtros selecionados.
+          </td>
+        </tr>
+      `;
+    } else {
+      pagePatients.forEach(p => {
+        const tr = document.createElement('tr');
+        const isInactive = p.status === 'Inativo';
+        tr.className = `hover:bg-emerald-50/40 transition-colors border-b border-gray-100 ${isInactive ? 'bg-gray-50/70 text-gray-400' : ''}`;
+
+        const isVipBadge = p.isVip ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 ml-1">VIP</span>' : '';
+        const statusBadge = isInactive ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200 ml-1">INATIVO</span>' : '';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono">
+            <div class="font-bold ${isInactive ? 'text-gray-500' : 'text-emerald-800'} flex items-center">
+              ${p.code || p.id} ${statusBadge}
+            </div>
+            <div class="text-[10px] text-gray-500">${p.sex || p.biologicalSex || p.sexo || p.gender || 'Não informado'}</div>
+          </td>
+          <td class="py-3 px-4">
+            <div class="font-bold ${isInactive ? 'text-gray-600 line-through' : 'text-gray-900'} flex items-center">
+              ${p.name} ${isVipBadge}
+            </div>
+            ${p.socialName ? `<div class="text-[10px] text-gray-500">Social: ${p.socialName}</div>` : ''}
+            <div class="text-[10px] text-gray-500">Resp: ${p.responsibleName || p.motherName || 'Não informado'}</div>
+          </td>
+          <td class="py-3 px-4 font-mono">
+            <div>CPF: ${p.cpf || 'Sem CPF'}</div>
+            <div class="text-[10px] text-gray-500">
+              ${p.rg ? 'RG: ' + p.rg + ' | ' : ''}Nasc: ${p.birthDate ? new Date(p.birthDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data'} ${p.age ? '(' + p.age + 'a)' : ''}
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <div class="font-mono text-gray-800">${p.phone || p.whatsapp || 'Sem contato'}</div>
+            <div class="text-[10px] text-gray-500">${p.city || 'Cambará'} - ${p.state || 'PR'}</div>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="editPatient('${p.id}')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 font-bold text-[11px] rounded-lg transition-colors cursor-pointer" title="Editar Ficha">
+                Editar
+              </button>
+              <button onclick="togglePatientStatus('${p.id}')" class="px-2.5 py-1 ${isInactive ? 'bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700' : 'bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700'} font-bold text-[11px] rounded-lg transition-colors cursor-pointer" title="${isInactive ? 'Ativar Cadastro' : 'Inativar Cadastro'}">
+                ${isInactive ? 'Ativar' : 'Inativar'}
+              </button>
+              <a href="/admin/requisicoes?patientName=${encodeURIComponent(p.name)}&patientCpf=${encodeURIComponent(p.cpf || '')}" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold text-[11px] rounded-lg transition-colors inline-block cursor-pointer" title="Emitir Ordem de Serviço">
+                + OS
+              </a>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Renderizar informações de paginação
+    const displayStart = totalItems === 0 ? 0 : startIndex + 1;
+    document.getElementById('paginationInfo').innerText = `Exibindo ${displayStart} - ${endIndex} de ${totalItems} pacientes registrados`;
+
+    // Renderizar botões de paginação
+    const controls = document.getElementById('paginationControls');
+    controls.innerHTML = '';
+
+    // Botao Anterior
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `px-2.5 py-1 rounded border text-xs font-bold transition-all ${currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-300 cursor-pointer'}`;
+    prevBtn.innerText = '‹ Anterior';
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPatientsTablePage(); } };
+    controls.appendChild(prevBtn);
+
+    // Numeros das Paginas
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages > 7 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== totalPages) {
+        if (i === 2 || i === totalPages - 1) {
+          const dots = document.createElement('span');
+          dots.className = 'px-1 text-gray-400';
+          dots.innerText = '...';
+          controls.appendChild(dots);
+        }
+        continue;
+      }
+
+      const pageBtn = document.createElement('button');
+      pageBtn.className = `px-2.5 py-1 rounded border text-xs font-bold font-mono transition-all ${i === currentPage ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-300 cursor-pointer'}`;
+      pageBtn.innerText = i;
+      pageBtn.onclick = () => { currentPage = i; renderPatientsTablePage(); };
+      controls.appendChild(pageBtn);
+    }
+
+    // Botao Proximo
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `px-2.5 py-1 rounded border text-xs font-bold transition-all ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-300 cursor-pointer'}`;
+    nextBtn.innerText = 'Próximo ›';
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPatientsTablePage(); } };
+    controls.appendChild(nextBtn);
+  }
+
+  // FUNÇÕES DO MODAL LIS
+  function openPatientModal() {
+    resetFormToNew();
+    document.getElementById('patientModal').classList.remove('hidden');
+    switchTab('endereco');
+  }
+
+  function closePatientModal() {
+    document.getElementById('patientModal').classList.add('hidden');
+  }
+
+  function applyCpfMask(v) {
+    if (!v) return '';
+    v = v.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+    return v
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+
+  function toggleRespondsWhatsappField() {
+    const responds = document.getElementById('form-respondsWhatsapp').value;
+    const container = document.getElementById('container-whatsappAlt');
+    if (responds === 'Não') {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+
+  function getNextIncrementalCode() {
+    let maxCode = 0;
+    allPatients.forEach(p => {
+      if (p.code) {
+        const num = parseInt(p.code, 10);
+        if (!isNaN(num) && num > maxCode) maxCode = num;
+      }
+      if (p.id) {
+        const idNum = parseInt(String(p.id).replace('PAC-', ''), 10);
+        if (!isNaN(idNum) && idNum > maxCode && idNum < 10000) maxCode = idNum;
+      }
+    });
+    return String(maxCode + 1);
+  }
+
+  function resetFormToNew() {
+    document.getElementById('modalTitle').innerText = 'Cadastro de pacientes';
+    document.getElementById('form-patient-id').value = '';
+    document.getElementById('form-code').value = getNextIncrementalCode();
+    document.getElementById('form-name').value = '';
+    document.getElementById('form-socialName').value = '';
+    document.getElementById('form-cpf').value = '';
+    document.getElementById('form-rg').value = '';
+    document.getElementById('form-whatsapp').value = '';
+    document.getElementById('form-respondsWhatsapp').value = 'Sim';
+    document.getElementById('form-whatsappAlt').value = '';
+    toggleRespondsWhatsappField();
+
+    document.getElementById('form-sex').value = '';
+    document.getElementById('form-gender').value = 'Não informado';
+    document.getElementById('form-birthDate').value = '';
+    document.getElementById('form-ageValue').value = '';
+    document.getElementById('form-ageUnit').value = 'Ano(s)';
+    document.getElementById('form-weight').value = '';
+    document.getElementById('form-height').value = '';
+    document.getElementById('form-motherName').value = '';
+    document.getElementById('form-obs').value = '';
+    document.getElementById('form-clinicalNotes').value = '';
+    
+    // Tab Adicionais
+    document.getElementById('form-maritalStatus').value = 'Solteiro';
+    document.getElementById('form-childrenCount').value = '0';
+    document.getElementById('form-passport').value = '';
+    document.getElementById('form-profession').value = '';
+    document.getElementById('form-smoker').value = 'Não';
+    document.getElementById('form-diabetic').value = 'Não';
+    document.getElementById('form-noInfoDiabetic').checked = false;
+    document.getElementById('form-email').value = '';
+    document.getElementById('form-fatherName').value = '';
+    document.getElementById('form-responsibleName').value = '';
+    document.getElementById('form-responsibleCpf').value = '';
+    document.getElementById('form-payerName').value = '';
+    document.getElementById('form-payerCpf').value = '';
+    document.getElementById('form-company').value = '';
+    document.getElementById('form-indication').value = '';
+
+    // Checkboxes
+    document.getElementById('form-isVip').checked = false;
+    document.getElementById('form-prohibitRegistration').checked = false;
+    document.getElementById('form-prohibitWeb').checked = false;
+    document.getElementById('form-incapacitated').checked = false;
+    document.getElementById('form-noSms').checked = false;
+    document.getElementById('form-noEmail').checked = false;
+    document.getElementById('form-noPush').checked = false;
+    document.getElementById('form-noWhatsapp').checked = false;
+    document.getElementById('form-sendDirectMail').checked = true;
+    document.getElementById('form-printCard').checked = false;
+
+    // Tab Endereço
+    document.getElementById('form-cep').value = '';
+    document.getElementById('form-street').value = '';
+    document.getElementById('form-number').value = '';
+    document.getElementById('form-complement').value = '';
+    document.getElementById('form-neighborhood').value = '';
+    document.getElementById('form-city').value = 'Cambará';
+    document.getElementById('form-state').value = 'PR';
+    document.getElementById('form-referencePoint').value = '';
+
+    // Tab Convênio
+    document.getElementById('form-convenio').value = 'Particular';
+    document.getElementById('form-insuranceNumber').value = '';
+    document.getElementById('form-insuranceValidity').value = '';
+    document.getElementById('form-cns').value = '';
+    document.getElementById('form-plan').value = '';
+    document.getElementById('form-defaultDoctor').value = '';
+
+    // Tab Medicamento
+    document.getElementById('form-continuousMedications').value = '';
+    document.getElementById('form-useAnticoagulant').value = 'Não';
+    document.getElementById('form-useAntibiotic').value = 'Não';
+    document.getElementById('form-antibioticDetails').value = '';
+    document.getElementById('form-otherDrugs').value = '';
+
+    // Tab Coleta
+    document.getElementById('form-allergies').value = '';
+    document.getElementById('form-collectionNotes').value = '';
+    document.getElementById('form-butterflyNeedle').checked = false;
+    document.getElementById('form-requiresEscort').checked = false;
+    document.getElementById('form-bedriddenPatient').checked = false;
+
+    // Foto e Histórico
+    document.getElementById('photoPreviewContainer').innerHTML = `
+      <svg class="w-12 h-12 text-gray-300 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+      <span class="text-[11px] text-gray-400 font-medium mt-2">Clique para adicionar imagem</span>
+    `;
+    document.getElementById('historyPatientCode').innerText = 'Código: Auto-gerar';
+    document.getElementById('patientHistoryTableBody').innerHTML = `
+      <tr>
+        <td colspan="6" class="p-4 text-center text-gray-400">
+          Salve o paciente para gerar o código e iniciar o histórico de requisições.
+        </td>
+      </tr>
+    `;
+
+    generateWebPassword();
+  }
+
+  function editPatient(id) {
+    const p = allPatients.find(item => item.id === id || item.code === id);
+    if (!p) return;
+
+    openPatientModal();
+    document.getElementById('modalTitle').innerText = 'Editar Cadastro de Paciente #' + (p.code || p.id);
+    document.getElementById('form-patient-id').value = p.id;
+    document.getElementById('form-code').value = p.code || p.id;
+    document.getElementById('form-name').value = p.name || '';
+    document.getElementById('form-socialName').value = p.socialName || '';
+    document.getElementById('form-cpf').value = applyCpfMask(p.cpf || '');
+    document.getElementById('form-rg').value = p.rg || '';
+    document.getElementById('form-whatsapp').value = p.whatsapp || p.phone || '';
+    document.getElementById('form-respondsWhatsapp').value = p.respondsWhatsapp || 'Sim';
+    document.getElementById('form-whatsappAlt').value = p.whatsappAlt || '';
+    toggleRespondsWhatsappField();
+
+    let patientSex = p.sex || p.biologicalSex || p.sexo || p.gender || '';
+    if (patientSex === 'M' || patientSex === 'm') patientSex = 'Masculino';
+    if (patientSex === 'F' || patientSex === 'f') patientSex = 'Feminino';
+
+    document.getElementById('form-sex').value = patientSex;
+    document.getElementById('form-gender').value = p.gender || patientSex || 'Não informado';
+    document.getElementById('form-birthDate').value = p.birthDate || '';
+    document.getElementById('form-ageValue').value = p.ageValue || p.age || '';
+    document.getElementById('form-ageUnit').value = p.ageUnit || 'Ano(s)';
+    document.getElementById('form-weight').value = p.weight || '';
+    document.getElementById('form-height').value = p.height || '';
+    document.getElementById('form-motherName').value = p.motherName || '';
+    document.getElementById('form-obs').value = p.obs || '';
+    document.getElementById('form-clinicalNotes').value = p.clinicalNotes || '';
+
+    // Tab Adicionais
+    document.getElementById('form-maritalStatus').value = p.maritalStatus || 'Solteiro';
+    document.getElementById('form-childrenCount').value = p.childrenCount || '0';
+    document.getElementById('form-passport').value = p.passport || '';
+    document.getElementById('form-profession').value = p.profession || '';
+    document.getElementById('form-smoker').value = p.smoker || 'Não';
+    document.getElementById('form-diabetic').value = p.diabetic || 'Não';
+    document.getElementById('form-noInfoDiabetic').checked = !!p.noInfoDiabetic;
+    document.getElementById('form-email').value = p.email || '';
+    document.getElementById('form-fatherName').value = p.fatherName || '';
+    document.getElementById('form-responsibleName').value = p.responsibleName || '';
+    document.getElementById('form-responsibleCpf').value = applyCpfMask(p.responsibleCpf || '');
+    document.getElementById('form-payerName').value = p.payerName || '';
+    document.getElementById('form-payerCpf').value = applyCpfMask(p.payerCpf || '');
+    document.getElementById('form-company').value = p.company || '';
+    document.getElementById('form-indication').value = p.indication || '';
+
+    // Checkboxes
+    document.getElementById('form-isVip').checked = !!p.isVip;
+    document.getElementById('form-prohibitRegistration').checked = !!p.prohibitRegistration;
+    document.getElementById('form-prohibitWeb').checked = !!p.prohibitWeb;
+    document.getElementById('form-incapacitated').checked = !!p.incapacitated;
+    document.getElementById('form-noSms').checked = !!p.noSms;
+    document.getElementById('form-noEmail').checked = !!p.noEmail;
+    document.getElementById('form-noPush').checked = !!p.noPush;
+    document.getElementById('form-noWhatsapp').checked = !!p.noWhatsapp;
+    document.getElementById('form-sendDirectMail').checked = p.sendDirectMail !== false;
+    document.getElementById('form-printCard').checked = !!p.printCard;
+
+    // Tab Endereço
+    document.getElementById('form-cep').value = p.cep || '';
+    document.getElementById('form-street').value = p.street || '';
+    document.getElementById('form-number').value = p.number || '';
+    document.getElementById('form-complement').value = p.complement || '';
+    document.getElementById('form-neighborhood').value = p.neighborhood || '';
+    document.getElementById('form-city').value = p.city || 'Cambará';
+    document.getElementById('form-state').value = p.state || 'PR';
+    document.getElementById('form-referencePoint').value = p.referencePoint || '';
+
+    // Tab Convênio
+    document.getElementById('form-convenio').value = p.convenio || 'Particular';
+    document.getElementById('form-insuranceNumber').value = p.insuranceNumber || '';
+    document.getElementById('form-insuranceValidity').value = p.insuranceValidity || '';
+    document.getElementById('form-cns').value = p.cns || '';
+    document.getElementById('form-plan').value = p.plan || '';
+    document.getElementById('form-defaultDoctor').value = p.defaultDoctor || '';
+
+    // Tab Medicamento
+    document.getElementById('form-continuousMedications').value = p.continuousMedications || '';
+    document.getElementById('form-useAnticoagulant').value = p.useAnticoagulant || 'Não';
+    document.getElementById('form-useAntibiotic').value = p.useAntibiotic || 'Não';
+    document.getElementById('form-antibioticDetails').value = p.antibioticDetails || '';
+    document.getElementById('form-otherDrugs').value = p.otherDrugs || '';
+
+    // Tab Coleta
+    document.getElementById('form-allergies').value = p.allergies || '';
+    document.getElementById('form-collectionNotes').value = p.collectionNotes || '';
+    document.getElementById('form-butterflyNeedle').checked = !!p.butterflyNeedle;
+    document.getElementById('form-requiresEscort').checked = !!p.requiresEscort;
+    document.getElementById('form-bedriddenPatient').checked = !!p.bedriddenPatient;
+
+    if (p.webPassword) {
+      document.getElementById('form-webPassword').value = p.webPassword;
+    } else {
+      generateWebPassword();
+    }
+
+    if (p.photo) {
+      document.getElementById('form-patient-photo').value = p.photo;
+      document.getElementById('photoPreviewContainer').innerHTML = `
+        <img src="${p.photo}" class="w-24 h-24 rounded-lg object-cover border border-emerald-500 shadow-sm mb-1">
+        <span class="text-[10px] text-emerald-600 font-bold">Alterar foto</span>
+      `;
+    }
+
+    // Carregar histórico fictício do LIS para o paciente
+    document.getElementById('historyPatientCode').innerText = 'Código: ' + (p.code || p.id);
+    document.getElementById('patientHistoryTableBody').innerHTML = `
+      <tr>
+        <td class="p-2 text-gray-500">${new Date().toLocaleDateString('pt-BR')} 08:30</td>
+        <td class="p-2 font-bold text-emerald-800">REQ-${p.id.replace('PAC-', '') || '9821'}</td>
+        <td class="p-2">${p.convenio || 'Particular'}</td>
+        <td class="p-2">${p.defaultDoctor || 'Dr. Carlos Eduardo'}</td>
+        <td class="p-2"><span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">Laudo Pronto</span></td>
+        <td class="p-2 text-right">
+          <a href="/admin/requisicoes" class="text-emerald-700 font-bold hover:underline">Ver OS</a>
+        </td>
+      </tr>
+    `;
+  }
+
+  function enableEditMode() {
+    const nameInput = document.getElementById('form-name');
+    nameInput.focus();
+  }
+
+  async function deleteCurrentPatient() {
+    const id = document.getElementById('form-patient-id').value;
+    if (!id) {
+      alert('Nenhum paciente selecionado para exclusão.');
+      return;
+    }
+
+    const name = document.getElementById('form-name').value;
+    if (!confirm(`Tem certeza que deseja excluir permanentemente o cadastro de ${name || id}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/recepcao/pacientes/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: new URLSearchParams({ id }).toString()
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        if (data.patients && Array.isArray(data.patients)) {
+          allPatients = data.patients;
+        } else {
+          allPatients = allPatients.filter(p => String(p.id) !== String(id) && String(p.code) !== String(id));
+        }
+
+        sortPatientsList();
+        filterAndPaginatePatients();
+        closePatientModal();
+        showToast(data.message || 'Paciente excluído com sucesso!', 'success');
+      } else {
+        alert(data.error || 'Erro ao excluir paciente.');
+      }
+    } catch (err) {
+      console.error('Erro ao excluir paciente:', err);
+      alert('Erro de conexão ao excluir paciente.');
+    }
+  }
+
+  // Troca de Abas no Modal
+  function switchTab(tabName) {
+    const tabs = ['adicionais', 'endereco', 'convenio', 'medicamento', 'coleta', 'historicos'];
+    
+    tabs.forEach(t => {
+      const btn = document.getElementById('tab-btn-' + t);
+      const pane = document.getElementById('tab-content-' + t);
+
+      if (t === tabName) {
+        btn.className = 'px-4 py-2 border-b-2 border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg transition-all cursor-pointer font-bold';
+        pane.classList.remove('hidden');
+      } else {
+        btn.className = 'px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-800 rounded-t-lg transition-all cursor-pointer';
+        pane.classList.add('hidden');
+      }
+    });
+  }
+
+  // Cálculos e Auxiliares
+  function calculateAgeFromBirth() {
+    const birthVal = document.getElementById('form-birthDate').value;
+    if (!birthVal) {
+      document.getElementById('form-ageValue').value = '';
+      return;
+    }
+
+    const birth = new Date(birthVal + 'T00:00:00');
+    const now = new Date();
+    if (isNaN(birth.getTime())) return;
+
+    let years = now.getFullYear() - birth.getFullYear();
+    let months = now.getMonth() - birth.getMonth();
+    let days = now.getDate() - birth.getDate();
+
+    if (days < 0) {
+      months--;
+      const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    if (years >= 1) {
+      document.getElementById('form-ageValue').value = years;
+      document.getElementById('form-ageUnit').value = 'Ano(s)';
+    } else if (months >= 1) {
+      document.getElementById('form-ageValue').value = months;
+      document.getElementById('form-ageUnit').value = 'Mês(es)';
+    } else {
+      document.getElementById('form-ageValue').value = Math.max(0, days);
+      document.getElementById('form-ageUnit').value = 'Dia(s)';
+    }
+  }
+
+  function generateNewCode() {
+    document.getElementById('form-code').value = getNextIncrementalCode();
+  }
+
+  function generateWebPassword() {
+    const pass = Math.random().toString(36).slice(-6).toUpperCase();
+    const passInput = document.getElementById('form-webPassword');
+    if (passInput) passInput.value = pass;
+    const passDisplay = document.getElementById('webPasswordDisplay');
+    if (passDisplay) passDisplay.innerText = pass;
+  }
+
+  function triggerPhotoUpload() {
+    document.getElementById('patientPhotoInput').click();
+  }
+
+  function handlePhotoSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('form-patient-photo').value = e.target.result;
+        document.getElementById('photoPreviewContainer').innerHTML = `
+          <img src="${e.target.result}" class="w-24 h-24 rounded-lg object-cover border border-emerald-500 shadow-sm mb-1">
+          <span class="text-[10px] text-emerald-600 font-bold">Alterar foto</span>
+        `;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function searchCep() {
+    const cep = document.getElementById('form-cep').value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+      alert('Por favor, informe um CEP válido com 8 dígitos.');
+      return;
+    }
+
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.erro) {
+          alert('CEP não encontrado.');
+          return;
+        }
+        document.getElementById('form-street').value = data.logradouro || '';
+        document.getElementById('form-neighborhood').value = data.bairro || '';
+        document.getElementById('form-city').value = data.localidade || 'Cambará';
+        document.getElementById('form-state').value = data.uf || 'PR';
+      })
+      .catch(err => {
+        console.error('Erro na busca de CEP:', err);
+      });
+  }
+
+  function togglePatientStatus(id) {
+    const p = allPatients.find(item => item.id === id || item.code === id);
+    const isInactive = p && p.status === 'Inativo';
+    const actionText = isInactive ? 'ativar' : 'inativar';
+    
+    if (!confirm(`Deseja realmente ${actionText} o cadastro do paciente ${p ? p.name : ''}?`)) return;
+
+    fetch('/admin/recepcao/pacientes/toggle-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (p) {
+          p.status = isInactive ? 'Ativo' : 'Inativo';
+        }
+        filterAndPaginatePatients();
+        showToast(`Paciente ${isInactive ? 'ativado' : 'inativado'} com sucesso!`, 'success');
+      } else {
+        alert('Erro ao alterar status do paciente.');
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao alterar status:', err);
+      alert('Erro na comunicação com o servidor.');
+    });
+  }
+
+  // Lógica de Importação de Pacientes (CSV/JSON)
+  let parsedImportPatients = [];
+
+  function openImportModal() {
+    document.getElementById('importPatientsModal').classList.remove('hidden');
+    resetImportFile();
+  }
+
+  function closeImportModal() {
+    document.getElementById('importPatientsModal').classList.add('hidden');
+    resetImportFile();
+  }
+
+  function resetImportFile() {
+    parsedImportPatients = [];
+    const input = document.getElementById('importFileInput');
+    if (input) input.value = '';
+    const container = document.getElementById('importPreviewContainer');
+    if (container) container.classList.add('hidden');
+    const dropzone = document.getElementById('importDropzone');
+    if (dropzone) dropzone.classList.remove('hidden');
+    const btn = document.getElementById('confirmImportBtn');
+    if (btn) btn.disabled = true;
+    const btnText = document.getElementById('confirmImportBtnText');
+    if (btnText) btnText.innerText = 'Confirmar Importação';
+  }
+
+  function downloadCSVTemplate() {
+    const csvContent = "nome;sexo;dataNascimento;cpf;rg;whatsapp;email;endereco;numero;bairro;cidade;estado;convenio\n" +
+      "Maria da Silva;Feminino;15/05/1988;123.456.789-00;12345678;43999998888;maria@email.com;Rua das Flores;100;Centro;Cambará;PR;Particular\n" +
+      "João Santos;Masculino;20/10/1975;987.654.321-11;87654321;43988887777;joao@email.com;Av. Brasil;500;Vila Nova;Cambará;PR;Unimed";
+    
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_importacao_pacientes.csv';
+    link.click();
+  }
+
+  function downloadJSONTemplate() {
+    const jsonSample = [
+      {
+        "nome": "Maria da Silva",
+        "sexo": "Feminino",
+        "dataNascimento": "1988-05-15",
+        "cpf": "123.456.789-00",
+        "rg": "12345678",
+        "whatsapp": "43999998888",
+        "email": "maria@email.com",
+        "endereco": "Rua das Flores",
+        "numero": "100",
+        "bairro": "Centro",
+        "cidade": "Cambará",
+        "estado": "PR",
+        "convenio": "Particular"
+      },
+      {
+        "nome": "João Santos",
+        "sexo": "Masculino",
+        "dataNascimento": "1975-10-20",
+        "cpf": "987.654.321-11",
+        "rg": "87654321",
+        "whatsapp": "43988887777",
+        "email": "joao@email.com",
+        "endereco": "Av. Brasil",
+        "numero": "500",
+        "bairro": "Vila Nova",
+        "cidade": "Cambará",
+        "estado": "PR",
+        "convenio": "Unimed"
+      }
+    ];
+
+    const blob = new Blob([JSON.stringify(jsonSample, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_importacao_pacientes.json';
+    link.click();
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r\n|\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 2) return [];
+
+    const headerLine = lines[0];
+    let delimiter = ';';
+    if (headerLine.includes(';') && !headerLine.includes('\t')) delimiter = ';';
+    else if (headerLine.includes(',') && !headerLine.includes(';')) delimiter = ',';
+    else if (headerLine.includes('\t')) delimiter = '\t';
+
+    const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+    
+    const results = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+      if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue;
+
+      const rowObj = {};
+      headers.forEach((h, idx) => {
+        rowObj[h] = cols[idx] !== undefined ? cols[idx] : '';
+      });
+      if (rowObj.nome || rowObj.name || rowObj.paciente) {
+        results.push(rowObj);
+      }
+    }
+    return results;
+  }
+
+  function handleImportFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const content = evt.target.result;
+      try {
+        if (file.name.endsWith('.json')) {
+          const json = JSON.parse(content);
+          parsedImportPatients = Array.isArray(json) ? json : (json.patients || [json]);
+        } else {
+          parsedImportPatients = parseCSV(content);
+        }
+
+        if (parsedImportPatients.length === 0) {
+          alert('Nenhum paciente válido encontrado no arquivo fornecido.');
+          resetImportFile();
+          return;
+        }
+
+        renderImportPreview();
+      } catch (err) {
+        console.error('Erro ao ler arquivo de importacao:', err);
+        alert('Erro ao interpretar o arquivo. Verifique o formato e tente novamente.');
+        resetImportFile();
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function renderImportPreview() {
+    const tbody = document.getElementById('importPreviewTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    parsedImportPatients.forEach((p, idx) => {
+      const name = p.nome || p.name || p.paciente || '-';
+      const sex = p.sexo || p.sex || p.genero || 'Não informado';
+      const dob = p.dataNascimento || p.birthDate || p.nascimento || '-';
+      const cpf = p.cpf || p.CPF || '-';
+      const phone = p.whatsapp || p.phone || p.celular || p.telefone || '-';
+      const city = (p.cidade || p.city || 'Cambará') + '/' + (p.estado || p.state || p.uf || 'PR');
+
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-gray-50';
+      tr.innerHTML = `
+        <td class="py-2 px-3 font-mono text-gray-400">${idx + 1}</td>
+        <td class="py-2 px-3 font-bold text-gray-900">${name}</td>
+        <td class="py-2 px-3">${sex}</td>
+        <td class="py-2 px-3 font-mono">${dob}</td>
+        <td class="py-2 px-3 font-mono">${cpf}</td>
+        <td class="py-2 px-3 font-mono">${phone}</td>
+        <td class="py-2 px-3 text-xs">${city}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('importPreviewCount').innerText = `${parsedImportPatients.length} pacientes identificados para importação`;
+    document.getElementById('importDropzone').classList.add('hidden');
+    document.getElementById('importPreviewContainer').classList.remove('hidden');
+    
+    const confirmBtn = document.getElementById('confirmImportBtn');
+    confirmBtn.disabled = false;
+    document.getElementById('confirmImportBtnText').innerText = `Confirmar Importação (${parsedImportPatients.length})`;
+  }
+
+  async function submitImportedPatients() {
+    if (parsedImportPatients.length === 0) return;
+
+    const overwrite = document.getElementById('overwriteImportCheck').checked;
+    const confirmBtn = document.getElementById('confirmImportBtn');
+    const btnTextSpan = document.getElementById('confirmImportBtnText');
+    const origText = btnTextSpan ? btnTextSpan.innerText : 'Confirmar Importação';
+
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `
+      <svg class="animate-spin w-4 h-4 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Processando...</span>
+    `;
+
+    try {
+      const response = await fetch('/admin/recepcao/pacientes/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          patients: parsedImportPatients,
+          overwrite: overwrite
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        if (data.patients && Array.isArray(data.patients)) {
+          allPatients = data.patients;
+        }
+
+        sortPatientsList();
+        currentPage = 1;
+        filterAndPaginatePatients();
+        closeImportModal();
+        showToast(data.message || 'Importação concluída com sucesso!', 'success');
+      } else {
+        alert(data.error || 'Erro ao importar pacientes.');
+      }
+    } catch (err) {
+      console.error('Erro na requisição de importação:', err);
+      alert('Erro de conexão ao enviar dados de importação.');
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span id="confirmImportBtnText">${origText}</span>`;
+    }
+  }
+
+  // Atalhos de Teclado Parametrizados no LIS (Novo Registro, Salvar, Cancelar, ESC)
+  document.addEventListener('keydown', (e) => {
+    // 1. Fechar Modal / ESC
+    if (window.matchShortcut && window.matchShortcut(e, 'closeModal')) {
+      closePatientModal();
+      closeImportModal();
+      return;
+    }
+
+    // 2. Novo Registro (Ex: CTRL + N)
+    if (window.matchShortcut && window.matchShortcut(e, 'newRecord')) {
+      e.preventDefault();
+      openPatientModal();
+      return;
+    }
+
+    // 3. Salvar (Ex: CTRL + S)
+    if (window.matchShortcut && window.matchShortcut(e, 'save')) {
+      e.preventDefault();
+      const modal = document.getElementById('patientModal');
+      const form = document.getElementById('patientMainForm');
+      if (form) {
+        if (modal && modal.classList.contains('hidden')) {
+          openPatientModal();
+        } else {
+          if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+          } else {
+            form.submit();
+          }
+        }
+      }
+      return;
+    }
+
+    // 4. Cancelar / Limpar (Ex: CTRL + C)
+    if (window.matchShortcut && window.matchShortcut(e, 'cancel')) {
+      const selectedText = window.getSelection() ? window.getSelection().toString() : '';
+      if (!selectedText) {
+        e.preventDefault();
+        closePatientModal();
+      }
+      return;
+    }
+  });
+</script>
+
+<%- include('../../partials/footer') %>

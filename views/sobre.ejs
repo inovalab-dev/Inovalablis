@@ -1,0 +1,303 @@
+<%- include('partials/header') %>
+
+<!-- Banner Superior da Página -->
+<section class="bg-gradient-to-b from-brand-softBg/60 to-white py-12 border-b border-brand-light/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+    <span class="text-xs font-bold tracking-widest text-brand-gold uppercase font-mono block">História e Valores</span>
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-brand-dark tracking-tight">O Laboratório InovaLab</h1>
+    <div class="w-12 h-1 bg-brand-gold mx-auto rounded-full"></div>
+    <p class="text-sm text-gray-500 max-w-2xl mx-auto">Conheça o nosso compromisso com a ciência, com a ética e com o desenvolvimento clínico de Cambará e região.</p>
+  </div>
+</section>
+
+<!-- Nossa História e Corpo Técnico -->
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Lado Esquerdo: Texto da História -->
+      <div class="lg:col-span-7 space-y-6">
+        <h2 class="text-2xl font-bold text-brand-dark tracking-tight">Tradição em Inovação e Confiança</h2>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          O **InovaLab Análises Clínicas** nasceu do desejo de trazer a Cambará e ao norte pioneiro do Paraná uma infraestrutura diagnóstica que se comparasse aos grandes centros do Brasil. Compreendendo que cada amostra coletada carrega as esperanças, preocupações e o futuro de uma família, estabelecemos uma operação focada no rigor técnico absoluto.
+        </p>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Nossa trajetória é pautada pelo investimento em recursos tecnológicos e em educação continuada de nossa equipe. Hoje, somos pioneiros locais na automatização da triagem laboratorial, o que garante exames sem erros de digitação e com laudos disponibilizados em tempo ágil diretamente em nosso portal digital.
+        </p>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Mais do que laudos matemáticos, buscamos a humanização das coletas, oferecendo acolhimento especializado e suporte personalizado a médicos e pacientes que encontram no InovaLab uma parceria genuína para a manutenção da saúde.
+        </p>
+      </div>
+
+      <!-- Lado Direito: Quadro de Destaques/Missão -->
+      <div class="lg:col-span-5 bg-brand-softBg/50 p-6 sm:p-8 rounded-3xl border border-brand-light/20 custom-shadow">
+        <h3 class="text-base font-bold text-brand-dark font-mono uppercase tracking-wider mb-6 text-center">Nossos Pilares de Atuação</h3>
+        
+        <div class="space-y-6">
+          <div class="flex items-start space-x-3.5">
+            <div class="w-8 h-8 rounded-lg bg-brand-dark flex items-center justify-center text-white shrink-0 mt-0.5">
+              <span class="text-xs font-bold font-mono">M</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-brand-dark">Missão</h4>
+              <p class="text-xs text-gray-500 leading-relaxed">Oferecer exames laboratoriais de máxima precisão e rapidez, auxiliando na prevenção, diagnóstico e melhoria da qualidade de vida de nossos pacientes com respeito e ética.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3.5">
+            <div class="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center text-brand-dark shrink-0 mt-0.5">
+              <span class="text-xs font-bold font-mono">V</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-brand-dark">Visão</h4>
+              <p class="text-xs text-gray-500 leading-relaxed">Ser reconhecido como o principal laboratório de referência em excelência diagnóstica e humanização do atendimento de Cambará e norte pioneiro até 2028.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3.5">
+            <div class="w-8 h-8 rounded-lg bg-brand-dark flex items-center justify-center text-white shrink-0 mt-0.5">
+              <span class="text-xs font-bold font-mono">V</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-brand-dark">Valores</h4>
+              <p class="text-xs text-gray-500 leading-relaxed">Rigidez técnica, ética incondicional, segurança patrimonial de dados, humanização de contatos, inovação instrumental e foco na satisfação dos médicos assistentes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Corpo Técnico e Especialistas -->
+<section class="py-16 bg-brand-neutralLight border-t border-b border-brand-light/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-12 space-y-2">
+      <span class="text-xs font-bold tracking-widest text-brand-gold uppercase font-mono block">Responsabilidade Técnica</span>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-brand-dark tracking-tight">Nossos Especialistas Clínicos</h2>
+      <div class="w-12 h-0.5 bg-brand-dark mx-auto"></div>
+      <p class="text-xs text-gray-500">Profissionais altamente gabaritados que assinam e supervisionam cada laudo emitido em nossa bancada de Cambará.</p>
+    </div>
+
+    <!-- Carrossel de Especialistas -->
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-12">
+      <!-- Container do Carrossel -->
+      <div class="overflow-hidden">
+        <div id="prof-carousel-track" class="flex transition-transform duration-500 ease-in-out">
+          <% professionals.forEach(prof => { %>
+            <!-- Card do Especialista -->
+            <div class="w-full sm:w-1/2 lg:w-1/3 shrink-0 p-3">
+              <div class="bg-white rounded-2xl p-6 border border-brand-light/20 shadow-sm flex flex-col h-full hover:border-brand-dark/30 hover:shadow-md transition-all">
+                <div class="flex items-center space-x-4 mb-4">
+                  <div class="w-16 h-16 rounded-2xl bg-brand-softBg shrink-0 overflow-hidden flex items-center justify-center border border-brand-light/30">
+                    <!-- Vetor de Avatar Premium -->
+                    <svg class="w-10 h-10 text-brand-dark/40" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                  <div class="space-y-1 text-left font-sans">
+                    <span class="bg-brand-dark text-white font-mono font-bold text-[8px] px-2 py-0.5 rounded-full uppercase inline-block"><%= prof.role %></span>
+                    <h3 class="text-sm font-bold text-brand-dark leading-tight"><%= prof.name %></h3>
+                    <p class="text-[10px] text-brand-gold font-mono font-semibold"><%= prof.title %></p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed flex-grow text-left font-sans">
+                  <%= prof.description %>
+                </p>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Controles (Sempre exibidos para navegação) -->
+      <% if (professionals.length > 0) { %>
+        <!-- Seta Esquerda -->
+        <button id="prof-prev" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 sm:-translate-x-4 bg-white hover:bg-brand-dark hover:text-white text-brand-dark w-10 h-10 rounded-full border border-brand-light/20 shadow-md flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer z-10" aria-label="Anterior">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <!-- Seta Direita -->
+        <button id="prof-next" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 sm:translate-x-4 bg-white hover:bg-brand-dark hover:text-white text-brand-dark w-10 h-10 rounded-full border border-brand-light/20 shadow-md flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer z-10" aria-label="Próximo">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+
+        <!-- Indicadores / Dots -->
+        <div id="prof-dots" class="flex justify-center space-x-2 mt-6"></div>
+      <% } %>
+    </div>
+
+    <!-- Script de inicialização e controle do Carrossel -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const track = document.getElementById('prof-carousel-track');
+        const prevBtn = document.getElementById('prof-prev');
+        const nextBtn = document.getElementById('prof-next');
+        const dotsContainer = document.getElementById('prof-dots');
+        
+        if (!track || !prevBtn || !nextBtn) return;
+        
+        const items = Array.from(track.children);
+        const totalItems = items.length;
+        let currentIndex = 0;
+        
+        function getItemsPerPage() {
+          if (window.innerWidth >= 1024) return 3; // lg
+          if (window.innerWidth >= 640) return 2;  // sm/md
+          return 1;                                // mobile
+        }
+        
+        function getMaxIndex() {
+          return Math.max(0, totalItems - getItemsPerPage());
+        }
+        
+        function updateCarousel() {
+          const itemsPerPage = getItemsPerPage();
+          const maxIndex = getMaxIndex();
+          
+          // Garante que o index atual não ultrapasse o máximo permitido
+          if (currentIndex > maxIndex) {
+            currentIndex = maxIndex;
+          }
+          
+          const itemWidthPercent = 100 / itemsPerPage;
+          const offsetPercent = -currentIndex * itemWidthPercent;
+          
+          track.style.transform = `translateX(${offsetPercent}%)`;
+          
+          // Habilita/desabilita botões
+          prevBtn.disabled = currentIndex === 0;
+          nextBtn.disabled = currentIndex >= maxIndex;
+          
+          // Oculta setas se todos os itens couberem na tela
+          if (maxIndex === 0) {
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+          } else {
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+          }
+          
+          // Atualiza os dots
+          updateDots();
+        }
+        
+        function updateDots() {
+          if (!dotsContainer) return;
+          dotsContainer.innerHTML = '';
+          
+          const itemsPerPage = getItemsPerPage();
+          const totalDots = Math.max(1, totalItems - itemsPerPage + 1);
+          
+          // Se tivermos 1 ou menos dots (tudo visível), não precisa mostrar dots
+          if (totalDots <= 1) return;
+          
+          for (let i = 0; i < totalDots; i++) {
+            const dot = document.createElement('button');
+            dot.className = `w-2 h-2 rounded-full transition-all cursor-pointer ${
+              i === currentIndex ? 'bg-brand-dark w-5' : 'bg-brand-light/35 hover:bg-brand-light/60'
+            }`;
+            dot.setAttribute('aria-label', `Ir para slide ${i + 1}`);
+            dot.addEventListener('click', () => {
+              currentIndex = i;
+              updateCarousel();
+            });
+            dotsContainer.appendChild(dot);
+          }
+        }
+        
+        prevBtn.addEventListener('click', () => {
+          if (currentIndex > 0) {
+            currentIndex--;
+            updateCarousel();
+          }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+          const maxIndex = getMaxIndex();
+          if (currentIndex < maxIndex) {
+            currentIndex++;
+            updateCarousel();
+          }
+        });
+        
+        // Suporte para deslizar (swipe) em dispositivos de toque
+        let startX = 0;
+        let isDragging = false;
+        
+        track.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          isDragging = true;
+        }, { passive: true });
+        
+        track.addEventListener('touchmove', (e) => {
+          if (!isDragging) return;
+          const diffX = e.touches[0].clientX - startX;
+          if (Math.abs(diffX) > 50) {
+            if (diffX > 0 && currentIndex > 0) {
+              currentIndex--;
+              updateCarousel();
+              isDragging = false;
+            } else if (diffX < 0 && currentIndex < getMaxIndex()) {
+              currentIndex++;
+              updateCarousel();
+              isDragging = false;
+            }
+          }
+        }, { passive: true });
+        
+        track.addEventListener('touchend', () => {
+          isDragging = false;
+        });
+        
+        // Evento de redimensionamento
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            updateCarousel();
+          }, 100);
+        });
+        
+        // Inicializa o carrossel
+        updateCarousel();
+      });
+    </script>
+  </div>
+</section>
+
+<!-- Garantia de Qualidade e Biossegurança -->
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto text-center space-y-6">
+      <h2 class="text-2xl font-bold text-brand-dark">Garantia PNCQ e Rigor Científico</h2>
+      <p class="text-sm text-gray-600 leading-relaxed max-w-3xl mx-auto">
+        A qualidade de um exame se inicia muito antes da análise em si. No InovaLab Cambará, todos os processos — desde a recepção, passando pela assepsia da coleta, triagem, armazenamento refrigerado de amostras, reações químicas computadorizadas, até a emissão eletrônica do laudo — são validados por rotinas rigorosas de calibração que atendem aos padrões internacionais mais rígidos de biossegurança e farmacovigilância clínica.
+      </p>
+      <div class="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
+        <div class="bg-brand-softBg/40 border border-brand-light/20 p-4 rounded-xl">
+          <span class="block text-xl font-mono font-bold text-brand-dark">100%</span>
+          <span class="text-[10px] text-gray-500 font-semibold uppercase">Calibração Diária</span>
+        </div>
+        <div class="bg-brand-softBg/40 border border-brand-light/20 p-4 rounded-xl">
+          <span class="block text-xl font-mono font-bold text-brand-dark">SBAC</span>
+          <span class="text-[10px] text-gray-500 font-semibold uppercase">Controle de Qualidade</span>
+        </div>
+        <div class="bg-brand-softBg/40 border border-brand-light/20 p-4 rounded-xl">
+          <span class="block text-xl font-mono font-bold text-brand-dark">Anvisa</span>
+          <span class="text-[10px] text-gray-500 font-semibold uppercase">RDC nº 978/2025</span>
+        </div>
+        <div class="bg-brand-softBg/40 border border-brand-light/20 p-4 rounded-xl">
+          <span class="block text-xl font-mono font-bold text-brand-dark">EPIs</span>
+          <span class="text-[10px] text-gray-500 font-semibold uppercase">Tripla Barreira</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

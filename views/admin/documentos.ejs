@@ -1,0 +1,783 @@
+<%- include('../partials/header') %>
+
+<!-- Seção do Topo / Header da Página -->
+<section class="bg-brand-softBg/30 border-b border-brand-light/15 py-6">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Qualidade & Conformidade</span>
+      </div>
+      <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight">Gestão de Documentos</h1>
+      <p class="text-xs text-gray-500">Faça upload, monitore a validade e gerencie a ordem dos documentos oficiais do laboratório.</p>
+    </div>
+    
+    <button onclick="openAddDocModal()" class="text-xs font-bold bg-brand-dark hover:bg-brand-neutralDark text-white px-5 py-3 rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
+      <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      <span>Fazer Upload de Documento</span>
+    </button>
+  </div>
+</section>
+
+<!-- Conteúdo Principal -->
+<section class="py-8 bg-brand-neutralLight/45 min-h-[70vh]">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    
+    <!-- Mensagens de Alerta (Feedback) -->
+    <% if (typeof query !== 'undefined' && query.success) { %>
+      <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-xl text-xs font-semibold text-emerald-800 animate-fade-in flex items-center gap-2 shadow-sm">
+        <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <% if (query.success === 'added') { %>
+          Documento enviado e cadastrado com sucesso!
+        <% } else if (query.success === 'edited') { %>
+          Documento atualizado com sucesso!
+        <% } else if (query.success === 'deleted') { %>
+          Documento removido com sucesso!
+        <% } %>
+      </div>
+    <% } %>
+
+    <!-- 📊 Dashboard de Prazos e Validades -->
+    <% 
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      let expiredCount = 0;
+      let warningCount = 0;
+      let validCount = 0;
+      
+      documents.forEach(doc => {
+        if (doc.hasNoExpiration) {
+          validCount++;
+          return;
+        }
+        const expDate = new Date(doc.expirationDate);
+        expDate.setHours(23,59,59,999);
+        const diffTime = expDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) {
+          expiredCount++;
+        } else if (diffDays <= 30) {
+          warningCount++;
+        } else {
+          validCount++;
+        }
+      });
+    %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+      <!-- Card Total -->
+      <div class="bg-white p-5 rounded-3xl border border-brand-light/15 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-brand-softBg flex items-center justify-center text-brand-dark shrink-0">
+          <svg class="w-6 h-6 text-brand-dark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider">Total de Documentos</span>
+          <span class="text-2xl font-black text-brand-dark font-mono"><%= documents.length %></span>
+        </div>
+      </div>
+
+      <!-- Card Vencidos -->
+      <div onclick="setFilterStatus('expired')" class="bg-white p-5 rounded-3xl border border-brand-light/15 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-red-200 transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider">Vencidos / Expirados</span>
+          <span class="text-2xl font-black text-red-600 font-mono"><%= expiredCount %></span>
+        </div>
+      </div>
+
+      <!-- Card A Vencer -->
+      <div onclick="setFilterStatus('warning')" class="bg-white p-5 rounded-3xl border border-brand-light/15 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-amber-200 transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+          <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider">A Vencer (Próximos 30 dias)</span>
+          <span class="text-2xl font-black text-amber-600 font-mono"><%= warningCount %></span>
+        </div>
+      </div>
+
+      <!-- Card Válidos -->
+      <div onclick="setFilterStatus('valid')" class="bg-white p-5 rounded-3xl border border-brand-light/15 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+          <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold text-gray-400 font-mono uppercase tracking-wider">Válidos e Seguros</span>
+          <span class="text-2xl font-black text-emerald-600 font-mono"><%= validCount %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛠 Filtros, Pesquisa e Área de Tabela -->
+    <div class="bg-white rounded-3xl border border-brand-light/15 overflow-hidden shadow-sm animate-fade-in">
+      <div class="px-6 py-5 border-b border-brand-light/10 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-brand-softBg/10">
+        
+        <!-- Barra de Busca -->
+        <div class="relative flex-1 max-w-md">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </span>
+          <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Buscar por título ou nome do arquivo..." class="w-full pl-10 pr-4 py-2 bg-brand-neutralLight border border-brand-light/20 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-dark">
+        </div>
+
+        <!-- Abas de Filtros Rápidos -->
+        <div class="flex flex-wrap gap-1.5 bg-brand-neutralLight p-1 rounded-xl border border-brand-light/10 text-[11px] font-bold uppercase tracking-wider font-mono">
+          <button onclick="setFilterStatus('all')" id="filter-btn-all" class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer bg-brand-dark text-white shadow-sm">Todos</button>
+          <button onclick="setFilterStatus('expired')" id="filter-btn-expired" class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer text-gray-500 hover:text-brand-dark">Vencidos</button>
+          <button onclick="setFilterStatus('warning')" id="filter-btn-warning" class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer text-gray-500 hover:text-brand-dark">A Vencer</button>
+          <button onclick="setFilterStatus('valid')" id="filter-btn-valid" class="px-3.5 py-1.5 rounded-lg transition-all cursor-pointer text-gray-500 hover:text-brand-dark">Válidos</button>
+        </div>
+      </div>
+
+      <!-- Tabela de Documentos -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-brand-softBg/30 text-[10px] font-bold uppercase tracking-widest text-brand-dark/75 border-b border-brand-light/10 font-mono">
+              <th class="py-4 px-6 w-16 text-center">Ordem</th>
+              <th class="py-4 px-6">Documento</th>
+              <th class="py-4 px-6">Envio / Autor</th>
+              <th class="py-4 px-6">Data de Validade</th>
+              <th class="py-4 px-6">Status</th>
+              <th class="py-4 px-6 text-center">Reordenar</th>
+              <th class="py-4 px-6 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="documents-tbody">
+            <% if (documents.length === 0) { %>
+              <tr id="empty-state-row">
+                <td colspan="7" class="py-16 text-center">
+                  <div class="max-w-sm mx-auto space-y-3">
+                    <div class="w-16 h-16 bg-brand-softBg rounded-full flex items-center justify-center mx-auto text-brand-dark/40">
+                      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-brand-dark">Nenhum documento cadastrado</h3>
+                    <p class="text-xs text-gray-400">Faça upload de contratos, certificados, relatórios de qualidade ou licenças regulatórias para começar.</p>
+                    <button onclick="openAddDocModal()" class="text-xs font-bold bg-brand-dark text-white px-4 py-2 rounded-xl hover:bg-brand-neutralDark transition-colors">Cadastrar Primeiro</button>
+                  </div>
+                </td>
+              </tr>
+            <% } else { %>
+              <% documents.forEach((doc, idx) => { 
+                let statusBadge = '';
+                let rowFilterStatus = 'valid';
+                let formattedExpDate = '';
+
+                if (doc.hasNoExpiration) {
+                  rowFilterStatus = 'valid';
+                  statusBadge = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold bg-sky-50 text-sky-700 uppercase font-mono"><span class="w-1.5 h-1.5 bg-sky-500 rounded-full"></span>Sem Validade</span>`;
+                  formattedExpDate = '<span class="text-gray-400 italic">Não expira</span>';
+                } else {
+                  const expDate = new Date(doc.expirationDate);
+                  expDate.setHours(23,59,59,999);
+                  const diffTime = expDate - today;
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  
+                  if (diffDays < 0) {
+                    rowFilterStatus = 'expired';
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold bg-red-50 text-red-700 uppercase font-mono"><span class="w-1.5 h-1.5 bg-red-600 rounded-full"></span>Vencido</span>`;
+                  } else if (diffDays <= 30) {
+                    rowFilterStatus = 'warning';
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 uppercase font-mono"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>A Vencer (${diffDays}d)</span>`;
+                  } else {
+                    rowFilterStatus = 'valid';
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 uppercase font-mono"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>Válido</span>`;
+                  }
+                  
+                  // Formatar data de validade pt-BR
+                  const dateParts = doc.expirationDate.split('-');
+                  formattedExpDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : doc.expirationDate;
+                }
+              %>
+                <tr class="border-b border-brand-light/10 hover:bg-brand-softBg/20 transition-colors text-xs font-medium" data-id="<%= doc.id %>" data-title="<%= doc.title %>" data-filename="<%= doc.fileName %>" data-status="<%= rowFilterStatus %>">
+                  
+                  <!-- Ordem Numérica -->
+                  <td class="py-4 px-6 text-center font-mono font-bold text-gray-400">
+                    <%= doc.order || (idx + 1) %>
+                  </td>
+
+                  <!-- Nome do Documento e Arquivo -->
+                  <td class="py-4 px-6 space-y-1">
+                    <span class="block font-bold text-brand-dark text-sm leading-tight max-w-sm truncate" title="<%= doc.title %>"><%= doc.title %></span>
+                    <span class="inline-flex items-center gap-1 text-[10px] text-gray-400 font-mono">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                      <%= doc.fileName %> (<%= doc.fileSize || 'N/A' %>)
+                    </span>
+                  </td>
+
+                  <!-- Informações de Envio -->
+                  <td class="py-4 px-6 space-y-0.5">
+                    <span class="block text-gray-500 text-[11px] font-semibold"><%= doc.uploadedBy %></span>
+                    <span class="block text-[9px] text-gray-400 font-mono"><%= doc.uploadedAt %></span>
+                  </td>
+
+                  <!-- Data de Validade -->
+                  <td class="py-4 px-6 font-mono font-bold text-brand-neutralDark">
+                    <%- formattedExpDate %>
+                  </td>
+
+                  <!-- Status do Prazo -->
+                  <td class="py-4 px-6">
+                    <%- statusBadge %>
+                  </td>
+
+                  <!-- Botões de Movimentação (Reordenar) -->
+                  <td class="py-4 px-6 text-center">
+                    <div class="inline-flex items-center gap-1 justify-center">
+                      <!-- Seta para cima -->
+                      <form action="/admin/documentos/move" method="POST" class="inline">
+                        <input type="hidden" name="id" value="<%= doc.id %>">
+                        <input type="hidden" name="direction" value="up">
+                        <button type="submit" class="p-1 text-gray-400 hover:text-brand-dark hover:bg-brand-softBg rounded-lg transition-colors <%= idx === 0 ? 'opacity-25 pointer-events-none' : 'cursor-pointer' %>" title="Mover para cima">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                        </button>
+                      </form>
+
+                      <!-- Seta para baixo -->
+                      <form action="/admin/documentos/move" method="POST" class="inline">
+                        <input type="hidden" name="id" value="<%= doc.id %>">
+                        <input type="hidden" name="direction" value="down">
+                        <button type="submit" class="p-1 text-gray-400 hover:text-brand-dark hover:bg-brand-softBg rounded-lg transition-colors <%= idx === documents.length - 1 ? 'opacity-25 pointer-events-none' : 'cursor-pointer' %>" title="Mover para baixo">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+
+                  <!-- Botões de Ações -->
+                  <td class="py-4 px-6 text-right">
+                    <div class="inline-flex items-center gap-1 justify-end">
+                      <!-- Abrir / Ler -->
+                      <button onclick="readDocument('<%= doc.id %>')" class="px-2.5 py-1.5 bg-brand-softBg text-brand-dark hover:bg-brand-light/35 font-bold text-[10px] uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1" title="Ler Conteúdo do Arquivo">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <span>Ler</span>
+                      </button>
+
+                      <!-- Editar -->
+                      <button onclick="editDocument({ id: '<%= doc.id %>', title: '<%= doc.title %>', expirationDate: '<%= doc.expirationDate %>', hasNoExpiration: <%= doc.hasNoExpiration || false %> })" class="p-1.5 text-gray-400 hover:text-brand-dark hover:bg-brand-softBg rounded-xl transition-all cursor-pointer" title="Editar Metadados">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-2.036a5 5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+
+                      <!-- Excluir -->
+                      <a href="/admin/documentos/delete/<%= doc.id %>" onclick="return confirm('Tem certeza que deseja excluir permanentemente o documento &ldquo;<%= doc.title %>&rdquo;?')" class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer" title="Excluir Documento">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </a>
+                    </div>
+                  </td>
+
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 📂 MODAL DE CADASTRO / EDIÇÃO DE DOCUMENTO -->
+<div id="doc-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-brand-neutralDark/65 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white w-full max-w-xl rounded-3xl border border-brand-light/20 shadow-2xl overflow-hidden animate-fade-in">
+    <div class="px-6 py-4 bg-brand-softBg/40 border-b border-brand-light/10 flex justify-between items-center">
+      <h2 id="modal-title" class="text-base font-extrabold text-brand-dark font-mono uppercase tracking-wider">Fazer Upload de Documento</h2>
+      <button onclick="closeDocModal()" class="text-gray-400 hover:text-brand-dark focus:outline-none cursor-pointer">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    
+    <form id="doc-form" action="/admin/documentos/add" method="POST" class="p-6 space-y-6">
+      <input type="hidden" name="id" id="doc-form-id">
+      
+      <!-- Título do Documento -->
+      <div>
+        <label for="title" class="block text-[10px] font-bold font-mono uppercase text-gray-400 tracking-wider mb-1.5">Título do Documento</label>
+        <input type="text" name="title" id="doc-form-title" required placeholder="Ex: Contrato de Manutenção - Analisador Bioquímico" class="w-full px-4 py-2.5 bg-brand-neutralLight border border-brand-light/25 rounded-xl font-semibold text-xs focus:outline-none focus:border-brand-dark">
+      </div>
+
+      <!-- Sem Validade / Permanente Flag -->
+      <div class="flex items-center gap-2.5 bg-brand-neutralLight/30 p-3 rounded-xl border border-brand-light/10">
+        <input type="checkbox" name="hasNoExpiration" id="doc-form-hasNoExpiration" class="w-4 h-4 rounded text-brand-dark focus:ring-brand-dark border-brand-light/35 bg-white cursor-pointer" onchange="toggleExpirationDateInput()">
+        <div class="leading-none">
+          <label for="doc-form-hasNoExpiration" class="text-xs font-bold text-brand-dark select-none cursor-pointer">
+            Documento permanente (Não tem validade / Sem vencimento)
+          </label>
+        </div>
+      </div>
+
+      <!-- Data de Validade -->
+      <div id="expiration-date-container">
+        <label for="expirationDate" class="block text-[10px] font-bold font-mono uppercase text-gray-400 tracking-wider mb-1.5">Data de Validade (Vencimento)</label>
+        <input type="date" name="expirationDate" id="doc-form-expirationDate" required class="w-full px-4 py-2.5 bg-brand-neutralLight border border-brand-light/25 rounded-xl font-bold text-xs focus:outline-none focus:border-brand-dark font-mono">
+      </div>
+
+      <!-- Área de Drag & Drop para Upload de Arquivo -->
+      <div id="upload-section">
+        <label class="block text-[10px] font-bold font-mono uppercase text-gray-400 tracking-wider mb-1.5">Arquivo do Documento</label>
+        
+        <div id="drop-zone" class="border-2 border-dashed border-brand-light/50 rounded-2xl p-6 text-center bg-brand-neutralLight/20 hover:bg-brand-softBg/30 hover:border-brand-dark transition-all cursor-pointer flex flex-col items-center justify-center gap-2">
+          <svg class="w-8 h-8 text-brand-dark/55 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <div class="text-xs">
+            <span class="font-bold text-brand-dark">Clique para selecionar</span> ou arraste o arquivo aqui
+          </div>
+          <p class="text-[10px] text-gray-400 font-medium">Formatos suportados: PDF, Imagens (PNG, JPG), Texto (TXT, MD), CSV, JSON</p>
+          <input type="file" id="file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.md,.json,.csv,.xlsx">
+        </div>
+
+        <!-- Inputs ocultos para dados do arquivo -->
+        <input type="hidden" name="fileContent" id="doc-form-fileContent">
+        <input type="hidden" name="fileName" id="doc-form-fileName">
+        <input type="hidden" name="fileSize" id="doc-form-fileSize">
+        <input type="hidden" name="mimeType" id="doc-form-mimeType">
+
+        <!-- Visualizador do Arquivo Selecionado -->
+        <div id="file-preview-indicator" class="hidden mt-3 p-3 bg-brand-softBg/35 border border-brand-light/20 rounded-xl flex items-center justify-between gap-3 animate-fade-in text-xs font-semibold">
+          <div class="flex items-center gap-2 truncate">
+            <svg class="w-5 h-5 text-brand-dark shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div class="truncate">
+              <span id="preview-filename" class="font-bold text-brand-dark">arquivo.pdf</span>
+              <span id="preview-filesize" class="block text-[10px] text-gray-400 font-mono">1.2 MB</span>
+            </div>
+          </div>
+          <button type="button" onclick="clearSelectedFile()" class="p-1 text-gray-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end pt-3 border-t border-brand-light/10">
+        <button type="button" onclick="closeDocModal()" class="px-5 py-2.5 bg-brand-softBg hover:bg-brand-light/20 text-brand-dark text-xs font-bold rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" id="doc-submit-btn" class="px-6 py-2.5 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1">
+          <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+          <span id="btn-submit-text">Salvar Documento</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 👁 GAVETA DE LEITURA DO DOCUMENTO (READ PANEL) -->
+<div id="read-drawer" class="hidden fixed inset-0 z-50 overflow-hidden bg-brand-neutralDark/40 backdrop-blur-sm flex justify-end">
+  <div class="bg-white w-full max-w-2xl h-full shadow-2xl flex flex-col animate-slide-left border-l border-brand-light/15">
+    
+    <!-- Cabeçalho da Gaveta -->
+    <div class="px-6 py-5 bg-brand-softBg/30 border-b border-brand-light/10 flex justify-between items-center shrink-0">
+      <div class="space-y-0.5 truncate">
+        <span class="block text-[9px] font-black font-mono uppercase text-brand-dark tracking-widest">Visualizador do Laboratório</span>
+        <h2 id="read-title" class="text-base font-extrabold text-brand-dark truncate">Título do Documento</h2>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="download-btn" class="p-2 text-gray-500 hover:text-brand-dark hover:bg-brand-softBg rounded-xl transition-all cursor-pointer" title="Fazer Download do Arquivo">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
+        <button onclick="closeReadDrawer()" class="p-2 text-gray-400 hover:text-brand-dark hover:bg-brand-softBg rounded-xl transition-all cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Metadados Rápidos -->
+    <div class="px-6 py-3 bg-brand-neutralLight/50 border-b border-brand-light/10 grid grid-cols-3 gap-4 text-xs font-medium text-gray-500 shrink-0">
+      <div>
+        <span class="block text-[9px] text-gray-400 uppercase font-mono font-bold">Arquivo</span>
+        <span id="read-filename" class="font-bold text-brand-dark truncate block">contrato.pdf</span>
+      </div>
+      <div>
+        <span class="block text-[9px] text-gray-400 uppercase font-mono font-bold">Validade</span>
+        <span id="read-expiration" class="font-bold font-mono text-brand-dark block">12/05/2027</span>
+      </div>
+      <div>
+        <span class="block text-[9px] text-gray-400 uppercase font-mono font-bold">Enviado por</span>
+        <span id="read-uploadedby" class="font-bold text-brand-dark truncate block">Dr. Alysson</span>
+      </div>
+    </div>
+
+    <!-- Área de Exibição / Conteúdo do Arquivo -->
+    <div class="flex-1 overflow-y-auto p-6 bg-slate-50 flex flex-col">
+      <div id="viewer-container" class="bg-white rounded-2xl border border-brand-light/10 shadow-sm p-6 flex-1 flex flex-col overflow-y-auto min-h-[400px]">
+        <!-- Conteúdo do visualizador dinâmico gerado por JS -->
+      </div>
+    </div>
+
+    <!-- Rodapé da Gaveta -->
+    <div class="p-5 border-t border-brand-light/10 bg-white text-center shrink-0">
+      <button onclick="closeReadDrawer()" class="w-full py-3 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-bold rounded-xl transition-all cursor-pointer">
+        Concluir Leitura
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Estilos e Animações customizadas de Transição -->
+<style>
+  @keyframes slide-left {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .animate-slide-left {
+    animation: slide-left 0.25s ease-out forwards;
+  }
+</style>
+
+<!-- 🧠 SCRIPTS INTERATIVOS DA GESTÃO DE DOCUMENTOS -->
+<script>
+  // Carregar lista de documentos do servidor
+  const allDocuments = <%- JSON.stringify(documents) %>;
+  let currentFilter = 'all';
+
+  // Drag & Drop Configs
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  if (dropZone && fileInput) {
+    // Abrir seletor de arquivos ao clicar
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Eventos de arraste
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-brand-dark', 'bg-brand-softBg/30');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-brand-dark', 'bg-brand-softBg/30');
+      }, false);
+    });
+
+    // Tratar drop de arquivo
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        handleSelectedFile(files[0]);
+      }
+    });
+
+    // Tratar seleção manual de arquivo
+    fileInput.addEventListener('change', (e) => {
+      if (fileInput.files.length > 0) {
+        handleSelectedFile(fileInput.files[0]);
+      }
+    });
+  }
+
+  // Converter e Processar o arquivo em Base64
+  function handleSelectedFile(file) {
+    if (!file) return;
+
+    // Indicador visual de loading
+    const previewFilename = document.getElementById('preview-filename');
+    const previewFilesize = document.getElementById('preview-filesize');
+    const previewIndicator = document.getElementById('file-preview-indicator');
+    
+    previewFilename.innerText = "Lendo arquivo...";
+    previewFilesize.innerText = "Aguarde...";
+    previewIndicator.classList.remove('hidden');
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const rawResult = event.target.result;
+      // Isolar apenas a string base64 pura (remover o prefixo data:*/*;base64,)
+      const base64Content = rawResult.split(',')[1];
+      
+      // Armazenar nos inputs ocultos do formulário
+      document.getElementById('doc-form-fileContent').value = base64Content;
+      document.getElementById('doc-form-fileName').value = file.name;
+      document.getElementById('doc-form-mimeType').value = file.type;
+      
+      // Formata tamanho amigável
+      let sizeStr = '';
+      if (file.size >= 1024 * 1024) {
+        sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      } else {
+        sizeStr = (file.size / 1024).toFixed(0) + ' KB';
+      }
+      document.getElementById('doc-form-fileSize').value = sizeStr;
+
+      // Exibe indicador final
+      previewFilename.innerText = file.name;
+      previewFilesize.innerText = sizeStr + ' - pronto para salvar';
+    };
+
+    reader.onerror = function(err) {
+      alert("Falha ao ler o arquivo selecionado.");
+      clearSelectedFile();
+    };
+
+    // Lê como URL de dados para converter automaticamente em Base64
+    reader.readAsDataURL(file);
+  }
+
+  function clearSelectedFile() {
+    document.getElementById('doc-form-fileContent').value = '';
+    document.getElementById('doc-form-fileName').value = '';
+    document.getElementById('doc-form-fileSize').value = '';
+    document.getElementById('doc-form-mimeType').value = '';
+    
+    if (fileInput) fileInput.value = '';
+    document.getElementById('file-preview-indicator').classList.add('hidden');
+  }
+
+  function toggleExpirationDateInput() {
+    const checkbox = document.getElementById('doc-form-hasNoExpiration');
+    const inputContainer = document.getElementById('expiration-date-container');
+    const input = document.getElementById('doc-form-expirationDate');
+    if (checkbox.checked) {
+      inputContainer.classList.add('hidden');
+      input.required = false;
+      input.value = '';
+    } else {
+      inputContainer.classList.remove('hidden');
+      input.required = true;
+      if (!input.value) {
+        input.value = new Date().toISOString().split('T')[0];
+      }
+    }
+  }
+
+  // Controle do Modal
+  function openAddDocModal() {
+    document.getElementById('modal-title').innerText = "Fazer Upload de Documento";
+    document.getElementById('btn-submit-text').innerText = "Salvar Documento";
+    document.getElementById('doc-form').action = "/admin/documentos/add";
+    
+    // Limpar campos
+    document.getElementById('doc-form-id').value = '';
+    document.getElementById('doc-form-title').value = '';
+    document.getElementById('doc-form-expirationDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('doc-form-hasNoExpiration').checked = false;
+    toggleExpirationDateInput();
+    clearSelectedFile();
+    
+    // Arquivo é obrigatório na criação
+    document.getElementById('doc-form-fileContent').required = true;
+
+    document.getElementById('doc-modal').classList.remove('hidden');
+  }
+
+  function editDocument(docData) {
+    document.getElementById('modal-title').innerText = "Editar Documento";
+    document.getElementById('btn-submit-text').innerText = "Atualizar Metadados";
+    document.getElementById('doc-form').action = "/admin/documentos/edit";
+    
+    document.getElementById('doc-form-id').value = docData.id;
+    document.getElementById('doc-form-title').value = docData.title;
+    document.getElementById('doc-form-expirationDate').value = docData.expirationDate;
+    
+    document.getElementById('doc-form-hasNoExpiration').checked = !!docData.hasNoExpiration;
+    toggleExpirationDateInput();
+    
+    clearSelectedFile();
+    // Arquivo não é obrigatório na edição (mantém o existente se não subir novo)
+    document.getElementById('doc-form-fileContent').required = false;
+
+    document.getElementById('doc-modal').classList.remove('hidden');
+  }
+
+  function closeDocModal() {
+    document.getElementById('doc-modal').classList.add('hidden');
+  }
+
+  // Filtragem Dinâmica da Tabela no Frontend
+  function setFilterStatus(status) {
+    currentFilter = status;
+    
+    // Atualiza botões ativos
+    const buttons = ['all', 'expired', 'warning', 'valid'];
+    buttons.forEach(btn => {
+      const el = document.getElementById(`filter-btn-${btn}`);
+      if (btn === status) {
+        el.className = "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer bg-brand-dark text-white shadow-sm";
+      } else {
+        el.className = "px-3.5 py-1.5 rounded-lg transition-all cursor-pointer text-gray-500 hover:text-brand-dark";
+      }
+    });
+
+    filterTable();
+  }
+
+  function filterTable() {
+    const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#documents-tbody tr:not(#empty-state-row)');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const title = row.getAttribute('data-title').toLowerCase();
+      const filename = row.getAttribute('data-filename').toLowerCase();
+      const status = row.getAttribute('data-status');
+
+      const matchesSearch = title.includes(searchVal) || filename.includes(searchVal);
+      const matchesStatus = (currentFilter === 'all') || (status === currentFilter);
+
+      if (matchesSearch && matchesStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Se a tabela estiver totalmente vazia por filtros, exibe mensagem
+    const emptyRow = document.getElementById('empty-state-row');
+    if (emptyRow) {
+      if (visibleCount === 0 && allDocuments.length > 0) {
+        // Cria mensagem temporária ou apenas não faz nada se for o real empty state
+      }
+    }
+  }
+
+  // 👁 Abrir e ler o conteúdo do arquivo na gaveta (Read Drawer)
+  function readDocument(id) {
+    const doc = allDocuments.find(d => d.id === id);
+    if (!doc) return;
+
+    document.getElementById('read-title').innerText = doc.title;
+    document.getElementById('read-filename').innerText = doc.fileName;
+    
+    // Format validade
+    let formattedExpDate = '';
+    if (doc.hasNoExpiration) {
+      formattedExpDate = 'Não expira';
+    } else {
+      const dateParts = doc.expirationDate.split('-');
+      formattedExpDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : doc.expirationDate;
+    }
+    document.getElementById('read-expiration').innerText = formattedExpDate;
+    document.getElementById('read-uploadedby').innerText = doc.uploadedBy;
+
+    // Configurar botão de download
+    const dlBtn = document.getElementById('download-btn');
+    dlBtn.onclick = function() {
+      downloadBase64File(doc.fileContent, doc.fileName, doc.mimeType);
+    };
+
+    // Renderizar visualizador
+    const container = document.getElementById('viewer-container');
+    container.innerHTML = ''; // limpa
+
+    const mime = doc.mimeType || 'text/plain';
+
+    if (mime.startsWith('image/')) {
+      // Exibe Imagem
+      container.className = "bg-white rounded-2xl border border-brand-light/10 shadow-sm p-4 flex-1 flex items-center justify-center overflow-auto";
+      container.innerHTML = `
+        <div class="text-center space-y-4 max-w-full">
+          <img src="data:${mime};base64,${doc.fileContent}" class="max-h-[500px] rounded-xl shadow-md border mx-auto object-contain max-w-full" referrerPolicy="no-referrer">
+          <p class="text-[10px] text-gray-400 font-mono">${doc.fileName} (${doc.fileSize})</p>
+        </div>
+      `;
+    } else if (mime.startsWith('text/') || mime === 'application/json' || mime === 'application/javascript') {
+      // Exibe Texto Decodificado
+      container.className = "bg-slate-50 rounded-2xl border border-brand-light/10 shadow-sm p-4 flex-1 flex flex-col overflow-auto font-mono text-xs leading-relaxed";
+      try {
+        const decodedText = atob(doc.fileContent);
+        container.innerHTML = `
+          <div class="flex justify-between items-center pb-2 mb-3 border-b border-gray-200 text-[10px] text-gray-400 font-bold shrink-0">
+            <span>CONTEÚDO TEXTUAL DETECTADO</span>
+            <span>${doc.fileSize}</span>
+          </div>
+          <pre class="whitespace-pre-wrap break-all text-gray-700 flex-1 overflow-y-auto">${escapeHtml(decodedText)}</pre>
+        `;
+      } catch (e) {
+        container.innerHTML = `<p class="text-red-500 font-bold text-center py-10">Falha ao decodificar arquivo de texto em Base64.</p>`;
+      }
+    } else if (mime === 'application/pdf') {
+      // PDF - Exibe visualizador nativo ou uma folha elegante de laboratório
+      container.className = "bg-white rounded-2xl border border-brand-light/10 shadow-sm flex-1 flex flex-col";
+      container.innerHTML = `
+        <!-- Tentativa de embed PDF -->
+        <object data="data:application/pdf;base64,${doc.fileContent}" type="application/pdf" class="w-full h-full min-h-[500px] rounded-xl">
+          <div class="p-10 text-center space-y-6 max-w-md mx-auto my-auto">
+            <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="text-sm font-bold text-brand-dark">Visualizador PDF incorporado</h3>
+            <p class="text-xs text-gray-500">Seu navegador não suporta visualização direta de PDFs incorporados de forma segura neste ambiente de frame.</p>
+            <button onclick="downloadBase64File('${doc.fileContent}', '${doc.fileName}', '${doc.mimeType}')" class="px-5 py-2.5 bg-brand-dark text-white rounded-xl text-xs font-bold hover:bg-brand-neutralDark transition-all flex items-center justify-center gap-1.5 mx-auto">
+              <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Baixar PDF para ler localmente</span>
+            </button>
+          </div>
+        </object>
+      `;
+    } else {
+      // Outros formatos: exibe folha de metadados refinada e download
+      container.className = "bg-white rounded-2xl border border-brand-light/10 shadow-sm p-6 flex-1 flex items-center justify-center";
+      container.innerHTML = `
+        <div class="text-center space-y-5 max-w-sm">
+          <div class="w-20 h-20 bg-brand-softBg rounded-full flex items-center justify-center mx-auto text-brand-dark">
+            <svg class="w-10 h-10 text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </div>
+          <div class="space-y-1">
+            <h4 class="text-sm font-bold text-brand-dark">${doc.fileName}</h4>
+            <p class="text-xs text-gray-400">Tipo: <span class="font-mono font-semibold">${doc.mimeType}</span> | Tamanho: <span class="font-mono font-semibold">${doc.fileSize}</span></p>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed">Este arquivo de extensão binária ou de planilha não possui visualizador direto interativo em tempo de execução no navegador. Faça o download para visualizá-lo localmente.</p>
+          <button onclick="downloadBase64File('${doc.fileContent}', '${doc.fileName}', '${doc.mimeType}')" class="px-5 py-2.5 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 mx-auto cursor-pointer">
+            <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Fazer Download</span>
+          </button>
+        </div>
+      `;
+    }
+
+    document.getElementById('read-drawer').classList.remove('hidden');
+  }
+
+  function closeReadDrawer() {
+    document.getElementById('read-drawer').classList.add('hidden');
+  }
+
+  // Auxiliares de visualização e download no cliente
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function downloadBase64File(base64Data, filename, contentType) {
+    if (!base64Data) {
+      alert("Nenhum arquivo anexado para download.");
+      return;
+    }
+    const sliceSize = 1024;
+    const byteCharacters = atob(base64Data);
+    const bytesLength = byteCharacters.length;
+    const slicesCount = Math.ceil(bytesLength / sliceSize);
+    const byteArrays = new Array(slicesCount);
+
+    for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+      const begin = sliceIndex * sliceSize;
+      const end = Math.min(begin + sliceSize, bytesLength);
+
+      const bytes = new Array(end - begin);
+      for (let offset = begin, i = 0; offset < end; ++offset, ++i) {
+        bytes[i] = byteCharacters.charCodeAt(offset);
+      }
+      byteArrays[sliceIndex] = new Uint8Array(bytes);
+    }
+
+    const blob = new Blob(byteArrays, { type: contentType });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+
+<%- include('../partials/footer') %>

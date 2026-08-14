@@ -1,0 +1,1659 @@
+<%- include('../partials/header') %>
+
+<!-- Conteúdo Principal da Gestão de Não Conformidades -->
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col min-h-screen">
+  
+  <!-- Cabeçalho -->
+  <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-gray-200">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-400">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Qualidade</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-neutralDark tracking-tight mt-1 flex items-center gap-3">
+        Gestão de Não Conformidades <span class="text-[10px] bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase tracking-wider">RDC 302 / ISO 15189</span>
+      </h1>
+      <p class="text-xs text-gray-500 mt-1">Identificação, rastreabilidade, análise de causa raiz e planos de ação corretiva e preventiva (CAPA).</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+      <button onclick="createNewNC()" class="flex-1 lg:flex-initial text-center px-4 py-2.5 bg-[#284701] hover:bg-[#1e350d] text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+        <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+        <span>+ Nova Não Conformidade</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Painel de Indicadores e KPIs da Qualidade -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 py-6">
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+      <span class="text-[9px] font-extrabold font-mono text-gray-400 uppercase tracking-widest">Total Registrado</span>
+      <div class="flex items-baseline justify-between mt-1">
+        <span class="text-xl font-black text-brand-neutralDark font-mono" id="kpi-total"><%= nonConformities.length %></span>
+        <span class="text-[10px] text-gray-400">ocorrencias</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between border-l-4 border-red-500">
+      <span class="text-[9px] font-extrabold font-mono text-red-600 uppercase tracking-widest">Abertas / Em Análise</span>
+      <div class="flex items-baseline justify-between mt-1">
+        <span class="text-xl font-black text-red-600 font-mono" id="kpi-open">
+          <%= nonConformities.filter(n => n.status === 'Aberta' || n.status === 'Em Análise').length %>
+        </span>
+        <span class="text-[9px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded font-mono font-bold">Ação Crítica</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between border-l-4 border-amber-500">
+      <span class="text-[9px] font-extrabold font-mono text-amber-600 uppercase tracking-widest">Em Execução / Validação</span>
+      <div class="flex items-baseline justify-between mt-1">
+        <span class="text-xl font-black text-amber-600 font-mono" id="kpi-execution">
+          <%= nonConformities.filter(n => n.status === 'Em Execução' || n.status === 'Aguardando Validação').length %>
+        </span>
+        <span class="text-[10px] text-gray-400">em progresso</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between border-l-4 border-emerald-500">
+      <span class="text-[9px] font-extrabold font-mono text-emerald-600 uppercase tracking-widest">Encerradas</span>
+      <div class="flex items-baseline justify-between mt-1">
+        <span class="text-xl font-black text-emerald-600 font-mono" id="kpi-closed">
+          <%= nonConformities.filter(n => n.status === 'Encerrada').length %>
+        </span>
+        <span class="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono font-bold">Resolvidas</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between col-span-2 lg:col-span-1">
+      <span class="text-[9px] font-extrabold font-mono text-brand-dark uppercase tracking-widest">Indicadores CAPA</span>
+      <div class="space-y-1 mt-2">
+        <div class="flex justify-between text-[10px]">
+          <span class="text-gray-500">Eficácia das Ações:</span>
+          <span class="font-bold text-emerald-600">94.5%</span>
+        </div>
+        <div class="flex justify-between text-[10px]">
+          <span class="text-gray-500">Índice Recorrência:</span>
+          <span class="font-bold text-red-600">1.2%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout Dividido em Duas Colunas -->
+  <div class="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+    
+    <!-- Coluna Esquerda: Listagem de NCs (xl:col-span-4) -->
+    <div class="xl:col-span-4 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-250px)] min-h-[500px]">
+      
+      <!-- Cabeçalho de Busca e Filtro -->
+      <div class="p-4 border-b border-gray-100 bg-gray-50/60 space-y-3">
+        <div>
+          <label class="text-[9px] font-extrabold uppercase font-mono tracking-wider text-gray-400">Buscar Ocorrência</label>
+          <div class="relative mt-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" id="nc-search" oninput="filterNCs()" placeholder="Nº da NC, setor ou descrição..." class="pl-9 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:border-brand-gold focus:outline-none transition-all">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] font-extrabold uppercase font-mono tracking-wider text-gray-400">Filtrar por Status</label>
+            <select id="status-filter" onchange="filterNCs()" class="mt-1 w-full bg-white border border-gray-200 rounded-xl py-1.5 px-2 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+              <option value="todos">Todos os Status</option>
+              <option value="Aberta">Aberta</option>
+              <option value="Em Análise">Em Análise</option>
+              <option value="Em Execução">Em Execução</option>
+              <option value="Aguardando Validação">Aguardando Validação</option>
+              <option value="Encerrada">Encerrada</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[9px] font-extrabold uppercase font-mono tracking-wider text-gray-400">Gravidade</label>
+            <select id="severity-filter" onchange="filterNCs()" class="mt-1 w-full bg-white border border-gray-200 rounded-xl py-1.5 px-2 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+              <option value="todos">Todas</option>
+              <option value="Baixa">Baixa</option>
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+              <option value="Crítica">Crítica</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista Rolável -->
+      <div class="flex-1 overflow-y-auto divide-y divide-gray-100" id="nc-list-container">
+        <% if (nonConformities.length === 0) { %>
+          <div class="p-8 text-center text-gray-400 space-y-2">
+            <svg class="w-12 h-12 mx-auto stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p class="text-xs font-semibold">Nenhuma Não Conformidade registrada.</p>
+            <button onclick="createNewNC()" class="text-xs text-brand-gold font-bold underline hover:text-brand-dark transition-colors">Criar a primeira agora</button>
+          </div>
+        <% } else { %>
+          <% nonConformities.forEach(function(nc) { %>
+            <div onclick="selectNC('<%= nc.id %>')" id="nc-card-<%= nc.id %>" class="nc-card p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 <%= selectedNC && selectedNC.id === nc.id ? 'bg-amber-50/50 border-[#284701]' : 'border-transparent' %>">
+              <div class="flex justify-between items-start gap-2">
+                <span class="font-mono font-bold text-xs text-brand-neutralDark"><%= nc.id %></span>
+                
+                <!-- Badge de Status Dinâmico -->
+                <% 
+                  let badgeClass = "bg-red-50 text-red-700 border-red-100";
+                  if (nc.status === 'Em Análise') badgeClass = "bg-orange-50 text-orange-700 border-orange-100";
+                  else if (nc.status === 'Em Execução') badgeClass = "bg-blue-50 text-blue-700 border-blue-100";
+                  else if (nc.status === 'Aguardando Validação') badgeClass = "bg-purple-50 text-purple-700 border-purple-100";
+                  else if (nc.status === 'Encerrada') badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                %>
+                <span class="text-[9px] px-2 py-0.5 rounded-full border font-bold font-mono tracking-wider <%= badgeClass %>">
+                  <%= nc.status %>
+                </span>
+              </div>
+              
+              <div class="text-[11px] text-gray-500 font-bold mt-1.5 flex justify-between items-center">
+                <span><%= nc.sector %> &bull; <%= nc.process %></span>
+                <span class="text-[10px] font-normal"><%= nc.dateOccurrence %></span>
+              </div>
+              
+              <p class="text-xs text-gray-700 font-normal line-clamp-2 mt-2 leading-relaxed">
+                <%= nc.description %>
+              </p>
+
+              <div class="flex justify-between items-center mt-3">
+                <div class="flex items-center gap-1.5">
+                  <% if (nc.severity === 'Alta' || nc.severity === 'Crítica') { %>
+                    <span class="text-[9px] bg-red-100 text-red-800 font-extrabold px-1.5 py-0.2 rounded uppercase">Critico</span>
+                  <% } else { %>
+                    <span class="text-[9px] bg-gray-100 text-gray-700 px-1.5 py-0.2 rounded"><%= nc.severity %></span>
+                  <% } %>
+                  
+                  <% if (nc.actionPlan && nc.actionPlan.length > 0) { %>
+                    <% 
+                      let done = nc.actionPlan.filter(a => a.status === 'Concluída').length;
+                      let total = nc.actionPlan.length;
+                      let pct = Math.round((done / total) * 100);
+                    %>
+                    <span class="text-[9px] font-mono text-gray-400 font-bold">Plano: <%= done %>/<%= total %> (<%= pct %>%)</span>
+                  <% } %>
+                </div>
+                
+                <% if (nc.comments && nc.comments.length > 0) { %>
+                  <span class="flex items-center gap-1 text-[10px] text-gray-400 font-mono">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <%= nc.comments.length %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Coluna Direita: Painel de Ocorrência Detalhado (xl:col-span-8) -->
+    <div class="xl:col-span-8 space-y-6">
+      
+      <!-- Se não houver nada e houver NCs, mostramos aviso ou carregamos o primeiro -->
+      <div id="nc-detail-card" class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+        
+        <!-- Formulário Geral da Não Conformidade -->
+        <form id="nc-form" onsubmit="saveNCForm(event)" class="flex flex-col flex-1">
+          <input type="hidden" name="id" id="form-nc-id" value="<%= selectedNC ? selectedNC.id : '' %>">
+          
+          <!-- Abas de Navegação (10 Abas) -->
+          <div class="border-b border-gray-200 bg-gray-50/50 p-2 overflow-x-auto whitespace-nowrap scrollbar-none flex items-center gap-1">
+            <button type="button" onclick="switchTab('gerais')" id="tab-btn-gerais" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-[#284701] bg-white border border-gray-100 shadow-sm">
+              1. Gerais
+            </button>
+            <button type="button" onclick="switchTab('descricao')" id="tab-btn-descricao" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              2. Descrição
+            </button>
+            <button type="button" onclick="switchTab('paciente')" id="tab-btn-paciente" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              3. Paciente/Exame
+            </button>
+            <button type="button" onclick="switchTab('impacto')" id="tab-btn-impacto" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              4. Impacto
+            </button>
+            <button type="button" onclick="switchTab('evidencias')" id="tab-btn-evidencias" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              5. Evidências
+            </button>
+            <button type="button" onclick="switchTab('causa')" id="tab-btn-causa" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              6. Causa
+            </button>
+            <button type="button" onclick="switchTab('plano')" id="tab-btn-plano" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              7. Plano CAPA
+            </button>
+            <button type="button" onclick="switchTab('eficacia')" id="tab-btn-eficacia" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              8. Eficácia
+            </button>
+            <button type="button" onclick="switchTab('encerramento')" id="tab-btn-encerramento" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              9. Fechamento
+            </button>
+            <button type="button" onclick="switchTab('historico')" id="tab-btn-historico" class="tab-btn px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all text-gray-500 hover:text-[#284701] hover:bg-white/50">
+              10. Histórico/Chat
+            </button>
+          </div>
+
+          <!-- Corpo do Detalhe das Abas -->
+          <div class="p-6 flex-1 overflow-y-auto min-h-[400px]">
+            
+            <!-- ABA 1: Informações Gerais -->
+            <div id="tab-content-gerais" class="tab-content space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Número da NC (Somente Leitura)</label>
+                  <input type="text" id="form-id-display" readonly value="<%= selectedNC ? selectedNC.id : '(Novo Registro Autogerado)' %>" class="mt-1.5 w-full bg-gray-50 border border-gray-200 text-gray-500 rounded-xl py-2 px-3 text-xs font-bold font-mono outline-none cursor-not-allowed">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Status Ocorrência</label>
+                  <select name="status" id="form-status" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none font-bold">
+                    <option value="Aberta" <%= selectedNC && selectedNC.status === 'Aberta' ? 'selected' : '' %>>Aberta</option>
+                    <option value="Em Análise" <%= selectedNC && selectedNC.status === 'Em Análise' ? 'selected' : '' %>>Em Análise</option>
+                    <option value="Em Execução" <%= selectedNC && selectedNC.status === 'Em Execução' ? 'selected' : '' %>>Em Execução</option>
+                    <option value="Aguardando Validação" <%= selectedNC && selectedNC.status === 'Aguardando Validação' ? 'selected' : '' %>>Aguardando Validação</option>
+                    <option value="Encerrada" <%= selectedNC && selectedNC.status === 'Encerrada' ? 'selected' : '' %>>Encerrada</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Responsável pelo Registro</label>
+                  <input type="text" name="responsibleRegistration" required id="form-responsibleRegistration" value="<%= selectedNC ? selectedNC.responsibleRegistration : 'Dra. Sandra Regina Mendes' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Data da Ocorrência</label>
+                  <input type="date" name="dateOccurrence" required id="form-dateOccurrence" value="<%= selectedNC ? selectedNC.dateOccurrence : '' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Hora</label>
+                  <input type="time" name="timeOccurrence" required id="form-timeOccurrence" value="<%= selectedNC ? selectedNC.timeOccurrence : '' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Data do Registro</label>
+                  <input type="date" name="dateRegistration" required id="form-dateRegistration" value="<%= selectedNC ? selectedNC.dateRegistration : new Date().toISOString().substring(0,10) %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Unidade</label>
+                  <select name="unit" id="form-unit" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Unidade Cambará - Central" <%= selectedNC && selectedNC.unit === 'Unidade Cambará - Central' ? 'selected' : '' %>>Unidade Cambará - Central</option>
+                    <option value="Unidade Posto Avançado Cambará" <%= selectedNC && selectedNC.unit === 'Unidade Posto Avançado Cambará' ? 'selected' : '' %>>Unidade Posto Avançado Cambará</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Setor Laboratorial</label>
+                  <select name="sector" id="form-sector" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Hematologia" <%= selectedNC && selectedNC.sector === 'Hematologia' ? 'selected' : '' %>>Hematologia</option>
+                    <option value="Bioquímica" <%= selectedNC && selectedNC.sector === 'Bioquímica' ? 'selected' : '' %>>Bioquímica</option>
+                    <option value="Imunologia" <%= selectedNC && selectedNC.sector === 'Imunologia' ? 'selected' : '' %>>Imunologia</option>
+                    <option value="Microbiologia" <%= selectedNC && selectedNC.sector === 'Microbiologia' ? 'selected' : '' %>>Microbiologia</option>
+                    <option value="Uroanálise" <%= selectedNC && selectedNC.sector === 'Uroanálise' ? 'selected' : '' %>>Uroanálise</option>
+                    <option value="Qualidade / Geral" <%= selectedNC && selectedNC.sector === 'Qualidade / Geral' ? 'selected' : '' %>>Qualidade / Geral</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Origem da Identificação</label>
+                  <select name="origin" id="form-origin" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Auditoria Interna de Rotina" <%= selectedNC && selectedNC.origin === 'Auditoria Interna de Rotina' ? 'selected' : '' %>>Auditoria Interna de Rotina</option>
+                    <option value="Auditoria Externa (PALC)" <%= selectedNC && selectedNC.origin === 'Auditoria Externa (PALC)' ? 'selected' : '' %>>Auditoria Externa (PALC)</option>
+                    <option value="Reclamação de Paciente" <%= selectedNC && selectedNC.origin === 'Reclamação de Paciente' ? 'selected' : '' %>>Reclamação de Paciente</option>
+                    <option value="Análise Crítica Diária da Equipe" <%= selectedNC && selectedNC.origin === 'Análise Crítica Diária da Equipe' ? 'selected' : '' %>>Análise Crítica Diária da Equipe</option>
+                    <option value="Controle Interno de Qualidade (CIQ)" <%= selectedNC && selectedNC.origin === 'Controle Interno de Qualidade (CIQ)' ? 'selected' : '' %>>Controle Interno de Qualidade (CIQ)</option>
+                    <option value="Controle Externo (Ensaios de Proficiência)" <%= selectedNC && selectedNC.origin === 'Controle Externo (Ensaios de Proficiência)' ? 'selected' : '' %>>Controle Externo (Ensaios de Proficiência)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Processo Afetado</label>
+                  <select name="process" id="form-process" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Fase Pré-Analítica" <%= selectedNC && selectedNC.process === 'Fase Pré-Analítica' ? 'selected' : '' %>>Fase Pré-Analítica</option>
+                    <option value="Fase Analítica" <%= selectedNC && selectedNC.process === 'Fase Analítica' ? 'selected' : '' %>>Fase Analítica</option>
+                    <option value="Fase Pós-Analítica" <%= selectedNC && selectedNC.process === 'Fase Pós-Analítica' ? 'selected' : '' %>>Fase Pós-Analítica</option>
+                    <option value="Processo Suporte/Garantia" <%= selectedNC && selectedNC.process === 'Processo Suporte/Garantia' ? 'selected' : '' %>>Processo Suporte/Garantia</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Subprocesso</label>
+                  <input type="text" name="subprocess" id="form-subprocess" value="<%= selectedNC ? selectedNC.subprocess : 'Processamento de Amostra' %>" placeholder="Ex: Cadastro, Triagem, Soroteca, Assinatura de Laudo..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Categoria da Não Conformidade</label>
+                  <select name="category" id="form-category" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Desvio de Equipamento" <%= selectedNC && selectedNC.category === 'Desvio de Equipamento' ? 'selected' : '' %>>Desvio de Equipamento</option>
+                    <option value="Troca/Erro de Amostra" <%= selectedNC && selectedNC.category === 'Troca/Erro de Amostra' ? 'selected' : '' %>>Troca/Erro de Amostra</option>
+                    <option value="Atraso na Entrega (TAT)" <%= selectedNC && selectedNC.category === 'Atraso na Entrega (TAT)' ? 'selected' : '' %>>Atraso na Entrega (TAT)</option>
+                    <option value="Reagente Vencido ou Degradado" <%= selectedNC && selectedNC.category === 'Reagente Vencido ou Degradado' ? 'selected' : '' %>>Reagente Vencido ou Degradado</option>
+                    <option value="Erro de Transcrição/Digitação" <%= selectedNC && selectedNC.category === 'Erro de Transcrição/Digitação' ? 'selected' : '' %>>Erro de Transcrição/Digitação</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Tipo de Falha</label>
+                  <input type="text" name="type" id="form-type" value="<%= selectedNC ? selectedNC.type : 'Erro de Calibração' %>" placeholder="Ex: Descalibração mecânica, erro de software..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Gravidade</label>
+                  <select name="severity" id="form-severity" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Baixa" <%= selectedNC && selectedNC.severity === 'Baixa' ? 'selected' : '' %>>Baixa (Mínimo impacto operacional)</option>
+                    <option value="Média" <%= selectedNC && selectedNC.severity === 'Média' ? 'selected' : '' %>>Média (Impacto gerenciável com correção rápida)</option>
+                    <option value="Alta" <%= selectedNC && selectedNC.severity === 'Alta' ? 'selected' : '' %>>Alta (Impacto no TAT ou risco analítico sob controle)</option>
+                    <option value="Crítica" <%= selectedNC && selectedNC.severity === 'Crítica' ? 'selected' : '' %>>Crítica (Prejuízo ao paciente / recolta imediata)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Prioridade</label>
+                  <select name="priority" id="form-priority" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Baixa" <%= selectedNC && selectedNC.priority === 'Baixa' ? 'selected' : '' %>>Baixa</option>
+                    <option value="Média" <%= selectedNC && selectedNC.priority === 'Média' ? 'selected' : '' %>>Média</option>
+                    <option value="Alta" <%= selectedNC && selectedNC.priority === 'Alta' ? 'selected' : '' %>>Alta</option>
+                    <option value="Crítica" <%= selectedNC && selectedNC.priority === 'Crítica' ? 'selected' : '' %>>Imediata / Crítica</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 2: Descrição Detalhada -->
+            <div id="tab-content-descricao" class="tab-content hidden space-y-4">
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Descrição Detalhada do Desvio Ocorrido</label>
+                <textarea name="description" id="form-description" rows="8" placeholder="Descreva de forma rica e objetiva o que ocorreu, onde ocorreu, como foi descoberto, as consequências imediatas e ações paliativas já adotadas pela equipe..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none leading-relaxed"><%= selectedNC ? selectedNC.description : '' %></textarea>
+              </div>
+
+              <!-- Integração de IA - Botões Rápidos e Exibição de Resultados -->
+              <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col gap-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-[9px] bg-amber-500 text-white font-mono font-bold px-1.5 py-0.5 rounded uppercase">Módulo IA Gemini</span>
+                  <span class="text-[11px] text-gray-600 font-bold">Assistente de Redação e Qualidade</span>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" onclick="callGemini('improve')" class="px-3 py-1.5 bg-brand-dark hover:bg-[#1e350d] text-white rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors active:scale-95 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    Melhorar Descrição com IA
+                  </button>
+                  <button type="button" onclick="callGemini('summarize')" class="px-3 py-1.5 bg-brand-dark hover:bg-[#1e350d] text-white rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors active:scale-95 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    Resumir Ocorrência
+                  </button>
+                </div>
+
+                <!-- Painel de Output da IA -->
+                <div id="ai-response-panel" class="hidden mt-3 bg-white p-3 rounded-xl border border-amber-200/50 space-y-2 relative">
+                  <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                    <span class="text-[10px] font-mono text-amber-700 font-bold">Resultado Sugerido pelo Gemini:</span>
+                    <button type="button" onclick="applyAIResult()" class="text-[10px] text-emerald-600 font-bold hover:underline font-mono">Aplicar ao Campo Descrição</button>
+                  </div>
+                  <p id="ai-response-text" class="text-xs text-gray-700 leading-relaxed italic whitespace-pre-wrap"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 3: Paciente / Exame Vinculado -->
+            <div id="tab-content-paciente" class="tab-content hidden space-y-6">
+              <div class="border-l-4 border-amber-400 pl-3">
+                <h4 class="text-xs font-extrabold uppercase font-mono text-gray-400">Vínculos de Amostra, Equipamento e Paciente</h4>
+                <p class="text-[11px] text-gray-500">Mantenha a rastreabilidade total preenchendo as informações associadas à ocorrência.</p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Nome do Paciente</label>
+                  <input type="text" name="patientName" id="form-patientName" value="<%= selectedNC ? selectedNC.patientName : '' %>" placeholder="Ex: Maria de Lurdes" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Código do Paciente</label>
+                  <input type="text" name="patientCode" id="form-patientCode" value="<%= selectedNC ? selectedNC.patientCode : '' %>" placeholder="Ex: 123456" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none font-mono">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Convênio</label>
+                  <input type="text" name="convenio" id="form-convenio" value="<%= selectedNC ? selectedNC.convenio : '' %>" placeholder="Ex: Unimed, Particular, SUS..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Código da Requisição</label>
+                  <input type="text" name="requisitionCode" id="form-requisitionCode" value="<%= selectedNC ? selectedNC.requisitionCode : '' %>" placeholder="Ex: REQ887" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none font-mono">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Exame Ocorrido</label>
+                  <input type="text" name="exam" id="form-exam" value="<%= selectedNC ? selectedNC.exam : '' %>" placeholder="Ex: Hemograma Completo" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Material Biológico</label>
+                  <input type="text" name="material" id="form-material" value="<%= selectedNC ? selectedNC.material : '' %>" placeholder="Ex: Sangue Total (EDTA)" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Lote do Insumo</label>
+                  <input type="text" name="lot" id="form-lot" value="<%= selectedNC ? selectedNC.lot : '' %>" placeholder="Ex: L2026-X8" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none font-mono">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Reagente Utilizado</label>
+                  <input type="text" name="reagent" id="form-reagent" value="<%= selectedNC ? selectedNC.reagent : '' %>" placeholder="Ex: Calibrador Hemoglobin 5V" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Equipamento Laboratorial</label>
+                  <input type="text" name="equipment" id="form-equipment" value="<%= selectedNC ? selectedNC.equipment : '' %>" placeholder="Ex: Sysmex XN-1000" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">POP de Referência (Wiki)</label>
+                  <input type="text" name="pop" id="form-pop" value="<%= selectedNC ? selectedNC.pop : '' %>" placeholder="Ex: POP-HEM-01" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none font-mono">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Fornecedor / Fabricante</label>
+                  <input type="text" name="supplier" id="form-supplier" value="<%= selectedNC ? selectedNC.supplier : '' %>" placeholder="Ex: Roche Diagnostics" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                </div>
+              </div>
+
+              <!-- Ações Extras de Relacionamento -->
+              <div class="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                <button type="button" onclick="showRelationModal('Equipamento')" class="px-3 py-2 border border-[#284701] hover:bg-[#284701]/5 text-[#284701] font-mono font-bold rounded-lg text-xs cursor-pointer transition-colors">
+                  + Relacionar Equipamento
+                </button>
+                <button type="button" onclick="showRelationModal('POP')" class="px-3 py-2 border border-[#284701] hover:bg-[#284701]/5 text-[#284701] font-mono font-bold rounded-lg text-xs cursor-pointer transition-colors">
+                  + Relacionar POP
+                </button>
+                <button type="button" onclick="showRelationModal('Fornecedor')" class="px-3 py-2 border border-[#284701] hover:bg-[#284701]/5 text-[#284701] font-mono font-bold rounded-lg text-xs cursor-pointer transition-colors">
+                  + Relacionar Fornecedor
+                </button>
+                <button type="button" onclick="triggerRecoleta()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-mono font-bold rounded-lg text-xs cursor-pointer transition-colors ml-auto">
+                  Criar Recoleta de Paciente
+                </button>
+              </div>
+            </div>
+
+            <!-- ABA 4: Impacto -->
+            <div id="tab-content-impacto" class="tab-content hidden space-y-6">
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Partes Afetadas pelo Desvio (Seleção Múltipla)</label>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
+                  <% 
+                    let affectedList = selectedNC && selectedNC.affected ? selectedNC.affected : [];
+                  %>
+                  <label class="flex items-center gap-2 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" name="affected" value="Paciente" <%= affectedList.includes('Paciente') ? 'checked' : '' %> class="rounded border-gray-300 text-brand-gold focus:ring-brand-gold">
+                    <span>Paciente</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" name="affected" value="Prazo" <%= affectedList.includes('Prazo') ? 'checked' : '' %> class="rounded border-gray-300 text-brand-gold focus:ring-brand-gold">
+                    <span>Prazo (TAT)</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" name="affected" value="Financeiro" <%= affectedList.includes('Financeiro') ? 'checked' : '' %> class="rounded border-gray-300 text-brand-gold focus:ring-brand-gold">
+                    <span>Financeiro</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" name="affected" value="Reputacional" <%= affectedList.includes('Reputacional') ? 'checked' : '' %> class="rounded border-gray-300 text-brand-gold focus:ring-brand-gold">
+                    <span>Reputação</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 cursor-pointer text-xs font-semibold">
+                    <input type="checkbox" name="affected" value="Qualidade" <%= affectedList.includes('Qualidade') ? 'checked' : '' %> class="rounded border-gray-300 text-brand-gold focus:ring-brand-gold">
+                    <span>Qualidade</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Descrição do Impacto e Mitigação Provisória</label>
+                <textarea name="impactDescription" id="form-impactDescription" rows="5" placeholder="Descreva os danos causados (atrasos, cancelamento de teste, retrabalho) e quais ações mitigadoras foram adotadas de imediato para resguardar o paciente e o laboratório..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none leading-relaxed"><%= selectedNC ? selectedNC.impactDescription : '' %></textarea>
+              </div>
+            </div>
+
+            <!-- ABA 5: Evidências (Arquivos e Anexos) -->
+            <div id="tab-content-evidencias" class="tab-content hidden space-y-6">
+              <div class="border-2 border-dashed border-gray-200 hover:border-brand-gold transition-colors p-8 rounded-2xl text-center space-y-3 cursor-pointer relative" id="evidence-dropzone" onclick="simulateFileUpload()">
+                <svg class="w-12 h-12 mx-auto text-gray-400 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <div>
+                  <p class="text-xs font-bold text-gray-700">Arraste e solte arquivos aqui, ou clique para selecionar</p>
+                  <p class="text-[10px] text-gray-400 mt-1">Imagens de calibração, logs de erro TXT, laudos PDF afetados (Até 10MB)</p>
+                </div>
+                <input type="file" id="evidence-file-input" class="hidden" multiple>
+              </div>
+
+              <div class="space-y-3">
+                <h4 class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Evidências e Documentos Anexados</h4>
+                <div class="divide-y divide-gray-100 border border-gray-100 rounded-xl" id="evidencias-list">
+                  <% if (selectedNC && selectedNC.evidences && selectedNC.evidences.length > 0) { %>
+                    <% selectedNC.evidences.forEach(function(ev, idx) { %>
+                      <div class="p-3 flex justify-between items-center bg-gray-50/50 rounded-xl">
+                        <div class="flex items-center gap-3">
+                          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                          <div>
+                            <p class="text-xs font-bold text-gray-800"><%= ev.name %></p>
+                            <p class="text-[10px] text-gray-400"><%= ev.size %> &bull; Anexado em <%= ev.date %></p>
+                          </div>
+                        </div>
+                        <button type="button" onclick="deleteEvidence(<%= idx %>)" class="text-xs text-red-500 font-mono hover:underline">Remover</button>
+                      </div>
+                    <% }); %>
+                  <% } else { %>
+                    <div class="p-4 text-center text-gray-400 text-xs">
+                      Nenhum anexo registrado como evidência física.
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 6: Análise da Causa Raiz -->
+            <div id="tab-content-causa" class="tab-content hidden space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Metodologia Utilizada</label>
+                  <select name="causeAnalysisMethod" id="form-causeAnalysisMethod" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="5 Porquês" <%= selectedNC && selectedNC.causeAnalysisMethod === '5 Porquês' ? 'selected' : '' %>>5 Porquês (Recomendado)</option>
+                    <option value="Diagrama de Ishikawa" <%= selectedNC && selectedNC.causeAnalysisMethod === 'Diagrama de Ishikawa' ? 'selected' : '' %>>Diagrama de Ishikawa (Espinha de Peixe)</option>
+                    <option value="Análise de Pareto" <%= selectedNC && selectedNC.causeAnalysisMethod === 'Análise de Pareto' ? 'selected' : '' %>>Análise de Pareto</option>
+                    <option value="Brainstorming" <%= selectedNC && selectedNC.causeAnalysisMethod === 'Brainstorming' ? 'selected' : '' %>>Brainstorming / Mapeamento</option>
+                  </select>
+                </div>
+                <div class="md:col-span-2">
+                  <span class="text-[10px] font-extrabold uppercase font-mono text-gray-400 block">Assistente de Qualidade IA</span>
+                  <div class="flex gap-2 mt-1.5">
+                    <button type="button" onclick="callGemini('suggest_cause')" class="px-3 py-1.5 bg-brand-dark hover:bg-[#1e350d] text-white rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors active:scale-95 flex items-center gap-1">
+                      Sugerir Causa Provável com IA
+                    </button>
+                    <button type="button" onclick="callGemini('generate_5whys')" class="px-3 py-1.5 bg-brand-dark hover:bg-[#1e350d] text-white rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors active:scale-95 flex items-center gap-1">
+                      Gerar Análise 5 Porquês com IA
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400 block">Investigação e Identificação da Causa Raiz</label>
+                <textarea name="causeAnalysisRoot" id="form-causeAnalysisRoot" rows="8" placeholder="Ex: Por que ocorreu a falha? O controle falhou. Por que o controle falhou? O calibrador degradou... [Insira a investigação lógica que levou ao fator impeditivo primário]" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none leading-relaxed font-mono whitespace-pre-wrap"><%= selectedNC ? selectedNC.causeAnalysisRoot : '' %></textarea>
+              </div>
+
+              <!-- Painel de Output da Investigação da IA -->
+              <div id="ai-cause-panel" class="hidden bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-2">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                  <span class="text-[10px] font-mono text-amber-700 font-bold">Investigação Estruturada do Gemini:</span>
+                  <button type="button" onclick="applyAICauseResult()" class="text-[10px] text-emerald-600 font-bold hover:underline font-mono">Aplicar ao Campo de Análise</button>
+                </div>
+                <p id="ai-cause-text" class="text-xs text-gray-700 leading-relaxed italic whitespace-pre-wrap font-mono bg-white p-3 rounded-xl border border-gray-200"></p>
+              </div>
+            </div>
+
+            <!-- ABA 7: Plano de Ação (CAPA) -->
+            <div id="tab-content-plano" class="tab-content hidden space-y-6">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4 class="text-xs font-extrabold uppercase font-mono text-gray-400">Plano de Ação Corretiva e Preventiva (CAPA)</h4>
+                  <p class="text-[11px] text-gray-500">Adicione ações corretivas imediatas e de melhoria para prevenir novas ocorrências.</p>
+                </div>
+                <button type="button" onclick="addActionPlanRow()" class="px-3 py-1.5 bg-[#284701] hover:bg-[#1e350d] text-white text-xs font-mono font-bold rounded-lg cursor-pointer transition-colors active:scale-95">
+                  + Adicionar Ação
+                </button>
+              </div>
+
+              <!-- Barra de Progresso Dinâmica -->
+              <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <div class="flex justify-between text-xs font-bold font-mono text-gray-600 mb-1">
+                  <span>Progresso do Plano de Ação:</span>
+                  <span id="action-progress-label">0% Concluído</span>
+                </div>
+                <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                  <div id="action-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Tabela de Ações Dinâmica -->
+              <div class="overflow-x-auto border border-gray-100 rounded-2xl">
+                <table class="w-full text-left text-xs divide-y divide-gray-100">
+                  <thead class="bg-gray-50 text-gray-400 font-mono font-bold uppercase text-[9px] tracking-wider">
+                    <tr>
+                      <th class="p-3">Tipo</th>
+                      <th class="p-3 w-1/3">Descrição da Ação</th>
+                      <th class="p-3">Responsável</th>
+                      <th class="p-3">Prazo</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="action-plan-rows" class="divide-y divide-gray-100">
+                    <!-- Gerado Dinamicamente por Javascript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ABA 8: Verificação da Eficácia -->
+            <div id="tab-content-eficacia" class="tab-content hidden space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">A Não Conformidade foi Resolvida?</label>
+                  <select name="effectivenessResolved" id="form-effectivenessResolved" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Sim" <%= selectedNC && selectedNC.effectivenessResolved === 'Sim' ? 'selected' : '' %>>Sim (Totalmente Solucionada)</option>
+                    <option value="Não" <%= selectedNC && selectedNC.effectivenessResolved === 'Não' ? 'selected' : '' %>>Não (Medidas ineficazes)</option>
+                    <option value="Parcialmente" <%= selectedNC && selectedNC.effectivenessResolved === 'Parcialmente' ? 'selected' : '' %>>Parcialmente (Aguardando monitoramento longo)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Houve Recorrência do Desvio?</label>
+                  <select name="effectivenessRecurred" id="form-effectivenessRecurred" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none">
+                    <option value="Não" <%= selectedNC && selectedNC.effectivenessRecurred === 'Não' ? 'selected' : '' %>>Não (Comportamento controlado)</option>
+                    <option value="Sim" <%= selectedNC && selectedNC.effectivenessRecurred === 'Sim' ? 'selected' : '' %>>Sim (Houve nova falha idêntica)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Auditor / Responsável Verificação</label>
+                  <input type="text" name="effectivenessResponsible" id="form-effectivenessResponsible" value="<%= selectedNC ? selectedNC.effectivenessResponsible : 'Dra. Sandra Regina Mendes' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Análise do Auditor da Qualidade (Evidência Objetiva)</label>
+                  <textarea name="effectivenessDescription" id="form-effectivenessDescription" rows="5" placeholder="Insira seu parecer técnico fundamentado sobre os resultados práticos obtidos após o encerramento do plano de ação..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-brand-gold leading-relaxed"><%= selectedNC ? selectedNC.effectivenessDescription : '' %></textarea>
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Data de Verificação</label>
+                  <input type="date" name="effectivenessDate" id="form-effectivenessDate" value="<%= selectedNC ? selectedNC.effectivenessDate : '' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold">
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 9: Encerramento / Homologação -->
+            <div id="tab-content-encerramento" class="tab-content hidden space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Diretor Técnico / Homologador</label>
+                  <input type="text" name="closureResponsible" id="form-closureResponsible" value="<%= selectedNC ? selectedNC.closureResponsible : 'Dr. Carlos Eduardo Lima (Diretor Técnico)' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold">
+                </div>
+                <div>
+                  <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Data de Encerramento Oficial</label>
+                  <input type="date" name="closureDate" id="form-closureDate" value="<%= selectedNC ? selectedNC.closureDate : '' %>" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold">
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Parecer Final de Homologação</label>
+                <textarea name="closureParecer" id="form-closureParecer" rows="5" placeholder="Parecer conclusivo da Diretoria de Qualidade atestando o restabelecimento da conformidade operacional..." class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-brand-gold leading-relaxed"><%= selectedNC ? selectedNC.closureParecer : '' %></textarea>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Assinatura Digital / Chave de Validação do Diretor</label>
+                <input type="text" name="closureSignature" id="form-closureSignature" value="<%= selectedNC ? selectedNC.closureSignature : 'Carlos Eduardo Lima - Diretor Técnico - CRBM/PR 4452' %>" placeholder="Ex: Carlos Eduardo Lima - Diretor Técnico - CRBM/PR 4452" class="mt-1.5 w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold font-mono">
+              </div>
+
+              <div class="pt-4 border-t border-gray-100 flex gap-2">
+                <button type="button" onclick="generateCAPADocument()" class="px-4 py-2.5 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-mono font-bold rounded-xl cursor-pointer transition-colors active:scale-95 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                  <span>Gerar Relatório CAPA para Impressão</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- ABA 10: Histórico de Auditoria & Live Chat -->
+            <div id="tab-content-historico" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              <!-- Histórico de Auditoria (Esquerda / lg:col-span-6) -->
+              <div class="lg:col-span-6 space-y-4">
+                <span class="text-[10px] font-extrabold uppercase font-mono text-gray-400">Trilha de Auditoria (Histórico de Alterações)</span>
+                <div class="space-y-4 border-l-2 border-gray-100 pl-4 relative" id="audit-trail-container">
+                  <!-- Carregado por Javascript -->
+                </div>
+              </div>
+
+              <!-- Live Chat Interno (Direita / lg:col-span-6) -->
+              <div class="lg:col-span-6 flex flex-col h-[400px] border border-gray-100 rounded-2xl bg-gray-50/50 overflow-hidden">
+                <div class="bg-white p-3 border-b border-gray-100 flex justify-between items-center">
+                  <span class="text-[10px] font-extrabold uppercase font-mono text-[#284701]">Chat de Colaboração Técnica</span>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono font-bold uppercase tracking-wider">Criptografado</span>
+                </div>
+
+                <!-- Corpo de Mensagens Chat -->
+                <div class="flex-1 p-4 overflow-y-auto space-y-3" id="chat-messages-container">
+                  <!-- Carregado por Javascript -->
+                </div>
+
+                <!-- Envio de Comentários -->
+                <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
+                  <input type="text" id="chat-text-input" placeholder="Digite sua nota ou observação..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-brand-gold focus:outline-none focus:bg-white transition-all">
+                  <button type="button" onclick="submitChatMessage()" class="px-3 bg-brand-dark hover:bg-brand-neutralDark text-white text-xs font-mono font-bold rounded-xl transition-colors cursor-pointer active:scale-95 flex items-center justify-center">
+                    Enviar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Barra de Ações do Rodapé do Formulário -->
+          <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center shrink-0">
+            <button type="button" onclick="deleteNC()" id="delete-nc-btn" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-mono font-bold rounded-xl transition-colors cursor-pointer <%= selectedNC ? '' : 'hidden' %>">
+              Remover Registro
+            </button>
+            <div class="flex gap-2 ml-auto">
+              <button type="button" onclick="window.location.reload()" class="px-4 py-2 border border-gray-200 text-gray-500 hover:bg-gray-100 text-xs font-mono font-bold rounded-xl transition-all cursor-pointer">
+                Cancelar
+              </button>
+              <button type="submit" class="px-5 py-2 bg-[#284701] hover:bg-[#1e350d] text-white text-xs font-mono font-bold rounded-xl transition-all shadow shadow-[#284701]/10 hover:shadow-lg cursor-pointer">
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= MODAL: RELACIONAR RECURSOS / SUCESSO ================= -->
+<div id="relation-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/40 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-gray-100 max-w-md w-full p-6 shadow-2xl relative animate-fade-in">
+    <div class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
+      <h3 class="text-sm font-extrabold uppercase font-mono text-brand-neutralDark" id="relation-modal-title">Relacionar Equipamento</h3>
+      <button onclick="closeRelationModal()" class="text-gray-400 hover:text-gray-700 focus:outline-none font-bold text-lg">&times;</button>
+    </div>
+    <div class="space-y-4">
+      <div id="relation-modal-selector">
+        <!-- Injetado por Javascript -->
+      </div>
+      <div class="flex gap-2 justify-end pt-3">
+        <button onclick="closeRelationModal()" class="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-mono font-bold text-gray-500 hover:bg-gray-50">Cancelar</button>
+        <button onclick="applyRelation()" class="px-4 py-1.5 bg-[#284701] hover:bg-[#1e350d] text-white rounded-lg text-xs font-mono font-bold shadow">Vincular Recurso</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: CRIAR RECOLETA ================= -->
+<div id="recoleta-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/40 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-gray-100 max-w-lg w-full p-6 shadow-2xl relative animate-fade-in">
+    <div class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
+      <h3 class="text-sm font-extrabold uppercase font-mono text-rose-700 flex items-center gap-2">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>Criar Solicitação de Recoleta</span>
+      </h3>
+      <button onclick="closeRecoletaModal()" class="text-gray-400 hover:text-gray-700 focus:outline-none font-bold text-lg">&times;</button>
+    </div>
+    <div class="space-y-4 text-xs text-gray-600 leading-relaxed">
+      <p class="font-bold">O paciente possui exames ativos nesta ocorrência. Deseja iniciar o protocolo de recoleta e notificação imediata do paciente?</p>
+      
+      <div class="bg-rose-50 p-3 rounded-xl border border-rose-100 space-y-1">
+        <p class="font-bold text-rose-800">Rastreabilidade Vinculada:</p>
+        <p>&bull; <strong>Paciente:</strong> <span id="recoleta-paciente-display">-</span></p>
+        <p>&bull; <strong>Exame Ocorrido:</strong> <span id="recoleta-exame-display">-</span></p>
+        <p>&bull; <strong>Motivo da Recoleta:</strong> <span id="recoleta-motivo-display">-</span></p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-[9px] font-extrabold uppercase font-mono text-gray-400 block mb-1">Motivo Justificado (RDC 302)</label>
+          <select id="recoleta-motivo-select" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
+            <option value="Amostra Hemolisada">Amostra Hemolisada</option>
+            <option value="Volume de Amostra Insuficiente">Volume de Amostra Insuficiente</option>
+            <option value="Amostra Coagulada">Amostra Coagulada</option>
+            <option value="Instabilidade Analítica do Lote">Instabilidade Analítica do Lote</option>
+            <option value="Confirmação de Resultado Absurdo">Confirmação de Resultado Absurdo</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[9px] font-extrabold uppercase font-mono text-gray-400 block mb-1">Contato com Paciente</label>
+          <select id="recoleta-contato-select" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
+            <option value="Pendente">Pendente de Ligação</option>
+            <option value="Ligado e Agendado">Ligado e Agendado</option>
+            <option value="Whatsapp Enviado">Notificado por Whatsapp</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end pt-3">
+        <button onclick="closeRecoletaModal()" class="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-mono font-bold text-gray-500 hover:bg-gray-50">Voltar</button>
+        <button onclick="confirmRecoleta()" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-mono font-bold shadow">Autorizar Recoleta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: DOCUMENTO CAPA (PRINT) ================= -->
+<div id="capa-modal" class="hidden fixed inset-0 z-50 bg-brand-neutralDark/40 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-gray-100 max-w-4xl w-full p-8 shadow-2xl relative flex flex-col max-h-[90vh]">
+    <div class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4 shrink-0">
+      <h3 class="text-sm font-extrabold uppercase font-mono text-[#284701] flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>Relatório de Não Conformidade e Ação CAPA (ISO 15189)</span>
+      </h3>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="px-3 py-1 bg-[#284701] hover:bg-[#1e350d] text-white text-xs font-mono font-bold rounded-lg cursor-pointer">Imprimir</button>
+        <button onclick="closeCAPAModal()" class="text-gray-400 hover:text-gray-700 focus:outline-none font-bold text-lg">&times;</button>
+      </div>
+    </div>
+    
+    <!-- Relatório Estruturado -->
+    <div class="flex-1 overflow-y-auto p-6 border border-gray-100 bg-gray-50/20 rounded-2xl" id="capa-print-content">
+      <!-- Injetado por Javascript -->
+    </div>
+  </div>
+</div>
+
+<!-- Scripts de Manipulação do Front-End -->
+<script>
+  // Carrega os dados da Não Conformidade Selecionada no EJS
+  let currentNC = <%- selectedNC ? JSON.stringify(selectedNC) : 'null' %>;
+  let allNCs = <%- JSON.stringify(nonConformities) %>;
+
+  // Lista local para gerenciar o Plano de Ação dinamicamente
+  let currentActionPlan = [];
+  if (currentNC && currentNC.actionPlan) {
+    currentActionPlan = [...currentNC.actionPlan];
+  }
+
+  // Lista local para gerenciar anexos / evidências
+  let currentEvidences = [];
+  if (currentNC && currentNC.evidences) {
+    currentEvidences = [...currentNC.evidences];
+  }
+
+  // Lista de históricos
+  let currentHistory = [];
+  if (currentNC && currentNC.history) {
+    currentHistory = [...currentNC.history];
+  }
+
+  // Lista de comentários/chat
+  let currentComments = [];
+  if (currentNC && currentNC.comments) {
+    currentComments = [...currentNC.comments];
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Inicializar visualização do plano de ação e histórico
+    renderActionPlanTable();
+    renderAuditTrail();
+    renderChatMessages();
+
+    // Se houver uma NC carregada, seleciona na lista visual
+    if (currentNC) {
+      const activeCard = document.getElementById(`nc-card-${currentNC.id}`);
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  });
+
+  // Troca de Abas
+  function switchTab(tabId) {
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.classList.remove("text-[#284701]", "bg-white", "border", "border-gray-100", "shadow-sm");
+      btn.classList.add("text-gray-500", "hover:text-[#284701]", "hover:bg-white/50");
+    });
+    
+    const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+    if (activeBtn) {
+      activeBtn.classList.remove("text-gray-500", "hover:text-[#284701]", "hover:bg-white/50");
+      activeBtn.classList.add("text-[#284701]", "bg-white", "border", "border-gray-100", "shadow-sm");
+    }
+
+    document.querySelectorAll(".tab-content").forEach(content => {
+      content.classList.add("hidden");
+    });
+    const activeContent = document.getElementById(`tab-content-${tabId}`);
+    if (activeContent) {
+      activeContent.classList.remove("hidden");
+    }
+  }
+
+  // Selecionar uma NC da Listagem
+  function selectNC(id) {
+    window.location.href = `/admin/nao-conformidades?id=${id}`;
+  }
+
+  // Iniciar criação de um novo registro (Zera o formulário)
+  function createNewNC() {
+    currentNC = null;
+    currentActionPlan = [];
+    currentEvidences = [];
+    currentHistory = [];
+    currentComments = [];
+
+    document.getElementById("form-nc-id").value = "";
+    document.getElementById("form-id-display").value = "(Novo Registro Autogerado)";
+    document.getElementById("form-status").value = "Aberta";
+    document.getElementById("form-responsibleRegistration").value = "Dra. Sandra Regina Mendes";
+    document.getElementById("form-dateOccurrence").value = "";
+    document.getElementById("form-timeOccurrence").value = "";
+    document.getElementById("form-dateRegistration").value = new Date().toISOString().substring(0,10);
+    document.getElementById("form-subprocess").value = "Triagem / Cadastro";
+    document.getElementById("form-description").value = "";
+    document.getElementById("form-patientName").value = "";
+    document.getElementById("form-patientCode").value = "";
+    document.getElementById("form-convenio").value = "";
+    document.getElementById("form-requisitionCode").value = "";
+    document.getElementById("form-exam").value = "";
+    document.getElementById("form-material").value = "";
+    document.getElementById("form-lot").value = "";
+    document.getElementById("form-reagent").value = "";
+    document.getElementById("form-equipment").value = "";
+    document.getElementById("form-pop").value = "";
+    document.getElementById("form-supplier").value = "";
+    document.getElementById("form-impactDescription").value = "";
+    document.getElementById("form-causeAnalysisRoot").value = "";
+    document.getElementById("form-effectivenessDescription").value = "";
+    document.getElementById("form-closureParecer").value = "";
+
+    // Desmarcar checkboxes de partes afetadas
+    document.querySelectorAll("input[name='affected']").forEach(cb => {
+      cb.checked = false;
+    });
+
+    document.getElementById("delete-nc-btn").classList.add("hidden");
+
+    // Reset de exibições dinâmicas
+    renderActionPlanTable();
+    renderAuditTrail();
+    renderChatMessages();
+
+    // Remove destaque visual das listagens
+    document.querySelectorAll(".nc-card").forEach(card => {
+      card.classList.remove("bg-amber-50/50", "border-[#284701]");
+      card.classList.add("border-transparent");
+    });
+
+    switchTab("gerais");
+  }
+
+  // Filtragem local na listagem
+  function filterNCs() {
+    const searchText = document.getElementById("nc-search").value.toLowerCase();
+    const statusVal = document.getElementById("status-filter").value;
+    const severityVal = document.getElementById("severity-filter").value;
+
+    document.querySelectorAll(".nc-card").forEach(card => {
+      const text = card.textContent.toLowerCase();
+      const matchesText = text.includes(searchText);
+      
+      const cardId = card.id.replace("nc-card-", "");
+      const matchObj = allNCs.find(n => n.id === cardId);
+      
+      if (!matchObj) return;
+
+      const matchesStatus = (statusVal === 'todos' || matchObj.status === statusVal);
+      const matchesSeverity = (severityVal === 'todos' || matchObj.severity === severityVal);
+
+      if (matchesText && matchesStatus && matchesSeverity) {
+        card.classList.remove("hidden");
+      } else {
+        card.classList.add("hidden");
+      }
+    });
+  }
+
+  // ================= GERENCIAMENTO PLANO DE AÇÃO (TABELA DINÂMICA) =================
+  function renderActionPlanTable() {
+    const container = document.getElementById("action-plan-rows");
+    container.innerHTML = "";
+
+    if (currentActionPlan.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">Nenhuma ação cadastrada no plano CAPA. Adicione ações no botão acima.</td></tr>`;
+      updateProgressBar(0);
+      return;
+    }
+
+    let completed = 0;
+    currentActionPlan.forEach((act, index) => {
+      if (act.status === 'Concluída') completed++;
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-gray-50/50";
+      tr.innerHTML = `
+        <td class="p-3">
+          <select onchange="updateActionField(${index}, 'type', this.value)" class="bg-white border border-gray-200 rounded-lg p-1 text-xs">
+            <option value="Correção" ${act.type === 'Correção' ? 'selected' : ''}>Correção Imediata</option>
+            <option value="Preventiva" ${act.type === 'Preventiva' ? 'selected' : ''}>Preventiva</option>
+            <option value="Corretiva" ${act.type === 'Corretiva' ? 'selected' : ''}>Corretiva</option>
+            <option value="Educativa" ${act.type === 'Educativa' ? 'selected' : ''}>Educativa</option>
+          </select>
+        </td>
+        <td class="p-3">
+          <input type="text" value="${act.description || ''}" onchange="updateActionField(${index}, 'description', this.value)" placeholder="Descreva a ação..." class="w-full bg-white border border-gray-200 rounded-lg p-1 text-xs">
+        </td>
+        <td class="p-3">
+          <input type="text" value="${act.responsible || ''}" onchange="updateActionField(${index}, 'responsible', this.value)" placeholder="Responsável..." class="w-full bg-white border border-gray-200 rounded-lg p-1 text-xs">
+        </td>
+        <td class="p-3">
+          <input type="date" value="${act.deadline || ''}" onchange="updateActionField(${index}, 'deadline', this.value)" class="bg-white border border-gray-200 rounded-lg p-1 text-xs">
+        </td>
+        <td class="p-3">
+          <select onchange="updateActionField(${index}, 'status', this.value)" class="bg-white border border-gray-200 rounded-lg p-1 text-xs font-semibold">
+            <option value="Aberta" ${act.status === 'Aberta' ? 'selected' : ''}>Aberta</option>
+            <option value="Em Execução" ${act.status === 'Em Execução' ? 'selected' : ''}>Em Execução</option>
+            <option value="Concluída" ${act.status === 'Concluída' ? 'selected' : ''}>Concluída</option>
+          </select>
+        </td>
+        <td class="p-3">
+          <button type="button" onclick="removeActionPlanRow(${index})" class="text-xs text-rose-600 hover:underline font-bold">Excluir</button>
+        </td>
+      `;
+      container.appendChild(tr);
+    });
+
+    const pct = Math.round((completed / currentActionPlan.length) * 100);
+    updateProgressBar(pct);
+  }
+
+  function addActionPlanRow() {
+    currentActionPlan.push({
+      id: 'act_' + Date.now(),
+      type: 'Correção',
+      description: '',
+      responsible: currentNC ? currentNC.responsibleRegistration : 'Dra. Sandra Regina Mendes',
+      deadline: '',
+      status: 'Aberta',
+      dateConclusion: ''
+    });
+    renderActionPlanTable();
+  }
+
+  function removeActionPlanRow(index) {
+    currentActionPlan.splice(index, 1);
+    renderActionPlanTable();
+  }
+
+  function updateActionField(index, field, value) {
+    currentActionPlan[index][field] = value;
+    if (field === 'status' && value === 'Concluída') {
+      currentActionPlan[index].dateConclusion = new Date().toISOString().substring(0, 10);
+    } else if (field === 'status') {
+      currentActionPlan[index].dateConclusion = "";
+    }
+    renderActionPlanTable();
+  }
+
+  function updateProgressBar(pct) {
+    document.getElementById("action-progress-label").textContent = `${pct}% Concluído`;
+    document.getElementById("action-progress-bar").style.width = `${pct}%`;
+  }
+
+  // ================= PROCESSAMENTO E ANEXOS DE EVIDÊNCIAS =================
+  function simulateFileUpload() {
+    const input = document.getElementById("evidence-file-input");
+    input.click();
+    input.onchange = function() {
+      if (input.files.length === 0) return;
+      
+      const list = document.getElementById("evidencias-list");
+      if (currentEvidences.length === 0) list.innerHTML = "";
+
+      for (let i = 0; i < input.files.length; i++) {
+        const file = input.files[i];
+        
+        // Simular o upload
+        const mockEv = {
+          name: file.name,
+          size: Math.round(file.size / 1024) + ' KB',
+          type: file.type || 'application/octet-stream',
+          date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+        };
+
+        currentEvidences.push(mockEv);
+        
+        // Renderizar novo item
+        const item = document.createElement("div");
+        item.className = "p-3 flex justify-between items-center bg-emerald-50/30 rounded-xl border border-emerald-100/50 animate-pulse";
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div>
+              <p class="text-xs font-bold text-emerald-800">${mockEv.name} (Carregando...)</p>
+              <p class="text-[10px] text-gray-400">${mockEv.size} &bull; Agendado para salvar</p>
+            </div>
+          </div>
+        `;
+        list.appendChild(item);
+
+        setTimeout(() => {
+          item.classList.remove("bg-emerald-50/30", "border-emerald-100/50", "animate-pulse");
+          item.className = "p-3 flex justify-between items-center bg-gray-50/50 rounded-xl";
+          item.innerHTML = `
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <div>
+                <p class="text-xs font-bold text-gray-800">${mockEv.name}</p>
+                <p class="text-[10px] text-gray-400">${mockEv.size} &bull; Pronto para salvar</p>
+              </div>
+            </div>
+            <button type="button" onclick="deleteEvidence(${currentEvidences.length - 1})" class="text-xs text-red-500 font-mono hover:underline">Remover</button>
+          `;
+        }, 1000);
+      }
+    };
+  }
+
+  function deleteEvidence(idx) {
+    currentEvidences.splice(idx, 1);
+    const list = document.getElementById("evidencias-list");
+    list.innerHTML = "";
+    if (currentEvidences.length === 0) {
+      list.innerHTML = `<div class="p-4 text-center text-gray-400 text-xs">Nenhum anexo registrado como evidência física.</div>`;
+      return;
+    }
+    currentEvidences.forEach((ev, i) => {
+      const item = document.createElement("div");
+      item.className = "p-3 flex justify-between items-center bg-gray-50/50 rounded-xl";
+      item.innerHTML = `
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <div>
+            <p class="text-xs font-bold text-gray-800">${ev.name}</p>
+            <p class="text-[10px] text-gray-400">${ev.size} &bull; Anexado em ${ev.date}</p>
+          </div>
+        </div>
+        <button type="button" onclick="deleteEvidence(${i})" class="text-xs text-red-500 font-mono hover:underline">Remover</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  // ================= CHAT DE COLABORAÇÃO LIVE =================
+  function renderChatMessages() {
+    const container = document.getElementById("chat-messages-container");
+    container.innerHTML = "";
+
+    if (currentComments.length === 0) {
+      container.innerHTML = `<div class="h-full flex items-center justify-center text-center p-6 text-gray-400 text-xs leading-relaxed">
+        Não há comentários técnicos nesta Não Conformidade.<br>Escreva suas notas de acompanhamento técnico abaixo.
+      </div>`;
+      return;
+    }
+
+    currentComments.forEach(c => {
+      const isMe = c.user === "Dra. Sandra Regina Mendes";
+      const div = document.createElement("div");
+      div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+      div.innerHTML = `
+        <div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-sm text-xs border ${isMe ? 'bg-amber-50 text-brand-neutralDark border-amber-100/50 rounded-tr-none' : 'bg-white text-gray-700 border-gray-100 rounded-tl-none'}">
+          <div class="flex justify-between items-center gap-4 text-[9px] font-mono font-bold text-gray-400 mb-1">
+            <span>${c.user}</span>
+            <span>${c.date}</span>
+          </div>
+          <p class="leading-relaxed whitespace-pre-wrap font-normal">${c.text}</p>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function submitChatMessage() {
+    const input = document.getElementById("chat-text-input");
+    const text = input.value.trim();
+    if (!text || !currentNC) return;
+
+    try {
+      const response = await fetch("/admin/nao-conformidades/comentar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: currentNC.id,
+          text: text,
+          user: "Dra. Sandra Regina Mendes"
+        })
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        currentComments.push(res.comment);
+        renderChatMessages();
+        input.value = "";
+        
+        // Atualizar trilha de auditoria para refletir o comentário inserido
+        currentHistory.push({
+          user: "Dra. Sandra Regina Mendes",
+          date: res.comment.date,
+          action: "Adição de Comentário",
+          comments: `Adicionou um comentário no chat da NC.`
+        });
+        renderAuditTrail();
+      } else {
+        alert("Erro ao adicionar nota: " + res.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Falha de rede ao comentar.");
+    }
+  }
+
+  // ================= TRILHA DE AUDITORIA / HISTÓRICO =================
+  function renderAuditTrail() {
+    const container = document.getElementById("audit-trail-container");
+    container.innerHTML = "";
+
+    if (currentHistory.length === 0) {
+      container.innerHTML = `<div class="p-4 text-center text-gray-400 text-xs">Nenhum evento registrado na trilha de auditoria.</div>`;
+      return;
+    }
+
+    currentHistory.forEach(h => {
+      const div = document.createElement("div");
+      div.className = "relative pl-2 space-y-1";
+      div.innerHTML = `
+        <span class="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-brand-gold rounded-full border border-white"></span>
+        <div class="text-[10px] font-mono font-bold text-gray-400 flex justify-between">
+          <span>${h.action}</span>
+          <span>${h.date}</span>
+        </div>
+        <p class="text-xs font-bold text-gray-700">${h.user}</p>
+        <p class="text-[11px] text-gray-500 italic font-normal">${h.comments || ''}</p>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // ================= SALVAMENTO DE FORMULÁRIO (AJAX) =================
+  async function saveNCForm(event) {
+    if (event) event.preventDefault();
+
+    const form = document.getElementById("nc-form");
+    const formData = new FormData(form);
+    const body = {};
+
+    formData.forEach((value, key) => {
+      if (key === 'affected') {
+        if (!body[key]) body[key] = [];
+        body[key].push(value);
+      } else {
+        body[key] = value;
+      }
+    });
+
+    // Injetar dados estruturados dinamicamente gerenciados
+    body.actionPlanJson = JSON.stringify(currentActionPlan);
+    body.evidences = currentEvidences;
+
+    try {
+      const response = await fetch("/admin/nao-conformidades/salvar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        alert("Não Conformidade salva com absoluto sucesso!");
+        // Redireciona com o ID atual para manter o foco e carregar de forma nativa e estática
+        window.location.href = `/admin/nao-conformidades?id=${res.id}`;
+      } else {
+        alert("Erro ao salvar: " + res.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Falha de rede ao tentar salvar os dados.");
+    }
+  }
+
+  // ================= REMOÇÃO DE REGISTRO =================
+  async function deleteNC() {
+    if (!currentNC) return;
+    if (!confirm(`Deseja realmente remover a ocorrência ${currentNC.id} de forma irreversível?`)) return;
+
+    try {
+      const response = await fetch("/admin/nao-conformidades/deletar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentNC.id })
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        alert("Não Conformidade removida com sucesso!");
+        window.location.href = "/admin/nao-conformidades";
+      } else {
+        alert("Erro ao remover: " + res.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Falha ao comunicar exclusão.");
+    }
+  }
+
+  // ================= RELACIONAR RECURSOS MODAL =================
+  let activeRelationType = "";
+  function showRelationModal(type) {
+    activeRelationType = type;
+    const title = document.getElementById("relation-modal-title");
+    title.textContent = `Relacionar ${type} à Ocorrência`;
+
+    const selector = document.getElementById("relation-modal-selector");
+    selector.innerHTML = "";
+
+    if (type === 'Equipamento') {
+      selector.innerHTML = `
+        <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400 block mb-1">Equipamentos Ativos</label>
+        <select id="relation-select-input" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
+          <option value="Sysmex XN-1000 (Hematologia)">Sysmex XN-1000 (Hematologia)</option>
+          <option value="Cobas c311 (Bioquímica)">Cobas c311 (Bioquímica)</option>
+          <option value="Centrífuga Clinispin v2">Centrífuga Clinispin v2</option>
+          <option value="Geladeira de Reagentes nº 4">Geladeira de Reagentes nº 4</option>
+        </select>
+      `;
+    } else if (type === 'POP') {
+      selector.innerHTML = `
+        <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400 block mb-1">Wiki de POPs Homologados</label>
+        <select id="relation-select-input" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs font-mono">
+          <option value="POP-HEM-01 (Uso de Sysmex)">POP-HEM-01 (Uso de Sysmex)</option>
+          <option value="POP-BIO-04 (Coleta Geral)">POP-BIO-04 (Coleta Geral)</option>
+          <option value="POP-TRI-02 (Triagem de Urgência)">POP-TRI-02 (Triagem de Urgência)</option>
+          <option value="POP-QUA-12 (Cadeia de Frio)">POP-QUA-12 (Cadeia de Frio)</option>
+        </select>
+      `;
+    } else {
+      selector.innerHTML = `
+        <label class="text-[10px] font-extrabold uppercase font-mono text-gray-400 block mb-1">Fornecedores Credenciados</label>
+        <select id="relation-select-input" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
+          <option value="Roche Diagnostics Ltda">Roche Diagnostics Ltda</option>
+          <option value="Sysmex Corporation Brasil">Sysmex Corporation Brasil</option>
+          <option value="Inova Distribuidora Regional">Inova Distribuidora Regional</option>
+          <option value="Bio-Rad Laboratories">Bio-Rad Laboratories</option>
+        </select>
+      `;
+    }
+
+    document.getElementById("relation-modal").classList.remove("hidden");
+  }
+
+  function closeRelationModal() {
+    document.getElementById("relation-modal").classList.add("hidden");
+  }
+
+  function applyRelation() {
+    const val = document.getElementById("relation-select-input").value;
+    if (activeRelationType === 'Equipamento') {
+      document.getElementById("form-equipment").value = val;
+    } else if (activeRelationType === 'POP') {
+      document.getElementById("form-pop").value = val.split(" ")[0];
+    } else if (activeRelationType === 'Fornecedor') {
+      document.getElementById("form-supplier").value = val;
+    }
+    closeRelationModal();
+    alert(`${activeRelationType} relacionado com sucesso no formulário. Lembre-se de Salvar o formulário para persistir.`);
+  }
+
+  // ================= PROTOCOLO DE RECOLETA =================
+  function triggerRecoleta() {
+    const pacName = document.getElementById("form-patientName").value;
+    const examName = document.getElementById("form-exam").value;
+    
+    if (!pacName || !examName) {
+      alert("Por favor, preencha o Nome do Paciente e o Exame na aba de Paciente antes de solicitar recoleta.");
+      return;
+    }
+
+    document.getElementById("recoleta-paciente-display").textContent = pacName;
+    document.getElementById("recoleta-exame-display").textContent = examName;
+    document.getElementById("recoleta-motivo-display").textContent = "Identificada Instabilidade Analítica da Amostra (NC)";
+
+    document.getElementById("recoleta-modal").classList.remove("hidden");
+  }
+
+  function closeRecoletaModal() {
+    document.getElementById("recoleta-modal").classList.add("hidden");
+  }
+
+  function confirmRecoleta() {
+    const motivo = document.getElementById("recoleta-motivo-select").value;
+    const contato = document.getElementById("recoleta-contato-select").value;
+
+    // Adicionar log ao chat
+    const logText = `[SOLICITAÇÃO DE RECOLETA EMITIDA]
+Motivo: ${motivo}
+Acompanhamento Paciente: ${contato}
+Rastreabilidade RDC-302 iniciada de forma automática pela Qualidade.`;
+
+    currentComments.push({
+      user: "Sistema da Qualidade (InovaLab)",
+      date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+      text: logText
+    });
+    
+    // Adicionar ao histórico
+    currentHistory.push({
+      user: "Sistema de Qualidade",
+      date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+      action: "Solicitação de Recoleta",
+      comments: `Emitido alerta de recoleta para o exame. Motivo: ${motivo}.`
+    });
+
+    renderChatMessages();
+    renderAuditTrail();
+    closeRecoletaModal();
+
+    alert("Recoleta protocolada e registrada na trila de auditoria e chat com absoluto sucesso!");
+  }
+
+  // ================= RELATÓRIO CAPA DE IMPRESSÃO (ISO 15189) =================
+  function generateCAPADocument() {
+    if (!currentNC) {
+      alert("Salve as alterações da ocorrência antes de gerar o relatório CAPA.");
+      return;
+    }
+
+    const container = document.getElementById("capa-print-content");
+    container.innerHTML = `
+      <div class="bg-white p-6 rounded-2xl border border-gray-200 space-y-6 leading-relaxed text-xs">
+        
+        <!-- Header Relatório -->
+        <div class="flex justify-between items-center border-b-2 border-[#284701] pb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xl font-black text-[#284701] tracking-tight">INOVALAB CAMBARÁ</span>
+          </div>
+          <div class="text-right font-mono">
+            <p class="font-bold text-sm">RELATÓRIO DE NÃO CONFORMIDADE</p>
+            <p class="text-[10px] text-gray-500">Documento Geral de Rastreabilidade CAPA &bull; ISO 15189</p>
+          </div>
+        </div>
+
+        <!-- Bloco de Código e Datas -->
+        <div class="grid grid-cols-4 gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100 font-mono text-[10px]">
+          <div>
+            <span class="text-gray-400 block uppercase">Nº Registro NC</span>
+            <span class="font-bold text-brand-neutralDark">${currentNC.id}</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block uppercase">Status Atual</span>
+            <span class="font-bold text-[#284701]">${currentNC.status}</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block uppercase">Data Registro</span>
+            <span class="font-bold">${currentNC.dateRegistration}</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block uppercase">Versão</span>
+            <span class="font-bold">v${currentNC.version || 1}</span>
+          </div>
+        </div>
+
+        <!-- Seção 1: Identificação Ocorrência -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black text-[#284701] uppercase border-b border-gray-100 pb-1">1. Descrição do Desvio e Ocorrência Geral</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
+            <div><strong>Unidade:</strong><br>${currentNC.unit || '-'}</div>
+            <div><strong>Setor:</strong><br>${currentNC.sector || '-'}</div>
+            <div><strong>Processo:</strong><br>${currentNC.process || '-'}</div>
+            <div><strong>Subprocesso:</strong><br>${currentNC.subprocess || '-'}</div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] pt-1">
+            <div><strong>Data Ocorrência:</strong><br>${currentNC.dateOccurrence} às ${currentNC.timeOccurrence}</div>
+            <div><strong>Responsável:</strong><br>${currentNC.responsibleRegistration}</div>
+            <div><strong>Gravidade:</strong><br>${currentNC.severity}</div>
+            <div><strong>Prioridade:</strong><br>${currentNC.priority}</div>
+          </div>
+          <p class="mt-2 text-gray-700 bg-gray-50/50 p-3 rounded-xl border border-gray-100 font-mono italic leading-relaxed text-[11px]">${currentNC.description}</p>
+        </div>
+
+        <!-- Seção 2: Rastreabilidade Amostra/Paciente -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black text-[#284701] uppercase border-b border-gray-100 pb-1">2. Rastreabilidade de Amostras, Lotes e Equipamento</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
+            <div><strong>Paciente:</strong><br>${currentNC.patientName || '(Não informado)'} (Cód: ${currentNC.patientCode || '-'})</div>
+            <div><strong>Convênio / Req:</strong><br>${currentNC.convenio || '-'} / ${currentNC.requisitionCode || '-'}</div>
+            <div><strong>Exame / Mat:</strong><br>${currentNC.exam || '-'} &bull; ${currentNC.material || '-'}</div>
+            <div><strong>Equipamento / POP:</strong><br>${currentNC.equipment || '-'} / ${currentNC.pop || '-'}</div>
+          </div>
+        </div>
+
+        <!-- Seção 3: Análise de Causa Raiz -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black text-[#284701] uppercase border-b border-gray-100 pb-1">3. Análise e Investigação da Causa Raiz (Fatores Contribuintes)</h4>
+          <p class="text-[10px] text-gray-400 uppercase font-mono">Metodologia Adotada: ${currentNC.causeAnalysisMethod || '5 Porquês'}</p>
+          <div class="p-3 bg-gray-50/50 rounded-xl border border-gray-100 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">${currentNC.causeAnalysisRoot || '(Nenhuma investigação registrada)'}</div>
+        </div>
+
+        <!-- Seção 4: Plano de Ação (CAPA) -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black text-[#284701] uppercase border-b border-gray-100 pb-1">4. Plano de Ação Implementado e Preventivo</h4>
+          <table class="w-full text-left text-[10px] border border-gray-100 divide-y divide-gray-100">
+            <thead class="bg-gray-50 font-mono font-bold text-gray-500 uppercase">
+              <tr>
+                <th class="p-2">Tipo</th>
+                <th class="p-2">Descrição Ação</th>
+                <th class="p-2">Responsável</th>
+                <th class="p-2">Prazo</th>
+                <th class="p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              ${
+                currentActionPlan.map(act => `
+                  <tr>
+                    <td class="p-2"><strong>${act.type}</strong></td>
+                    <td class="p-2">${act.description}</td>
+                    <td class="p-2">${act.responsible}</td>
+                    <td class="p-2 font-mono">${act.deadline}</td>
+                    <td class="p-2 font-bold">${act.status} ${act.dateConclusion ? `(Concl. em ${act.dateConclusion})` : ''}</td>
+                  </tr>
+                `).join('') || `<tr><td colspan="5" class="p-3 text-center text-gray-400">Nenhum plano de ação definido.</td></tr>`
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Seção 5: Eficácia & Homologação -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 text-[11px]">
+          <div class="space-y-2 border-r border-gray-100 pr-4">
+            <h5 class="font-bold uppercase text-[#284701]">Verificação da Eficácia (Controle de Qualidade)</h5>
+            <p><strong>NC Resolvida?</strong> ${currentNC.effectivenessResolved || 'Aguardando Verificação'}</p>
+            <p><strong>Houve Recorrência?</strong> ${currentNC.effectivenessRecurred || 'Não'}</p>
+            <p class="text-gray-500 italic">"${currentNC.effectivenessDescription || 'Aguardando auditoria preventiva final.'}"</p>
+            <p class="font-mono text-[10px] text-gray-400">Verificado por: ${currentNC.effectivenessResponsible} em ${currentNC.effectivenessDate || '-'}</p>
+          </div>
+          <div class="space-y-2">
+            <h5 class="font-bold uppercase text-[#284701]">Homologação e Parecer de Encerramento</h5>
+            <p class="text-gray-600">"${currentNC.closureParecer || 'Ocorrência sob investigação operacional preventiva.'}"</p>
+            <p class="font-mono text-[10px] text-gray-400">Homologado por: ${currentNC.closureResponsible} em ${currentNC.closureDate || '-'}</p>
+            <div class="pt-4 mt-4 border-t border-dashed border-gray-200 text-center text-gray-400 text-[9px] font-mono">
+              <p>Chave de Homologação Digital:</p>
+              <p class="font-bold text-gray-700">${currentNC.closureSignature || 'PENDENTE DE HOMOLOGAÇÃO'}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    document.getElementById("capa-modal").classList.remove("hidden");
+  }
+
+  function closeCAPAModal() {
+    document.getElementById("capa-modal").classList.add("hidden");
+  }
+
+  // ================= CHAME DA INTELIGÊNCIA ARTIFICIAL GEMINI =================
+  async function callGemini(action) {
+    let text = "";
+    
+    if (action === 'improve' || action === 'summarize') {
+      text = document.getElementById("form-description").value.trim();
+      if (!text) {
+        alert("Por favor, preencha o campo de Descrição antes de chamar a Inteligência Artificial Gemini.");
+        return;
+      }
+    } else if (action === 'suggest_cause' || action === 'generate_5whys') {
+      text = document.getElementById("form-description").value.trim();
+      if (!text) {
+        // Se a descrição estiver vazia, sugerir preencher primeiro
+        alert("Preencha a descrição do desvio na Aba 2 para que a IA possa analisar e sugerir a causa raiz correspondente.");
+        return;
+      }
+    }
+
+    const context = {
+      sector: document.getElementById("form-sector").value,
+      process: document.getElementById("form-process").value,
+      subprocess: document.getElementById("form-subprocess").value
+    };
+
+    // Alerta visual de loading
+    const isCause = (action === 'suggest_cause' || action === 'generate_5whys');
+    const responsePanel = document.getElementById(isCause ? "ai-cause-panel" : "ai-response-panel");
+    const responseText = document.getElementById(isCause ? "ai-cause-text" : "ai-response-text");
+
+    responsePanel.classList.remove("hidden");
+    responseText.innerHTML = `<span class="animate-pulse flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Chamando modelo gemini-3.5-flash e analisando dados da rotina laboratorial...</span>`;
+
+    if (!isCause) {
+      // Garantir rolagem visível na aba de descrição
+      responsePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      responsePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    try {
+      const response = await fetch("/api/admin/nao-conformidades/ia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: action,
+          text: text,
+          context: context
+        })
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        responseText.textContent = res.result;
+      } else {
+        responseText.textContent = "Erro retornado pela IA: " + res.error;
+      }
+    } catch (e) {
+      console.error(e);
+      responseText.textContent = "Falha crítica de rede ao tentar se conectar ao assistente de inteligência artificial Gemini.";
+    }
+  }
+
+  function applyAIResult() {
+    const txt = document.getElementById("ai-response-text").textContent;
+    if (txt && !txt.includes("Chamando modelo") && !txt.includes("Erro retornado")) {
+      document.getElementById("form-description").value = txt;
+      alert("Texto sugerido pelo Gemini aplicado com sucesso!");
+    }
+  }
+
+  function applyAICauseResult() {
+    const txt = document.getElementById("ai-cause-text").textContent;
+    if (txt && !txt.includes("Chamando modelo") && !txt.includes("Erro retornado")) {
+      document.getElementById("form-causeAnalysisRoot").value = txt;
+      alert("Investigação sugerida pelo Gemini aplicada ao formulário!");
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

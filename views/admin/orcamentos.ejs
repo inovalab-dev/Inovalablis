@@ -1,0 +1,1300 @@
+<%- include('../partials/header', { page: 'admin' }) %>
+
+<style>
+@media print {
+  body > *:not(#print-modal),
+  #print-modal > *:not(.bg-white),
+  #print-modal .bg-white > *:not(#modal-print-content) {
+    display: none !important;
+  }
+
+  #print-modal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 99999 !important;
+  }
+
+  #print-modal > .bg-white {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    display: block !important;
+  }
+
+  #modal-print-content {
+    display: block !important;
+    width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+</style>
+
+<!-- Cabeçalho de Navegação Superior -->
+<section class="bg-brand-softBg/30 border-b border-brand-light/15 py-5">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+        <a href="/admin" class="hover:text-brand-dark transition-colors">Administração</a>
+        <span>&rsaquo;</span>
+        <span class="text-brand-dark font-bold font-mono uppercase text-[10px]">Recepção e Atendimento</span>
+      </div>
+      <h1 class="text-2xl font-extrabold text-brand-dark tracking-tight flex items-center gap-2">
+        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Orçamentos
+      </h1>
+      <p class="text-xs text-gray-500">Orçamento de exames por convênios e emissão de fichas de preparo</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <a href="/admin" class="text-xs font-bold bg-white hover:bg-brand-softBg text-brand-dark px-4 py-2.5 rounded-xl border border-brand-light/20 transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm">
+        <span>Voltar ao Painel</span>
+      </a>
+      <button onclick="toggleRegistrationForm(true)" class="text-xs font-bold bg-brand-dark hover:bg-brand-light text-white px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Novo Orçamento</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="py-8 bg-brand-neutralLight/45 min-h-screen">
+  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <!-- PAINEL DE CADASTRO DE ORÇAMENTO (COLLAPSE FECHADO POR PADRÃO) -->
+    <div id="novo-orcamento-card" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hidden transition-all duration-300">
+      
+      <!-- Cabeçalho do Collapse -->
+      <div onclick="toggleRegistrationForm()" class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100/80 transition-colors select-none">
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-emerald-100 text-emerald-800 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-900 font-mono uppercase tracking-wider" id="form-title-heading">Cadastro de Novo Orçamento</h2>
+            <p class="text-[11px] text-gray-500">Preencha os exames e dados para gerar a proposta comercial e ficha de instrução</p>
+          </div>
+        </div>
+        <button type="button" class="text-gray-500 hover:text-gray-800 font-bold text-sm flex items-center gap-1 font-mono">
+          <span id="collapse-toggle-text">Ocultar ▲</span>
+        </button>
+      </div>
+
+      <!-- Form de Cadastro -->
+      <form action="/admin/orcamentos/add" method="POST" id="budget-form" onsubmit="prepareFormSubmission(event)" class="p-6 space-y-6">
+        <input type="hidden" name="originalId" id="form-originalId" value="">
+        <input type="hidden" name="examsJson" id="hidden-exams-json">
+
+        <!-- Linha Superior: Código, Data, Usuário -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-gray-100 bg-gray-50/50 p-4 rounded-xl border">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 font-mono uppercase mb-1">Código:</label>
+            <input type="text" name="codigo" id="form-codigo" readonly value="ORC<%= Date.now().toString().slice(-6) %>" class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 font-mono uppercase mb-1">Data:</label>
+            <input type="date" name="data" id="form-data" value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 font-mono uppercase mb-1">Usuário:</label>
+            <input type="text" name="usuario" id="form-usuario" readonly value="<%= adminUserName || 'Administrador' %>" class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800">
+          </div>
+        </div>
+
+        <!-- Seção Dobrável: Dados do Paciente (MOVIDO PARA CIMA) -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+          <button type="button" onclick="togglePatientDataSection()" class="w-full px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-left font-bold text-xs font-mono text-gray-800 uppercase flex items-center justify-between border-b border-gray-200 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Dados do paciente
+            </span>
+            <span id="patient-data-toggle-icon" class="text-xs font-bold text-gray-500">▲</span>
+          </button>
+
+          <div id="patient-data-panel" class="p-4 space-y-3 bg-white">
+            
+            <!-- Linha 1: Paciente + Busca -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">Paciente:</label>
+              <div class="flex-1 flex items-center gap-1">
+                <input type="text" name="patientName" id="form-patientName" placeholder="Nome do paciente" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+                <button type="button" onclick="openPatientSearchModal()" class="px-3 py-1.5 bg-brand-gold hover:bg-brand-gold/90 text-brand-dark font-bold rounded-lg text-xs transition-all flex items-center justify-center shrink-0 cursor-pointer" title="Buscar Paciente Cadastrado">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Linha 2: Solicitante -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">Solicitante:</label>
+              <input type="text" name="solicitante" id="form-solicitante" placeholder="Nome do solicitante / instituição" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+            </div>
+
+            <!-- Linha 3: Fone & E-mail -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+              <div class="sm:col-span-5 flex items-center gap-2">
+                <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">Fone:</label>
+                <input type="text" name="patientPhone" id="form-patientPhone" placeholder="(  ) - " class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+              <div class="sm:col-span-7 flex items-center gap-2">
+                <label class="w-16 text-xs font-bold text-gray-700 font-mono uppercase shrink-0 sm:text-right">E-mail:</label>
+                <input type="email" name="patientEmail" id="form-patientEmail" placeholder="email@exemplo.com" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+            </div>
+
+            <!-- Linha 4: Contato & Fone -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+              <div class="sm:col-span-7 flex items-center gap-2">
+                <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">Contato:</label>
+                <input type="text" name="contatoNome" id="form-contatoNome" placeholder="Nome do contato responsável" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+              <div class="sm:col-span-5 flex items-center gap-2">
+                <label class="w-16 text-xs font-bold text-gray-700 font-mono uppercase shrink-0 sm:text-right">Fone:</label>
+                <input type="text" name="contatoFone" id="form-contatoFone" placeholder="(  ) - " class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+            </div>
+
+            <!-- Linha 5: Médico (Conselho, N°, UF, Lupa, Nome) -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">Médico:</label>
+              <div class="flex-1 flex flex-wrap sm:flex-nowrap items-center gap-2">
+                <select name="conselhoTipo" id="form-conselhoTipo" class="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                  <option value="CRM">CRM</option>
+                  <option value="CRO">CRO</option>
+                  <option value="CRMV">CRMV</option>
+                  <option value="COREN">COREN</option>
+                  <option value="CRF">CRF</option>
+                  <option value="OUTRO">OUTRO</option>
+                </select>
+                <input type="text" name="conselhoNum" id="form-conselhoNum" placeholder="Nº Conselho" class="w-28 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+                <select name="conselhoUf" id="form-conselhoUf" class="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                  <option value="PR">PR</option>
+                  <option value="SP">SP</option>
+                  <option value="SC">SC</option>
+                  <option value="RS">RS</option>
+                  <option value="RJ">RJ</option>
+                  <option value="MG">MG</option>
+                  <option value="MS">MS</option>
+                  <option value="MT">MT</option>
+                  <option value="GO">GO</option>
+                  <option value="DF">DF</option>
+                  <option value="OUTRO">UF</option>
+                </select>
+                <button type="button" onclick="openDoctorSearchModal()" class="px-3 py-1.5 bg-brand-gold hover:bg-brand-gold/90 text-brand-dark font-bold rounded-lg text-xs transition-all flex items-center justify-center shrink-0 cursor-pointer" title="Buscar Médico Solicitante">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+                <input type="text" name="doctorName" id="form-doctorName" placeholder="Nome do médico" class="flex-1 min-w-[200px] px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+            </div>
+
+            <!-- Linha Complementar: CPF e Convênio -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+              <div class="flex items-center gap-2">
+                <label class="w-24 text-xs font-bold text-gray-700 font-mono uppercase shrink-0">CPF:</label>
+                <input type="text" name="patientCpf" id="form-patientCpf" placeholder="000.000.000-00" class="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="w-20 text-xs font-bold text-gray-700 font-mono uppercase shrink-0 sm:text-right">Convênio:</label>
+                <select name="convenio" id="form-convenio" onchange="recalculateBudgetExamPrices()" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-300 rounded-lg text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none cursor-pointer">
+                  <option value="Particular">Particular</option>
+                  <% (typeof convenios !== 'undefined' ? convenios : []).forEach(c => { %>
+                    <option value="<%= c.fantasia || c.razaoSocial %>"><%= c.codigo ? '[' + c.codigo + '] ' : '' %><%= c.fantasia || c.razaoSocial %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Seletor Rápido de Exame & Material -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+          <div class="text-xs font-bold text-gray-800 font-mono uppercase tracking-wider flex items-center gap-1.5">
+            <span>🔍 Adicionar Exames ao Orçamento</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <!-- Cód. Exame -->
+            <div class="md:col-span-3">
+              <label class="block text-[11px] font-bold text-gray-600 mb-1">Cód. Exame:</label>
+              <input type="text" id="exam-code-field" oninput="onExamCodeInput()" onkeydown="handleExamInputKeydown(event)" placeholder="Código (ex: HEM)..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none uppercase">
+            </div>
+
+            <!-- Input com Datalist do Exame -->
+            <div class="md:col-span-5">
+              <label class="block text-[11px] font-bold text-gray-600 mb-1">Nome / Descrição do Exame:</label>
+              <div class="relative">
+                <input type="text" id="exam-search-field" list="exams-datalist" oninput="onExamNameInput()" onkeydown="handleExamInputKeydown(event)" placeholder="Digite ou selecione o exame..." class="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none">
+                <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <datalist id="exams-datalist">
+                <% exams.forEach(e => { %>
+                  <option value="<%= e.code ? e.code + ' - ' : '' %><%= e.name %>" data-id="<%= e.id %>" data-name="<%= e.name %>" data-code="<%= e.code || '' %>" data-price="<%= e.pricePrivate || 0 %>" data-material="<%= e.material || 'Soro' %>" data-fasting="<%= e.fasting || 'Sem jejum' %>" data-timeframe="<%= e.timeframe || '1 dia útil' %>" data-instructions="<%= e.instructions || '' %>">
+                <% }) %>
+              </datalist>
+            </div>
+
+            <!-- Material Dropdown -->
+            <div class="md:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-600 mb-1">Material:</label>
+              <select id="exam-material-field" class="w-full px-2.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="Soro">Soro (S)</option>
+                <option value="Plasma">Plasma (P)</option>
+                <option value="Sangue Total">Sangue Total (ST)</option>
+                <option value="Urina">Urina (U)</option>
+                <option value="Fezes">Fezes (FZ)</option>
+                <option value="Líquor">Líquor (LQ)</option>
+                <option value="Swab">Swab (SW)</option>
+                <option value="Saliva">Saliva (SL)</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <!-- Botão OK -->
+            <div class="md:col-span-2 flex items-end">
+              <button type="button" onclick="addSelectedExam()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center justify-center gap-1 cursor-pointer">
+                <span>OK</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de Exames Adicionados ao Orçamento -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+          <table class="w-full text-left border-collapse" id="budget-items-table">
+            <thead>
+              <tr class="bg-gray-100 border-b border-gray-200 text-[11px] font-bold text-gray-600 uppercase font-mono">
+                <th class="py-2.5 px-3 w-12 text-center">#</th>
+                <th class="py-2.5 px-3 w-28">Código</th>
+                <th class="py-2.5 px-3">Exame</th>
+                <th class="py-2.5 px-3 w-28">Mat.</th>
+                <th class="py-2.5 px-3 w-28 text-right">Valor (R$)</th>
+                <th class="py-2.5 px-3 w-16 text-center">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="budget-items-tbody" class="divide-y divide-gray-100 text-xs font-medium">
+              <tr id="empty-exams-row">
+                <td colspan="6" class="py-8 text-center text-gray-400 font-mono text-xs">
+                  Nenhum exame adicionado ao orçamento ainda. Selecione um exame acima e clique em OK.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Ajustes Financeiros: Acréscimo, Desconto, Validade, Observação -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-xl border border-gray-200">
+          <!-- Acréscimo -->
+          <div class="md:col-span-3">
+            <label class="block text-[11px] font-bold text-gray-700 mb-1 font-mono uppercase">Acréscimo:</label>
+            <div class="flex items-center gap-1">
+              <input type="number" step="0.01" name="acrescimo" id="form-acrescimo" value="0.00" oninput="calculateTotais()" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+              <select name="tipoAcrescimo" id="form-tipoAcrescimo" onchange="calculateTotais()" class="px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold">
+                <option value="R$">R$</option>
+                <option value="%">%</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Desconto -->
+          <div class="md:col-span-3">
+            <label class="block text-[11px] font-bold text-gray-700 mb-1 font-mono uppercase">Desconto:</label>
+            <div class="flex items-center gap-1">
+              <input type="number" step="0.01" name="desconto" id="form-desconto" value="0.00" oninput="calculateTotais()" class="w-full px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+              <select name="tipoDesconto" id="form-tipoDesconto" onchange="calculateTotais()" class="px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold">
+                <option value="R$">R$</option>
+                <option value="%">%</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Validade -->
+          <div class="md:col-span-3">
+            <label class="block text-[11px] font-bold text-gray-700 mb-1 font-mono uppercase">Validade:</label>
+            <div class="relative">
+              <input type="text" name="validade" id="form-validade" value="30 dias" class="w-full pr-8 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-mono font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+              <span class="absolute right-2 top-2 text-gray-400 text-xs">🔍</span>
+            </div>
+          </div>
+
+          <!-- Total Geral Resumo -->
+          <div class="md:col-span-3 text-right bg-white p-2.5 rounded-lg border border-gray-300 shadow-sm">
+            <span class="block text-[10px] font-bold text-gray-500 uppercase font-mono">Valor Total Líquido:</span>
+            <span class="text-lg font-black text-emerald-800 font-mono" id="form-total-display">R$ 0,00</span>
+          </div>
+
+          <!-- Observação -->
+          <div class="md:col-span-12">
+            <label class="block text-[11px] font-bold text-gray-700 mb-1 font-mono uppercase">Observação:</label>
+            <textarea name="observation" id="form-observation" rows="2" placeholder="Observações do orçamento (ex: Validade 30 dias, trazer pedido médico na coleta)..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Opções & Legenda -->
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2">
+          <div class="space-y-1 text-xs text-gray-600">
+            <label class="flex items-center gap-2 cursor-pointer font-medium">
+              <input type="checkbox" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span>Mostrar valores para todos os convênios</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium">
+              <input type="checkbox" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span>Carregar exames de agrupamento</span>
+            </label>
+          </div>
+
+          <!-- Legenda de Cores -->
+          <div class="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-gray-600">
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 bg-rose-600 inline-block rounded-xs"></span>
+              Exame com desconto
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 bg-emerald-600 inline-block rounded-xs"></span>
+              Exame com acréscimo
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 bg-blue-600 inline-block rounded-xs"></span>
+              Exame possui instrução de coleta
+            </span>
+          </div>
+        </div>
+
+        <!-- Barra de Botões de Ação do Cadastro -->
+        <div class="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button type="button" onclick="alert('Funcionalidade de opções estendidas de impressão.')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-lg border border-gray-300 flex items-center gap-1 cursor-pointer">
+              <span>Imprimir ▼</span>
+            </button>
+            <button type="button" onclick="alert('Menu de opções avançadas de orçamento.')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-lg border border-gray-300 flex items-center gap-1 cursor-pointer">
+              <span>Opções ▼</span>
+            </button>
+            <button type="button" onclick="convertToRequision()" class="px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs rounded-lg border border-sky-200 cursor-pointer">
+              Requisição (OS)
+            </button>
+            <button type="button" onclick="alert('Orçamento Aprovado com Sucesso!')" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-lg border border-emerald-200 cursor-pointer">
+              Aprovar
+            </button>
+          </div>
+
+          <!-- Botões Principais de Salvar / Cancelar / Fechar -->
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button type="button" onclick="resetBudgetForm()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-lg border border-gray-300 cursor-pointer">
+              Novo
+            </button>
+            <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-md transition-all cursor-pointer">
+              Salvar
+            </button>
+            <button type="button" onclick="toggleRegistrationForm(false)" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-lg border border-rose-200 cursor-pointer">
+              Cancelar
+            </button>
+            <button type="button" onclick="toggleRegistrationForm(false)" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-lg cursor-pointer">
+              Fechar
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- TABELA HISTÓRICO DE ORÇAMENTOS (PAGINADA DE 50 EM 50) -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" id="historico-secao">
+      
+      <!-- Cabeçalho e Busca -->
+      <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/60">
+        <div>
+          <h2 class="text-sm font-bold text-gray-900 font-mono uppercase tracking-wider flex items-center gap-2">
+            <span>📋 Orçamentos Emitidos</span>
+            <span class="px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] rounded-full font-mono font-bold" id="total-budgets-count"><%= budgets.length %> registros</span>
+          </h2>
+          <p class="text-[11px] text-gray-500 mt-0.5">Listagem paginada de 50 em 50 orçamentos. Use o filtro para buscar por paciente ou número.</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative w-full sm:w-72">
+            <input type="text" id="budget-search-input" onkeyup="filterBudgetsWithPagination()" placeholder="Buscar por paciente ou código..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="budgets-table">
+          <thead>
+            <tr class="bg-gray-100 text-gray-700 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider font-mono">
+              <th class="px-6 py-3.5">Código / Data</th>
+              <th class="px-6 py-3.5">Paciente</th>
+              <th class="px-6 py-3.5">Médico / Convênio</th>
+              <th class="px-6 py-3.5">Exames</th>
+              <th class="px-6 py-3.5 text-right">Valor Total</th>
+              <th class="px-6 py-3.5">Status</th>
+              <th class="px-6 py-3.5 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-xs" id="budgets-table-tbody">
+            <% budgets.forEach((req, idx) => { %>
+              <tr class="hover:bg-gray-50 transition-colors budget-row" data-name="<%= (req.patientName || '').toLowerCase() %>" data-id="<%= (req.id || '').toLowerCase() %>" data-index="<%= idx %>">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-bold text-gray-900 font-mono text-[11px]"><%= req.id %></div>
+                  <div class="text-[10px] text-gray-400 mt-0.5 font-mono"><%= req.createdAt || req.date %></div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="font-bold text-gray-900 text-sm"><%= req.patientName %></div>
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500 mt-1 font-mono">
+                    <% if (req.patientCpf) { %>
+                      <span>CPF: <%= req.patientCpf %></span>
+                    <% } %>
+                    <% if (req.patientPhone) { %>
+                      <span>Cel: <%= req.patientPhone %></span>
+                    <% } %>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-medium text-gray-800"><%= req.doctorName || 'Não Informado' %></div>
+                  <div class="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md inline-block font-mono mt-1 font-bold uppercase"><%= req.convenio || 'Particular' %></div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="max-w-xs truncate" title="<%= (req.exams || []).map(e => e.name).join(', ') %>">
+                    <span class="font-semibold text-gray-900"><%= (req.exams || []).length %> exames:</span>
+                    <span class="text-gray-500 text-[11px]"><%= (req.exams || []).map(e => e.name).join(', ') %></span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-emerald-800 text-sm">
+                  R$ <%= (req.totalPrice || 0).toFixed(2).replace('.', ',') %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <select onchange="updateBudgetStatus('<%= req.id %>', this.value)" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all bg-white
+                    <%= req.status === 'Pronto' ? 'text-emerald-700 border-emerald-300 bg-emerald-50' : 
+                        req.status === 'Coletado' ? 'text-blue-700 border-blue-300 bg-blue-50' : 
+                        req.status === 'Em Processamento' ? 'text-amber-700 border-amber-300 bg-amber-50' : 
+                        'text-gray-700 border-gray-300 bg-gray-50' %>">
+                    <option value="Aguardando Coleta" <%= req.status === 'Aguardando Coleta' ? 'selected' : '' %>>Aguardando Coleta</option>
+                    <option value="Coletado" <%= req.status === 'Coletado' ? 'selected' : '' %>>Coletado</option>
+                    <option value="Em Processamento" <%= req.status === 'Em Processamento' ? 'selected' : '' %>>Em Processamento</option>
+                    <option value="Pronto" <%= req.status === 'Pronto' ? 'selected' : '' %>>Pronto / Concluído</option>
+                  </select>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <!-- Editar -->
+                    <button type="button" onclick="editBudget('<%= req.id %>')" class="p-2 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 rounded-lg transition-all cursor-pointer" title="Editar Orçamento">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <!-- Botão de Visualização / Impressão -->
+                    <button type="button" onclick="openPrintModal('<%= req.id %>')" class="p-2 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-lg transition-all cursor-pointer" title="Visualizar & Imprimir Ficha">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    </button>
+                    <!-- Excluir -->
+                    <form action="/admin/orcamentos/delete" method="POST" onsubmit="return confirm('Deseja realmente excluir este orçamento?')" class="inline m-0">
+                      <input type="hidden" name="id" value="<%= req.id %>">
+                      <button type="submit" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-all cursor-pointer" title="Excluir Orçamento">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+
+            <% if (budgets.length === 0) { %>
+              <tr id="empty-budgets-row">
+                <td colspan="7" class="text-center py-12 text-gray-400 text-xs italic">
+                  Nenhum orçamento emitido até o momento. Clique em "Novo Orçamento" para criar o primeiro.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Barra de Paginação (50 por Página) -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600 font-mono">
+        <div id="pagination-info">
+          Exibindo 1 a 50 de <%= budgets.length %> orçamentos
+        </div>
+
+        <div class="flex items-center gap-2" id="pagination-controls">
+          <button type="button" id="btn-prev-page" onclick="changePage(-1)" class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+            &larr; Anterior
+          </button>
+          
+          <span id="page-display" class="px-3 py-1 bg-white border border-gray-300 rounded-lg font-bold">
+            Página 1 de 1
+          </span>
+
+          <button type="button" id="btn-next-page" onclick="changePage(1)" class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+            Próxima &rarr;
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- MODAL DE VISUALIZAÇÃO E IMPRESSÃO -->
+<div id="print-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    
+    <div class="px-6 py-4 bg-emerald-900 text-white flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span class="font-bold text-sm uppercase tracking-wider font-mono">Orçamento & Ficha de Orientação</span>
+      </div>
+      <button onclick="closePrintModal()" class="text-gray-300 hover:text-white text-xl font-bold">&times;</button>
+    </div>
+
+    <div class="p-8 overflow-y-auto space-y-6" id="modal-print-content">
+      
+      <div class="flex justify-between items-center pb-4 border-b border-gray-200">
+        <div>
+          <div class="text-emerald-900 font-black text-lg flex items-center gap-1">
+            <span>INOVALAB ANÁLISES CLÍNICAS</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono">Cambará - PR | Tel: (43) 3535-1234</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] font-mono font-bold uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Proposta de Orçamento</div>
+          <div class="text-[10px] text-gray-400 font-mono mt-1" id="modal-date">02/07/2026</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs">
+        <div>
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono">Nº do Orçamento:</span>
+          <span class="font-bold text-emerald-900 text-sm font-mono" id="modal-id">ORC1001</span>
+        </div>
+        <div>
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono">Paciente:</span>
+          <span class="font-bold text-gray-900 text-sm" id="modal-patient-name">João da Silva</span>
+        </div>
+        <div>
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono">CPF:</span>
+          <span class="font-semibold text-gray-600 font-mono" id="modal-patient-cpf">-</span>
+        </div>
+        <div>
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono">Médico / Convênio:</span>
+          <span class="font-semibold text-gray-600" id="modal-doctor">-</span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <span class="block text-[10px] font-bold text-gray-700 uppercase font-mono border-b border-gray-200 pb-1">Exames Cotados</span>
+        <div class="divide-y divide-gray-100 text-xs" id="modal-exams-list">
+        </div>
+        <div class="flex justify-between items-center pt-3 border-t border-gray-200 text-sm font-bold text-gray-900">
+          <span>Valor Total Cotado:</span>
+          <span class="text-lg font-black font-mono text-emerald-800" id="modal-total-price">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono mb-1">Jejum Recomendado</span>
+          <div class="text-xs font-bold text-gray-800 font-mono" id="modal-fasting">Sem jejum</div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+          <span class="block text-[9px] font-bold text-gray-400 uppercase font-mono mb-1">Prazo Estimado</span>
+          <div class="text-xs font-bold text-gray-800 font-mono" id="modal-timeframe">1 dia útil</div>
+        </div>
+      </div>
+
+      <div class="text-center pt-4 border-t border-gray-200 text-[9px] text-gray-400">
+        InovaLab Cambará • Valores válidos conforme prazo estipulado.
+      </div>
+
+    </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+      <button onclick="closePrintModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-xl">Fechar</button>
+      <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase rounded-xl">Imprimir</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DE BUSCA DE PACIENTE (LUPA 🔍) -->
+<div id="patient-search-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="px-6 py-4 bg-brand-dark text-white flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="font-bold text-sm uppercase tracking-wider font-mono">Selecionar Paciente Cadastrado</span>
+      </div>
+      <button onclick="closePatientSearchModal()" class="text-gray-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+    </div>
+    <div class="p-4 border-b border-gray-100 bg-gray-50">
+      <input type="text" id="patient-modal-input" oninput="filterPatientsModal()" placeholder="Digite o nome ou CPF para buscar..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+    </div>
+    <div class="p-4 overflow-y-auto space-y-2 flex-1" id="patient-modal-list">
+      <!-- Preenchido via JS -->
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+      <button onclick="closePatientSearchModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE BUSCA DE MÉDICO (LUPA 🔍) -->
+<div id="doctor-search-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="px-6 py-4 bg-brand-dark text-white flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="font-bold text-sm uppercase tracking-wider font-mono">Buscar Médico Solicitante</span>
+      </div>
+      <button onclick="closeDoctorSearchModal()" class="text-gray-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+    </div>
+    <div class="p-4 border-b border-gray-100 bg-gray-50 space-y-2">
+      <input type="text" id="doctor-modal-input" oninput="filterDoctorsModal()" placeholder="Digite o nome ou CRM para buscar..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+    </div>
+    <div class="p-4 overflow-y-auto space-y-2 flex-1" id="doctor-modal-list">
+      <!-- Preenchido via JS -->
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+      <button onclick="closeDoctorSearchModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dados de todos os orçamentos
+  const budgetsData = <%- JSON.stringify(budgets) %>;
+  const examsData = <%- JSON.stringify(exams) %>;
+  const patientsData = <%- JSON.stringify(locals.patients || []) %>;
+  const conveniosData = <%- JSON.stringify(locals.convenios || []) %>;
+  const priceTablesData = <%- JSON.stringify(locals.priceTables || []) %>;
+
+  function getExamPriceForBudgetConvenio(exam) {
+    if (!exam) return 0;
+    
+    const currentConvName = (document.getElementById('form-convenio')?.value || 'Particular').trim();
+    
+    let conv = conveniosData.find(c => 
+      (c.fantasia && c.fantasia.toLowerCase() === currentConvName.toLowerCase()) ||
+      (c.razaoSocial && c.razaoSocial.toLowerCase() === currentConvName.toLowerCase())
+    );
+
+    if (!conv) {
+      conv = conveniosData.find(c => (c.fantasia || c.razaoSocial || '').toLowerCase().includes('particular')) || conveniosData[0];
+    }
+
+    const tabelaId = conv ? conv.tabelaPrecoId : null;
+    let priceTable = null;
+    if (tabelaId) {
+      priceTable = priceTablesData.find(pt => String(pt.id) === String(tabelaId));
+    }
+    if (!priceTable && priceTablesData.length > 0) {
+      priceTable = priceTablesData[0];
+    }
+
+    if (!priceTable || !priceTable.precios) {
+      return parseFloat(exam.pricePrivate || exam.price || 0);
+    }
+
+    const examCode = (exam.code || exam.codigo || '').toLowerCase();
+    const examName = (exam.name || exam.nome || '').toLowerCase();
+    const examId = (exam.id || '').toLowerCase();
+    const examMat = (exam.material || exam.materialColetado || exam.materialNome || '').toLowerCase().trim();
+
+    let priceItem = null;
+    if (examMat) {
+      priceItem = priceTable.precios.find(p => {
+        const pCode = (p.exameCodigo || p.examCode || p.code || '').toLowerCase();
+        const pName = (p.exameNome || p.examName || p.name || '').toLowerCase();
+        const pId = (p.exameId || p.id || '').toLowerCase();
+        const pMat = (p.material || '').toLowerCase().trim();
+
+        const matchExam = (examCode && pCode === examCode) || (examId && pId === examId) || (examName && pName === examName);
+        return matchExam && pMat === examMat;
+      });
+    }
+
+    if (!priceItem) {
+      priceItem = priceTable.precios.find(p => {
+        const pCode = (p.exameCodigo || p.examCode || p.code || '').toLowerCase();
+        const pName = (p.exameNome || p.examName || p.name || '').toLowerCase();
+        const pId = (p.exameId || p.id || '').toLowerCase();
+        return (examCode && pCode === examCode) || (examId && pId === examId) || (examName && pName === examName);
+      });
+    }
+
+    if (priceItem && priceItem.valor !== undefined && priceItem.valor !== null && priceItem.valor !== '') {
+      return parseFloat(priceItem.valor) || 0;
+    }
+
+    return parseFloat(exam.pricePrivate || exam.price || 0);
+  }
+
+  function recalculateBudgetExamPrices() {
+    if (!addedExams || addedExams.length === 0) return;
+    addedExams.forEach(item => {
+      const match = examsData.find(e => e.id === item.id || (e.code && e.code.toLowerCase() === (item.code || '').toLowerCase()));
+      item.price = getExamPriceForBudgetConvenio(match || item);
+    });
+    renderAddedExamsTable();
+    calculateTotais();
+  }
+
+  // Lista local de exames adicionados na sessão de cadastro
+  let addedExams = [];
+
+  // Variáveis de Paginação (50 por página)
+  const PAGE_SIZE = 50;
+  let currentPage = 1;
+  let filteredBudgets = [...budgetsData];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderPagination();
+  });
+
+  // TGL Formulário de Cadastro (Collapse Fechado por Padrão)
+  function toggleRegistrationForm(forceOpen = null) {
+    const card = document.getElementById('novo-orcamento-card');
+    const toggleText = document.getElementById('collapse-toggle-text');
+    const historico = document.getElementById('historico-secao');
+
+    let shouldShow = forceOpen !== null ? forceOpen : card.classList.contains('hidden');
+
+    if (shouldShow) {
+      card.classList.remove('hidden');
+      if (historico) historico.classList.add('hidden');
+      if (toggleText) toggleText.textContent = 'Ocultar ▲';
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      card.classList.add('hidden');
+      if (historico) historico.classList.remove('hidden');
+      if (toggleText) toggleText.textContent = 'Expandir ▼';
+    }
+  }
+
+  // TGL Dados do Paciente dentro do Form
+  function togglePatientDataSection() {
+    const panel = document.getElementById('patient-data-panel');
+    const icon = document.getElementById('patient-data-toggle-icon');
+
+    if (panel.classList.contains('hidden')) {
+      panel.classList.remove('hidden');
+      icon.textContent = '▲';
+    } else {
+      panel.classList.add('hidden');
+      icon.textContent = '▼';
+    }
+  }
+
+  // Limpar/Resetar Form de Cadastro
+  function resetBudgetForm() {
+    addedExams = [];
+    renderAddedExamsTable();
+    if (document.getElementById('form-originalId')) document.getElementById('form-originalId').value = '';
+    const heading = document.getElementById('form-title-heading');
+    if (heading) heading.textContent = 'Cadastro de Novo Orçamento';
+    document.getElementById('form-codigo').value = 'ORC' + Date.now().toString().slice(-6);
+    if (document.getElementById('exam-code-field')) document.getElementById('exam-code-field').value = '';
+    document.getElementById('exam-search-field').value = '';
+    document.getElementById('form-patientName').value = '';
+    if (document.getElementById('form-solicitante')) document.getElementById('form-solicitante').value = '';
+    document.getElementById('form-patientPhone').value = '';
+    if (document.getElementById('form-patientEmail')) document.getElementById('form-patientEmail').value = '';
+    if (document.getElementById('form-contatoNome')) document.getElementById('form-contatoNome').value = '';
+    if (document.getElementById('form-contatoFone')) document.getElementById('form-contatoFone').value = '';
+    if (document.getElementById('form-conselhoTipo')) document.getElementById('form-conselhoTipo').value = 'CRM';
+    if (document.getElementById('form-conselhoNum')) document.getElementById('form-conselhoNum').value = '';
+    if (document.getElementById('form-conselhoUf')) document.getElementById('form-conselhoUf').value = 'PR';
+    document.getElementById('form-doctorName').value = '';
+    document.getElementById('form-patientCpf').value = '';
+    document.getElementById('form-convenio').value = 'Particular';
+    document.getElementById('form-acrescimo').value = '0.00';
+    document.getElementById('form-desconto').value = '0.00';
+    document.getElementById('form-observation').value = '';
+    calculateTotais();
+    toggleRegistrationForm(true);
+  }
+
+  // Editar Orçamento Existente
+  function editBudget(id) {
+    const b = budgetsData.find(item => item.id === id);
+    if (!b) {
+      alert('Orçamento não encontrado!');
+      return;
+    }
+
+    // Preencher campos do formulário
+    if (document.getElementById('form-originalId')) document.getElementById('form-originalId').value = b.id;
+    if (document.getElementById('form-codigo')) document.getElementById('form-codigo').value = b.id;
+    if (document.getElementById('form-data')) document.getElementById('form-data').value = b.date || new Date().toISOString().split('T')[0];
+    if (document.getElementById('form-usuario')) document.getElementById('form-usuario').value = b.user || 'Administrador';
+
+    // Dados do paciente / solicitante / contato / médico
+    if (document.getElementById('form-patientName')) document.getElementById('form-patientName').value = b.patientName || '';
+    if (document.getElementById('form-patientCpf')) document.getElementById('form-patientCpf').value = b.patientCpf || '';
+    if (document.getElementById('form-patientPhone')) document.getElementById('form-patientPhone').value = b.patientPhone || '';
+    if (document.getElementById('form-patientEmail')) document.getElementById('form-patientEmail').value = b.patientEmail || '';
+    if (document.getElementById('form-solicitante')) document.getElementById('form-solicitante').value = b.solicitante || '';
+    if (document.getElementById('form-contatoNome')) document.getElementById('form-contatoNome').value = b.contatoNome || '';
+    if (document.getElementById('form-contatoFone')) document.getElementById('form-contatoFone').value = b.contatoFone || '';
+    if (document.getElementById('form-conselhoTipo')) document.getElementById('form-conselhoTipo').value = b.conselhoTipo || 'CRM';
+    if (document.getElementById('form-conselhoNum')) document.getElementById('form-conselhoNum').value = b.conselhoNum || '';
+    if (document.getElementById('form-conselhoUf')) document.getElementById('form-conselhoUf').value = b.conselhoUf || 'PR';
+    if (document.getElementById('form-doctorName')) document.getElementById('form-doctorName').value = b.doctorName || '';
+    if (document.getElementById('form-convenio')) document.getElementById('form-convenio').value = b.convenio || 'Particular';
+
+    // Valores e observação
+    if (document.getElementById('form-acrescimo')) document.getElementById('form-acrescimo').value = b.acrescimo !== undefined ? b.acrescimo : '0.00';
+    if (document.getElementById('form-tipoAcrescimo')) document.getElementById('form-tipoAcrescimo').value = b.tipoAcrescimo || 'R$';
+    if (document.getElementById('form-desconto')) document.getElementById('form-desconto').value = b.desconto !== undefined ? b.desconto : '0.00';
+    if (document.getElementById('form-tipoDesconto')) document.getElementById('form-tipoDesconto').value = b.tipoDesconto || 'R$';
+    if (document.getElementById('form-validade')) document.getElementById('form-validade').value = b.validade || '30 dias';
+    if (document.getElementById('form-observation')) document.getElementById('form-observation').value = b.observation || '';
+
+    // Exames
+    addedExams = Array.isArray(b.exams) ? JSON.parse(JSON.stringify(b.exams)) : [];
+    renderAddedExamsTable();
+
+    // Atualizar título do form
+    const heading = document.getElementById('form-title-heading');
+    if (heading) heading.textContent = 'Editar Orçamento #' + b.id;
+
+    // Expandir painel de dados do paciente se estiver fechado
+    const panel = document.getElementById('patient-data-panel');
+    if (panel && panel.classList.contains('hidden')) {
+      togglePatientDataSection();
+    }
+
+    // Abrir formulário e esconder histórico
+    toggleRegistrationForm(true);
+  }
+
+  // Modais de Busca de Paciente e Médico
+  function openPatientSearchModal() {
+    renderPatientsModalList(patientsData);
+    document.getElementById('patient-search-modal').classList.remove('hidden');
+    document.getElementById('patient-modal-input').value = '';
+    document.getElementById('patient-modal-input').focus();
+  }
+
+  function closePatientSearchModal() {
+    document.getElementById('patient-search-modal').classList.add('hidden');
+  }
+
+  function filterPatientsModal() {
+    const q = document.getElementById('patient-modal-input').value.toLowerCase().trim();
+    const filtered = patientsData.filter(p => {
+      const name = (p.nome || p.name || '').toLowerCase();
+      const cpf = (p.cpf || '').toLowerCase();
+      return name.includes(q) || cpf.includes(q);
+    });
+    renderPatientsModalList(filtered);
+  }
+
+  function renderPatientsModalList(list) {
+    const container = document.getElementById('patient-modal-list');
+    container.innerHTML = '';
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div class="p-4 text-center text-xs text-gray-400 font-mono">Nenhum paciente cadastrado encontrado.</div>';
+      return;
+    }
+    list.forEach(p => {
+      const pName = p.nome || p.name || 'Paciente sem nome';
+      const div = document.createElement('div');
+      div.className = 'p-3 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 cursor-pointer transition-all flex justify-between items-center';
+      div.onclick = () => selectPatientFromModal(p);
+      div.innerHTML = `
+        <div>
+          <span class="block font-bold text-gray-900 text-xs">${pName}</span>
+          <span class="block text-[10px] text-gray-500 font-mono">CPF: ${p.cpf || '-'} | Tel: ${p.telefone || p.celular || p.phone || '-'}</span>
+        </div>
+        <button type="button" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-[10px] uppercase rounded-lg">Selecionar</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function selectPatientFromModal(p) {
+    document.getElementById('form-patientName').value = p.nome || p.name || '';
+    if (p.cpf) document.getElementById('form-patientCpf').value = p.cpf;
+    if (p.telefone || p.celular || p.phone) document.getElementById('form-patientPhone').value = p.telefone || p.celular || p.phone;
+    if (p.email && document.getElementById('form-patientEmail')) document.getElementById('form-patientEmail').value = p.email;
+    if (p.convenio) document.getElementById('form-convenio').value = p.convenio;
+    closePatientSearchModal();
+  }
+
+  // Busca de Médico
+  const medicosListFromDb = <%- JSON.stringify(locals.medicos || []) %>;
+  const defaultDoctors = medicosListFromDb.length > 0
+    ? medicosListFromDb.map(m => ({ name: m.nome, crm: m.numero || '', uf: m.uf || 'PR', tipo: m.conselho || 'CRM' }))
+    : [
+        { name: 'Dr. Carlos Eduardo Ferreira', crm: '12345', uf: 'PR', tipo: 'CRM' },
+        { name: 'Dra. Ana Paula Silva', crm: '23456', uf: 'PR', tipo: 'CRM' },
+        { name: 'Dr. Roberto Mendes', crm: '34567', uf: 'SP', tipo: 'CRM' },
+        { name: 'Dra. Juliana Castro', crm: '45678', uf: 'PR', tipo: 'CRM' },
+        { name: 'Médico Solicitante Particular / Balcão', crm: '00000', uf: 'PR', tipo: 'CRM' }
+      ];
+
+  function openDoctorSearchModal() {
+    renderDoctorsModalList(defaultDoctors);
+    document.getElementById('doctor-search-modal').classList.remove('hidden');
+    document.getElementById('doctor-modal-input').value = '';
+    document.getElementById('doctor-modal-input').focus();
+  }
+
+  function closeDoctorSearchModal() {
+    document.getElementById('doctor-search-modal').classList.add('hidden');
+  }
+
+  function filterDoctorsModal() {
+    const q = document.getElementById('doctor-modal-input').value.toLowerCase().trim();
+    const filtered = defaultDoctors.filter(d => d.name.toLowerCase().includes(q) || d.crm.includes(q));
+    renderDoctorsModalList(filtered);
+  }
+
+  function renderDoctorsModalList(list) {
+    const container = document.getElementById('doctor-modal-list');
+    container.innerHTML = '';
+    list.forEach(d => {
+      const div = document.createElement('div');
+      div.className = 'p-3 bg-gray-50 hover:bg-emerald-50 rounded-xl border border-gray-200 cursor-pointer transition-all flex justify-between items-center';
+      div.onclick = () => selectDoctorFromModal(d);
+      div.innerHTML = `
+        <div>
+          <span class="block font-bold text-gray-900 text-xs">${d.name}</span>
+          <span class="block text-[10px] text-gray-500 font-mono">${d.tipo}: ${d.crm} / ${d.uf}</span>
+        </div>
+        <button type="button" class="px-2.5 py-1 bg-emerald-600 text-white font-bold text-[10px] uppercase rounded-lg">Selecionar</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function selectDoctorFromModal(d) {
+    if (document.getElementById('form-conselhoTipo')) document.getElementById('form-conselhoTipo').value = d.tipo || 'CRM';
+    if (document.getElementById('form-conselhoNum')) document.getElementById('form-conselhoNum').value = d.crm || '';
+    if (document.getElementById('form-conselhoUf')) document.getElementById('form-conselhoUf').value = d.uf || 'PR';
+    document.getElementById('form-doctorName').value = d.name || '';
+    closeDoctorSearchModal();
+  }
+
+  // Digitação do Código do Exame no Form
+  function onExamCodeInput() {
+    const codeVal = document.getElementById('exam-code-field').value.trim().toLowerCase();
+    if (!codeVal) return;
+
+    // Buscar no banco de exames por código exato ou que inicie com o código
+    const match = examsData.find(e => e.code && e.code.toLowerCase() === codeVal) ||
+                  examsData.find(e => e.code && e.code.toLowerCase().startsWith(codeVal));
+
+    if (match) {
+      document.getElementById('exam-search-field').value = (match.code ? match.code + ' - ' : '') + match.name;
+      if (match.material) {
+        document.getElementById('exam-material-field').value = match.material;
+      }
+    }
+  }
+
+  // Digitação/Seleção do Nome do Exame
+  function onExamNameInput() {
+    const searchVal = document.getElementById('exam-search-field').value.trim().toLowerCase();
+    if (!searchVal) return;
+
+    const match = examsData.find(e => {
+      const fullText = (e.code ? e.code + ' - ' : '') + e.name;
+      return fullText.toLowerCase() === searchVal || e.name.toLowerCase() === searchVal;
+    });
+
+    if (match) {
+      if (document.getElementById('exam-code-field')) {
+        document.getElementById('exam-code-field').value = match.code || '';
+      }
+      if (match.material) {
+        document.getElementById('exam-material-field').value = match.material;
+      }
+    }
+  }
+
+  // Tecla Enter nos campos de busca de exame
+  function handleExamInputKeydown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addSelectedExam();
+    }
+  }
+
+  // Adicionar Exame da Barra de Pesquisa ao Grid
+  function addSelectedExam() {
+    const codeInput = document.getElementById('exam-code-field');
+    const codeVal = codeInput ? codeInput.value.trim() : '';
+    const searchVal = document.getElementById('exam-search-field').value.trim();
+    const materialVal = document.getElementById('exam-material-field').value;
+
+    if (!codeVal && !searchVal) {
+      alert('Por favor, digite o código ou selecione um exame na busca.');
+      return;
+    }
+
+    // Tentar localizar no banco de exames
+    const match = examsData.find(e => {
+      const codeMatch = codeVal && e.code && e.code.toLowerCase() === codeVal.toLowerCase();
+      const fullText = (e.code ? e.code + ' - ' : '') + e.name;
+      const nameMatch = searchVal && (fullText.toLowerCase() === searchVal.toLowerCase() || e.name.toLowerCase() === searchVal.toLowerCase());
+      return codeMatch || nameMatch;
+    });
+
+    if (match) {
+      addedExams.push({
+        id: match.id,
+        code: match.code || 'EX-' + Math.floor(Math.random()*1000),
+        name: match.name,
+        material: materialVal || match.material || 'Soro',
+        price: parseFloat(match.pricePrivate || 0),
+        fasting: match.fasting || 'Sem jejum',
+        timeframe: match.timeframe || '1 dia útil',
+        instructions: match.instructions || ''
+      });
+    } else {
+      alert("Exame não encontrado no cadastro de exames. Selecione um exame da lista de exames cadastrados.");
+      return;
+    }
+
+    if (codeInput) codeInput.value = '';
+    document.getElementById('exam-search-field').value = '';
+    if (codeInput) {
+      codeInput.focus();
+    } else {
+      document.getElementById('exam-search-field').focus();
+    }
+    renderAddedExamsTable();
+  }
+
+  // Remover Exame da Tabela
+  function removeExamFromGrid(idx) {
+    addedExams.splice(idx, 1);
+    renderAddedExamsTable();
+  }
+
+  // Renderizar Tabela de Exames Adicionados
+  function renderAddedExamsTable() {
+    const tbody = document.getElementById('budget-items-tbody');
+    tbody.innerHTML = '';
+
+    if (addedExams.length === 0) {
+      tbody.innerHTML = `
+        <tr id="empty-exams-row">
+          <td colspan="6" class="py-8 text-center text-gray-400 font-mono text-xs">
+            Nenhum exame adicionado ao orçamento ainda. Selecione um exame acima e clique em OK.
+          </td>
+        </tr>
+      `;
+      calculateTotais();
+      return;
+    }
+
+    addedExams.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-gray-50 border-b border-gray-100';
+
+      tr.innerHTML = `
+        <td class="py-2.5 px-3 text-center font-mono font-bold text-gray-500">${index + 1}</td>
+        <td class="py-2.5 px-3 font-mono font-bold text-emerald-800">${item.code}</td>
+        <td class="py-2.5 px-3 font-bold text-gray-900">${item.name}</td>
+        <td class="py-2.5 px-3 font-mono text-gray-700">${item.material}</td>
+        <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-900">
+          R$ ${item.price.toFixed(2).replace('.', ',')}
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <button type="button" onclick="removeExamFromGrid(${index})" class="text-rose-600 hover:text-rose-800 font-bold p-1 rounded hover:bg-rose-50 cursor-pointer" title="Remover Exame">
+            ✕
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    calculateTotais();
+  }
+
+  // Calcular Totais (Acréscimo e Desconto)
+  function calculateTotais() {
+    let subtotal = addedExams.reduce((acc, cur) => acc + (cur.price || 0), 0);
+
+    let acrescimoVal = parseFloat(document.getElementById('form-acrescimo').value || '0');
+    let tipoAcrescimo = document.getElementById('form-tipoAcrescimo').value;
+
+    let descontoVal = parseFloat(document.getElementById('form-desconto').value || '0');
+    let tipoDesconto = document.getElementById('form-tipoDesconto').value;
+
+    let totalAcrescimo = tipoAcrescimo === '%' ? (subtotal * acrescimoVal) / 100 : acrescimoVal;
+    let totalDesconto = tipoDesconto === '%' ? (subtotal * descontoVal) / 100 : descontoVal;
+
+    let totalLiquido = Math.max(0, subtotal + totalAcrescimo - totalDesconto);
+
+    document.getElementById('form-total-display').textContent = 'R$ ' + totalLiquido.toFixed(2).replace('.', ',');
+  }
+
+  // Preparar Envio do Formulário
+  function prepareFormSubmission(e) {
+    if (addedExams.length === 0) {
+      e.preventDefault();
+      alert('Por favor, adicione pelo menos um exame antes de salvar o orçamento.');
+      return false;
+    }
+
+    document.getElementById('hidden-exams-json').value = JSON.stringify(addedExams);
+    return true;
+  }
+
+  // Converter Orçamento Atual em Requisição / OS
+  function convertToRequision() {
+    const pName = document.getElementById('form-patientName').value.trim();
+    const pCpf = document.getElementById('form-patientCpf').value.trim();
+    const pPhone = document.getElementById('form-patientPhone').value.trim();
+
+    if (!pName) {
+      alert('Preencha o Nome do Paciente para gerar a Requisição.');
+      return;
+    }
+
+    window.location.href = `/admin/requisicoes?patientName=${encodeURIComponent(pName)}&patientCpf=${encodeURIComponent(pCpf)}&patientPhone=${encodeURIComponent(pPhone)}`;
+  }
+
+  // LÓGICA DE PAGINAÇÃO DE 50 EM 50
+  function filterBudgetsWithPagination() {
+    const input = document.getElementById('budget-search-input');
+    const query = input.value.toLowerCase().trim();
+
+    filteredBudgets = budgetsData.filter(b => {
+      const name = (b.patientName || '').toLowerCase();
+      const id = (b.id || '').toLowerCase();
+      return name.includes(query) || id.includes(query);
+    });
+
+    currentPage = 1;
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const totalItems = filteredBudgets.length;
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+
+    // Ocultar/Exibir linhas correspondentes
+    const allRows = document.querySelectorAll('.budget-row');
+    allRows.forEach(row => {
+      const idx = parseInt(row.getAttribute('data-index'), 10);
+      const rowItem = budgetsData[idx];
+      if (rowItem && filteredBudgets.includes(rowItem)) {
+        const filteredIdx = filteredBudgets.indexOf(rowItem);
+        if (filteredIdx >= startIndex && filteredIdx < endIndex) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Atualizar Contadores e Textos
+    document.getElementById('total-budgets-count').textContent = totalItems + ' registros';
+    document.getElementById('pagination-info').textContent = totalItems > 0 
+      ? `Exibindo ${startIndex + 1} a ${endIndex} de ${totalItems} orçamentos`
+      : 'Nenhum orçamento encontrado';
+
+    document.getElementById('page-display').textContent = `Página ${currentPage} de ${totalPages}`;
+
+    document.getElementById('btn-prev-page').disabled = (currentPage <= 1);
+    document.getElementById('btn-next-page').disabled = (currentPage >= totalPages);
+  }
+
+  function changePage(direction) {
+    currentPage += direction;
+    renderPagination();
+  }
+
+  // Atualizar Status via API
+  async function updateBudgetStatus(id, newStatus) {
+    try {
+      const response = await fetch('/admin/orcamentos/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus })
+      });
+      const data = await response.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert('Erro ao atualizar status: ' + (data.message || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro na comunicação com o servidor.');
+    }
+  }
+
+  // Visualizar / Imprimir Ficha no Modal
+  function openPrintModal(reqId) {
+    const req = budgetsData.find(r => r.id === reqId);
+    if (!req) return;
+
+    document.getElementById('modal-id').textContent = req.id;
+    document.getElementById('modal-date').textContent = req.createdAt || req.date;
+    document.getElementById('modal-patient-name').textContent = req.patientName;
+    document.getElementById('modal-patient-cpf').textContent = req.patientCpf || 'Não informado';
+    document.getElementById('modal-doctor').textContent = (req.doctorName || 'Não Informado') + ' [' + (req.convenio || 'Particular') + ']';
+    document.getElementById('modal-fasting').textContent = req.maxFasting || 'Sem jejum';
+    document.getElementById('modal-timeframe').textContent = req.maxTimeframe || '1 dia útil';
+    document.getElementById('modal-total-price').textContent = 'R$ ' + (req.totalPrice || 0).toFixed(2).replace('.', ',');
+
+    const examsContainer = document.getElementById('modal-exams-list');
+    examsContainer.innerHTML = '';
+    (req.exams || []).forEach(exam => {
+      const div = document.createElement('div');
+      div.className = 'py-2 flex justify-between items-center';
+      div.innerHTML = `
+        <div>
+          <span class="font-bold text-gray-900">${exam.name}</span>
+          <span class="block text-[10px] text-gray-500 font-mono">Mat: ${exam.material || 'Soro'} | Cód: ${exam.code || '-'}</span>
+        </div>
+        <div class="font-bold text-gray-800 font-mono">
+          R$ ${(exam.price || 0).toFixed(2).replace('.', ',')}
+        </div>
+      `;
+      examsContainer.appendChild(div);
+    });
+
+    document.getElementById('print-modal').classList.remove('hidden');
+  }
+
+  function closePrintModal() {
+    document.getElementById('print-modal').classList.add('hidden');
+  }
+</script>
+
+<%- include('../partials/footer') %>

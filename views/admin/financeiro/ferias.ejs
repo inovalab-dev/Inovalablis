@@ -1,0 +1,1864 @@
+<%- include('../../partials/header') %>
+
+<div class="p-3 sm:p-6 w-full space-y-6">
+  <!-- 1. Cabeçalho Principal com Ações -->
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm no-print">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono font-black uppercase tracking-wider bg-brand-gold/10 text-brand-dark px-2 py-0.5 rounded border border-brand-gold/20">Recursos Humanos</span>
+        <span class="text-xs text-gray-300">/</span>
+        <span class="text-xs font-bold text-gray-500">Controle de Férias Contábil</span>
+      </div>
+      <h1 class="text-2xl font-black text-brand-dark tracking-tight font-sans mt-1">Gestão de Férias Vencidas e a Vencer</h1>
+      <p class="text-xs text-gray-500 mt-1">Colaboradores e datas de admissão sincronizados automaticamente da tela de <a href="/admin/profissionais" class="text-brand-dark font-bold underline hover:text-brand-gold">Cadastro de Profissionais</a>. Controle de saldos, prazos do Art. 137 da CLT e escala de gozo.</p>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <button onclick="openVacationModal()" class="px-3.5 py-2.5 bg-brand-dark hover:bg-brand-dark/90 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-2">
+        <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+        Agendar Férias
+      </button>
+
+      <button onclick="printAccountingReport()" class="px-3.5 py-2.5 bg-brand-gold hover:bg-brand-gold/90 text-brand-dark text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.615 0-1.101-.476-1.12-1.091L5.87 18m11.79 0c.081-.833-.27-1.675-.92-2.224l-.008-.007a4.902 4.902 0 00-6.002 0l-.008.007a2.917 2.917 0 01-1.92.576" /></svg>
+        Imprimir Relatório
+      </button>
+    </div>
+  </div>
+
+  <%
+    if (typeof computeAllVacationPeriods !== 'function') {
+      computeAllVacationPeriods = function(prof) {
+        return [{
+          periodIndex: 0,
+          aquisitivePeriod: prof && prof.vencidaEm ? `Até ${prof.vencidaEm}` : 'Aquisitivo Atual',
+          vencidaEm: (prof && prof.vencidaEm) || '-',
+          faltas: (prof && prof.faltas) || 0,
+          diasDireito: prof && prof.diasDireito !== undefined ? prof.diasDireito : 30,
+          diasGozados: (prof && prof.diasGozados) || 0,
+          saldoAGozar: prof && prof.saldoAGozar !== undefined ? prof.saldoAGozar : 30,
+          concederAvisoAte: (prof && prof.concederAvisoAte) || '-',
+          concederAvisoAteBr: prof && prof.concederAvisoAte ? prof.concederAvisoAte.split('-').reverse().join('/') : '-',
+          proximoVencimento: (prof && prof.proximoVencimento) || '-',
+          isVencida: true,
+          isAtual: false,
+          statusLabel: 'Férias Vencidas',
+          vacations: (prof && prof.vacations) || []
+        }];
+      };
+    }
+
+    // Processamento de Indicadores de Saldo e Limites CLT
+    let totalProfs = professionals.length;
+    let totalSaldoAGozar = 0;
+    let totalDiasGozados = 0;
+    let vencidasOuProximasCount = 0;
+    let avisoExpirandoCount = 0;
+
+    const todayStr = '2026-07-22';
+    const todayObj = new Date(todayStr);
+
+    professionals.forEach(p => {
+      const pPeriods = computeAllVacationPeriods(p);
+      pPeriods.forEach(period => {
+        const saldo = period.saldoAGozar !== undefined ? Number(period.saldoAGozar) : 30;
+        totalSaldoAGozar += saldo;
+
+        const gozados = period.diasGozados !== undefined ? Number(period.diasGozados) : 0;
+        totalDiasGozados += gozados;
+
+        if (period.isVencida && period.saldoAGozar > 0) {
+          vencidasOuProximasCount++;
+        }
+
+        if (period.concederAvisoAte) {
+          let avisoIso = period.concederAvisoAte;
+          if (avisoIso.includes('/')) {
+            let avisoParts = avisoIso.split('/');
+            avisoIso = `${avisoParts[2]}-${avisoParts[1]}-${avisoParts[0]}`;
+          }
+          const avisoDate = new Date(avisoIso);
+          if (!isNaN(avisoDate.getTime())) {
+            const diffDays = Math.floor((avisoDate - todayObj) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 30 && saldo > 0) {
+              avisoExpirandoCount++;
+            }
+          }
+        }
+      });
+    });
+  %>
+
+  <!-- 2. KPIs de Controle de Férias do Laboratório -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 no-print">
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Colaboradores</span>
+        <div class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6 0 3.375 3.375 0 016 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-brand-dark mt-2 font-mono"><%= totalProfs %></p>
+      <span class="text-[10px] text-gray-400 font-sans">Cadastrados no relatório</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Saldo Total a Gozar</span>
+        <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-amber-600 mt-2 font-mono"><%= totalSaldoAGozar %> <span class="text-xs font-sans text-gray-400">dias</span></p>
+      <span class="text-[10px] text-amber-600/80 font-sans">Pendente de gozo</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Aviso Prévio Próximo</span>
+        <div class="w-8 h-8 rounded-xl <%= avisoExpirandoCount > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' %> flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black <%= avisoExpirandoCount > 0 ? 'text-rose-600' : 'text-emerald-600' %> mt-2 font-mono"><%= avisoExpirandoCount %></p>
+      <span class="text-[10px] text-gray-400 font-sans">Aviso prévio urgente (Art. 137)</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Dias Já Gozados</span>
+        <div class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-emerald-600 mt-2 font-mono"><%= totalDiasGozados %> <span class="text-xs font-sans text-gray-400">dias</span></p>
+      <span class="text-[10px] text-emerald-600/80 font-sans">Concluídos no período</span>
+    </div>
+  </div>
+
+  <!-- 3. Barra de Alternância de Visões -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 no-print">
+    <!-- Filtros de Busca -->
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="relative min-w-[220px]">
+        <input type="text" id="search-name" onkeyup="filterRows()" placeholder="Buscar colaborador..." class="w-full bg-gray-50 border border-gray-200 rounded-xl text-xs pl-8 pr-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-gold">
+        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+      </div>
+
+      <button type="button" onclick="toggleShowGozadas()" id="btn-toggle-gozadas" class="btn-toggle-gozadas px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-mono font-bold rounded-xl border border-gray-300 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs" title="Exibir ou ocultar férias já gozadas por completo / quitadas">
+        <span class="gozada-icon">👁️</span>
+        <span class="gozada-text">Exibir Férias Gozadas</span>
+      </button>
+
+
+    </div>
+
+    <!-- Modos de Exibição -->
+    <div class="flex items-center bg-gray-100 p-1 rounded-xl shrink-0">
+      <button onclick="switchView('gantt')" id="btn-view-gantt" class="px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all bg-white text-brand-dark shadow-sm flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-brand-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+        Timeline / Escala Anual
+      </button>
+      <button onclick="switchView('calendar')" id="btn-view-calendar" class="px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+        Calendário Mensal
+      </button>
+      <button onclick="switchView('accounting')" id="btn-view-accounting" class="px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-500 hover:text-gray-800 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+        Relatório Contábil
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== VISÃO 1: ESCALA & GANTT (TIMELINE 12 MESES) ==================== -->
+  <div id="view-gantt" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden no-print space-y-3">
+    <!-- Cabeçalho do Gantt e Controles de Navegação de Mês -->
+    <div class="p-3 bg-gray-50 border-b border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div>
+        <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-wider flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-brand-gold"></span>
+          Timeline de Férias & Escala Mês a Mês
+        </h3>
+        <p class="text-[11px] text-gray-500">Mapeamento visual do planejamento de férias dos colaboradores ao longo do ano.</p>
+      </div>
+
+      <!-- Controles para movimentar o calendário para frente e para trás -->
+      <div class="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-gray-200 shadow-2xs">
+        <button onclick="changeGanttMonth(-1)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-1 cursor-pointer" title="Mês Anterior">
+          ◀ Anterior
+        </button>
+        <button onclick="resetGanttToCurrent()" class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-1 cursor-pointer" title="Voltar ao Mês Atual (Julho 2026)">
+          📍 Mês Atual
+        </button>
+        <span id="gantt-range-title" class="px-2.5 text-xs font-mono font-black text-brand-dark uppercase">Julho 2026 — Junho 2027</span>
+        <button onclick="changeGanttMonth(1)" class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-1 cursor-pointer" title="Próximo Mês">
+          Próximo ▶
+        </button>
+      </div>
+
+      <!-- Legenda de Status -->
+      <div class="flex items-center gap-2.5 text-[10px] font-mono shrink-0">
+        <div class="flex items-center gap-1">
+          <span class="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span>
+          <span class="text-gray-600">Gozadas</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="w-2.5 h-2.5 rounded-xs bg-amber-500"></span>
+          <span class="text-gray-600">Agendadas</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="w-2.5 h-2.5 rounded-xs bg-rose-500"></span>
+          <span class="text-gray-600">Limite CLT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela Dinâmica do Gantt Renderizada via JS -->
+    <div id="gantt-table-container" class="overflow-x-auto p-2">
+      <!-- Preenchido via renderGanttTimeline() -->
+    </div>
+  </div>
+
+  <!-- ==================== VISÃO 2: CALENDÁRIO MENSAL OPERACIONAL ==================== -->
+  <div id="view-calendar" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 no-print">
+    <!-- Navegação do Mês -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4">
+      <div>
+        <h2 class="text-lg font-black text-brand-dark font-sans flex items-center gap-2">
+          <span>📅</span> Calendário Operacional de Férias
+        </h2>
+        <p class="text-xs text-gray-500">Acompanhamento diário das saídas e retornos do laboratório.</p>
+      </div>
+
+      <div class="flex items-center gap-2 bg-gray-100 p-1.5 rounded-2xl">
+        <button onclick="changeCalendarMonth(-1)" class="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl shadow-2xs">
+          ◀ Mês Anterior
+        </button>
+        <span id="calendar-month-title" class="px-4 text-xs font-mono font-black text-brand-dark uppercase">Julho 2026</span>
+        <button onclick="changeCalendarMonth(1)" class="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl shadow-2xs">
+          Próximo ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- Grade dos Dias do Mês (7 Colunas) -->
+    <div class="space-y-2">
+      <div class="grid grid-cols-7 gap-1 text-center font-mono text-xs font-bold text-gray-500 uppercase bg-gray-50 p-2 rounded-xl">
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div class="text-brand-dark font-black">Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+      </div>
+
+      <!-- Container Dinâmico dos Dias gerado via JS -->
+      <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5">
+        <!-- Renderizado dinamicamente pelo script -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VISÃO 3: RELATÓRIO DE FÉRIAS VENCIDAS E A VENCER (OFICIAL ESCRITÓRIO) ==================== -->
+  <div id="view-accounting" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6 printable-report">
+    <!-- Cabeçalho do Relatório Fiel à Contabilidade -->
+    <div class="border-b border-gray-800 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 font-mono">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-black tracking-tight uppercase font-serif">RELATÓRIO DE FÉRIAS VENCIDAS E A VENCER</h2>
+        <p class="text-sm font-bold text-gray-800 mt-1">0767 - IDEM LABORATORIO DE ANALISES CLINICAS LTDA</p>
+        <p class="text-xs text-gray-700">CNPJ: 56.428.462/0001-69</p>
+      </div>
+      <div class="text-right text-xs text-gray-700 flex flex-col items-end gap-2">
+        <div><span>Emissão: </span><strong class="font-bold">18/06/2026 13:52:06</strong></div>
+        <button type="button" onclick="toggleShowGozadas()" class="btn-toggle-gozadas no-print px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-mono font-bold rounded-xl border border-gray-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Exibir ou ocultar férias já gozadas por completo / quitadas">
+          <span class="gozada-icon">👁️</span>
+          <span class="gozada-text">Exibir Férias Gozadas</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabela do Relatório Contábil -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse font-serif text-xs">
+        <thead>
+          <tr class="border-y-2 border-black font-sans text-[11px] font-bold text-black uppercase tracking-tight bg-gray-50/50">
+            <th class="py-2.5 px-2 text-center border-r border-gray-300 w-12">Cod.</th>
+            <th class="py-2.5 px-3 border-r border-gray-300">Nome</th>
+            <th class="py-2.5 px-2 text-center border-r border-gray-300 w-24">Admissão</th>
+            <th class="py-2.5 px-2 text-center border-r border-gray-300 w-24">Vencida em</th>
+            <th class="py-2.5 px-1 text-center border-r border-gray-300 w-14">Faltas</th>
+            <th class="py-2.5 px-1 text-center border-r border-gray-300 w-16">Dias de direito</th>
+            <th class="py-2.5 px-1 text-center border-r border-gray-300 w-16">Dias gozados</th>
+            <th class="py-2.5 px-1 text-center border-r border-gray-300 w-16">Saldo a gozar</th>
+            <th class="py-2.5 px-2 text-center border-r border-gray-300 w-28">Conceder Aviso até</th>
+            <th class="py-2.5 px-2 text-center border-r border-gray-300 w-28">Próximo Vencimento</th>
+            <th class="py-2.5 px-2 text-center no-print w-20">Ação</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-300 font-mono text-xs">
+          <% professionals.forEach(p => { 
+              let pPeriods = computeAllVacationPeriods(p);
+              let admFormatted = p.admissionDate ? p.admissionDate.split('-').reverse().join('/') : '-';
+              let code = p.code || p.id;
+              let isDesligado = (p.status === 'Desligado' || p.status === 'Inativo');
+
+              pPeriods.forEach((period, pIdx) => {
+                let vencidaEm = period.vencidaEm || '-';
+                let faltas = period.faltas > 0 ? period.faltas : '';
+                let diasDireito = period.diasDireito;
+                let diasGozados = period.diasGozados > 0 ? period.diasGozados : '';
+                let saldoAGozar = period.saldoAGozar;
+                let concederAvisoAte = period.concederAvisoAteBr || '-';
+                let proximoVencimento = period.proximoVencimento || '-';
+
+                let rowHighlight = '';
+                if (period.concederAvisoAte && period.concederAvisoAte.includes('2026-07')) {
+                  rowHighlight = 'bg-rose-50/60 font-bold';
+                }
+
+                let isTerminatedClass = isDesligado ? 'opacity-70 bg-gray-50/80 grayscale-[20%]' : '';
+          %>
+            <tr class="report-row hover:bg-gray-100/50 transition-colors <%= rowHighlight %> <%= isTerminatedClass %>" data-name="<%= p.name.toLowerCase() %>" data-gozada="<%= saldoAGozar === 0 ? 'true' : 'false' %>">
+              <td class="py-2 px-2 text-center border-r border-gray-200 font-bold"><%= code %></td>
+              <td class="py-2 px-3 border-r border-gray-200 font-sans">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-extrabold text-gray-900 uppercase"><%= p.name %></span>
+                  <% if (isDesligado) { %>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase font-mono bg-gray-200 text-gray-700 border border-gray-300">Desligado</span>
+                  <% } %>
+                  <% if (saldoAGozar === 0) { %>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase font-mono bg-emerald-100 text-emerald-800 border border-emerald-300">Quitada</span>
+                  <% } else if (period.isVencida) { %>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase font-mono bg-rose-100 text-rose-800 border border-rose-300">Férias Vencidas</span>
+                  <% } else { %>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase font-mono bg-blue-50 text-blue-800 border border-blue-200">Aquisitivo Atual</span>
+                  <% } %>
+                </div>
+                <div class="text-[10px] font-mono text-gray-500 mt-0.5">Período: <strong class="text-gray-800"><%= period.aquisitivePeriod %></strong></div>
+              </td>
+              <td class="py-2 px-2 text-center border-r border-gray-200"><%= admFormatted %></td>
+              <td class="py-2 px-2 text-center border-r border-gray-200 font-bold text-gray-900"><%= vencidaEm %></td>
+              <td class="py-2 px-1 text-center border-r border-gray-200"><%= faltas %></td>
+              <td class="py-2 px-1 text-center border-r border-gray-200" title="<%= period.isVencida ? '30 dias de direito' : (period.diasAcumulados + ' dias acumulados (' + period.avosAcumulados + '/12 avos)') %>">
+                <% if (!period.isVencida) { %>
+                  <span class="font-bold text-blue-900"><%= period.diasAcumulados %>d</span>
+                  <div class="text-[9px] font-mono text-gray-500">(<%= period.avosAcumulados %>/12 avos)</div>
+                <% } else { %>
+                  <%= diasDireito %>
+                <% } %>
+              </td>
+              <td class="py-2 px-1 text-center border-r border-gray-200"><%= diasGozados %></td>
+              <td class="py-2 px-1 text-center border-r border-gray-200 font-extrabold <%= saldoAGozar ? 'text-amber-700 bg-amber-50/40' : 'text-emerald-700' %>">
+                <div><%= saldoAGozar %>d</div>
+                <% if (period.diasPlanejados && period.diasPlanejados > 0) { %>
+                  <div class="text-[9px] font-mono font-semibold text-blue-800 mt-0.5">
+                    (<%= period.diasPlanejados %>d plan.)
+                  </div>
+                <% } %>
+              </td>
+              <td class="py-2 px-2 text-center border-r border-gray-200 font-bold <%= (concederAvisoAte !== '-' && period.concederAvisoAte && period.concederAvisoAte <= '2026-07-31') ? 'text-rose-700' : 'text-gray-800' %>">
+                <%= concederAvisoAte %>
+              </td>
+              <td class="py-2 px-2 text-center border-r border-gray-200 text-gray-800"><%= proximoVencimento %></td>
+              <td class="py-2 px-2 text-center no-print">
+                <div class="flex items-center justify-center gap-1">
+                  <button 
+                    onclick="openVacationModalForProfAndPeriod('<%= p.id %>', '<%= p.name.replace(/'/g, "\\'") %>', '<%= period.aquisitivePeriod %>')"
+                    class="px-1.5 py-1 bg-brand-dark hover:bg-brand-gold text-white hover:text-brand-dark text-[10px] font-mono font-bold uppercase rounded transition-all shadow-2xs"
+                    title="Agendar Férias para este Período"
+                  >
+                    + Agendar
+                  </button>
+                  <button 
+                    onclick="openEditAccountingModal('<%= p.id %>', '<%= code %>', '<%= p.name.replace(/'/g, "\\'") %>', '<%= p.admissionDate %>', '<%= vencidaEm %>', '<%= faltas %>', '<%= diasDireito %>', '<%= diasGozados %>', '<%= saldoAGozar %>', '<%= period.concederAvisoAte || '' %>', '<%= period.proximoVencimento || '' %>', '<%= period.aquisitivePeriod %>')"
+                    class="px-1.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-mono font-bold uppercase rounded border border-gray-300 transition-all"
+                    title="Editar Dados Contábeis"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Rodapé de Aviso Jurídico CLT Fiel ao Documento -->
+    <div class="border-t border-black pt-3 font-mono text-[11px] text-black leading-relaxed space-y-1">
+      <p class="font-bold">As férias devem ser concedidas obrigatoriamente durante os 12 meses seguintes ao seu vencimento, sob pena de pagamento em dobro, nos termos do Art. 137 da CLT, ou seja, a lei não permite acumular férias.</p>
+    </div>
+  </div>
+
+  <!-- ==================== VISÃO 2: ESCALA & GANTT (LINHA DO TEMPO) ==================== -->
+  <div id="view-gantt" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden no-print">
+    <div class="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+      <h3 class="text-xs font-black text-brand-dark uppercase font-mono tracking-widest">Escala Mês a Mês (Gantt)</h3>
+      <span class="text-[10px] text-gray-400 font-mono">Ano Base: 2026</span>
+    </div>
+
+    <div class="p-4 divide-y divide-gray-100">
+      <% professionals.forEach(p => { %>
+        <div class="py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-[10px] font-mono font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600">Cod <%= p.code || p.id %></span>
+            <p class="font-extrabold text-gray-800 text-sm mt-0.5"><%= p.name %></p>
+            <span class="text-xs text-gray-400 font-sans"><%= p.sector || 'Geral' %></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+              Saldo: <%= p.saldoAGozar || 30 %> dias
+            </span>
+            <button onclick="openVacationModalForProf('<%= p.id %>', '<%= p.name.replace(/'/g, "\\'") %>')" class="px-3 py-1 bg-brand-dark text-white text-xs font-mono font-bold rounded-lg hover:bg-brand-dark/90 transition-all">
+              + Agendar Gozo
+            </button>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- ==================== VISÃO 3: CALENDÁRIO MENSAL ==================== -->
+  <div id="view-calendar" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4 no-print">
+    <div class="flex items-center justify-between border-b pb-4">
+      <div>
+        <h2 class="text-base font-extrabold text-brand-dark font-sans">Calendário Operacional de Férias</h2>
+        <p class="text-xs text-gray-500">Acompanhamento diário das saídas e retornos de colaboradores.</p>
+      </div>
+    </div>
+    <div class="p-8 text-center text-gray-400 font-mono text-xs italic">
+      Calendário sincronizado com o período atual de Julho/2026.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DE EDIÇÃO CONTÁBIL ==================== -->
+<div id="accounting-modal" class="fixed inset-0 bg-brand-dark/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4 relative">
+    <div class="flex items-center justify-between border-b pb-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-brand-gold/20 flex items-center justify-center text-brand-dark font-black">
+          📑
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-brand-dark font-sans">Editar Dados do Relatório Contábil</h3>
+          <p class="text-[10px] text-gray-400 font-mono">Sincronizar com o arquivo do escritório</p>
+        </div>
+      </div>
+      <button onclick="closeAccountingModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form action="/admin/financeiro/rh/update-accounting-vacation" method="POST" class="space-y-4">
+      <input type="hidden" id="acc-prof-id" name="profId">
+      <input type="hidden" name="redirectUrl" value="/admin/financeiro/ferias">
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Colaborador</label>
+        <input type="text" id="acc-prof-name" class="w-full mt-1 px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-700" readonly>
+      </div>
+
+      <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200/60 flex items-center justify-between gap-3">
+        <div>
+          <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider font-mono">Data de Admissão:</span>
+          <span id="acc-adm-display" class="text-xs font-black font-mono text-amber-900 ml-1">-</span>
+          <input type="hidden" id="acc-adm-val">
+        </div>
+        <button type="button" onclick="autoCalcModalClt()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold font-mono uppercase rounded-lg shadow-xs flex items-center gap-1 transition-all">
+          ⚡ Autocalcular p/ Admissão
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Código (Cod.)</label>
+          <input type="number" id="acc-code" name="code" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800" required>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Vencida em</label>
+          <input type="text" id="acc-vencida-em" name="vencidaEm" placeholder="DD/MM/AAAA" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Faltas</label>
+          <input type="number" id="acc-faltas" name="faltas" min="0" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Dias Direito</label>
+          <input type="number" id="acc-dias-direito" name="diasDireito" onchange="calcSaldo()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Dias Gozados</label>
+          <input type="number" id="acc-dias-gozados" name="diasGozados" onchange="calcSaldo()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Saldo a Gozar (Dias)</label>
+        <input type="number" id="acc-saldo" name="saldoAGozar" class="w-full mt-1 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-mono font-bold text-amber-900">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Conceder Aviso Até</label>
+          <input type="date" id="acc-conceder-aviso" name="concederAvisoAte" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Próximo Vencimento</label>
+          <input type="date" id="acc-proximo-vencimento" name="proximoVencimento" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t">
+        <button type="button" onclick="closeAccountingModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold font-mono uppercase rounded-xl transition-all">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2 bg-brand-dark hover:bg-brand-dark/90 text-white text-xs font-bold font-mono uppercase tracking-wider rounded-xl transition-all shadow-md">
+          Salvar Dados
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== MODAL DE AGENDAR FÉRIAS ==================== -->
+<div id="vacation-modal" class="fixed inset-0 bg-brand-dark/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4 relative">
+    <div class="flex items-center justify-between border-b pb-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-brand-gold/20 flex items-center justify-center text-brand-dark font-black">
+          🏖️
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-brand-dark font-sans">Agendar Período de Férias</h3>
+          <p class="text-[10px] text-gray-400 font-mono">Lançar saída de férias por período aquisitivo</p>
+        </div>
+      </div>
+      <button onclick="closeVacationModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form id="add-vacation-form" action="/admin/financeiro/rh/add-vacation" method="POST" onsubmit="return validateVacationForm(event)" class="space-y-4">
+      <input type="hidden" name="redirectUrl" value="/admin/financeiro/ferias">
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Colaborador *</label>
+        <select id="form-prof-id" name="profId" onchange="onModalProfChange()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 cursor-pointer" required>
+          <option value="">-- Selecione o Colaborador --</option>
+          <% professionals.forEach(p => { %>
+            <option value="<%= p.id %>"><%= p.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Período Aquisitivo das Férias *</label>
+        <select id="form-aquisitive-period-select" name="aquisitivePeriod" onchange="onModalPeriodChange()" class="w-full mt-1 px-3 py-2 bg-amber-50/60 border border-amber-200 rounded-xl text-xs font-mono font-bold text-amber-950 cursor-pointer" required>
+          <option value="">-- Selecione o Colaborador primeiro --</option>
+        </select>
+        <input type="hidden" id="form-max-available-days" value="30">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Data Início *</label>
+          <input type="date" id="form-start-date" name="startDate" onchange="calculateVacationDays()" onkeyup="calculateVacationDays()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-mono" required>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Data Término *</label>
+          <input type="date" id="form-end-date" name="endDate" onchange="calculateVacationDays()" onkeyup="calculateVacationDays()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 font-mono" required>
+        </div>
+      </div>
+
+      <!-- Resumo do Cálculo e Alertas de Limite -->
+      <div id="vacation-days-summary" class="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs font-mono space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Dias de Gozo (Folga):</span>
+          <strong id="requested-days-val" class="font-bold text-gray-900">0 dia(s)</strong>
+        </div>
+        <div class="flex items-center justify-between text-blue-800">
+          <span>Venda de Férias (Abono):</span>
+          <strong id="abono-days-val" class="font-bold">0 dia(s)</strong>
+        </div>
+        <div class="flex items-center justify-between border-t border-gray-200 pt-1 font-extrabold">
+          <span class="text-gray-800">Total Debitado do Saldo:</span>
+          <strong id="total-days-val" class="text-brand-dark">0 dia(s)</strong>
+        </div>
+        <div class="flex items-center justify-between text-[11px] pt-0.5">
+          <span class="text-gray-500">Saldo Disponível no Período:</span>
+          <strong id="available-days-val" class="font-bold text-emerald-700">30 dia(s)</strong>
+        </div>
+        <div id="vacation-balance-alert" class="mt-2 p-2 bg-rose-100 text-rose-900 border border-rose-300 rounded-lg text-[11px] font-bold hidden leading-snug">
+          ⚠️ Os dias solicitados ultrapassam o saldo disponível de férias para este período aquisitivo!
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Vendeu Férias? (Abono Pecuniário)</label>
+          <select id="form-abono" name="abono" onchange="calculateVacationDays()" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800">
+            <option value="Não">Não (Gozo Integral / 0 dias vendidos)</option>
+            <option value="Sim (10 dias)">Sim (Vender 10 dias de Abono)</option>
+            <option value="Sim (5 dias)">Sim (Vender 5 dias de Abono)</option>
+            <option value="Sim (15 dias)">Sim (Vender 15 dias de Abono)</option>
+          </select>
+          <input type="hidden" id="form-abono-days-hidden" name="abonoDays" value="0">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider font-mono">Status *</label>
+          <select name="status" class="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800" required>
+            <option value="Agendadas" selected>Agendadas / Aprovadas</option>
+            <option value="Planejada">Planejada</option>
+            <option value="Em Gozo">Em Gozo</option>
+            <option value="Gozadas">Gozadas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t">
+        <button type="button" onclick="closeVacationModal()" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold font-mono uppercase rounded-xl transition-all cursor-pointer hover:bg-gray-200">
+          Cancelar
+        </button>
+        <button type="submit" id="submit-vacation-btn" class="px-5 py-2 bg-brand-dark text-white text-xs font-bold font-mono uppercase rounded-xl shadow-md transition-all cursor-pointer hover:bg-brand-dark/90">
+          Salvar Férias
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== MODAL DE GERENCIAR / REMOVER FÉRIAS ==================== -->
+<div id="manage-vacations-modal" class="fixed inset-0 bg-brand-dark/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-gray-100 space-y-4 relative max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between border-b pb-3 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-black text-sm">
+          🗑️
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-brand-dark font-sans">Gerenciar e Remover Agendamentos de Férias</h3>
+          <p class="text-[10px] text-gray-400 font-mono">Consulte todos os períodos lançados e remova conforme necessário</p>
+        </div>
+      </div>
+      <button onclick="closeManageVacationsModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div class="overflow-y-auto flex-1 space-y-3 pr-1">
+      <% 
+        let allVacations = [];
+        professionals.forEach(p => {
+          if (p.vacations && p.vacations.length > 0) {
+            p.vacations.forEach((v, idx) => {
+              allVacations.push({
+                profId: p.id,
+                profName: p.name,
+                sector: p.sector || 'Geral',
+                vacation: v,
+                vacationIndex: idx
+              });
+            });
+          }
+        });
+      %>
+
+      <% if (allVacations.length === 0) { %>
+        <div class="p-8 text-center text-gray-400 font-mono text-xs italic">
+          Nenhum agendamento de férias encontrado no sistema.
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs font-sans">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-[10px] font-mono uppercase font-bold text-gray-500">
+                <th class="p-2.5">Colaborador / Setor</th>
+                <th class="p-2.5">Período de Férias</th>
+                <th class="p-2.5">Status</th>
+                <th class="p-2.5">Abono</th>
+                <th class="p-2.5 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% allVacations.forEach(item => { 
+                  let v = item.vacation;
+                  let startBr = v.startDate ? v.startDate.split('-').reverse().join('/') : '-';
+                  let endBr = v.endDate ? v.endDate.split('-').reverse().join('/') : '-';
+                  let statusColor = v.status === 'Gozadas' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (v.status === 'Agendadas' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-800 border-blue-200');
+              %>
+                <tr class="hover:bg-gray-50/80 transition-colors">
+                  <td class="p-2.5">
+                    <p class="font-extrabold text-gray-900 text-xs uppercase"><%= item.profName %></p>
+                    <p class="text-[10px] text-gray-400 font-mono"><%= item.sector %></p>
+                  </td>
+                  <td class="p-2.5 font-mono font-bold text-gray-800">
+                    <%= startBr %> a <%= endBr %>
+                  </td>
+                  <td class="p-2.5">
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border <%= statusColor %>">
+                      <%= v.status %>
+                    </span>
+                  </td>
+                  <td class="p-2.5 text-gray-600 text-[11px]">
+                    <%= v.abono || 'Não' %>
+                  </td>
+                  <td class="p-2.5 text-right flex items-center justify-end gap-1.5">
+                    <% if (v.status !== 'Gozadas') { %>
+                      <button onclick="confirmBaixaVacation('<%= item.profId %>', '<%= v.id || item.vacationIndex %>', '<%= item.profName.replace(/'/g, "\\'") %>', '<%= startBr %> a <%= endBr %>')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 hover:border-emerald-600 text-[10px] font-mono font-bold uppercase rounded-lg transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer" title="Dar baixa e abater do saldo de férias">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        Dar Baixa
+                      </button>
+                    <% } else { %>
+                      <span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold rounded-lg inline-flex items-center gap-1 border border-emerald-200">
+                        ✓ Gozada
+                      </span>
+                    <% } %>
+                    <button onclick="confirmDeleteVacation('<%= item.profId %>', '<%= v.id || item.vacationIndex %>', '<%= item.profName.replace(/'/g, "\\'") %>', '<%= startBr %> a <%= endBr %>')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 text-[10px] font-mono font-bold uppercase rounded-lg transition-all shadow-2xs inline-flex items-center gap-1 cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                      Remover
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="pt-3 border-t flex justify-end shrink-0">
+      <button onclick="closeManageVacationsModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold font-mono uppercase rounded-xl transition-all">
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos Especiais para Impressão -->
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .printable-report, .printable-report * {
+      visibility: visible;
+    }
+    .printable-report {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  const allProfessionalsData = <%- JSON.stringify(professionals) %>;
+
+  let currentCalYear = 2026;
+  let currentCalMonth = 6; // Julho (0-indexed)
+
+  let ganttStartYear = 2026;
+  let ganttStartMonth = 6; // Julho (0-indexed: 6 = Julho - Mês Atual)
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const shortMonthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  let showGozadas = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderGanttTimeline(ganttStartYear, ganttStartMonth);
+    switchView('gantt');
+    renderCalendar(currentCalYear, currentCalMonth);
+    filterRows();
+  });
+
+  function calculateAccruedAvosJS(startPeriod, today, endPeriod) {
+    if (!startPeriod || !today) return 0;
+    if (today >= endPeriod) return 12;
+    if (today < startPeriod) return 0;
+
+    let avos = 0;
+    let curr = new Date(startPeriod.getFullYear(), startPeriod.getMonth(), startPeriod.getDate());
+
+    while (avos < 12) {
+      let origDay = curr.getDate();
+      let nextM = new Date(curr.getFullYear(), curr.getMonth() + 1, 1);
+      let maxDaysInNext = new Date(nextM.getFullYear(), nextM.getMonth() + 1, 0).getDate();
+      nextM.setDate(Math.min(origDay, maxDaysInNext));
+
+      if (today >= nextM) {
+        avos++;
+        curr = nextM;
+      } else {
+        let diffMs = today.getTime() - curr.getTime();
+        let diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+        if (diffDays >= 14) {
+          avos++;
+        }
+        break;
+      }
+    }
+
+    return Math.min(12, avos);
+  }
+
+  function computeAllVacationPeriodsJS(prof, todayDateStr = '2026-07-22') {
+    if (!prof || !prof.admissionDate) {
+      let fallbackPlanned = 0;
+      if (prof && prof.vacations && prof.vacations.length > 0) {
+        prof.vacations.forEach(v => {
+          if (v.startDate && v.endDate && v.status !== 'Gozadas' && v.status !== 'Em Gozo') {
+            const s = new Date(v.startDate);
+            const e = new Date(v.endDate);
+            if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+              fallbackPlanned += Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
+            }
+          }
+        });
+      }
+      return [{
+        periodIndex: 0,
+        aquisitivePeriod: prof && prof.vencidaEm ? `Até ${prof.vencidaEm}` : 'Aquisitivo Atual',
+        vencidaEm: (prof && prof.vencidaEm) || '-',
+        faltas: (prof && prof.faltas) || 0,
+        diasDireito: prof && prof.diasDireito !== undefined ? prof.diasDireito : 30,
+        avosAcumulados: 12,
+        diasAcumulados: prof && prof.diasDireito !== undefined ? prof.diasDireito : 30,
+        diasGozados: (prof && prof.diasGozados) || 0,
+        diasPlanejados: fallbackPlanned,
+        saldoAGozar: prof && prof.saldoAGozar !== undefined ? prof.saldoAGozar : 30,
+        concederAvisoAte: (prof && prof.concederAvisoAte) || '-',
+        concederAvisoAteBr: prof && prof.concederAvisoAte ? prof.concederAvisoAte.split('-').reverse().join('/') : '-',
+        proximoVencimento: (prof && prof.proximoVencimento) || '-',
+        isVencida: true,
+        isAtual: false,
+        statusLabel: 'Férias Vencidas',
+        vacations: (prof && prof.vacations) || []
+      }];
+    }
+
+    let admDate;
+    if (prof.admissionDate.includes('/')) {
+      const parts = prof.admissionDate.split('/');
+      admDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else {
+      const parts = prof.admissionDate.split('-');
+      admDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    if (isNaN(admDate.getTime())) return [];
+
+    const today = new Date(todayDateStr);
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmtBr = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    const fmtIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    const periods = [];
+    let i = 0;
+
+    while (true) {
+      let startPeriod = new Date(admDate.getFullYear() + i, admDate.getMonth(), admDate.getDate());
+      let endPeriod = new Date(admDate.getFullYear() + i + 1, admDate.getMonth(), admDate.getDate() - 1);
+
+      if (startPeriod > today) break;
+
+      const aquisitivePeriodStr = `${fmtBr(startPeriod)} a ${fmtBr(endPeriod)}`;
+
+      let gozadaDays = 0;
+      let plannedDays = 0;
+      let registeredVacations = [];
+
+      if (prof.vacations && prof.vacations.length > 0) {
+        prof.vacations.forEach(v => {
+          let matches = false;
+          if (v.aquisitivePeriod && String(v.aquisitivePeriod).trim() !== '') {
+            const startBrStr = fmtBr(startPeriod);
+            const aqTrim = String(v.aquisitivePeriod).trim();
+            if (aqTrim === aquisitivePeriodStr || aqTrim.includes(startBrStr)) {
+              matches = true;
+            }
+          } else if (v.startDate) {
+            let vStart = new Date(v.startDate);
+            let concessiveEnd = new Date(endPeriod.getFullYear() + 1, endPeriod.getMonth(), endPeriod.getDate());
+            if (vStart >= startPeriod && vStart <= concessiveEnd) {
+              matches = true;
+            }
+          }
+
+          if (matches) {
+            registeredVacations.push(v);
+
+            let vAbono = Number(v.abonoDays) || 0;
+            if (!vAbono && v.abono && typeof v.abono === 'string') {
+              const m = v.abono.match(/\d+/);
+              if (m) vAbono = parseInt(m[0], 10);
+              else if (v.abono.toLowerCase().includes('sim')) vAbono = 10;
+            }
+
+            if (v.startDate && v.endDate) {
+              const s = new Date(v.startDate);
+              const e = new Date(v.endDate);
+              if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+                const diffDays = Math.ceil(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1;
+                if (v.status === 'Gozadas' || v.status === 'Em Gozo') {
+                  gozadaDays += diffDays + vAbono;
+                } else {
+                  plannedDays += diffDays + vAbono;
+                }
+              }
+            } else if (vAbono > 0) {
+              if (v.status === 'Gozadas' || v.status === 'Em Gozo') {
+                gozadaDays += vAbono;
+              } else {
+                plannedDays += vAbono;
+              }
+            }
+          }
+        });
+      }
+
+      let numFaltas = Number(prof.faltas) || 0;
+      let diasDireitoTotal = 30;
+      if (numFaltas > 32) diasDireitoTotal = 0;
+      else if (numFaltas >= 24) diasDireitoTotal = 12;
+      else if (numFaltas >= 15) diasDireitoTotal = 18;
+      else if (numFaltas >= 6) diasDireitoTotal = 24;
+
+      const isVencida = endPeriod <= today;
+      const isAtual = startPeriod <= today && endPeriod > today;
+
+      let avosAcumulados = 12;
+      if (!isVencida) {
+        avosAcumulados = calculateAccruedAvosJS(startPeriod, today, endPeriod);
+      }
+
+      let diasAcumulados = isVencida ? diasDireitoTotal : Math.min(diasDireitoTotal, Math.round(avosAcumulados * (diasDireitoTotal / 12)));
+
+      let vencidaEm = '';
+      let concederAvisoAteIso = '';
+      let concederAvisoAteBr = '-';
+      let proximoVencimentoBr = '-';
+
+      if (isVencida) {
+        vencidaEm = fmtBr(endPeriod);
+        let concessiveEndDate = new Date(endPeriod.getFullYear() + 1, endPeriod.getMonth(), endPeriod.getDate());
+        let concederAvisoDate = new Date(concessiveEndDate.getTime() - (60 * 24 * 60 * 60 * 1000));
+        concederAvisoAteIso = fmtIso(concederAvisoDate);
+        concederAvisoAteBr = fmtBr(concederAvisoDate);
+        proximoVencimentoBr = fmtBr(concessiveEndDate);
+      } else {
+        vencidaEm = '-';
+        proximoVencimentoBr = fmtBr(endPeriod);
+      }
+
+      let saldoAGozar = Math.max(0, diasAcumulados - gozadaDays);
+
+      let statusLbl = 'Aquisitivo Atual (A Vencer)';
+      if (saldoAGozar === 0 && isVencida) {
+        statusLbl = 'Quitada';
+      } else if (isVencida) {
+        statusLbl = 'Férias Vencidas';
+      }
+
+      periods.push({
+        periodIndex: i,
+        aquisitivePeriod: aquisitivePeriodStr,
+        startPeriod: fmtIso(startPeriod),
+        endPeriod: fmtIso(endPeriod),
+        vencidaEm: vencidaEm,
+        faltas: numFaltas,
+        diasDireito: diasDireitoTotal,
+        avosAcumulados: avosAcumulados,
+        diasAcumulados: diasAcumulados,
+        diasGozados: gozadaDays,
+        diasPlanejados: plannedDays,
+        saldoAGozar: saldoAGozar,
+        concederAvisoAte: concederAvisoAteIso,
+        concederAvisoAteBr: concederAvisoAteBr,
+        proximoVencimento: proximoVencimentoBr,
+        isVencida: isVencida,
+        isAtual: isAtual,
+        statusLabel: statusLbl,
+        vacations: registeredVacations
+      });
+
+      i++;
+      if (i > 30) break;
+    }
+
+    if (periods.length > 2) {
+      const relevant = periods.filter(p => p.isAtual || (p.isVencida && (p.saldoAGozar > 0 || p.vacations.length > 0)));
+      if (relevant.length >= 2) return relevant;
+      return periods.slice(-2);
+    }
+
+    return periods;
+  }
+
+  function renderGanttTimeline(startYear, startMonth) {
+    const container = document.getElementById('gantt-table-container');
+    if (!container) return;
+
+    const visibleMonths = [];
+    let curY = startYear;
+    let curM = startMonth;
+
+    // Exibir 6 meses por vez para melhor legibilidade e destaque dos períodos
+    for (let i = 0; i < 6; i++) {
+      visibleMonths.push({
+        year: curY,
+        month: curM,
+        monthNum: curM + 1,
+        label: `${shortMonthNames[curM]} / ${String(curY).slice(2)}`,
+        fullLabel: `${monthNames[curM]} de ${curY}`,
+        isCurrentMonth: (curY === 2026 && curM === 6)
+      });
+      curM++;
+      if (curM > 11) {
+        curM = 0;
+        curY++;
+      }
+    }
+
+    const titleEl = document.getElementById('gantt-range-title');
+    if (titleEl) {
+      const firstM = visibleMonths[0];
+      const lastM = visibleMonths[5];
+      titleEl.innerText = `${monthNames[firstM.month]} ${firstM.year} — ${monthNames[lastM.month]} ${lastM.year}`;
+    }
+
+    let html = `
+      <table class="w-full text-left border-collapse min-w-[900px]">
+        <thead>
+          <tr class="bg-gray-100/90 text-[11px] font-mono font-bold text-gray-700 uppercase border-b border-gray-200">
+            <th class="p-2 w-60 min-w-[220px] border-r border-gray-200 sticky left-0 bg-gray-100 z-10 shadow-2xs">Colaborador / Período Aquisitivo</th>
+    `;
+
+    visibleMonths.forEach(m => {
+      let highlight = m.isCurrentMonth ? 'bg-amber-100/80 text-amber-950 font-black ring-1 ring-amber-300' : '';
+      html += `
+        <th class="p-2 text-center border-r border-gray-200 min-w-[130px] ${highlight}">
+          <span class="block text-xs font-black">${m.label}</span>
+          ${m.isCurrentMonth ? '<span class="block text-[8px] text-amber-800 font-sans font-bold uppercase tracking-wider">(Mês Atual)</span>' : ''}
+        </th>
+      `;
+    });
+
+    html += `
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 text-xs font-sans">
+    `;
+
+    if (allProfessionalsData && Array.isArray(allProfessionalsData)) {
+      allProfessionalsData.forEach(p => {
+        let pPeriods = computeAllVacationPeriodsJS(p);
+        let isDesligado = (p.status === 'Desligado' || p.status === 'Inativo');
+        let isTerminatedClass = isDesligado ? 'opacity-70 bg-gray-50/80 grayscale-[20%]' : '';
+
+        pPeriods.forEach(period => {
+          let saldo = period.saldoAGozar;
+          let safeName = (p.name || '').replace(/'/g, "\\'");
+
+          html += `
+            <tr class="gantt-row hover:bg-gray-50/90 transition-colors ${isTerminatedClass}" data-name="${(p.name || '').toLowerCase()}" data-gozada="${saldo === 0 ? 'true' : 'false'}">
+              <td class="p-2 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-2xs w-60 min-w-[220px]">
+                <div class="flex items-center justify-between gap-1 leading-tight">
+                  <div class="truncate">
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-mono font-bold text-gray-400">#${p.code || p.id}</span>
+                      <span class="font-extrabold text-gray-900 text-[11px] uppercase truncate" title="${p.name}">${p.name}</span>
+                      ${isDesligado ? '<span class="text-[8px] font-mono font-bold text-gray-500 bg-gray-200 px-1 rounded">Desligado</span>' : ''}
+                    </div>
+                    <div class="flex items-center gap-1 text-[9px] font-mono text-gray-500 mt-0.5">
+                      ${saldo === 0 ? '<span class="text-emerald-700 font-bold bg-emerald-50 px-1 rounded border border-emerald-200">Quitada</span>' : (period.isVencida ? '<span class="text-rose-700 font-bold bg-rose-50 px-1 rounded border border-rose-200">Vencida</span>' : '<span class="text-blue-700 font-bold bg-blue-50 px-1 rounded border border-blue-200">Atual</span>')}
+                      <span class="truncate">${period.aquisitivePeriod}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-1.5 pt-1 border-t border-gray-100 font-mono text-[9px] space-y-1">
+                  <div class="flex items-center justify-between gap-1">
+                    <span class="${saldo > 0 ? 'text-amber-800 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200' : 'text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200'}" title="${!period.isVencida ? 'Calculado proporcionalmente aos meses/dias trabalhados até a data atual' : 'Período completo'}">
+                      Saldo: ${saldo} dias${!period.isVencida ? ` (${period.avosAcumulados}/12 avos)` : ''}
+                    </span>
+                    <button onclick="openVacationModalForProfAndPeriod('${p.id}', '${safeName}', '${period.aquisitivePeriod}')" class="text-brand-dark hover:text-brand-gold font-bold underline cursor-pointer">
+                      + Agendar
+                    </button>
+                  </div>
+                  <div class="flex items-center justify-between gap-1 text-[9px] text-gray-600 bg-gray-50/80 px-1.5 py-0.5 rounded border border-gray-200">
+                    <span class="text-gray-500 font-medium">Dias Planejados:</span>
+                    <strong class="${period.diasPlanejados > 0 ? 'text-blue-800 font-black' : 'text-gray-400 font-bold'}">${period.diasPlanejados || 0} dia(s)</strong>
+                  </div>
+                </div>
+              </td>
+          `;
+
+          visibleMonths.forEach(m => {
+            let vacationsInMonth = [];
+            if (period.vacations && period.vacations.length > 0) {
+              period.vacations.forEach(v => {
+                if (v.startDate && v.endDate) {
+                  let startParts = v.startDate.split('-');
+                  let endParts = v.endDate.split('-');
+                  if (startParts.length === 3 && endParts.length === 3) {
+                    let startM = parseInt(startParts[1], 10);
+                    let startY = parseInt(startParts[0], 10);
+                    let endM = parseInt(endParts[1], 10);
+                    let endY = parseInt(endParts[0], 10);
+
+                    if ((startY === m.year && startM === m.monthNum) ||
+                        (endY === m.year && endM === m.monthNum) ||
+                        ((startY < m.year || (startY === m.year && startM <= m.monthNum)) && (endY > m.year || (endY === m.year && endM >= m.monthNum)))) {
+                      vacationsInMonth.push(v);
+                    }
+                  }
+                }
+              });
+            }
+
+            let isAvisoCLT = false;
+            if (period.concederAvisoAte) {
+              let avisoParts = period.concederAvisoAte.split('-');
+              if (avisoParts.length === 3 && parseInt(avisoParts[0], 10) === m.year && parseInt(avisoParts[1], 10) === m.monthNum && saldo > 0) {
+                isAvisoCLT = true;
+              }
+            }
+
+            let cellHighlight = m.isCurrentMonth ? 'bg-amber-50/20' : '';
+
+            html += `<td class="p-1.5 border-r border-gray-200 text-center align-middle relative group min-h-[44px] min-w-[130px] ${cellHighlight}">`;
+            html += `<div class="space-y-1">`;
+
+            if (vacationsInMonth.length > 0) {
+              vacationsInMonth.forEach((v, vIdx) => {
+                let isGozada = v.status === 'Gozadas' || v.status === 'Em Gozo';
+                let isAgendada = v.status === 'Agendadas';
+                let bgClass = isGozada ? 'bg-emerald-50 text-emerald-950 border-emerald-300' : (isAgendada ? 'bg-amber-50 text-amber-950 border-amber-300' : 'bg-blue-50 text-blue-950 border-blue-300');
+                let dotClass = isGozada ? 'bg-emerald-500' : (isAgendada ? 'bg-amber-500' : 'bg-blue-500');
+
+                let startFullBr = v.startDate ? v.startDate.split('-').reverse().join('/') : '';
+                let endFullBr = v.endDate ? v.endDate.split('-').reverse().join('/') : '';
+
+                let chipGozadaClass = (v.status === 'Gozadas') ? 'gozada-chip' : '';
+
+                html += `
+                  <div class="p-1.5 rounded-lg text-[10px] font-mono border shadow-2xs text-left ${bgClass} ${chipGozadaClass} relative group/v transition-all hover:shadow-xs" title="Férias ${v.status}: ${v.startDate} a ${v.endDate}">
+                    <div class="flex items-center justify-between gap-1 border-b border-black/10 pb-0.5 mb-1">
+                      <span class="text-[9px] uppercase font-black tracking-tight flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span>
+                        ${v.status}
+                      </span>
+                      <div class="flex items-center gap-0.5">
+                        ${!isGozada ? `
+                          <button type="button" onclick="confirmBaixaVacation('${p.id}', '${v.id || vIdx}', '${safeName}', '${startFullBr} a ${endFullBr}')" class="text-emerald-800 hover:text-emerald-950 bg-emerald-200/80 hover:bg-emerald-300 px-1 py-0.5 text-[8px] font-bold rounded leading-none cursor-pointer flex items-center gap-0.5" title="Dar Baixa (Marcar como Gozada)">
+                            ✓ Baixa
+                          </button>
+                        ` : ''}
+                        <button type="button" onclick="confirmDeleteVacation('${p.id}', '${v.id || vIdx}', '${safeName}', '${startFullBr} a ${endFullBr}')" class="text-rose-600 hover:text-rose-900 font-bold px-1 rounded hover:bg-rose-200/50 leading-none cursor-pointer" title="Remover Férias">&times;</button>
+                      </div>
+                    </div>
+                    <div class="space-y-0.5 text-[9px]">
+                      <div class="flex items-center justify-between gap-1">
+                        <span class="text-gray-600">Início:</span>
+                        <strong class="font-bold text-gray-900">${startFullBr}</strong>
+                      </div>
+                      <div class="flex items-center justify-between gap-1">
+                        <span class="text-gray-600">Término:</span>
+                        <strong class="font-bold text-gray-900">${endFullBr}</strong>
+                      </div>
+                      ${(() => {
+                        let vAbono = Number(v.abonoDays) || 0;
+                        if (!vAbono && v.abono && typeof v.abono === 'string') {
+                          const m = v.abono.match(/\d+/);
+                          if (m) vAbono = parseInt(m[0], 10);
+                          else if (v.abono.toLowerCase().includes('sim')) vAbono = 10;
+                        }
+                        if (vAbono > 0 || (v.abono && v.abono !== 'Não')) {
+                          return `<div class="flex items-center justify-between gap-1 text-[9px] bg-amber-100 text-amber-950 px-1.5 py-0.5 rounded font-mono border border-amber-300 font-bold mt-1"><span>💰 Vendeu Férias:</span><strong>${vAbono || 10}d (Abono)</strong></div>`;
+                        }
+                        return '';
+                      })()}
+                      ${!isGozada ? `
+                        <button type="button" onclick="confirmBaixaVacation('${p.id}', '${v.id || vIdx}', '${safeName}', '${startFullBr} a ${endFullBr}')" class="w-full mt-1.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-mono font-bold rounded-md text-center transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1">
+                          ✓ Dar Baixa no Saldo
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              });
+            }
+
+            if (isAvisoCLT) {
+              html += `
+                <div class="p-1 bg-rose-100 text-rose-900 border border-rose-300 rounded-md text-[9px] font-mono font-bold text-left animate-pulse" title="Limite do Art. 137 da CLT">
+                  <span class="block text-[8px] text-rose-800 uppercase font-black">⚠️ Aviso CLT</span>
+                  <span class="block text-[9px]">${period.concederAvisoAteBr}</span>
+                </div>
+              `;
+            }
+
+            if (vacationsInMonth.length === 0 && !isAvisoCLT) {
+              let monthStr = m.monthNum < 10 ? '0' + m.monthNum : '' + m.monthNum;
+              let dateIso = `${m.year}-${monthStr}-01`;
+              html += `
+                <button onclick="openVacationModalForMonth('${p.id}', '${dateIso}')" class="opacity-0 group-hover:opacity-100 w-full py-1 bg-gray-100 hover:bg-brand-gold hover:text-brand-dark text-gray-600 text-[9px] font-mono font-bold rounded transition-all cursor-pointer">
+                  + Lançar
+                </button>
+              `;
+            }
+
+            html += `</div></td>`;
+          });
+
+          html += `</tr>`;
+        });
+      });
+    }
+
+    html += `
+        </tbody>
+      </table>
+    `;
+
+    container.innerHTML = html;
+    filterRows();
+  }
+
+  function changeGanttMonth(delta) {
+    ganttStartMonth += delta;
+    if (ganttStartMonth < 0) {
+      ganttStartMonth = 11;
+      ganttStartYear -= 1;
+    } else if (ganttStartMonth > 11) {
+      ganttStartMonth = 0;
+      ganttStartYear += 1;
+    }
+    renderGanttTimeline(ganttStartYear, ganttStartMonth);
+  }
+
+  function resetGanttToCurrent() {
+    ganttStartYear = 2026;
+    ganttStartMonth = 6; // Julho
+    renderGanttTimeline(ganttStartYear, ganttStartMonth);
+  }
+
+  function switchView(viewName) {
+    document.getElementById('view-accounting').classList.add('hidden');
+    document.getElementById('view-gantt').classList.add('hidden');
+    document.getElementById('view-calendar').classList.add('hidden');
+
+    document.getElementById('btn-view-accounting').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-500 hover:text-gray-800 flex items-center gap-1.5";
+    document.getElementById('btn-view-gantt').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-500 hover:text-gray-800 flex items-center gap-1.5";
+    document.getElementById('btn-view-calendar').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all text-gray-500 hover:text-gray-800 flex items-center gap-1.5";
+
+    if (viewName === 'accounting') {
+      document.getElementById('view-accounting').classList.remove('hidden');
+      document.getElementById('btn-view-accounting').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all bg-white text-brand-dark shadow-sm flex items-center gap-1.5";
+    } else if (viewName === 'gantt') {
+      document.getElementById('view-gantt').classList.remove('hidden');
+      document.getElementById('btn-view-gantt').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all bg-white text-brand-dark shadow-sm flex items-center gap-1.5";
+      renderGanttTimeline(ganttStartYear, ganttStartMonth);
+    } else if (viewName === 'calendar') {
+      document.getElementById('view-calendar').classList.remove('hidden');
+      document.getElementById('btn-view-calendar').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider transition-all bg-white text-brand-dark shadow-sm flex items-center gap-1.5";
+      renderCalendar(currentCalYear, currentCalMonth);
+    }
+  }
+
+  function renderCalendar(year, monthIndex) {
+    const title = document.getElementById('calendar-month-title');
+    if (title) {
+      title.innerText = `${monthNames[monthIndex]} ${year}`;
+    }
+
+    const grid = document.getElementById('calendar-days-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(year, monthIndex, 1);
+    const lastDay = new Date(year, monthIndex + 1, 0);
+    const startDayOfWeek = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+
+    for (let i = 0; i < startDayOfWeek; i++) {
+      const emptyBox = document.createElement('div');
+      emptyBox.className = 'bg-gray-50/40 rounded-xl min-h-[90px] border border-dashed border-gray-100/60';
+      grid.appendChild(emptyBox);
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+      const dayBox = document.createElement('div');
+      const pad = (n) => String(n).padStart(2, '0');
+      const monthStr = pad(monthIndex + 1);
+      const dayStr = pad(day);
+      const dateIso = `${year}-${monthStr}-${dayStr}`;
+
+      const isToday = (year === 2026 && monthIndex === 6 && day === 22);
+
+      dayBox.className = `p-2 rounded-xl border min-h-[95px] flex flex-col justify-between transition-all ${
+        isToday ? 'bg-amber-50/80 border-amber-300 ring-2 ring-brand-gold/30' : 'bg-white border-gray-100 hover:border-gray-200'
+      }`;
+
+      let dayHeader = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold ${isToday ? 'text-amber-900 font-black bg-amber-200 px-1.5 py-0.5 rounded-md' : 'text-gray-700'}">${day}</span>
+          ${isToday ? '<span class="text-[9px] font-mono font-bold text-amber-800 uppercase">Hoje</span>' : ''}
+        </div>
+      `;
+
+      let activeChips = [];
+      if (allProfessionalsData && Array.isArray(allProfessionalsData)) {
+        allProfessionalsData.forEach(p => {
+          if (p.vacations && p.vacations.length > 0) {
+            p.vacations.forEach((v, vIdx) => {
+              if (v.startDate && v.endDate && dateIso >= v.startDate && dateIso <= v.endDate) {
+                let firstName = p.name ? p.name.split(' ')[0] : 'Colaborador';
+                let badgeColor = v.status === 'Gozadas' ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+                let startBr = v.startDate ? v.startDate.split('-').reverse().slice(0, 2).join('/') : '';
+                let endBr = v.endDate ? v.endDate.split('-').reverse().slice(0, 2).join('/') : '';
+                activeChips.push(`
+                  <div class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${badgeColor} flex items-center justify-between gap-1" title="${p.name} - ${v.status}: ${v.startDate} a ${v.endDate}">
+                    <span class="truncate">🌴 ${firstName}</span>
+                    <div class="flex items-center gap-0.5">
+                      ${v.status !== 'Gozadas' ? `
+                        <button onclick="event.stopPropagation(); confirmBaixaVacation('${p.id}', '${v.id || vIdx}', '${p.name.replace(/'/g, "\\'")}', '${startBr} a ${endBr}')" class="text-emerald-700 hover:text-emerald-950 font-black px-0.5 leading-none cursor-pointer" title="Dar Baixa nas Férias">&#10003;</button>
+                      ` : ''}
+                      <button onclick="event.stopPropagation(); confirmDeleteVacation('${p.id}', '${v.id || vIdx}', '${p.name.replace(/'/g, "\\'")}', '${startBr} a ${endBr}')" class="text-rose-600 hover:text-rose-900 font-black px-0.5 leading-none cursor-pointer" title="Remover agendamento de férias">&times;</button>
+                    </div>
+                  </div>
+                `);
+              }
+            });
+          }
+
+          if (p.concederAvisoAte && p.concederAvisoAte === dateIso) {
+            let firstName = p.name ? p.name.split(' ')[0] : 'Colaborador';
+            activeChips.push(`
+              <div class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-100 text-rose-900 border border-rose-300 truncate" title="Limite de Aviso Prévio CLT para ${p.name}">
+                🚨 Limite CLT: ${firstName}
+              </div>
+            `);
+          }
+        });
+      }
+
+      dayBox.innerHTML = `
+        <div>
+          ${dayHeader}
+          <div class="mt-1 space-y-1 overflow-y-auto max-h-[60px]">
+            ${activeChips.join('')}
+          </div>
+        </div>
+        <button onclick="openVacationModalWithDate('${dateIso}')" class="text-[9px] font-mono font-bold text-gray-400 hover:text-brand-dark mt-1 text-right w-full hover:underline">
+          + agendar
+        </button>
+      `;
+
+      grid.appendChild(dayBox);
+    }
+  }
+
+  function changeCalendarMonth(delta) {
+    currentCalMonth += delta;
+    if (currentCalMonth < 0) {
+      currentCalMonth = 11;
+      currentCalYear -= 1;
+    } else if (currentCalMonth > 11) {
+      currentCalMonth = 0;
+      currentCalYear += 1;
+    }
+    renderCalendar(currentCalYear, currentCalMonth);
+  }
+
+  function openVacationModalForMonth(profId, dateIso) {
+    document.getElementById('form-prof-id').value = profId;
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    if (startDateInput) startDateInput.value = dateIso;
+    openVacationModal();
+  }
+
+  function openVacationModalWithDate(dateIso) {
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    if (startDateInput) startDateInput.value = dateIso;
+    openVacationModal();
+  }
+
+  function toggleShowGozadas() {
+    showGozadas = !showGozadas;
+
+    const btns = document.querySelectorAll('.btn-toggle-gozadas');
+    btns.forEach(btn => {
+      if (showGozadas) {
+        btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-700');
+        btn.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-300');
+        const icon = btn.querySelector('.gozada-icon');
+        if (icon) icon.innerText = '✓';
+        const txt = btn.querySelector('.gozada-text');
+        if (txt) txt.innerText = 'Exibindo Gozadas / Quitadas';
+      } else {
+        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-700');
+        btn.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-300');
+        const icon = btn.querySelector('.gozada-icon');
+        if (icon) icon.innerText = '👁️';
+        const txt = btn.querySelector('.gozada-text');
+        if (txt) txt.innerText = 'Exibir Férias Gozadas';
+      }
+    });
+
+    filterRows();
+  }
+
+  function filterRows() {
+    const searchInput = document.getElementById('search-name');
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    // 1. Relatório Contábil
+    const reportRows = document.querySelectorAll('.report-row');
+    reportRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const isGozada = row.getAttribute('data-gozada') === 'true';
+
+      const matchesSearch = !term || name.includes(term);
+      const matchesGozada = showGozadas || !isGozada;
+
+      if (matchesSearch && matchesGozada) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // 2. Timeline Gantt
+    const ganttRows = document.querySelectorAll('.gantt-row');
+    ganttRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const isGozada = row.getAttribute('data-gozada') === 'true';
+
+      const matchesSearch = !term || name.includes(term);
+      const matchesGozada = showGozadas || !isGozada;
+
+      if (matchesSearch && matchesGozada) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // 3. Férias já gozadas dentro dos meses no Gantt
+    const gozadaChips = document.querySelectorAll('.gozada-chip');
+    gozadaChips.forEach(chip => {
+      if (showGozadas) {
+        chip.style.display = '';
+      } else {
+        chip.style.display = 'none';
+      }
+    });
+  }
+
+  function openEditAccountingModal(id, code, name, adm, vencidaEm, faltas, direito, gozados, saldo, aviso, proximo) {
+    document.getElementById('acc-prof-id').value = id;
+    document.getElementById('acc-prof-name').value = name;
+    document.getElementById('acc-adm-val').value = adm || '';
+    
+    let admFormatted = '-';
+    if (adm) {
+      const parts = adm.split('-');
+      admFormatted = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : adm;
+    }
+    document.getElementById('acc-adm-display').innerText = admFormatted;
+
+    document.getElementById('acc-code').value = code || id;
+    document.getElementById('acc-vencida-em').value = vencidaEm !== '-' ? vencidaEm : '';
+    document.getElementById('acc-faltas').value = faltas || 0;
+    document.getElementById('acc-dias-direito').value = direito || 30;
+    document.getElementById('acc-dias-gozados').value = gozados || 0;
+    document.getElementById('acc-saldo').value = saldo || 30;
+    document.getElementById('acc-conceder-aviso').value = aviso || '';
+    document.getElementById('acc-proximo-vencimento').value = proximo || '';
+
+    document.getElementById('accounting-modal').classList.remove('hidden');
+  }
+
+  function autoCalcModalClt() {
+    const adm = document.getElementById('acc-adm-val').value;
+    if (!adm) {
+      alert('Este colaborador não possui data de admissão cadastrada.');
+      return;
+    }
+
+    const faltas = Number(document.getElementById('acc-faltas').value) || 0;
+    const gozados = Number(document.getElementById('acc-dias-gozados').value) || 0;
+
+    let admDate;
+    if (adm.includes('/')) {
+      const parts = adm.split('/');
+      admDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else {
+      const parts = adm.split('-');
+      admDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    if (isNaN(admDate.getTime())) {
+      alert('Data de admissão inválida.');
+      return;
+    }
+
+    const today = new Date('2026-07-22');
+    let k = 1;
+    while (true) {
+      let nextEnd = new Date(admDate.getFullYear() + k, admDate.getMonth(), admDate.getDate() - 1);
+      if (nextEnd > today && k > 1) break;
+      k++;
+      if (k > 50) break;
+    }
+
+    let kVencida = Math.max(1, k - 1);
+    let vencidaEmDate = new Date(admDate.getFullYear() + kVencida, admDate.getMonth(), admDate.getDate() - 1);
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmtBr = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    const fmtIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    let concessiveEndDate = new Date(vencidaEmDate.getFullYear() + 1, vencidaEmDate.getMonth(), vencidaEmDate.getDate());
+    let concederAvisoDate = new Date(concessiveEndDate.getTime() - (60 * 24 * 60 * 60 * 1000));
+    let proximoDate = new Date(admDate.getFullYear() + kVencida + 1, admDate.getMonth(), admDate.getDate() - 1);
+
+    let diasDireito = 30;
+    if (faltas > 32) diasDireito = 0;
+    else if (faltas >= 24) diasDireito = 12;
+    else if (faltas >= 15) diasDireito = 18;
+    else if (faltas >= 6) diasDireito = 24;
+
+    let saldoAGozar = Math.max(0, diasDireito - gozados);
+
+    document.getElementById('acc-vencida-em').value = fmtBr(vencidaEmDate);
+    document.getElementById('acc-dias-direito').value = diasDireito;
+    document.getElementById('acc-saldo').value = saldoAGozar;
+    document.getElementById('acc-conceder-aviso').value = fmtIso(concederAvisoDate);
+    document.getElementById('acc-proximo-vencimento').value = fmtBr(proximoDate);
+  }
+
+  function closeAccountingModal() {
+    document.getElementById('accounting-modal').classList.add('hidden');
+  }
+
+  function calcSaldo() {
+    const direito = Number(document.getElementById('acc-dias-direito').value) || 0;
+    const gozados = Number(document.getElementById('acc-dias-gozados').value) || 0;
+    document.getElementById('acc-saldo').value = Math.max(0, direito - gozados);
+  }
+
+  function openVacationModal() {
+    const profSelect = document.getElementById('form-prof-id');
+    if (profSelect && profSelect.value) {
+      onModalProfChange();
+    } else if (profSelect && profSelect.options.length > 1) {
+      profSelect.selectedIndex = 1;
+      onModalProfChange();
+    }
+    document.getElementById('vacation-modal').classList.remove('hidden');
+  }
+
+  function openVacationModalForProf(profId, name) {
+    const profSelect = document.getElementById('form-prof-id');
+    if (profSelect) profSelect.value = profId;
+    onModalProfChange();
+    document.getElementById('vacation-modal').classList.remove('hidden');
+  }
+
+  function openVacationModalForProfAndPeriod(profId, name, periodStr) {
+    const profSelect = document.getElementById('form-prof-id');
+    if (profSelect) profSelect.value = profId;
+    onModalProfChange(periodStr);
+    document.getElementById('vacation-modal').classList.remove('hidden');
+  }
+
+  function openVacationModalForMonth(profId, dateIso) {
+    const profSelect = document.getElementById('form-prof-id');
+    if (profSelect) profSelect.value = profId;
+    onModalProfChange();
+    const startDateInput = document.getElementById('form-start-date');
+    if (startDateInput) startDateInput.value = dateIso;
+    calculateVacationDays();
+    document.getElementById('vacation-modal').classList.remove('hidden');
+  }
+
+  function onModalProfChange(preferredPeriodStr = null) {
+    const profId = document.getElementById('form-prof-id').value;
+    const periodSelect = document.getElementById('form-aquisitive-period-select');
+    if (!periodSelect) return;
+
+    periodSelect.innerHTML = '';
+
+    if (!profId) {
+      periodSelect.innerHTML = '<option value="">-- Selecione o Colaborador primeiro --</option>';
+      document.getElementById('form-max-available-days').value = '0';
+      calculateVacationDays();
+      return;
+    }
+
+    const prof = allProfessionalsData ? allProfessionalsData.find(p => String(p.id) === String(profId)) : null;
+    if (!prof) {
+      periodSelect.innerHTML = '<option value="">-- Colaborador não encontrado --</option>';
+      document.getElementById('form-max-available-days').value = '0';
+      calculateVacationDays();
+      return;
+    }
+
+    const periods = computeAllVacationPeriodsJS(prof);
+    if (!periods || periods.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = 'Aquisitivo Atual';
+      opt.dataset.saldo = '30';
+      opt.innerText = 'Aquisitivo Atual — Saldo: 30 dias';
+      periodSelect.appendChild(opt);
+    } else {
+      periods.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.aquisitivePeriod;
+        opt.dataset.saldo = p.saldoAGozar;
+        opt.dataset.diasDireito = p.diasDireito;
+        opt.dataset.diasGozados = p.diasGozados;
+
+        const badge = p.saldoAGozar === 0 ? '[Quitada]' : (p.isVencida ? '[Vencida]' : '[Atual]');
+        const planStr = p.diasPlanejados > 0 ? ` | Planejados: ${p.diasPlanejados}d` : '';
+        opt.innerText = `${badge} ${p.aquisitivePeriod} — Saldo: ${p.saldoAGozar} dias${planStr}`;
+
+        periodSelect.appendChild(opt);
+      });
+    }
+
+    if (preferredPeriodStr) {
+      for (let i = 0; i < periodSelect.options.length; i++) {
+        const val = periodSelect.options[i].value;
+        if (val === preferredPeriodStr || val.includes(preferredPeriodStr) || preferredPeriodStr.includes(val)) {
+          periodSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    onModalPeriodChange();
+  }
+
+  function onModalPeriodChange() {
+    const periodSelect = document.getElementById('form-aquisitive-period-select');
+    if (!periodSelect || periodSelect.selectedIndex === -1) return;
+    const selectedOpt = periodSelect.options[periodSelect.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.saldo !== undefined) {
+      document.getElementById('form-max-available-days').value = selectedOpt.dataset.saldo;
+    } else {
+      document.getElementById('form-max-available-days').value = '30';
+    }
+    calculateVacationDays();
+  }
+
+  function calculateVacationDays() {
+    const startVal = document.getElementById('form-start-date').value;
+    const endVal = document.getElementById('form-end-date').value;
+    const abonoSelect = document.getElementById('form-abono');
+    const summaryBox = document.getElementById('vacation-days-summary');
+    const requestedEl = document.getElementById('requested-days-val');
+    const abonoEl = document.getElementById('abono-days-val');
+    const totalEl = document.getElementById('total-days-val');
+    const availableEl = document.getElementById('available-days-val');
+    const alertEl = document.getElementById('vacation-balance-alert');
+    const submitBtn = document.getElementById('submit-vacation-btn');
+    const maxAvailable = Number(document.getElementById('form-max-available-days').value) || 0;
+
+    let abonoDays = 0;
+    if (abonoSelect && abonoSelect.value && abonoSelect.value !== 'Não') {
+      const match = abonoSelect.value.match(/\d+/);
+      if (match) abonoDays = parseInt(match[0], 10);
+      else abonoDays = 10;
+    }
+    const abonoInput = document.getElementById('form-abono-days-hidden');
+    if (abonoInput) abonoInput.value = abonoDays;
+
+    let requestedDays = 0;
+    if (startVal && endVal) {
+      const s = new Date(startVal + 'T00:00:00');
+      const e = new Date(endVal + 'T00:00:00');
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime()) && e >= s) {
+        const diffTime = e - s;
+        requestedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      } else if (e < s) {
+        if (summaryBox) summaryBox.classList.remove('hidden');
+        if (requestedEl) requestedEl.innerText = 'Data inválida';
+        if (availableEl) availableEl.innerText = `${maxAvailable} dia(s)`;
+        if (alertEl) {
+          alertEl.innerText = '⚠️ A data de término deve ser posterior à data de início!';
+          alertEl.classList.remove('hidden');
+        }
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        return;
+      }
+    }
+
+    const totalDays = requestedDays + abonoDays;
+
+    if (summaryBox) summaryBox.classList.remove('hidden');
+    if (requestedEl) requestedEl.innerText = `${requestedDays} dia(s)`;
+    if (abonoEl) abonoEl.innerText = `${abonoDays} dia(s)`;
+    if (totalEl) totalEl.innerText = `${totalDays} dia(s)`;
+    if (availableEl) availableEl.innerText = `${maxAvailable} dia(s)`;
+
+    if (totalDays > maxAvailable) {
+      if (alertEl) {
+        alertEl.innerText = `⚠️ Total a debitar (${totalDays}d = ${requestedDays}d gozo + ${abonoDays}d abono) excede o saldo disponível de ${maxAvailable}d!`;
+        alertEl.classList.remove('hidden');
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    } else {
+      if (alertEl) alertEl.classList.add('hidden');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+  }
+
+  function validateVacationForm(event) {
+    const startVal = document.getElementById('form-start-date').value;
+    const endVal = document.getElementById('form-end-date').value;
+    const maxAvailable = Number(document.getElementById('form-max-available-days').value) || 0;
+
+    if (!startVal || !endVal) {
+      alert('Por favor, selecione as datas de início e término das férias.');
+      if (event) event.preventDefault();
+      return false;
+    }
+
+    const s = new Date(startVal + 'T00:00:00');
+    const e = new Date(endVal + 'T00:00:00');
+
+    if (e < s) {
+      alert('A data de término não pode ser anterior à data de início.');
+      if (event) event.preventDefault();
+      return false;
+    }
+
+    const requestedDays = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (requestedDays > maxAvailable) {
+      alert(`Atenção: Você solicitou ${requestedDays} dias de férias, mas o saldo disponível para este período aquisitivo é de apenas ${maxAvailable} dias.`);
+      if (event) event.preventDefault();
+      return false;
+    }
+
+    return true;
+  }
+
+  function closeVacationModal() {
+    const modal = document.getElementById('vacation-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  }
+
+  function printAccountingReport() {
+    switchView('accounting');
+    window.print();
+  }
+
+  function openManageVacationsModal() {
+    document.getElementById('manage-vacations-modal').classList.remove('hidden');
+  }
+
+  function closeManageVacationsModal() {
+    document.getElementById('manage-vacations-modal').classList.add('hidden');
+  }
+
+  function confirmDeleteVacation(profId, vacationIdOrIndex, profName, periodStr) {
+    if (confirm(`Deseja realmente remover o agendamento de férias de ${profName} (${periodStr})?`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/admin/financeiro/rh/delete-vacation';
+
+      const inputProf = document.createElement('input');
+      inputProf.type = 'hidden';
+      inputProf.name = 'profId';
+      inputProf.value = profId;
+      form.appendChild(inputProf);
+
+      const inputVacId = document.createElement('input');
+      inputVacId.type = 'hidden';
+      inputVacId.name = 'vacationId';
+      inputVacId.value = vacationIdOrIndex;
+      form.appendChild(inputVacId);
+
+      const inputVacIdx = document.createElement('input');
+      inputVacIdx.type = 'hidden';
+      inputVacIdx.name = 'vacationIndex';
+      inputVacIdx.value = vacationIdOrIndex;
+      form.appendChild(inputVacIdx);
+
+      const inputRedir = document.createElement('input');
+      inputRedir.type = 'hidden';
+      inputRedir.name = 'redirectUrl';
+      inputRedir.value = window.location.pathname + window.location.search;
+      form.appendChild(inputRedir);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  function confirmBaixaVacation(profId, vacationIdOrIndex, profName, periodStr) {
+    if (confirm(`Deseja confirmar e dar baixa nas férias de ${profName} (${periodStr})?\n\nO status será alterado para GOZADAS e os dias serão abatidos do saldo de férias do colaborador.`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/admin/financeiro/rh/confirm-baixa-vacation';
+
+      const inputProf = document.createElement('input');
+      inputProf.type = 'hidden';
+      inputProf.name = 'profId';
+      inputProf.value = profId;
+      form.appendChild(inputProf);
+
+      const inputVacId = document.createElement('input');
+      inputVacId.type = 'hidden';
+      inputVacId.name = 'vacationId';
+      inputVacId.value = vacationIdOrIndex;
+      form.appendChild(inputVacId);
+
+      const inputVacIdx = document.createElement('input');
+      inputVacIdx.type = 'hidden';
+      inputVacIdx.name = 'vacationIndex';
+      inputVacIdx.value = vacationIdOrIndex;
+      form.appendChild(inputVacIdx);
+
+      const inputRedir = document.createElement('input');
+      inputRedir.type = 'hidden';
+      inputRedir.name = 'redirectUrl';
+      inputRedir.value = window.location.pathname + window.location.search;
+      form.appendChild(inputRedir);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
+
+<%- include('../../partials/footer') %>

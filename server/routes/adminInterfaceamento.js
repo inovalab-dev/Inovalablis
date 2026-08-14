@@ -929,11 +929,34 @@ function handleAmostraLookup(req, res) {
     const naoEnviados = (interfaceData && Array.isArray(interfaceData.naoEnviados)) ? interfaceData.naoEnviados : [];
     const processando = (interfaceData && Array.isArray(interfaceData.processando)) ? interfaceData.processando : [];
     const prontos = (interfaceData && Array.isArray(interfaceData.prontos)) ? interfaceData.prontos : [];
-    const equipamentosCadastrados = (interfaceData && Array.isArray(interfaceData.equipamentos)) ? interfaceData.equipamentos : getDefaultEquipments();
+    const equipamentosCadastrados = loadEquipamentos() || [];
     const catalogExams = loadExams() || [];
+    const requisitions = loadRequisitions() || [];
 
-    // Busca nas listas
+    // Busca nas listas de interfaceamento
     let foundItem = naoEnviados.find(item => {
+      if (!item) return false;
+      const bc = String(item.sampleBarcode || '').toLowerCase().trim();
+      const bcClean = bc.replace(/[-_]/g, '');
+      const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
+      const reqFormatted = formatRequisitionCode(item.requisitionCode);
+
+      return bc === searchNormalized ||
+             bcClean === searchClean ||
+             reqCode === searchNormalized ||
+             reqFormatted === reqFormattedFromSearch;
+    }) || processando.find(item => {
+      if (!item) return false;
+      const bc = String(item.sampleBarcode || '').toLowerCase().trim();
+      const bcClean = bc.replace(/[-_]/g, '');
+      const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
+      const reqFormatted = formatRequisitionCode(item.requisitionCode);
+
+      return bc === searchNormalized ||
+             bcClean === searchClean ||
+             reqCode === searchNormalized ||
+             reqFormatted === reqFormattedFromSearch;
+    }) || prontos.find(item => {
       if (!item) return false;
       const bc = String(item.sampleBarcode || '').toLowerCase().trim();
       const bcClean = bc.replace(/[-_]/g, '');
@@ -946,231 +969,20 @@ function handleAmostraLookup(req, res) {
              reqFormatted === reqFormattedFromSearch;
     });
 
-    let wasInNaoEnviados = false;
+    // Busca requisição correspondente no LIS
+    const reqObj = requisitions.find(r => 
+      formatRequisitionCode(r.requisitionCode) === reqFormattedFromSearch || 
+      r.id === reqCodeNum ||
+      r.requisitionCode === reqCodeNum ||
+      (foundItem && (formatRequisitionCode(r.requisitionCode) === formatRequisitionCode(foundItem.requisitionCode) || r.id === foundItem.requisitionCode)) ||
+      (Array.isArray(r.exams) && r.exams.some(e => String(e.sampleBarcode || e.barcode || '').toLowerCase().replace(/[-_]/g, '') === searchClean))
+    );
 
-    if (foundItem) {
-      wasInNaoEnviados = true;
-    } else {
-      foundItem = processando.find(item => {
-        if (!item) return false;
-        const bc = String(item.sampleBarcode || '').toLowerCase().trim();
-        const bcClean = bc.replace(/[-_]/g, '');
-        const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
-        const reqFormatted = formatRequisitionCode(item.requisitionCode);
-
-        return bc === searchNormalized ||
-               bcClean === searchClean ||
-               reqCode === searchNormalized ||
-               reqFormatted === reqFormattedFromSearch;
-      }) || prontos.find(item => {
-        if (!item) return false;
-        const bc = String(item.sampleBarcode || '').toLowerCase().trim();
-        const bcClean = bc.replace(/[-_]/g, '');
-        const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
-        const reqFormatted = formatRequisitionCode(item.requisitionCode);
-
-        return bc === searchNormalized ||
-               bcClean === searchClean ||
-               reqCode === searchNormalized ||
-               reqFormatted === reqFormattedFromSearch;
+    if (!foundItem && !reqObj) {
+      return res.status(404).json({
+        error: "Amostra não encontrada no sistema de interfaceamento.",
+        idAmostra: searchCode
       });
-    }
-
-    const requisitions = loadRequisitions();
-
-    if (!foundItem) {
-      // Fallback: busca diretamente no banco de requisições do LIS
-      const reqObjFallback = requisitions.find(r => 
-        formatRequisitionCode(r.requisitionCode) === reqFormattedFromSearch || 
-        r.id === reqCodeNum ||
-        r.requisitionCode === reqCodeNum ||
-        (Array.isArray(r.exams) && r.exams.some(e => String(e.sampleBarcode || e.barcode || '').toLowerCase().replace(/[-_]/g, '') === searchClean))
-      );
-
-      if (reqObjFallback) {
-        const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        foundItem = {
-          id: 'INT-ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-          requisitionCode: reqObjFallback.requisitionCode || reqCodeNum,
-          patientName: reqObjFallback.patientName || 'Paciente LIS',
-          patientAge: reqObjFallback.patientAge || '30 Anos',
-          patientSex: reqObjFallback.patientSex || 'M',
-          convenio: reqObjFallback.convenio || 'Particular',
-          examCode: (reqObjFallback.exams && reqObjFallback.exams[0] && (reqObjFallback.exams[0].code || reqObjFallback.exams[0].codigo)) || 'EXAME',
-          examTitle: (reqObjFallback.exams && reqObjFallback.exams[0] && (reqObjFallback.exams[0].name || reqObjFallback.exams[0].nome)) || 'Exame de Laboratório',
-          material: 'Soro',
-          equipment: 'Urit 8021A - Bioquímica',
-          sampleBarcode: searchCode,
-          status: 'Processando',
-          startTime: nowStr,
-          progress: 20
-        };
-
-        if (!Array.isArray(interfaceData.processando)) {
-          interfaceData.processando = [];
-        }
-        interfaceData.processando.unshift(foundItem);
-
-        if (!Array.isArray(interfaceData.mensagens)) {
-          interfaceData.mensagens = [];
-        }
-        interfaceData.mensagens.unshift({
-          id: 'MSG-' + Date.now() + '-' + Math.floor(Math.random() * 100),
-          timestamp: nowStr,
-          type: 'OUTBOUND',
-          protocol: 'ASTM E1394 / REST',
-          equipment: foundItem.equipment,
-          direction: 'LIS ➔ EQUIPAMENTO',
-          payload: `H|\\^&|||LIS_INOVALAB\nP|1||${foundItem.requisitionCode}||${foundItem.patientName}\nO|1|${foundItem.sampleBarcode}||^^^${foundItem.examCode}|R\nL|1|N`,
-          status: 'Consulta API - Criada e Transicionada para Processando (Em Execução)'
-        });
-
-        saveInterfaceData(interfaceData);
-      } else {
-        return res.status(404).json({
-          error: "Amostra não encontrada no sistema de interfaceamento.",
-          idAmostra: searchCode
-        });
-      }
-    }
-
-    // Se estava na lista de não enviados, transiciona TODOS os exames vinculados para Processando
-    if (wasInNaoEnviados) {
-      const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const sampleBcToMove = String(foundItem.sampleBarcode || '').toLowerCase().trim();
-      const reqCodeToMove = String(foundItem.requisitionCode || '').toLowerCase().trim();
-      const reqFormattedToMove = formatRequisitionCode(foundItem.requisitionCode);
-
-      const itemsToMove = interfaceData.naoEnviados.filter(i => {
-        if (!i) return false;
-        const bc = String(i.sampleBarcode || '').toLowerCase().trim();
-        const bcClean = bc.replace(/[-_]/g, '');
-        const reqCode = String(i.requisitionCode || '').toLowerCase().trim();
-        const reqFormatted = formatRequisitionCode(i.requisitionCode);
-
-        return (sampleBcToMove && bc === sampleBcToMove) ||
-               (sampleBcToMove && bcClean === sampleBcToMove.replace(/[-_]/g, '')) ||
-               (reqCodeToMove && reqCode === reqCodeToMove) ||
-               (reqFormattedToMove && reqFormatted === reqFormattedToMove) ||
-               bc === searchNormalized ||
-               bcClean === searchClean ||
-               reqCode === searchNormalized ||
-               reqFormatted === reqFormattedFromSearch ||
-               i.id === foundItem.id;
-      });
-
-      itemsToMove.forEach(item => {
-        const idx = interfaceData.naoEnviados.findIndex(n => n.id === item.id);
-        if (idx !== -1) {
-          const [moved] = interfaceData.naoEnviados.splice(idx, 1);
-          moved.status = 'Processando';
-          moved.startTime = nowStr;
-          moved.progress = Math.floor(Math.random() * 20) + 15;
-
-          if (!Array.isArray(interfaceData.processando)) {
-            interfaceData.processando = [];
-          }
-          if (!interfaceData.processando.some(p => p.id === moved.id)) {
-            interfaceData.processando.unshift(moved);
-          }
-
-          if (!Array.isArray(interfaceData.mensagens)) {
-            interfaceData.mensagens = [];
-          }
-          interfaceData.mensagens.unshift({
-            id: 'MSG-' + Date.now() + '-' + Math.floor(Math.random() * 100),
-            timestamp: nowStr,
-            type: 'OUTBOUND',
-            protocol: 'ASTM E1394',
-            equipment: moved.equipment || 'Equipamento',
-            direction: 'LIS ➔ EQUIPAMENTO',
-            payload: moved.astmFrame || `H|\\^&|||LIS_INOVALAB\nP|1||${moved.requisitionCode}||${moved.patientName}\nO|1|${moved.sampleBarcode}||^^^${moved.examCode}|R\nL|1|N`,
-            status: 'Consulta API - Transicionada para Processando (Em Execução)'
-          });
-        }
-      });
-
-      foundItem.status = 'Processando';
-      saveInterfaceData(interfaceData);
-    }
-
-    // Atualiza status do exame na requisição no banco de requisições do LIS
-    try {
-      const targetReqCode = formatRequisitionCode(foundItem.requisitionCode);
-      const reqObjToUpdate = requisitions.find(r => formatRequisitionCode(r.requisitionCode) === targetReqCode || r.id === foundItem.requisitionCode);
-      if (reqObjToUpdate && Array.isArray(reqObjToUpdate.exams)) {
-        let modified = false;
-        reqObjToUpdate.exams.forEach(ex => {
-          if (ex.status !== 'Pronto' && ex.status !== 'Concluído') {
-            ex.status = 'Em Execução';
-            ex.situacao = 'Em Execução';
-            modified = true;
-          }
-        });
-        if (modified) {
-          saveRequisitions(requisitions);
-        }
-      }
-    } catch (errReq) {
-      console.error('Erro ao sincronizar requisição para Em Execução:', errReq);
-    }
-
-    // Localiza dados do paciente para retorno JSON
-    const reqCodeFormatted = formatRequisitionCode(foundItem.requisitionCode);
-    const reqObj = requisitions.find(r => formatRequisitionCode(r.requisitionCode) === reqCodeFormatted || r.id === foundItem.requisitionCode);
-
-    let idPaciente = "1";
-    if (reqObj) {
-      idPaciente = String(reqObj.patientCode || reqObj.patientId || reqObj.pacienteId || reqObj.idPaciente || reqObj.patientCpf || foundItem.requisitionCode || "1");
-    } else if (foundItem.requisitionCode) {
-      idPaciente = String(foundItem.requisitionCode);
-    }
-
-    const nome = reqObj?.patientName || foundItem.patientName || "Paciente sem nome";
-
-    let rawSex = (reqObj?.patientSex || foundItem.patientSex || 'M').trim().toUpperCase();
-    let genero = 'M';
-    if (rawSex.startsWith('F') || rawSex.includes('FEM')) {
-      genero = 'F';
-    } else {
-      genero = 'M';
-    }
-
-    let dataNascimento = reqObj?.patientBirthDate || reqObj?.dataNascimento || foundItem.patientBirthDate || foundItem.dataNascimento || "";
-    if (dataNascimento && dataNascimento.includes('T')) {
-      dataNascimento = dataNascimento.split('T')[0];
-    }
-
-    if (!dataNascimento && (reqObj?.patientCode || reqObj?.patientId || idPaciente)) {
-      const pCode = String(reqObj?.patientCode || reqObj?.patientId || idPaciente);
-      const person = (typeof pessoasCache !== 'undefined' && Array.isArray(pessoasCache))
-        ? pessoasCache.find(p => String(p.id) === pCode || String(p.code) === pCode || String(p.cpfCnpj) === pCode)
-        : null;
-      if (person?.birthDate) {
-        dataNascimento = person.birthDate;
-      }
-    }
-
-    let idade = 0;
-    if (dataNascimento) {
-      const birth = new Date(dataNascimento);
-      if (!isNaN(birth.getTime())) {
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const m = today.getMonth() - birth.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-          age--;
-        }
-        if (age >= 0) idade = age;
-      }
-    }
-
-    if (!idade) {
-      const ageStr = String(reqObj?.patientAge || foundItem.patientAge || '');
-      const match = ageStr.match(/\d+/);
-      if (match) {
-        idade = parseInt(match[0], 10);
-      }
     }
 
     // =========================================================================
@@ -1236,7 +1048,7 @@ function handleAmostraLookup(req, res) {
 
     const displayEquipmentName = (matchedEqObj 
       ? (matchedEqObj.chave ? `${matchedEqObj.chave} - ${matchedEqObj.descricao || matchedEqObj.nome}` : (matchedEqObj.descricao || matchedEqObj.nome))
-      : requestedEquipment) || foundItem.equipment || "Equipamento API";
+      : requestedEquipment) || (foundItem ? foundItem.equipment : "Equipamento API");
 
     // Função de verificação se um exame é específico deste equipamento
     function checkExamMatchesEquipment(candidateCode, candidateTitle, candidateItemEquipment) {
@@ -1344,16 +1156,72 @@ function handleAmostraLookup(req, res) {
       return { matches: false, hl7Code: null, equipmentName: null, material: null, catalogExam: null };
     }
 
-    // Coleta todos os exames associados a esta amostra/requisição
+    // Localiza dados do paciente para retorno JSON
+    let idPaciente = "1";
+    if (reqObj) {
+      idPaciente = String(reqObj.patientCode || reqObj.patientId || reqObj.pacienteId || reqObj.idPaciente || reqObj.patientCpf || reqObj.requisitionCode || "1");
+    } else if (foundItem?.requisitionCode) {
+      idPaciente = String(foundItem.requisitionCode);
+    }
+
+    const nome = reqObj?.patientName || foundItem?.patientName || "Paciente sem nome";
+
+    let rawSex = (reqObj?.patientSex || foundItem?.patientSex || 'M').trim().toUpperCase();
+    let genero = 'M';
+    if (rawSex.startsWith('F') || rawSex.includes('FEM')) {
+      genero = 'F';
+    } else {
+      genero = 'M';
+    }
+
+    let dataNascimento = reqObj?.patientBirthDate || reqObj?.dataNascimento || foundItem?.patientBirthDate || foundItem?.dataNascimento || "";
+    if (dataNascimento && dataNascimento.includes('T')) {
+      dataNascimento = dataNascimento.split('T')[0];
+    }
+
+    if (!dataNascimento && (reqObj?.patientCode || reqObj?.patientId || idPaciente)) {
+      const pCode = String(reqObj?.patientCode || reqObj?.patientId || idPaciente);
+      const person = (typeof pessoasCache !== 'undefined' && Array.isArray(pessoasCache))
+        ? pessoasCache.find(p => String(p.id) === pCode || String(p.code) === pCode || String(p.cpfCnpj) === pCode)
+        : null;
+      if (person?.birthDate) {
+        dataNascimento = person.birthDate;
+      }
+    }
+
+    let idade = 0;
+    if (dataNascimento) {
+      const birth = new Date(dataNascimento);
+      if (!isNaN(birth.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+        if (age >= 0) idade = age;
+      }
+    }
+
+    if (!idade) {
+      const ageStr = String(reqObj?.patientAge || foundItem?.patientAge || '');
+      const match = ageStr.match(/\d+/);
+      if (match) {
+        idade = parseInt(match[0], 10);
+      }
+    }
+
+    // Coleta todos os exames associados a esta amostra/requisição QUE PERTENCEM AO EQUIPAMENTO
     let examList = [];
     let examCodesSet = new Set();
+    let matchedExamsCodes = new Set();
 
-    const sampleBcToMatch = String(foundItem.sampleBarcode || searchCode).toLowerCase().trim();
-    const reqCodeToMatch = String(foundItem.requisitionCode || '').toLowerCase().trim();
+    const sampleBcToMatch = String(foundItem?.sampleBarcode || searchCode).toLowerCase().trim();
+    const reqCodeToMatch = String(foundItem?.requisitionCode || (reqObj ? reqObj.requisitionCode : '')).toLowerCase().trim();
 
     const allInterfaceItems = [
-      ...(Array.isArray(interfaceData.processando) ? interfaceData.processando : []),
       ...(Array.isArray(interfaceData.naoEnviados) ? interfaceData.naoEnviados : []),
+      ...(Array.isArray(interfaceData.processando) ? interfaceData.processando : []),
       ...(Array.isArray(interfaceData.prontos) ? interfaceData.prontos : [])
     ];
 
@@ -1377,6 +1245,10 @@ function handleAmostraLookup(req, res) {
         if (matchResult.matches) {
           const finalCode = (matchResult.hl7Code || code || 'EXAME').trim();
           const cleanKey = finalCode.toLowerCase();
+          matchedExamsCodes.add(String(code).toLowerCase());
+          matchedExamsCodes.add(String(exTitle).toLowerCase());
+          matchedExamsCodes.add(cleanKey);
+
           if (!examCodesSet.has(cleanKey)) {
             examCodesSet.add(cleanKey);
 
@@ -1412,6 +1284,10 @@ function handleAmostraLookup(req, res) {
         if (matchResult.matches) {
           const finalCode = (matchResult.hl7Code || code || 'EXAME').trim();
           const cleanKey = finalCode.toLowerCase();
+          matchedExamsCodes.add(String(code).toLowerCase());
+          matchedExamsCodes.add(String(exTitle).toLowerCase());
+          matchedExamsCodes.add(cleanKey);
+
           if (!examCodesSet.has(cleanKey)) {
             examCodesSet.add(cleanKey);
 
@@ -1438,7 +1314,7 @@ function handleAmostraLookup(req, res) {
     }
 
     // Se NÃO foi filtrado por equipamento e não achou nada, aplica fallback geral
-    if (examList.length === 0 && !reqEqNormalized) {
+    if (examList.length === 0 && !reqEqNormalized && foundItem) {
       const fallbackCode = String(foundItem.examCode || foundItem.codigo || foundItem.code || "GLICO").trim();
       let params = [];
       if (fallbackCode.toUpperCase().includes('HEMO') || (foundItem.examTitle || '').toUpperCase().includes('HEMOGRAMA')) {
@@ -1453,17 +1329,125 @@ function handleAmostraLookup(req, res) {
         equipamento: displayEquipmentName,
         ...(params.length > 0 ? { parametros: params } : {})
       });
+      matchedExamsCodes.add(fallbackCode.toLowerCase());
+    }
+
+    // Se filtrou por equipamento e não achou nenhum exame para este aparelho
+    if (examList.length === 0 && reqEqNormalized) {
+      return res.status(404).json({
+        error: `Nenhum exame pendente ou atribuído ao equipamento ${requestedEquipment} para esta amostra.`,
+        idAmostra: searchCode,
+        equipamento: requestedEquipment
+      });
+    }
+
+    // =========================================================================
+    // TRANSIÇÃO DE ESTADO: Mover de 'naoEnviados' para 'processando' APENAS OS EXAMES DO EQUIPAMENTO
+    // =========================================================================
+    const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    if (Array.isArray(interfaceData.naoEnviados) && interfaceData.naoEnviados.length > 0) {
+      // Filtra APENAS os itens de naoEnviados que pertencem a esta amostra/requisição E que foram correspondidos ao equipamento
+      const itemsToTransition = interfaceData.naoEnviados.filter(item => {
+        if (!item) return false;
+        const bc = String(item.sampleBarcode || '').toLowerCase().trim();
+        const bcClean = bc.replace(/[-_]/g, '');
+        const reqCode = String(item.requisitionCode || '').toLowerCase().trim();
+        const reqFormatted = formatRequisitionCode(item.requisitionCode);
+
+        const isSampleMatch = (sampleBcToMatch && bc === sampleBcToMatch) ||
+                              (sampleBcToMatch && bcClean === sampleBcToMatch.replace(/[-_]/g, '')) ||
+                              (reqCodeToMatch && reqCode === reqCodeToMatch) ||
+                              bc === searchNormalized ||
+                              bcClean === searchClean ||
+                              reqCode === searchNormalized ||
+                              reqFormatted === reqFormattedFromSearch;
+
+        if (!isSampleMatch) return false;
+
+        const code = String(item.examCode || item.codigo || item.code || item.exam || '').toLowerCase();
+        const title = String(item.examTitle || item.nome || item.name || '').toLowerCase();
+        
+        // Verifica se este exame específico deu match com o equipamento consultado
+        const isExamMatched = matchedExamsCodes.has(code) || 
+                              matchedExamsCodes.has(title) || 
+                              checkExamMatchesEquipment(code, title, item.equipment).matches;
+
+        return isExamMatched;
+      });
+
+      if (itemsToTransition.length > 0) {
+        itemsToTransition.forEach(item => {
+          const idx = interfaceData.naoEnviados.findIndex(n => n.id === item.id);
+          if (idx !== -1) {
+            const [moved] = interfaceData.naoEnviados.splice(idx, 1);
+            moved.status = 'Processando';
+            moved.startTime = nowStr;
+            moved.progress = Math.floor(Math.random() * 20) + 15;
+            moved.equipment = displayEquipmentName;
+
+            if (!Array.isArray(interfaceData.processando)) {
+              interfaceData.processando = [];
+            }
+            if (!interfaceData.processando.some(p => p.id === moved.id)) {
+              interfaceData.processando.unshift(moved);
+            }
+
+            if (!Array.isArray(interfaceData.mensagens)) {
+              interfaceData.mensagens = [];
+            }
+            interfaceData.mensagens.unshift({
+              id: 'MSG-' + Date.now() + '-' + Math.floor(Math.random() * 100),
+              timestamp: nowStr,
+              type: 'OUTBOUND',
+              protocol: 'ASTM E1394',
+              equipment: displayEquipmentName,
+              direction: 'LIS ➔ EQUIPAMENTO',
+              payload: moved.astmFrame || `H|\\^&|||LIS_INOVALAB\nP|1||${moved.requisitionCode}||${moved.patientName}\nO|1|${moved.sampleBarcode}||^^^${moved.examCode}|R\nL|1|N`,
+              status: `Consulta API (${displayEquipmentName}) - Transicionado para Processando`
+            });
+          }
+        });
+
+        saveInterfaceData(interfaceData);
+      }
+    }
+
+    // Atualiza status APENAS dos exames correspondentes na requisição no banco MySQL/LIS
+    try {
+      if (reqObj && Array.isArray(reqObj.exams)) {
+        let modifiedReq = false;
+        reqObj.exams.forEach(ex => {
+          const code = String(ex.code || ex.codigo || ex.jalisCode || ex.id || '').toLowerCase();
+          const title = String(ex.name || ex.nome || ex.title || '').toLowerCase();
+          const isExamMatched = matchedExamsCodes.has(code) || 
+                                matchedExamsCodes.has(title) || 
+                                checkExamMatchesEquipment(code, title, ex.equipment).matches;
+
+          if (isExamMatched && ex.status !== 'Pronto' && ex.status !== 'Concluído' && ex.status !== 'Liberado') {
+            ex.status = 'Em Execução';
+            ex.situacao = 'Em Execução';
+            modifiedReq = true;
+          }
+        });
+
+        if (modifiedReq) {
+          saveRequisitions(requisitions);
+        }
+      }
+    } catch (errReq) {
+      console.error('Erro ao sincronizar requisição para Em Execução:', errReq);
     }
 
     return res.json({
-      idAmostra: foundItem.sampleBarcode || searchCode,
+      idAmostra: foundItem?.sampleBarcode || searchCode,
       idPaciente: idPaciente,
       nome: nome,
       genero: genero,
       idade: idade,
       dataNascimento: dataNascimento || "",
       equipamento: displayEquipmentName,
-      status: foundItem.status || "Processando",
+      status: "Processando",
       totalExames: examList.length,
       exames: examList
     });
